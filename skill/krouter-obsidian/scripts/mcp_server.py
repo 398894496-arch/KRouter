@@ -31,7 +31,7 @@ INSTRUCTIONS = (
     "Call krouter_ask before answering a question about how this user does things, what was decided before, or what "
     "was corrected. Answer from the `how` line and cite the page path; open the page only when `how` does not close "
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
-    "instead of guessing. If a receipt has `host_action:`, tell the user that line."
+    "instead of guessing; `recall_note:` means only part of the question matched: say that too. If a receipt has `host_action:`, tell the user that line."
 )
 TOOLS = [
     {

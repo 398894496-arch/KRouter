@@ -325,6 +325,10 @@ TITLE_HIT = 2.0
 CARD_MIN = 0.5  # 问答卡至少覆盖问题一半的实词分量才输出
 ANSWER_SUPPORT_MIN = 0.3  # 答案用词至少这么多在原页出现
 ALIEN_MIN = 2  # 库里从没出现过的汉字达到这么多、且只对上一个实词：判为库外
+# 整句问题只对上一个实词也作答时（分数够、又没有库外证据），首条页可能是对的，也可能只是借了一个词。
+# 开发集上这种情况对错各半，分数分不开，所以不改答不答，只把话说清楚
+PARTIAL_NOTE = ("recall_note: only one word of the question matched these pages; they may be about something else. "
+                "Say what they say and that the vault may not cover the question; do not give it as the answer.")
 
 
 def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_first: bool = True,
@@ -400,8 +404,11 @@ def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_fir
     else:
         refuse = (top < SCORE_MIN * scale or (strong < need and top < SINGLE_TERM_SCORE * scale) or strong == 0
                   or (unknown and strong <= 2) or (strong < need and alien >= ALIEN_MIN) or off_vault)
+    partial = not single and strong < need
     if gate and refuse:
         conf = "none"
+    elif partial:
+        conf = "low"
     elif margin >= 1.5 and hits[0]["tier"] in ("rule", "topic"):
         conf = "high"
     elif margin >= 1.15:
@@ -410,10 +417,10 @@ def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_fir
         conf = "low"
     for h in hits:
         h.pop("rid", None)
-    if hits and conf != "none":
-        attach_answers(vault, hits, raw, df)
+    if hits and conf != "none" and not partial:
+        attach_answers(vault, hits, raw, df)  # 只对上一个词时不给生成的答案：那一行读起来像定论
     return {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
-            "strong": strong, "confidence": conf}
+            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
 
 
 def strong_matches(con: sqlite3.Connection, rid: int, terms: list[str], df: dict[str, int],
@@ -763,6 +770,8 @@ def main() -> int:
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
+    if res.get("partial"):
+        print(PARTIAL_NOTE)
     if not res["hits"] or res.get("confidence") == "none":
         print("recall: none (no page covers enough of the question; do not guess)")
         return 0

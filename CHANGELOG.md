@@ -11,6 +11,13 @@ notice, then the details.
 
 ## Unreleased
 
+- **A question that matches one word of a page now says so.** On a 20-page vault, "小红书的笔记几点发？" was answered at
+  medium confidence from a page about sealing days, on the single word 笔记: the score floors scale with vault size,
+  so a new vault lets a one-word match through. On the dev sets such answers are right half the time and the score
+  does not tell which half, so whether to answer is unchanged (dev, dev2, dev3 identical). What changes: confidence is
+  `low`, the receipt carries a `recall_note:` line (only one word matched; say the vault may not cover the question),
+  and no generated answer is attached. Alias hints no longer come from scattered characters or question words
+  ("剪辑" was offered "剪藏原件"; "标题有什么讲究" was offered a page on 什么): a hint needs a shared two-character word.
 - Docs: retrieval described as it is. PROTOCOL, ARCHITECTURE, DETAILS (en, zh) and VERIFY still called it "a lock on short
   nouns" and quoted "25/25 paraphrases miss" without saying that tests the alias lock alone; outside agents read that
   as "you must maintain an alias table and any rewording misses". Ranked recall answers most questions; the alias lock
