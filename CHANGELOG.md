@@ -11,6 +11,13 @@ notice, then the details.
 
 ## Unreleased
 
+- **A question that names something the vault never mentions is refused** (waits for the real-traffic blind judge).
+  "Which did I start first, the Ferrari model or the Porsche model?" on a vault that has never mentioned a Porsche was
+  answered from the Ferrari page. Now a capitalised word in mid-sentence (`Porsche`, `Seattle`, `iPad`) that no page
+  contains refuses the question; sentence-initial capitals, two-letter words such as `OK`, and month and day names do
+  not count. Tuned on LongMemEval S's 30 unanswerable questions (now a development set: refused 3 → 9, answerable
+  questions refused 12 → 14 of 470) and dev3 (one more neighbour refused, nothing lost). heldout3, run once: wrong
+  citations 26.6% → 26.1%, neighbours refused 46 → 47 of 80, answerable right 102 of 120 unchanged.
 - **A question that matches one word of a page now says so.** On a 20-page vault, "小红书的笔记几点发？" was answered at
   medium confidence from a page about sealing days, on the single word 笔记: the score floors scale with vault size,
   so a new vault lets a one-word match through. On the dev sets such answers are right half the time and the score

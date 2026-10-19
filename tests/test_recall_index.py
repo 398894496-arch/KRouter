@@ -510,6 +510,22 @@ def test_one_cli_at_a_time(monkeypatch, tmp_path):
     assert peak[0] == 1
 
 
+def test_a_question_that_names_something_the_vault_never_mentions_is_refused(tmp_path, monkeypatch):
+    """`Porsche` is in no page: however many other words match, the vault cannot say when that project started.
+    Sentence-initial capitals, `OK`, and month or day names are not names."""
+    monkeypatch.setenv("KROUTER_CACHE_DIR", str(tmp_path / "cache"))
+    v = tmp_path / "vault"
+    write(v, "Projects/Models.md", "---\ntitle: Models\nstatus: active\n---\n\n"
+          "I started the Ferrari model project in March and finished the Ferrari model in May.\n")
+    for i in range(6):
+        write(v, f"Journal/day{i}.md", f"---\ntitle: day {i}\n---\n\nWorked on the garden and a model kit, day {i}.\n")
+    assert r.recall(v, "When did I start the Ferrari model project?")["confidence"] != "none"
+    assert r.recall(v, "When did I start the Porsche model project?")["confidence"] == "none"
+    assert r.absent_names("Is it OK to start the model project?", {}) == []
+    assert r.absent_names("Which project did I start in December?", {}) == []
+    assert r.absent_names("Porsche project start?", {}) == []  # 句首
+
+
 def test_a_question_that_matches_one_word_is_answered_as_low_and_says_so(tmp_path, monkeypatch, capsys):
     """A 20-page vault: `小红书的笔记几点发？` meets only 笔记 on a page about sealing days. Recall may still show the
     page, but at low confidence, with a note, and without a generated answer."""

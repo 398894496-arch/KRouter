@@ -398,12 +398,13 @@ def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_fir
     # 问题里的真词有两个以上整库都没有，而且比首条页对上的真词还多：问的主要是库外的事（`纠错之后的房贷利率`）
     absent_words, top_words = outside_words(con, hits[0]["rid"], raw, df)
     off_vault = absent_words >= 2 and absent_words > top_words
+    unnamed = absent_names(query, df)
     if single:
         # 一个概念的短查询：只有一个词可比，不按"至少两个实词"拦；但仍要过（减半的）分数下限
-        refuse = top < SCORE_MIN * scale * 0.5 or (unknown and strong == 0)
+        refuse = top < SCORE_MIN * scale * 0.5 or (unknown and strong == 0) or bool(unnamed)
     else:
         refuse = (top < SCORE_MIN * scale or (strong < need and top < SINGLE_TERM_SCORE * scale) or strong == 0
-                  or (unknown and strong <= 2) or (strong < need and alien >= ALIEN_MIN) or off_vault)
+                  or (unknown and strong <= 2) or (strong < need and alien >= ALIEN_MIN) or off_vault or bool(unnamed))
     partial = not single and strong < need
     if gate and refuse:
         conf = "none"
@@ -518,6 +519,31 @@ def latin_forms(t: str) -> list[str]:
 
 def _known_latin(t: str, df: dict[str, int]) -> bool:
     return any(df.get(f, 0) for f in [t, *latin_forms(t)])
+
+
+CALENDAR = set("""january february march april may june july august september october november december jan feb mar apr
+jun jul aug sep sept oct nov dec monday tuesday wednesday thursday friday saturday sunday""".split())
+
+
+def absent_names(query: str, df: dict[str, int]) -> list[str]:
+    """问题点名、整库一次都没出现过的专名：不在句首却带大写的拉丁词（`Peter`、`Seattle`、`iPad`）。
+
+    问的是一个库里从没提过的人、地方或东西，库就答不了；借来的其他词（`museum`、`visit`）再多也一样。
+    月份和星期不算：日期多半记在页面的日期里，不写成单词。句首的大写只是句首。"""
+    text = unicodedata.normalize("NFKC", query or "")
+    out = []
+    for m in re.finditer(r"[A-Za-z][A-Za-z0-9]*", text):
+        word = m.group(0)
+        if not any(c.isupper() for c in word) or (word.isupper() and len(word) <= 2):  # `OK`、`AI` 不是在点名
+            continue
+        before = text[: m.start()].rstrip()
+        if not before or before[-1] in ".?!。？！:：":
+            continue
+        t = word.lower()
+        if len(t) < 2 or t in EN_FUNCTION or t in CALENDAR or _known_latin(t, df):
+            continue
+        out.append(t)
+    return out
 
 
 def unknown_content_terms(raw: list[str], df: dict[str, int]) -> int:

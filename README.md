@@ -9,8 +9,8 @@ Claude Code, Codex, Cursor and DeepSeek Harness share one memory: a folder of pl
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
 
 **Measured, not claimed.** On 200 held-out questions in English and Chinese that it was never tuned on, at default
-settings, KRouter cites a wrong page 27% of the time; claude-mem 64%, basic-memory 78%. Of 80 questions the vault
-cannot answer, KRouter refuses 46; the other two refuse none. Of 60 questions about a decision that was later
+settings, KRouter cites a wrong page 26% of the time; claude-mem 64%, basic-memory 78%. Of 80 questions the vault
+cannot answer, KRouter refuses 47; the other two refuse none. Of 60 questions about a decision that was later
 changed, it gets 50 right; they get 34 and 16. Neither of them can refuse or knows a page was replaced, so part of
 that gap is by construction: plain full-text search given KRouter's two rules is level with it. What KRouter adds is
 having those rules on by default, plus receipts and a vault you can edit. [How it was measured](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13) · [rerun it in one second](#check-it-yourself)
@@ -80,7 +80,7 @@ your machine; CLI lanes differ in what they can read, and the install says which
 | Measured | Result |
 |---|---|
 | Refuses instead of guessing (public benches, CI) | Off-topic questions refused 12/12 (English) and 6/6 (Chinese) |
-| Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 27% [19, 34] wrong, 46 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor) at the same coverage cites 43 wrong pages to KRouter's 37 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.4] points, right [-2, +14]). On the same 200 questions at their defaults, claude-mem 13.39 cites a wrong page 64% of the time [58, 71] and basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 questions about a changed decision they get 34 and 16 right, KRouter 50 |
+| Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 26% [19, 33] wrong, 47 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor) at the same coverage cites 42 wrong pages to KRouter's 36 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.3] points, right [-2, +14]). On the same 200 questions at their defaults, claude-mem 13.39 cites a wrong page 64% of the time [58, 71] and basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 questions about a changed decision they get 34 and 16 right, KRouter 50 |
 | Exact match vs embeddings on a supersede / neighbor set (CI) | Exact match refuses where TF-IDF, MiniLM and BGE-M3 cite a neighbor |
 | Real traffic, author's vault | 0.62 → 1.47 of 2, blind-judged. **This is a development set**: on held-out questions the gain is flat. A blind test on fresh traffic runs once 50 new queries are logged (not before 2026-10-20) |
 
