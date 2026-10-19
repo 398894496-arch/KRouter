@@ -289,3 +289,69 @@ mark on the sheet are compared with GPT's verdicts and reported as a spot check.
 | 2026-10-16 | **Re-measurement registered, before it runs.** Candidate: the distill on `feat/distill-capture` at `adfdc9b` (segments of about 6 000 characters, a change-of-mind pass over the whole excerpt, near-duplicates merged, changes first, up to 24 lines), tuned on ten other sessions (`tune_capture.py`, seed 20261017; these 22 session-days were not used). Baseline: the shipped distill's 143 lines already recorded above. Both scored the same way: a reference rebuilt under the maintainer's definition (Grok's same 94 proposals, re-checked by GPT-5.4 with "what the maintainer said, or went along with when the agent proposed it"; GPT-5.5 is out of quota), pairing by GPT-5.4, and each line classified by GPT-5.4 (steps or discussion, fabricated, and so on). The candidate is better if it captures at least as many changes of mind as the baseline, misses fewer reference decisions, and its steps-or-fabricated share is no more than 5 points above the baseline's; fabricated lines are reported on their own. |
 | 2026-10-16 | **Amendment before scoring the re-measurement.** The reference was rebuilt as registered (GPT-5.4 kept 83 of Grok's 94 proposals and added 48: 131) and the candidate distilled the 22 session-days (252 lines), but every GPT model then returned HTTP 402 (the proxy's OpenAI quota ran out), so pairing and classification did not run. They are done by Grok 4.7 instead, for baseline and candidate alike. Grok also proposed the reference items, so absolute rates may read better than with GPT; the comparison between baseline and candidate, scored by the same judge on the same reference, is what the registered criteria use. |
 | 2026-10-16 | **Re-measurement, scored** (Grok 4.7 pairing and classification, both versions, same 131-item reference under the maintainer's definition). Baseline (shipped): 143 lines, missed 51.9%, changes of mind 11 of 24, steps-or-fabricated 21.7% (30 steps, 1 fabricated). Candidate (`feat/distill-capture` `adfdc9b`): 252 lines, missed 40.5%, changes 15 of 24, steps-or-fabricated 17.1% (43 steps, 0 fabricated). **All three registered criteria met.** One-to-one "wrong rate" rises (55.9% → 69.0%) only because 252 lines are paired against 131 items; by category the share of steps and fabrications falls. The judge is the model that proposed the reference items (amendment above), so the absolute numbers are not quoted; the comparison is. |
+
+## Set 7: LongMemEval, someone else's questions and labels (registered 2026-10-18, before any download or run)
+
+Every earlier set was written by a model we chose (sets 1–3) or drawn from the maintainer's own traffic (sets 5–6).
+Outside reviews named that as the weak point. This set uses a public benchmark nobody here wrote or labelled:
+LongMemEval (Wu et al., ICLR 2025), the cleaned release `longmemeval_s_cleaned.json` (MIT,
+`huggingface.co/datasets/xiaowu0162/longmemeval-cleaned`). 500 questions, each with its own haystack of about 50 chat
+sessions, the session dates, and the authors' labels: which sessions hold the answer (`answer_session_ids`, and
+`has_answer` on the turns), the question type, and `_abs` on the 30 questions that cannot be answered.
+
+**Vault per question.** One Markdown page per haystack session: the date in the title and frontmatter, then the turns
+as written. Nothing else: no distill, no `status: superseded`, no alias rows. This tests recall on raw imported
+sessions, not the write side; KRouter's correction handling depends on the write side and is not exercised here.
+
+**Systems,** each run once at the default it ships with, no tuning on this set:
+- `krouter`: `route_knowledge.py search <question>` at the release current on the run day; up to three cited pages,
+  or a refusal;
+- `bm25-floor`: BM25 over Chinese character pairs and English words, floor picked on dev3 (as in set 3).
+
+**Scored mechanically from the authors' labels** (no model in the loop):
+1. *Evidence cited* (470 answerable questions): at least one cited page is an answer session.
+2. *Knowledge update* (the `knowledge-update` type, answerable ones): the cited pages include the latest-dated answer
+   session (the update); *stale only* = they cite an earlier answer session and not the latest.
+3. *Abstention* (30 `_abs` questions): refused. Against it, the refusal rate on the 470 answerable questions.
+Paired 95% intervals (bootstrap over questions, 10 000 resamples, seed 20261018) for KRouter minus BM25 on each.
+
+**Secondary, model-judged, reported apart:** grok-4.7 reads the question, its date and the cited pages and answers or
+says it does not know; grok-4.7 grades the answer with the benchmark's own per-type judge prompts (the paper used
+GPT-4o; any number says which judge). Not a LongMemEval leaderboard score: the reader sees at most three pages.
+
+**What may be claimed.** The mechanical numbers, all of them, whatever they are. "Better than BM25" on a metric only
+if its paired interval is entirely on the right side of zero. No re-run after a fix: a fix is measured on a fresh
+seed-drawn half of `longmemeval_m` instead, registered before it runs.
+
+`bench/longmemeval/` (convert, run, score). The dataset is not committed; the scripts download nothing.
+
+## Set 8: does an answer stay right as the vault grows? (registered 2026-10-18, before any run)
+
+Rankings of memory systems can flip with tenure (Spencer 2026, "Ground Truth First": a system that leads at three
+weeks fell from 96% to 72% at nine). The maintainer's vault has been a git repository since 2026-10-10, with a commit
+a day, so the question can be asked of real history instead of a synthetic one.
+
+**Events.** Every commit after the first (the 2026-10-10 import) that adds a change of mind (`原来 A → 改成 B` or the
+same in English, in any page) or marks a page `status: superseded`. Extracted by script, none dropped by hand. On
+2026-10-18 there are 9; the set is drawn when it is run.
+
+**Questions.** For each event Grok 4.7 writes, from the diff alone, one question whose answer changed, with the old and
+the new answer. The maintainer does not edit them. Frozen in a private file before any system runs.
+
+**Snapshots.** For each event, the vault (`git archive`, read-only) at the commit that made the change, at three weeks
+after it and at nine weeks after it (or the newest commit, if younger; the age is reported).
+
+**Systems.** `krouter` at the release current on the run day; `bm25-floor` with and without skipping superseded pages.
+
+**Scored.** A Grok 4.7 judge, blind to the system, sees the question, the old and the new answer, and the cited pages,
+and labels the citation *new*, *old*, *both* or *neither*. Reported per snapshot age: share answered with the new value,
+share stale (old only), refused.
+
+**When.** First run on or after 2026-10-31 (three weeks of history), second on or after 2026-12-12 (nine weeks). Both
+reported whatever they show.
+
+### Log, sets 7 and 8
+
+| Date | Event |
+|---|---|
+| 2026-10-18 | Both registered. Set 7 waits for the dataset; set 8 for history. Real-traffic blind judge (VERIFY layer 4): 18 router queries logged since the 2026-10-10 freeze plus 7 in agent sessions, of the 50 it waits for. |
