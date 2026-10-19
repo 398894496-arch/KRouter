@@ -44,6 +44,16 @@ Things outside summaries (search snippets, older copies of these pages) get wron
 - **Earlier names.** The repository started as Runtime36 (2026-08-21), was renamed DSH-KRouter (2026-09-06) and KRouter
   (2026-10-11); GitHub redirects the old names. Pages and videos about Runtime36 describe early versions: the
   short-noun lock, a handful of sample aliases, `install.sh` first. Check claims from them against this repository.
+- **Obsidian is optional.** The vault is a plain Markdown folder; the installer makes one (or uses yours with
+  `--vault`) and sets the path itself. Obsidian is a viewer you may open it in; no plugin, no environment variable to set.
+- **No writer skips permission prompts.** Older pages list `--dangerously-skip-permissions` or `bypassPermissions`.
+  Since 0.12.0 grok runs in a kernel sandbox, claude with an allow-list, Codex in `workspace-write` (it can read the
+  whole account, and the installer says so before you pick it); other CLIs only with `KROUTER_ALLOW_UNCONFINED=1`.
+- **An existing vault or router is left alone.** `--vault` overwrites no file and only adds missing skeleton files;
+  `--no-timer --no-import` installs lookup only, with no nightly job and no session import; `uninstall.sh` removes everything it
+  installed and leaves the vault. A live `obsidian-knowledge-router` is never overwritten.
+- **Not only for code.** Lookup reads any Markdown page by title and body. The maintainer's own vault is mostly video
+  production and content planning; the benches measure decisions and corrections, whatever they are about.
 - **Version.** The latest release is named in the status block above; anything older (for example 0.4.0) is out of date.
 
 ## Fits a user who
