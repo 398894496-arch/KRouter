@@ -386,24 +386,86 @@ DISTILL_PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段�
 - 改主意的事：先定了 A，后来改成 B，写成「原来 A → 改成 B」。
 - 每条行尾用括号标出处：那一轮提问的时间，例如（14:05）。
 - 只写摘录里明确出现的内容，不推测、不补充；没有就只回一行「- （这段会话没有定下来的事）」。
+- agent 提议、这个人接受了或接着照做的，也算定下来的事。
+- 不算的（不要列）：操作步骤和执行过程（「先跑一下测试」「重启服务」）；排查和讨论（「可能是缓存问题」），除非最后选定了
+  其中一个；一次性的事（「把这段文字翻译一下」）。
 - 输出纯 Markdown 列表，不要前言和总结。
 
 摘录：
 
 {text}
 """
+CHANGES_PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段会话摘录（项目：{project}；只有提问和每轮最后的回答，已脱敏）。
+
+只做一件事：找出这段会话里**改主意**的地方：先定了（或在用）A，后来改成了 B。每条一行，写成「原来 A → 改成 B」，行尾用括号
+标出改的那一轮的提问时间，例如（14:05）。最多 8 条。
+- 只写摘录里明确出现的改动；A 和 B 都要写清楚，让人不看原文也知道改了什么。
+- agent 提议改、这个人接受了或接着照做的，也算。
+- 没有就只回一行「- （这段会话没有改主意的事）」。
+- 输出纯 Markdown 列表，不要前言和总结。
+
+摘录：
+
+{text}
+"""
+SEGMENT_CHARS = 6_000   # 长会话按轮切成这么长的段分别提炼：一次只看整段，写满 8 条就把后面的决定挤掉了
+DIGEST_LINES = 24       # 一页最多留这么多条；开新会话时只带 8 条，改主意的排在最前
+NONE_LINES = ("没有定下来的事", "没有改主意的事")
+TURN_MARK = re.compile(r"(?m)^- \*\*问\*\*（")
+
+
+def segments(body: str) -> list[str]:
+    """The excerpt cut at turn boundaries into pieces of about SEGMENT_CHARS."""
+    starts = [m.start() for m in TURN_MARK.finditer(body)]
+    if not starts:
+        return [body]
+    head, out, cur = body[: starts[0]], [], ""
+    for a, b in zip(starts, starts[1:] + [len(body)]):
+        turn = body[a:b]
+        if cur and len(cur) + len(turn) > SEGMENT_CHARS:
+            out.append(head + cur)
+            cur = ""
+        cur += turn
+    return out + ([head + cur] if cur else [])
+
+
+def merge_digest(lines: list[str]) -> list[str]:
+    """Drop "nothing decided" lines and near-duplicates (the same change found in a segment and by the change pass),
+    put changes of mind first, keep at most DIGEST_LINES."""
+    import recall_index as ri
+
+    def words(s: str) -> set[str]:
+        return {t for t in ri.question_terms(s) if t not in ri.EN_FUNCTION}
+
+    kept: list[str] = []
+    for ln in lines:
+        if any(n in ln for n in NONE_LINES):
+            continue
+        w = words(ln)
+        if any(len(w & words(k)) / max(1, len(w | words(k))) >= 0.5 for k in kept):
+            continue
+        kept.append(ln)
+    return sorted(kept, key=lambda ln: "→" not in ln)[:DIGEST_LINES]
 
 
 def distill(e: dict, page: str, vault: Path, dry: bool) -> tuple[str, int]:
+    """What was decided and what changed, from one session-day: each segment distilled, plus one pass over the whole
+    excerpt for changes of mind (a change often spans segments: decided early, changed later)."""
     body = page.split("\n## 摘录", 1)[-1][:DISTILL_MAX]
-    prompt = DISTILL_PROMPT.format(day=e["day"].isoformat(), project=e["project"] or "?", text=body)
+    fill = {"day": e["day"].isoformat(), "project": e["project"] or "?"}
+    prompts = [DISTILL_PROMPT.format(**fill, text=seg) for seg in segments(body)]
+    prompts.append(CHANGES_PROMPT.format(**fill, text=body))
+    chars = sum(len(p) for p in prompts)
     if dry:
-        return "", len(prompt)
+        return "", chars
     import llm
 
-    text = llm.complete(prompt, vault)
-    lines = [ln.rstrip() for ln in redact(text).splitlines() if ln.strip().startswith(("-", "*"))]
-    return "\n".join(lines[:8]), len(prompt)
+    lines: list[str] = []
+    for prompt in prompts:
+        text = llm.complete(prompt, vault)
+        lines += [ln.rstrip() for ln in redact(text).splitlines() if ln.strip().startswith(("-", "*"))]
+    merged = merge_digest(lines)
+    return "\n".join(merged) if merged else "- （这段会话没有定下来的事）", chars
 
 
 def main() -> int:

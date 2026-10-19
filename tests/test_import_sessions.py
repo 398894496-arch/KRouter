@@ -213,11 +213,14 @@ def test_distill_puts_decisions_on_top_and_keeps_them(env, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["import_sessions.py", "--distill"])
     assert imp.main() == 0
     page = next(iter(_pages(env).values()))
-    assert len(sent) == 1 and KEY not in sent[0]  # 发出去的也是脱敏后的
+    calls = len(sent)  # 每段一次，外加整段找改主意的一次
+    assert calls == 2 and not any(KEY in p for p in sent)  # 发出去的也是脱敏后的
     assert "## 定了什么、改了什么" in page and "- 发版只从 main 打 tag（10:05）" in page and "总结完毕" not in page
-    assert "how: 发版只从 main 打 tag（10:05）" in page
+    digest = page.split("## 定了什么、改了什么", 1)[1].split("\n## ", 1)[0]
+    assert digest.count("原来手动发 → 改成 CI 发") == 1  # 两遍都找到的同一次改主意只留一条
+    assert "how: 原来手动发 → 改成 CI 发（10:05）" in page  # 改主意的排在最前
     monkeypatch.setattr(sys, "argv", ["import_sessions.py", "--distill"])
-    assert imp.main() == 0 and len(sent) == 1  # 会话没变：不重复提炼，也不丢掉已有的提炼
+    assert imp.main() == 0 and len(sent) == calls  # 会话没变：不重复提炼，也不丢掉已有的提炼
 
 
 def test_imported_page_answers_a_question_through_the_router(env, tmp_path):
@@ -233,3 +236,18 @@ def test_imported_page_answers_a_question_through_the_router(env, tmp_path):
                          capture_output=True, text=True, timeout=120)
     assert res.returncode == 0, res.stderr
     assert "05 时间日志/会话摘录/" in res.stdout.split("recall:", 1)[1].splitlines()[1]
+
+
+def test_long_sessions_are_distilled_in_segments():
+    sys.path.insert(0, str(SCRIPTS))
+    import import_sessions as imp
+
+    turn = "- **问**（10:{:02d}）：问题 {}\n  **答**：" + "回答内容。" * 400 + "\n"
+    body = "".join(turn.format(i, i) for i in range(10))
+    parts = imp.segments(body)
+    assert len(parts) > 1 and "".join(parts) == body  # 按轮切开，不丢内容
+    assert all(p.startswith("- **问**") for p in parts)
+    lines = ["- （这段会话没有定下来的事）", "- 发版只从 main 打 tag（10:05）", "- 原来手动发 → 改成 CI 发（10:06）",
+             "- 原来是手动发版 → 改成用 CI 发版（10:06）", "- 日志级别用 info（10:07）"]
+    assert imp.merge_digest(lines) == ["- 原来手动发 → 改成 CI 发（10:06）", "- 发版只从 main 打 tag（10:05）",
+                                       "- 日志级别用 info（10:07）"]

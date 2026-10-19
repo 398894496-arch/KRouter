@@ -12,6 +12,16 @@ notice, then the details.
 
 ## Unreleased
 
+- **Session distill writes down more of what was decided, changes of mind first.** A long session-day is distilled
+  in segments of about 6 000 characters, plus one pass over the whole excerpt for changes of mind (decided early,
+  changed later, often in different segments); near-duplicates are merged; changes come first; up to 24 lines per page
+  (a new session still gets 8, changes first). The prompt says what is not a decision (steps, discussion, one-offs) and
+  that a proposal the user accepted counts. On ten tuning sessions (not the measurement set): missed 44% → 22%,
+  changes of mind 13 → 15 of 17, steps-or-fabricated share 29% → 31% (fabricated 1 → 7 of 202). More model calls per
+  page (one per segment, plus one). On the
+  registered measurement set (set 6: 22 session-days never used for tuning, scored by Grok against the same
+  131-item reference): missed 51.9% → 40.5%, changes of mind 11 → 15 of 24, steps-or-fabricated 21.7% → 17.1%;
+  all three registered criteria met.
 - **The one-line install is lookup only and asks nothing.** It makes or finds the vault, installs the router,
   connects the agents, and stops: no session import, no nightly job, nothing leaves the machine. Its last lines say
   how to turn remembering on: `bootstrap.py --ask` puts the two questions it used to put at install (import recent
