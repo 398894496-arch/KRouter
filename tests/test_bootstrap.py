@@ -82,10 +82,13 @@ def test_chinese_template_alias_table_is_consistent():
 
 
 def test_nightly_job_needs_an_explicit_yes(tmp_path):
-    """No terminal to ask on → no nightly job; `--timer` → installed. Never installed silently."""
+    """Default → lookup only, and it says how to turn remembering on; `--ask` with no terminal → no nightly job;
+    `--timer` → installed. Never installed silently."""
     env = {**_env(tmp_path), "KROUTER_NO_PROMPT": "1"}
     plist = tmp_path / "home/Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist"
     res, out = _boot(env, "--lang", "en", "--vault", str(tmp_path / "v1"))
+    assert res.returncode == 0 and out["timer"] is False and "lookup only" in res.stdout and "--ask" in res.stdout
+    res, out = _boot(env, "--lang", "en", "--vault", str(tmp_path / "v1"), "--ask")
     assert res.returncode == 0 and out["timer"] is False and "needs your yes" in res.stdout
     assert not plist.exists() and not (tmp_path / "home/.config/systemd").exists()
     res, out = _boot(env, "--lang", "en", "--vault", str(tmp_path / "v2"), "--timer")
@@ -101,7 +104,7 @@ def test_consent_prompt_says_what_runs_and_what_is_sent(tmp_path, monkeypatch):
     asked = []
     monkeypatch.setattr(bs, "nightly_preview", lambda vault: ("claude", "claude", 12, 4000))
     monkeypatch.setattr(bs, "ask_tty", lambda prompt: asked.append(prompt) or "y")
-    args = bs.argparse.Namespace(timer=False, no_timer=False)
+    args = bs.argparse.Namespace(timer=False, no_timer=False, ask=True)
     assert bs.decide_timer(args, tmp_path, bs.MSG["zh"]) == (True, True)
     assert "claude" in asked[0] and "12 页" in asked[0] and "4000" in asked[0]
     assert "API key" in asked[0].splitlines()[0]  # the safer lane is offered first
@@ -176,7 +179,7 @@ def test_install_imports_sessions_only_on_a_yes_and_records_the_vault(tmp_path):
     env = {**_env(tmp_path), "KROUTER_NO_PROMPT": "1", "KROUTER_CLAUDE_PROJECTS": str(tmp_path / "projects"),
            "KROUTER_VAULT_FILE": str(vf)}
     res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v1"), "--no-timer")
-    assert res.returncode == 0 and out["imported"] == 0 and "import_sessions.py" in res.stdout
+    assert res.returncode == 0 and out["imported"] == 0 and "只查询" in res.stdout and "--ask" in res.stdout
     assert not (tmp_path / "v1/05 时间日志/会话摘录").exists()
     assert vf.read_text(encoding="utf-8").strip() == str((tmp_path / "v1").resolve())
     res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v2"), "--no-timer", "--import")
@@ -197,3 +200,29 @@ def test_install_offers_claude_mem_and_imports_it_on_a_yes(tmp_path):
     assert res.returncode == 0 and out["claude_mem"] == 3, res.stdout[-1500:]
     assert "从 claude-mem 导入了 3 个会话、4 条决定和改动" in res.stdout
     assert (tmp_path / "v2/02 经验与方法/从 claude-mem 导入/shop 的决定（claude-mem）.md").is_file()
+
+
+def test_default_install_asks_nothing_and_an_upgrade_keeps_what_is_on(tmp_path, monkeypatch):
+    """Without `--ask` no question is put and nothing is imported; a host who said yes before is not told it is off."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    import bootstrap as bs
+    import import_sessions
+
+    monkeypatch.setattr(bs, "ask_tty", lambda prompt: pytest.fail("asked: " + prompt))
+    monkeypatch.setattr(bs, "run_import", lambda *a: pytest.fail("previewed an import"))
+    monkeypatch.setattr(bs, "run_claude_mem", lambda *a: pytest.fail("previewed claude-mem"))
+    args = bs.argparse.Namespace(timer=False, no_timer=False, ask=False, no_import=False, import_sessions=False,
+                                 import_distill=False)
+    assert bs.decide_timer(args, tmp_path, bs.MSG["en"]) == (False, True)
+    assert bs.decide_import(args, tmp_path, bs.MSG["en"], "claude") == (False, False, False)
+    assert bs.offer_claude_mem(args, tmp_path, bs.MSG["en"], False) == {}
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(bs.shutil, "which", lambda name: None)
+    monkeypatch.setattr(import_sessions, "load_state", lambda: {"consent": True})
+    assert bs.remembering_already()
+    monkeypatch.setattr(import_sessions, "load_state", lambda: {})
+    assert not bs.remembering_already()
+    plist = tmp_path / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist"
+    plist.parent.mkdir(parents=True)
+    plist.write_text("", encoding="utf-8")
+    assert bs.remembering_already()

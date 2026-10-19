@@ -10,7 +10,8 @@ happens before you said yes to importing (`import_sessions.py --consent`, or the
 
 `session_hook.py start` (SessionStart): prints, as context for the new session, up to 8 decisions recorded for this
 repository (matched by its git top level, never by folder name) in the last 30 days, each naming its page,
-corrections first. By default that is every line of pages you confirmed and only the corrections from the rest, marked
+corrections first. A decision that a later correction replaced ("原来 A → 改成 B") is left out, so the new session
+does not start from the old answer. By default that is every line of pages you confirmed and only the corrections from the rest, marked
 unconfirmed; `KROUTER_INJECT=all` brings every line, `KROUTER_INJECT=0` nothing. Nothing is printed when the vault
 has none or the import was never turned on. In English unless the lines are Chinese. Reads only the vault; sends
 nothing; well under a second.
@@ -38,6 +39,9 @@ DAYS = 30
 MAX_LINES = 8
 MAX_CHARS = 1600
 DIGEST_HEADS = ("## 定了什么、改了什么（模型提炼，待你确认）", "## 现在有效的、被取代的（模型整理，待你确认）")
+OLD_SIDE = re.compile(r"^(原来|以前|之前|起初|最初|was|from|before|previously)\s*[:：]?\s*", re.I)
+NEW_SIDE = re.compile(r"^(改成|改为|改回|换成|换回|变成|现在|now|back to|to|became)\s*[:：]?\s*", re.I)
+TIME = re.compile(r"[（(]\s*(\d{1,2}):(\d{2})\s*[)）]")
 
 
 def consented() -> bool:
@@ -72,7 +76,87 @@ def digest_lines(text: str) -> list[str]:
     return []
 
 
+def terms(text: str) -> set[str]:
+    """Content words of a decision line (time stamps and function words dropped), for matching a line to the old
+    side of a later correction."""
+    import recall_index as ri
+
+    text = re.sub(r"[（(]\s*\d{1,2}:\d{2}\s*[)）]", " ", text)
+    return {t for t in ri.question_terms(text) if t not in ri.EN_FUNCTION}
+
+
+def sides(line: str) -> tuple[set[str], set[str]] | None:
+    """(old side, new side) of a correction line "原来 A → 改成 B"; None for a plain decision."""
+    if "→" not in line:
+        return None
+    old, new = line.split("→", 1)
+    return terms(OLD_SIDE.sub("", old.strip())), terms(NEW_SIDE.sub("", new.strip()))
+
+
+def specific(words: set[str]) -> set[str]:
+    """The tokens that carry a value (a number, a name, an English word), not just the subject's shared vocabulary."""
+    return {t for t in words if re.search(r"[0-9a-z]", t)}
+
+
+def changed(old: set[str], new: set[str]) -> tuple[set[str], set[str]]:
+    """(the value that was replaced, the value that replaced it): what one side has and the other does not, narrowed
+    to value-carrying tokens when there are any ("8080" and "9090", not "本地 API 端口")."""
+    gone, came = old - new, new - old
+    return (specific(gone) or gone), (specific(came) or came)
+
+
+def holds(value: set[str], line: set[str], share: float = 1.0) -> bool:
+    return bool(value) and len(value & line) >= share * len(value)
+
+
+def stale_lines(found: list[tuple[str, str, str, bool]]) -> tuple[set[int], set[int]]:
+    """Indices of recorded lines a later correction replaced. Order is the page date, then the line's (HH:MM), then its
+    place on the page; a correction only replaces what came before it.
+
+    A plain line is replaced when it still holds the value a later correction replaced (all of it: "端口用 8080" holds
+    "8080"; "端口文档放在 README" does not) and does not already hold the new one; it comes back when an even later
+    correction restores its value (same-day revert). A correction is replaced when a later one starts from its new
+    value on the same subject (30 → 10, then 10 → 5).
+
+    Returns (replaced, unsure): a line that holds the replaced value but only part of the correction's subject
+    ("测试环境 API 端口用 8080" against "本地 API 端口 8080 → 9090") is not dropped; it is marked for the agent to check."""
+    keyed = []
+    for n, (day, line, _, _) in enumerate(found):
+        m = TIME.search(line)
+        keyed.append(((day, f"{int(m.group(1)):02d}:{m.group(2)}" if m else "", n), line))
+    order = sorted(range(len(found)), key=lambda i: keyed[i][0])
+    pos = {i: k for k, i in enumerate(order)}
+    fixes = [(i, *sides(found[i][1])) for i in order if sides(found[i][1])]
+    out, unsure = set(), set()
+    for i, (_, line, _, _) in enumerate(found):
+        mine = terms(line)
+        after = [(j, old, new) for j, old, new in fixes if pos[j] > pos[i]]
+        if sides(line) is None:
+            for k, (j, old, new) in enumerate(after):
+                gone, came = changed(old, new)
+                # 主题：旧一侧里不是数值的词（「会议 时长」），「分钟」这种两侧都有的单位不算
+                subject = (old - new) - specific(old - new)
+                if holds(gone, mine) and not holds(came, mine, 0.5) and (not subject or subject & mine):
+                    back = [(o2, n2) for _, o2, n2 in after[k + 1:] if holds(changed(o2, n2)[1], mine)]
+                    if back:
+                        continue
+                    if not subject or subject <= mine:
+                        out.add(i)
+                        break
+                    unsure.add(i)  # 值对得上、主语只对上一部分：别的环境、别的服务，不删，提醒核对
+        else:
+            old1, new1 = sides(line)
+            came1 = changed(old1, new1)[1]
+            subject1 = (old1 | new1) - came1 - changed(old1, new1)[0]
+            for j, old2, new2 in after:
+                if holds(came1, old2) and (not subject1 or subject1 & old2):
+                    out.add(i)
+                    break
+    return out, unsure - out
+
+
 CONFIRMED = {"active", "confirmed", "adopted"}
+MAYBE_CHANGED = {"zh": "（可能已被上面的「→」改过，先核对）", "en": " (may have been changed by a \"→\" line above; check)"}
 CJK = re.compile(r"[\u3400-\u9fff]")
 
 
@@ -106,6 +190,10 @@ def project_lines(vault: Path, root: str, everything: bool = False) -> list[tupl
                 if ok or everything or "→" in line:
                     found.append((meta.get("date") or "9999", line, rel, ok))
     found.sort(key=lambda x: x[0], reverse=True)
+    # 后来改过主意的：旧决定不再当现行决定带进新会话（纠错那一行本身就写着「原来 A → 改成 B」）
+    gone, unsure = stale_lines(found)
+    found = [(d, line + (MAYBE_CHANGED["zh" if CJK.search(line) else "en"] if n in unsure else ""), rel, ok)
+             for n, (d, line, rel, ok) in enumerate(found) if n not in gone]
     seen, out = set(), []
     for _, line, rel, ok in sorted(found, key=lambda x: "→" not in x[1]):  # 稳定排序：纠错在前，其余仍按新到旧
         if line not in seen:

@@ -325,6 +325,10 @@ TITLE_HIT = 2.0
 CARD_MIN = 0.5  # 问答卡至少覆盖问题一半的实词分量才输出
 ANSWER_SUPPORT_MIN = 0.3  # 答案用词至少这么多在原页出现
 ALIEN_MIN = 2  # 库里从没出现过的汉字达到这么多、且只对上一个实词：判为库外
+# 整句问题只对上一个实词也作答时（分数够、又没有库外证据），首条页可能是对的，也可能只是借了一个词。
+# 开发集上这种情况对错各半，分数分不开，所以不改答不答，只把话说清楚
+PARTIAL_NOTE = ("recall_note: only one word of the question matched these pages; they may be about something else. "
+                "Say what they say and that the vault may not cover the question; do not give it as the answer.")
 
 
 def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_first: bool = True,
@@ -394,14 +398,18 @@ def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_fir
     # 问题里的真词有两个以上整库都没有，而且比首条页对上的真词还多：问的主要是库外的事（`纠错之后的房贷利率`）
     absent_words, top_words = outside_words(con, hits[0]["rid"], raw, df)
     off_vault = absent_words >= 2 and absent_words > top_words
+    unnamed = absent_names(query, df)
     if single:
         # 一个概念的短查询：只有一个词可比，不按"至少两个实词"拦；但仍要过（减半的）分数下限
-        refuse = top < SCORE_MIN * scale * 0.5 or (unknown and strong == 0)
+        refuse = top < SCORE_MIN * scale * 0.5 or (unknown and strong == 0) or bool(unnamed)
     else:
         refuse = (top < SCORE_MIN * scale or (strong < need and top < SINGLE_TERM_SCORE * scale) or strong == 0
-                  or (unknown and strong <= 2) or (strong < need and alien >= ALIEN_MIN) or off_vault)
+                  or (unknown and strong <= 2) or (strong < need and alien >= ALIEN_MIN) or off_vault or bool(unnamed))
+    partial = not single and strong < need
     if gate and refuse:
         conf = "none"
+    elif partial:
+        conf = "low"
     elif margin >= 1.5 and hits[0]["tier"] in ("rule", "topic"):
         conf = "high"
     elif margin >= 1.15:
@@ -410,10 +418,10 @@ def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_fir
         conf = "low"
     for h in hits:
         h.pop("rid", None)
-    if hits and conf != "none":
-        attach_answers(vault, hits, raw, df)
+    if hits and conf != "none" and not partial:
+        attach_answers(vault, hits, raw, df)  # 只对上一个词时不给生成的答案：那一行读起来像定论
     return {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
-            "strong": strong, "confidence": conf}
+            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
 
 
 def strong_matches(con: sqlite3.Connection, rid: int, terms: list[str], df: dict[str, int],
@@ -511,6 +519,31 @@ def latin_forms(t: str) -> list[str]:
 
 def _known_latin(t: str, df: dict[str, int]) -> bool:
     return any(df.get(f, 0) for f in [t, *latin_forms(t)])
+
+
+CALENDAR = set("""january february march april may june july august september october november december jan feb mar apr
+jun jul aug sep sept oct nov dec monday tuesday wednesday thursday friday saturday sunday""".split())
+
+
+def absent_names(query: str, df: dict[str, int]) -> list[str]:
+    """问题点名、整库一次都没出现过的专名：不在句首却带大写的拉丁词（`Peter`、`Seattle`、`iPad`）。
+
+    问的是一个库里从没提过的人、地方或东西，库就答不了；借来的其他词（`museum`、`visit`）再多也一样。
+    月份和星期不算：日期多半记在页面的日期里，不写成单词。句首的大写只是句首。"""
+    text = unicodedata.normalize("NFKC", query or "")
+    out = []
+    for m in re.finditer(r"[A-Za-z][A-Za-z0-9]*", text):
+        word = m.group(0)
+        if not any(c.isupper() for c in word) or (word.isupper() and len(word) <= 2):  # `OK`、`AI` 不是在点名
+            continue
+        before = text[: m.start()].rstrip()
+        if not before or before[-1] in ".?!。？！:：":
+            continue
+        t = word.lower()
+        if len(t) < 2 or t in EN_FUNCTION or t in CALENDAR or _known_latin(t, df):
+            continue
+        out.append(t)
+    return out
 
 
 def unknown_content_terms(raw: list[str], df: dict[str, int]) -> int:
@@ -763,6 +796,8 @@ def main() -> int:
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
+    if res.get("partial"):
+        print(PARTIAL_NOTE)
     if not res["hits"] or res.get("confidence") == "none":
         print("recall: none (no page covers enough of the question; do not guess)")
         return 0

@@ -4,21 +4,22 @@
 > **Current status of `main` (latest release v1.1.1, 2026-10-15). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
-> - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 27%
->   wrong citations, 46 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
+> - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
+>   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries.
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Stable line:** 1.1.x takes fixes only until 2026-11-12, at most one patch a week. Smallest install, nothing in the
->   background: `bootstrap.py --vault <vault> --no-timer --no-import`.
-> - **Nightly job:** the one-line install asks before installing it; the manual `install.sh` installs it
->   (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Stable line:** v1.1.1 is the stable release. `main` already carries the 1.2.0 features (merged 2026-10-19 at the
+>   maintainer's call); a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
+> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
+>   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
->   limited to the vault; Codex can read the whole account and writes only the vault; other CLIs are unconfined and
->   are never picked unless you set `KROUTER_ALLOW_UNCONFINED=1`.
+>   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
+>   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
+>   `KROUTER_ALLOW_UNCONFINED=1`.
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 
@@ -53,7 +54,7 @@ Windows (PowerShell, no admin):
 irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
 ```
 
-It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` (`Documents/第二大脑` with the Chinese template when the system language is Chinese), installs the router and the agent rules, and opens the vault in Obsidian. Then it **asks** before installing the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no nightly job; `--timer` says yes up front, `--no-timer` says no. `KROUTER_TAG=v1.1.1` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`… | sh -s -- --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
+It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` (`Documents/第二大脑` with the Chinese template when the system language is Chinese), installs the router and the agent rules, and opens the vault in Obsidian. That is all by default: lookup only, no questions, nothing leaves the machine. `--ask` asks whether to import recent agent sessions and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v1.1.1` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`… | sh -s -- --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
 
 ## What leaves your machine, and what it costs
 
@@ -109,7 +110,7 @@ Chat is not memory. People do not share a brain, so **no second brain ships some
 
 **Remembering means: seal the day, distill, write it into the vault.** It does not mean the next turn gets a vector dump. When five gates pass, a `provisional` method is written **the same day**, no ask. Formal `active` still asks you on the next similar task.
 
-Retrieval is a lock first: one short noun → that page + dual SHA-256. When no noun matches, ranked recall answers instead — rule pages first, a precomputed one-line `answer (generated):` for the question, or `recall: none` when nothing in the vault covers it. No vector database to run. If the agent cannot hit the page, the evolution did not happen.
+Retrieval tries an optional alias lock first (one short noun → that page + dual SHA-256); most questions miss it, and ranked recall answers instead. The alias table needs no upkeep: a sample ships, and a row is worth adding only to pin a short noun to one page. Ranked recall answers — rule pages first, a precomputed one-line `answer (generated):` for the question, or `recall: none` when nothing in the vault covers it. No vector database to run. If the agent cannot hit the page, the evolution did not happen.
 
 ```mermaid
 flowchart LR
@@ -137,7 +138,7 @@ Do not merge. Full split: [`docs/VERIFY.md`](VERIFY.md).
 
 Exhaustive on this clone’s `template/` map: **25/25** topics, **39/39** aliases, **0** conflicts. That is a full check of the table, not a sample, and not “the ranker is smart.”
 
-Rewrite invariants: **25/25** paraphrases miss (no AND over a whole sentence); **25/25** listed nouns hit the gold page. That is implementation correctness. **This is not five fresh LLM sessions.** `template/` is a clean minimum sample — a floor, not the dirty live vault.
+Rewrite invariants of the alias lock alone: **25/25** whole-sentence paraphrases do not fire the lock (by design: no AND over a sentence); **25/25** listed nouns hit the gold page. A paraphrase that misses the lock goes on to ranked recall; on the 200-question held-out set recall gets 102 of 120 answerable questions right, most worded differently from their page. That is implementation correctness. **This is not five fresh LLM sessions.** `template/` is a clean minimum sample — a floor, not the dirty live vault.
 
 ```bash
 python3 tests/fixtures/clone_25/run.py
@@ -213,7 +214,7 @@ Q11|deploy;deployment;how we ship|02 经验与方法/Deploy/发布流程.md|Ship
 
 ## Start the daily writer
 
-This is the product. `install.sh` installs the nightly job (`KROUTER_NO_TIMER=1` skips it); the one-line install asks first.
+This is the product. `install.sh` installs the nightly job (`KROUTER_NO_TIMER=1` skips it); the one-line install leaves it off unless `--ask` (asks first) or `--timer`.
 
 Copy `template/` to your vault, then:
 
@@ -242,9 +243,9 @@ Subscription lane if a CLI is already logged in: grok in the kernel sandbox prof
 
 ## When not to install this
 
-- You need **semantic** retrieval (paraphrase understood by embeddings). The lock is a short noun plus `canonical_sources.psv`; L1 recall is lexical and covers paraphrase only through trigger phrases.
-- Your notes are mostly English and you will not replace the CJK sample nouns. Folder names are configurable: a `krouter-zones.psv` at the vault root maps the default layout onto yours (`90 系统文件|System`, `Agent第二大脑.md|Home.md`). The DSH bridge still assumes the default names.
-- You want chat auto-injected into the next prompt, or a hosted memory API.
+- You need **semantic** retrieval (meaning matched by embeddings). Recall is lexical (words, Chinese character pairs, trigger phrases): it finds many rewordings and still misses some (102 of 120 answerable held-out questions right). Local embeddings exist on a branch only.
+- Your notes are mostly English and you want the sample alias nouns in English too (recall itself works in English; the sample nouns are Chinese and optional). Folder names are configurable: a `krouter-zones.psv` at the vault root maps the default layout onto yours (`90 系统文件|System`, `Agent第二大脑.md|Home.md`). The DSH bridge still assumes the default names.
+- You want the whole previous chat injected into the next prompt (with the Claude Code plugin, a new session gets up to 8 recorded decisions for that repository, not the chat), or a hosted memory API.
 
 ## Four mounts, one vault
 
@@ -284,7 +285,7 @@ After the daily seal the bundled timer runs `nightly.py`: `compile_subconscious.
 | What clone contains | Protocol + skeleton + router + writer | Empty store too |
 | After a good day | Distill; five gates → auto `provisional`; next time ask → maybe `active` | Compress the session and inject the next prompt |
 | After a correction | Edit the canonical page. Next call must open it | Re-embed and hope the old chunk decays |
-| How it finds the page | Your short noun + alias table; on a miss, ranked lexical recall that refuses weak overlap | Semantic nearest neighbor |
+| How it finds the page | Ranked lexical recall that refuses weak overlap; an optional alias lock pins short nouns | Semantic nearest neighbor |
 | A topic that recurs for weeks | Merged overnight into one cited dossier | Chunks scattered across sessions |
 | A question asked again | The same page and `how` line, deterministically; a checked precomputed card when one fits | Re-retrieved and re-read |
 | What you maintain | Your nouns and topic list. No vector DB | Indexes, sync, injection, expiry |

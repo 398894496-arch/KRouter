@@ -159,6 +159,13 @@ def alias_score(query: str, alias: str) -> int:
     return 0
 
 
+HINT_FUNCTION = set("的了我你他她它吗呢吧啊么什怎样哪是有在要不能会该这那个")
+
+
+def is_cjk(char: str) -> bool:
+    return "\u3400" <= char <= "\u9fff"
+
+
 def near_score(query: str, alias: str) -> int:
     """Weaker overlap for suggestions only. Never used as a canonical hit."""
     hit = alias_score(query, alias)
@@ -175,7 +182,13 @@ def near_score(query: str, alias: str) -> int:
         n += 1
     if n >= 2:
         return 40 + n
-    overlap = len(set(q) & set(a))
+    # 汉字只算连着的双字，而且不算虚字双字：零散的单字（「剪辑」和「剪藏原件」共有「剪」「件」）、
+    # 「什么」这种问句词，都不说明问的是这一页
+    shared = {q[i:i + 2] for i in range(len(q) - 1)} & {a[i:i + 2] for i in range(len(a) - 1)}
+    shared = {b for b in shared if is_cjk(b[0]) and is_cjk(b[1]) and not set(b) & HINT_FUNCTION}
+    if shared:
+        return 21 + len(shared)
+    overlap = len({c for c in set(q) & set(a) if not is_cjk(c)})
     if overlap >= 2:
         return 20 + overlap
     return 0

@@ -143,8 +143,9 @@ def emit_host_action(health: Path) -> None:
         print(
             "host_action: Distill needs a callable model. Paste *_API_KEY on "
             "90 系统文件/自动化/自进化钥匙.md (flagship is auto-locked), or log in "
-            "grok / official Codex / claude (your subscription); other CLIs (opencode, kimi, …) run unconfined and "
-            "are used only with KROUTER_ALLOW_UNCONFINED=1 in the keys file. Timer already on. "
+            "grok / claude (your subscription; Codex reads the whole account, so it needs KROUTER_ALLOW_CODEX=1); "
+            "other CLIs (opencode, kimi, …) run unconfined and are used only with KROUTER_ALLOW_UNCONFINED=1 in the "
+            "keys file. Timer already on. "
             "Do not print secrets."
         )
     nightly = meta.get("nightly") or ""
@@ -304,11 +305,13 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
 
 
 def print_recall(res: dict, vault: Path, lines: int) -> None:
-    from recall_index import best_lines
+    from recall_index import PARTIAL_NOTE, best_lines
 
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
+    if res.get("partial"):
+        print(PARTIAL_NOTE)
     print("recall:")
     for h in res["hits"]:
         flag = f" status={h['status']}" if h["status"] else ""

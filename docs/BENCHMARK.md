@@ -4,21 +4,22 @@
 > **Current status of `main` (latest release v1.1.1, 2026-10-15). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
-> - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 27%
->   wrong citations, 46 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
+> - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
+>   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries.
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Stable line:** 1.1.x takes fixes only until 2026-11-12, at most one patch a week. Smallest install, nothing in the
->   background: `bootstrap.py --vault <vault> --no-timer --no-import`.
-> - **Nightly job:** the one-line install asks before installing it; the manual `install.sh` installs it
->   (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Stable line:** v1.1.1 is the stable release. `main` already carries the 1.2.0 features (merged 2026-10-19 at the
+>   maintainer's call); a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
+> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
+>   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
->   limited to the vault; Codex can read the whole account and writes only the vault; other CLIs are unconfined and
->   are never picked unless you set `KROUTER_ALLOW_UNCONFINED=1`.
+>   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
+>   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
+>   `KROUTER_ALLOW_UNCONFINED=1`.
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 

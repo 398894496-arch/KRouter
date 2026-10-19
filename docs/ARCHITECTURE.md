@@ -4,21 +4,22 @@
 > **Current status of `main` (latest release v1.1.1, 2026-10-15). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
-> - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 27%
->   wrong citations, 46 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
+> - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
+>   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries.
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Stable line:** 1.1.x takes fixes only until 2026-11-12, at most one patch a week. Smallest install, nothing in the
->   background: `bootstrap.py --vault <vault> --no-timer --no-import`.
-> - **Nightly job:** the one-line install asks before installing it; the manual `install.sh` installs it
->   (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Stable line:** v1.1.1 is the stable release. `main` already carries the 1.2.0 features (merged 2026-10-19 at the
+>   maintainer's call); a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
+> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
+>   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
->   limited to the vault; Codex can read the whole account and writes only the vault; other CLIs are unconfined and
->   are never picked unless you set `KROUTER_ALLOW_UNCONFINED=1`.
+>   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
+>   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
+>   `KROUTER_ALLOW_UNCONFINED=1`.
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 
@@ -40,7 +41,7 @@ flowchart TB
     L3["L3 Promotion<br/>auto provisional → ask → active"]
     L1 --> L2 --> L3
   end
-  L4["L4 Retrieval<br/>short noun + alias table + SHA receipt"]
+  L4["L4 Retrieval<br/>ranked recall + optional alias lock + SHA receipt"]
   L3 --> L4
   L1 -.-> L4
   L2 -.-> L4
@@ -90,7 +91,7 @@ Landings:
 - Derived notes with `source_ref`, `verified_at`, and scope
 
 1. **Derived notes keep source, time, scope, trust, and limits.**
-2. **Two lanes, same job.** API key first: lock the provider's flagship model and run distill + two-step promotion. No key: spawn a logged-in Claudian-class CLI (`grok`, official Codex, `claude`, …) with vault cwd — **subscription unattended**, not Grok-only. Grok `--permission-mode bypassPermissions` (not `acceptEdits`); Claude `--dangerously-skip-permissions`; Codex `exec --sandbox workspace-write`. The timer pins this repo's `krouter-obsidian`, never a live `obsidian-knowledge-router`. Do not use a PATH-level `agent`. Chat/IDE login is not a spawnable harness. Mounted agents run `status` and tell the host if `host_action` is present. An in-vault chat plugin is not the writer. On failure, leave a to-summarize note. Do not switch shells and rewrite.
+2. **Two lanes, same job.** API key first: lock the provider's flagship model and run distill + two-step promotion. No key: spawn a logged-in Claudian-class CLI (`grok`, official Codex, `claude`, …) with vault cwd — **subscription unattended**, not Grok-only. Since 0.12.0 no lane skips permission prompts: grok runs in a kernel-enforced sandbox profile (`strict` + the router); Claude runs with tools allow-listed (`dontAsk`: read / edit inside the vault, run the router); Codex runs `exec --sandbox workspace-write` (writes only the vault, reads the whole account; used only when named or with `KROUTER_ALLOW_CODEX=1`); any other CLI is used only with `KROUTER_ALLOW_UNCONFINED=1`. See [`SECURITY.md`](../SECURITY.md). The timer pins this repo's `krouter-obsidian`, never a live `obsidian-knowledge-router`. Do not use a PATH-level `agent`. Chat/IDE login is not a spawnable harness. Mounted agents run `status` and tell the host if `host_action` is present. An in-vault chat plugin is not the writer. On failure, leave a to-summarize note. Do not switch shells and rewrite.
 3. **One product: KRouter.** The writer lives in `extras/host-daily-evolution/`. `extras/dsh` is the DSH socket on the same `OBSIDIAN_VAULT`. Not two repositories, not a side plugin. Uninstalling the DSH socket does not delete notes and does not stop the timer.
 4. Distillation may propose candidates. **It must not write formal `02`.**
 
@@ -145,7 +146,7 @@ A formal method may become a Skill candidate only after **at least three** verif
 
 ## L4 Retrieval
 
-The agent does not dump the vault into context. It sends a short noun, or a short question. No vector store, no service: one Python process and a rebuildable SQLite FTS5 cache (`~/.cache/krouter/`, stdlib).
+The agent does not dump the vault into context. It sends a short question (or a short noun, which the optional alias lock can pin to a page); ranked recall answers most of them. No vector store, no service: one Python process and a rebuildable SQLite FTS5 cache (`~/.cache/krouter/`, stdlib).
 
 ### Routes
 
@@ -268,7 +269,7 @@ The questions the author’s agents actually sent the router (92 de-duplicated q
 | Execution gate | Passed. Pre-action recall in effect; Clippings mutate/move/delete and Obsidian restart are hard-blocked |
 | Host daily evolution | Running. Writer is a pinned local CLI |
 
-**Retrieval:** one short noun, one page, dual SHA receipt. The agent must cite `canonical_source`. Experience is retrieved. The 25/25 row above is layer 3 (self-report). Layer 1 is [`VERIFY.md`](VERIFY.md). Layer 2 is [`LOCK_VS_NEIGHBOR.md`](LOCK_VS_NEIGHBOR.md).
+**Retrieval:** a short question, ranked recall (or the optional alias lock), cited pages, dual SHA receipt. The agent must cite `canonical_source`. Experience is retrieved. The 25/25 row above is layer 3 (self-report). Layer 1 is [`VERIFY.md`](VERIFY.md). Layer 2 is [`LOCK_VS_NEIGHBOR.md`](LOCK_VS_NEIGHBOR.md).
 
 **Corrections:** written to canonical pages (`supersedes` / quasi-correction → formal correction). The next similar task hits the new page through L4. Old wording is not current rule. Provisional methods become `active` after adopt + accept. The vault gets sharper; the agent gets steadier.
 
