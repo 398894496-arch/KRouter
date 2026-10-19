@@ -11,6 +11,16 @@ notice, then the details.
 
 ## Unreleased
 
+- **The one-line install is lookup only and asks nothing** (1.2.0). It makes or finds the vault, installs the router,
+  connects the agents, and stops: no session import, no nightly job, nothing leaves the machine. Its last lines say
+  how to turn remembering on: `bootstrap.py --ask` puts the two questions it used to put at install (import recent
+  sessions? install the nightly job?), with the same preview of what is sent; `--import`, `--import-distill` and
+  `--timer` still say yes in advance. An upgrade where you said yes before (session import consent, or a nightly job
+  on disk) keeps it and is not told it is off.
+- **Codex is no longer picked as the nightly writer on its own** (1.2.0). It writes only the vault but can read the
+  whole account, keys file included. It is used when you name it (`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or set
+  `KROUTER_ALLOW_CODEX=1`; otherwise a logged-in grok or claude, both limited to the vault, is used instead, and a
+  Codex-only machine is told why distilling was skipped (`codex:reads-account`).
 - Docs: retrieval described as it is. PROTOCOL, ARCHITECTURE, DETAILS (en, zh) and VERIFY still called it "a lock on short
   nouns" and quoted "25/25 paraphrases miss" without saying that tests the alias lock alone; outside agents read that
   as "you must maintain an alias table and any rewording misses". Ranked recall answers most questions; the alias lock

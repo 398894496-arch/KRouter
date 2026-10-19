@@ -8,10 +8,13 @@ latest release; can also be run from a clone. What it does, in order:
 2. Pick the vault: `--vault PATH`, else `OBSIDIAN_VAULT`, else a new folder `Documents/第二大脑` (`Second Brain`).
    A new or empty folder gets the template. An existing vault keeps every file; only missing skeleton files are
    added (`--vault` on a vault of your own). Nothing is ever overwritten.
-3. Install the router skill, the agent rules and the daily timer (launchd / systemd / cron / Windows task), keeping
-   an existing alias table. Re-running it is an upgrade.
+3. Install the router skill and the agent rules, keeping an existing alias table. Re-running it is an upgrade.
 4. Check for a model: a logged-in CLI or an API key. If there is none, say in one sentence what to do.
-5. Open the new vault in Obsidian when Obsidian is installed.
+5. By default that is all: lookup only, no questions, nothing leaves the machine; the last lines say how to turn on
+   remembering. `--ask` asks whether to import recent agent sessions (and claude-mem's memory) and whether to install
+   the nightly job (launchd / systemd / cron / Windows task); `--import`, `--import-distill` and `--timer` say yes in
+   advance. An upgrade where the host said yes before keeps what is on.
+6. Open the new vault in Obsidian when Obsidian is installed.
 
 `--dry-run` prints the plan and changes nothing.
 """
@@ -50,6 +53,8 @@ MSG = {
         "prefer_key": "更稳妥的是用 API key：它直接调用接口，不在本机运行任何 agent（把 key 贴到知识库的「自进化钥匙」页就行）。\n",
         "timer_off": "没有开启每晚自动整理。想开的时候运行：{cmd}",
         "timer_skip_noninteractive": "不是在交互终端里运行，所以没有开启每晚自动整理（需要你明确同意）。想开的时候运行：{cmd}",
+        "lookup_only": "装的是只查询的版本：不导入会话、不装夜间任务，没有任何内容离开这台机器。\n"
+        "想让它开始记住你和 agent 定下的事（会先问你、先说清发出多少字），运行：{cmd}",
         "import_ask": "要把本机已有的 agent 会话导进知识库吗？找到近 7 天 {agents} 的 {sessions} 个会话、{turns} 轮。"
         "只留你的提问和每轮最后的回答，先脱敏，只写在本机这个库里，不发给任何模型；以后每晚也导入前一天的。导入？[y/N] ",
         "distill_ask": "再让 {lane} 把最近 {n} 个会话「定了什么、改了什么」提炼出来吗？会发出约 {chars} 字（已脱敏），"
@@ -87,6 +92,8 @@ MSG = {
         "prefer_key": "The safer choice is an API key: a direct API call, no agent runs on this machine (paste it on the vault's key page).\n",
         "timer_off": "Nightly upkeep is off. To turn it on later: {cmd}",
         "timer_skip_noninteractive": "Not run from an interactive terminal, so the nightly upkeep was not turned on (it needs your yes). To turn it on: {cmd}",
+        "lookup_only": "Installed for lookup only: no session import, no nightly job, nothing leaves this machine.\n"
+        "To have it start remembering what you and your agents decide (it asks first and says how much it sends): {cmd}",
         "import_ask": "Import the agent sessions already on this machine? Found {sessions} sessions ({turns} turns) from {agents} "
         "in the last 7 days. Only your questions and each turn's closing answer are kept, redacted, written to this vault "
         "on this machine, and sent to no model; each night it imports the previous day too. Import? [y/N] ",
@@ -289,7 +296,7 @@ def decide_timer(args: argparse.Namespace, vault: Path, t: dict) -> tuple[bool, 
     it is installed only on an explicit yes — `--timer`, or `y` at the prompt. No terminal to ask on: not installed."""
     if args.timer:
         return True, True
-    if args.no_timer:
+    if args.no_timer or not args.ask:
         return False, True
     kind, cli, pages, tokens = nightly_preview(vault)
     lane = t["lane_cli"].format(cli=cli) if kind not in ("", "key") else (t["lane_key"] if kind == "key" else t["lane_none"])
@@ -302,6 +309,28 @@ def decide_timer(args: argparse.Namespace, vault: Path, t: dict) -> tuple[bool, 
 
 
 IMPORT = ROOT / "skill/krouter-obsidian/scripts/import_sessions.py"
+
+
+def remembering_already() -> bool:
+    """An upgrade where the host said yes before (session import consent, or a nightly job on disk)."""
+    try:
+        sys.path.insert(0, str(IMPORT.parent))
+        import import_sessions
+
+        if import_sessions.load_state().get("consent"):
+            return True
+    except Exception:  # noqa: BLE001 - 读不到旧状态就当没开过，只影响要不要多打印一行提示
+        pass
+    if WINDOWS:
+        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution"], capture_output=True, text=True)
+        return res.returncode == 0
+    home = Path.home()
+    if (home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist").is_file():
+        return True
+    if (home / ".config/systemd/user/dsh-krouter-daily.timer").is_file():
+        return True
+    res = subprocess.run(["crontab", "-l"], capture_output=True, text=True) if shutil.which("crontab") else None
+    return bool(res and "# dsh-krouter-daily" in res.stdout)
 DISTILL_AT_INSTALL = 8  # 安装时只提炼最近几个会话，免得一装就等十几分钟
 
 
@@ -318,7 +347,7 @@ def run_import(vault: Path, *extra: str) -> dict:
 def decide_import(args: argparse.Namespace, vault: Path, t: dict, lane_kind: str) -> tuple[bool, bool, bool]:
     """(import, distill, worth saying how to do it later). Copying chat text into the vault, and sending it to a
     model, each need a yes: a flag, or `y` at the prompt. No terminal to ask on: nothing is imported."""
-    if args.no_import:
+    if args.no_import or not (args.ask or args.import_sessions or args.import_distill):
         return False, False, False
     preview = run_import(vault, "--dry-run")
     if not preview.get("pages"):
@@ -354,7 +383,7 @@ def run_claude_mem(vault: Path, *extra: str) -> dict:
 
 def offer_claude_mem(args: argparse.Namespace, vault: Path, t: dict, distill: bool) -> dict:
     """claude-mem users already have a memory: offer to bring it in. Same rule as the sessions — a yes or a flag."""
-    if args.no_import:
+    if args.no_import or not (args.ask or args.import_sessions or args.import_distill):
         return {}
     preview = run_claude_mem(vault, "--dry-run", *(["--distill"] if distill else []))
     if preview.get("claude_mem") != "dry-run" or not preview.get("sessions"):
@@ -450,6 +479,8 @@ def main() -> int:
                     help="import the last 7 days of agent sessions, and claude-mem's memory if present, without asking (local only)")
     ap.add_argument("--import-distill", action="store_true", help="import, and have the model lane distill the latest sessions")
     ap.add_argument("--no-import", action="store_true", help="do not import agent sessions, and do not ask")
+    ap.add_argument("--ask", action="store_true",
+                    help="ask whether to import sessions and turn on the nightly job (default: lookup only, no questions)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     lang = system_lang() if args.lang == "auto" else args.lang
@@ -470,9 +501,10 @@ def main() -> int:
         return rc
     if args.dry_run:
         register_mcp(t, True)
-        print("  nightly job: " + ("yes (--timer)" if args.timer else "no (--no-timer)" if args.no_timer else "asks first"))
+        print("  nightly job: " + ("yes (--timer)" if args.timer else "no (--no-timer)" if args.no_timer
+                                   else "asks first (--ask)" if args.ask else "no (lookup only; --ask to be asked)"))
         print("  session import: " + ("no (--no-import)" if args.no_import else "yes (--import)" if args.import_sessions
-                                      else "asks first"))
+                                      else "asks first (--ask)" if args.ask else "no (lookup only; --ask to be asked)"))
         return 0
     sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
     from krouter_home import remember
@@ -485,7 +517,7 @@ def main() -> int:
         rc = install_windows(vault, False, True) if WINDOWS else install_posix(vault, False)
         if rc != 0:
             return rc
-    else:
+    elif args.ask:
         cmd = f"{'python' if WINDOWS else 'python3'} \"{ROOT / 'scripts' / 'bootstrap.py'}\" --timer --vault \"{vault}\""
         print((t["timer_off"] if asked else t["timer_skip_noninteractive"]).format(cmd=cmd))
     lane = model_lane(vault)
@@ -506,6 +538,9 @@ def main() -> int:
         cmd = f"{'python' if WINDOWS else 'python3'} \"{IMPORT}\" --consent --vault \"{vault}\""
         print(t["import_off"].format(cmd=cmd))
     cmem = offer_claude_mem(args, vault, t, do_distill)
+    if not (timer or do_import or args.ask or remembering_already()):
+        cmd = f"{'python' if WINDOWS else 'python3'} \"{ROOT / 'scripts' / 'bootstrap.py'}\" --ask --vault \"{vault}\""
+        print(t["lookup_only"].format(cmd=cmd))
     if "claude" in mcp:
         print(t["plugin_hint"])
     skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")

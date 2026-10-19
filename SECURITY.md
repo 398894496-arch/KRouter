@@ -14,11 +14,12 @@
 >   set is planned.
 > - **Stable line:** 1.1.x takes fixes only until 2026-11-12, at most one patch a week. Smallest install, nothing in the
 >   background: `bootstrap.py --vault <vault> --no-timer --no-import`.
-> - **Nightly job:** the one-line install asks before installing it; the manual `install.sh` installs it
->   (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
+>   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
->   limited to the vault; Codex can read the whole account and writes only the vault; other CLIs are unconfined and
->   are never picked unless you set `KROUTER_ALLOW_UNCONFINED=1`.
+>   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
+>   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
+>   `KROUTER_ALLOW_UNCONFINED=1`.
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 
@@ -50,13 +51,13 @@ and sends nothing. The one-line install asks before it installs the nightly job;
 | **API key (recommended)** | Nothing: a direct API call | — (KRouter sends only what `--dry-run` lists) | — |
 | `grok` | grok, in a kernel-enforced sandbox profile (`strict` + the router) | The vault, the router, system paths | The vault, KRouter's cache and state |
 | `claude` | Claude Code, with tools allow-listed (`dontAsk`): read / edit inside the vault, run the router, nothing else | The vault (tool-level rule, no kernel sandbox) | The vault |
-| Codex | Codex in its `workspace-write` sandbox | **Your whole account**, keys file included | The vault |
+| Codex | Codex in its `workspace-write` sandbox. **Not picked on its own**: only when you name it (`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or set `KROUTER_ALLOW_CODEX=1` | **Your whole account**, keys file included | The vault |
 | Others (opencode, kimi, pi, vibe, antigravity, cursor-agent) | The CLI with no confinement KRouter can set. **Never picked on its own**: only with `KROUTER_ALLOW_UNCONFINED=1` in the environment or the keys file | **Your whole account** | **Your whole account** |
 
 The vault is where untrusted text arrives (clipped web pages, pasted chats), so a writer that can do more than
 read and write the vault is one prompt injection away from acting as you. Prefer the API-key lane; if you use a CLI,
 prefer grok or claude. A logged-in CLI KRouter cannot confine is skipped (a confined one further down the list is
-used instead) and reported as `<kind>:unconfined` until you opt in. Before 0.12.0 the claude and grok writers ran with permission prompts skipped and no
+used instead) and reported as `<kind>:unconfined` until you opt in; Codex the same way, as `codex:reads-account`. Before 0.12.0 the claude and grok writers ran with permission prompts skipped and no
 sandbox — able to read and write anything in the account; an outside review pointed this out and a test confirmed
 it (grok read a file outside the vault through both its file tool and its shell; under the new profile it cannot).
 

@@ -13,9 +13,10 @@
 > - **留出题是谁写的：** claude.ai 里单独会话中的 Claude Opus，不是真人。真人写的一套在计划中。
 > - **稳定线：** 1.1.x 到 2026-11-12 只修问题、不加功能，补丁每周最多一个。最小安装、零后台进程：
 >   `bootstrap.py --vault <库> --no-timer --no-import`。
-> - **夜间任务：** 一行安装会先问再装；从 clone 手动跑 `install.sh` 会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
+> - **夜间任务：** 一行安装只装查询，什么都不问；加 `--ask` 才问要不要导入会话、开夜间任务。从 clone 手动跑 `install.sh`
+>   会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
->   只写库；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。
+>   只写库，所以只有你点名或设 `KROUTER_ALLOW_CODEX=1` 才用；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。
 <!-- krouter-status:end -->
 
 首页没写的都在这里：安装选项、什么会离开本机、证据、版本、夜间写手怎么工作、四个挂载、和常见 agent 记忆的对比。回到[首页](../README.zh.md)。
@@ -38,7 +39,7 @@ Windows（PowerShell，不需要管理员）：
 irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
 ```
 
-它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（系统语言是中文就用中文模板），装好路由器和 agent 规则，并在 Obsidian 里打开这座库。然后它会**先问你**要不要装夜间任务，用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就不装；`--timer` 表示事先同意，`--no-timer` 表示不要。想固定在某个版本：`… | KROUTER_TAG=v1.1.1 sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`… | sh -s -- --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
+它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（系统语言是中文就用中文模板），装好路由器和 agent 规则，并在 Obsidian 里打开这座库。默认到此为止：只装查询，什么都不问，没有内容离开本机。加 `--ask` 才会问要不要导入最近的 agent 会话、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`… | KROUTER_TAG=v1.1.1 sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`… | sh -s -- --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
 
 ## 什么会离开本机，要花多少
 
@@ -174,7 +175,7 @@ Q11|deploy;deployment;怎么发版|02 经验与方法/发布/发布流程.md|只
 
 ## 打开每天的写入器
 
-这就是产品。`install.sh` 会装上夜间任务（`KROUTER_NO_TIMER=1` 跳过）；一行安装会先问你。
+这就是产品。`install.sh` 会装上夜间任务（`KROUTER_NO_TIMER=1` 跳过）；一行安装默认不装，`--ask` 时先问你。
 
 把 `template/` 拷到你的库，然后：
 

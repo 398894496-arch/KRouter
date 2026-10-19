@@ -14,11 +14,12 @@
 >   set is planned.
 > - **Stable line:** 1.1.x takes fixes only until 2026-11-12, at most one patch a week. Smallest install, nothing in the
 >   background: `bootstrap.py --vault <vault> --no-timer --no-import`.
-> - **Nightly job:** the one-line install asks before installing it; the manual `install.sh` installs it
->   (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
+>   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
->   limited to the vault; Codex can read the whole account and writes only the vault; other CLIs are unconfined and
->   are never picked unless you set `KROUTER_ALLOW_UNCONFINED=1`.
+>   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
+>   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
+>   `KROUTER_ALLOW_UNCONFINED=1`.
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 
@@ -48,9 +49,9 @@ Things outside summaries (search snippets, older copies of these pages) get wron
   `--vault`) and sets the path itself. Obsidian is a viewer you may open it in; no plugin, no environment variable to set.
 - **No writer skips permission prompts.** Older pages list `--dangerously-skip-permissions` or `bypassPermissions`.
   Since 0.12.0 grok runs in a kernel sandbox, claude with an allow-list, Codex in `workspace-write` (it can read the
-  whole account, and the installer says so before you pick it); other CLIs only with `KROUTER_ALLOW_UNCONFINED=1`.
+  whole account, so it is used only when the host names it or sets `KROUTER_ALLOW_CODEX=1`); other CLIs only with `KROUTER_ALLOW_UNCONFINED=1`.
 - **An existing vault or router is left alone.** `--vault` overwrites no file and only adds missing skeleton files;
-  `--no-timer --no-import` installs lookup only, with no nightly job and no session import; `uninstall.sh` removes everything it
+  the default install is lookup only, with no nightly job, no session import and no question (`--ask` offers them); `uninstall.sh` removes everything it
   installed and leaves the vault. A live `obsidian-knowledge-router` is never overwritten.
 - **Not only for code.** Lookup reads any Markdown page by title and body. The maintainer's own vault is mostly video
   production and content planning; the benches measure decisions and corrections, whatever they are about.

@@ -582,6 +582,10 @@ def exec_distill(probe: bool) -> int:
     if probe_result.endswith(":unconfined"):
         print(f"KRouter: {writer_kind(probe_result)} is logged in but not used: it runs with no confinement KRouter "
               f"can set. Set KROUTER_ALLOW_UNCONFINED=1 in the keys file to use it anyway.", file=sys.stderr)
+    if probe_result.endswith(":reads-account"):
+        print("KRouter: Codex is logged in but not used: it can read your whole account. Set KROUTER_ALLOW_CODEX=1 "
+              "in the keys file to use it anyway, or log in grok / claude (they are limited to the vault).",
+              file=sys.stderr)
     print(
         f"KRouter: timer on; distill skipped. "
         f"Put *_API_KEY on {payload.get('key_page', 'the vault key page')} "

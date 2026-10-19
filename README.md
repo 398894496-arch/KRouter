@@ -32,13 +32,13 @@ python3 scripts/bootstrap.py --dry-run      # every change the install would mak
 python3 scripts/bootstrap.py --vault ~/notes --no-timer   # install against your vault, nightly job off
 ```
 
-Python 3 is the only requirement. The installer makes a vault (or uses yours with `--vault`, overwriting nothing), connects Claude Code and Codex to it through MCP, and then asks you two questions.
+Python 3 is the only requirement. The installer makes a vault (or uses yours with `--vault`, overwriting nothing), connects Claude Code and Codex to it through MCP, and stops there: lookup only, no questions, nothing leaves the machine. When you want it to start remembering, run the line it prints last (`bootstrap.py --ask`), which asks two questions.
 
 ## Five minutes later
 
-1. **"Import the agent sessions already on this machine?"** On a yes, the last 7 days of Claude Code, Codex and Cursor agent sessions become pages, one per session: your questions and each turn's closing answer. Key-shaped text is redacted first, and nothing leaves the machine.
-2. **"Have your model pull out what was decided?"** On a yes, the model you already use (a logged-in CLI or an API key) writes "what was decided, what changed" at the top of each recent session's page. The installer tells you how many characters that sends before it sends anything.
-3. Ask your agent: *"what did we decide about X last week?"* It answers from the vault, names the page, and says plainly when the vault has nothing on it.
+1. Ask your agent: *"what did we decide about X last week?"* It answers from the vault, names the page, and says plainly when the vault has nothing on it.
+2. **"Import the agent sessions already on this machine?"** (with `--ask`) On a yes, the last 7 days of Claude Code, Codex and Cursor agent sessions become pages, one per session: your questions and each turn's closing answer. Key-shaped text is redacted first, and nothing leaves the machine.
+3. **"Have your model pull out what was decided?"** On a yes, the model you already use (a logged-in CLI or an API key) writes "what was decided, what changed" at the top of each recent session's page. The installer tells you how many characters that sends before it sends anything.
 
 From then on a nightly job, which also asks first, imports yesterday, distills it, and keeps the vault tidy. Nothing needs maintaining.
 
@@ -48,8 +48,8 @@ From then on a nightly job, which also asks first, imports yesterday, distills i
 would, and keep re-explaining the same decision to your agents. **No**, if you want semantic search over
 embeddings, the last chat replayed into the next one, a hosted memory API, or a brain that is full on install.
 **Not needed:** Obsidian (it is an optional viewer), an alias table to maintain, an environment variable to set.
-Already have a vault? `--vault` changes none of its files; to try lookup only, add `--no-timer --no-import`: no nightly
-job, no session import.
+Already have a vault? `--vault` changes none of its files. The default is lookup only: no nightly job, no session
+import.
 
 ## How it is different
 
