@@ -45,7 +45,8 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 
 **适合**：你用 Claude Code、Codex、Cursor 或 DeepSeek Harness（常常不止一个），笔记用 Markdown 记或愿意这么记，
 而且总要给 agent 反复交代同一个决定。**不适合**：你要基于向量的语义搜索、要把上一轮聊天自动塞进下一轮、
-要托管的记忆 API，或者希望装好就是一个装满的大脑。
+要托管的记忆 API，或者希望装好就是一个装满的大脑。**不需要**：装 Obsidian（它只是可选的查看器）、维护别名表、
+自己设环境变量。已经有库？`--vault` 一个文件都不改；只想先试查询，加 `--no-timer --no-import`：不装夜间任务，不导入会话。
 
 ## 和常见 agent 记忆的区别
 
