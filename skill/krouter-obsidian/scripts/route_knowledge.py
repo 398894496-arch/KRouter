@@ -143,8 +143,9 @@ def emit_host_action(health: Path) -> None:
         print(
             "host_action: Distill needs a callable model. Paste *_API_KEY on "
             "90 系统文件/自动化/自进化钥匙.md (flagship is auto-locked), or log in "
-            "grok / official Codex / claude (your subscription); other CLIs (opencode, kimi, …) run unconfined and "
-            "are used only with KROUTER_ALLOW_UNCONFINED=1 in the keys file. Timer already on. "
+            "grok / claude (your subscription; Codex reads the whole account, so it needs KROUTER_ALLOW_CODEX=1); "
+            "other CLIs (opencode, kimi, …) run unconfined and are used only with KROUTER_ALLOW_UNCONFINED=1 in the "
+            "keys file. Timer already on. "
             "Do not print secrets."
         )
     nightly = meta.get("nightly") or ""

@@ -8,8 +8,9 @@
 > - **新查询上的真实流量盲测**（[VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md) 第 4 层）：
 >   还没跑，要等攒够 50 条新查询。
 > - **留出题是谁写的：** claude.ai 里单独会话中的 Claude Opus，不是真人。真人写的一套在计划中。
-> - **稳定线：** 1.1.x 到 2026-11-12 只修问题、不加功能，补丁每周最多一个。最小安装、零后台进程：
->   `bootstrap.py --vault <库> --no-timer --no-import`。
-> - **夜间任务：** 一行安装会先问再装；从 clone 手动跑 `install.sh` 会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
+> - **稳定线：** 稳定版是 v1.1.1。`main` 上已经合入 1.2.0 的新功能（2026-10-19 维护者决定提前合并）；1.2.0 之前如需
+>   1.1.x 补丁，从 v1.1.1 拉分支发。
+> - **夜间任务：** 一行安装只装查询，什么都不问；加 `--ask` 才问要不要导入会话、开夜间任务。从 clone 手动跑 `install.sh`
+>   会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
->   只写库；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。
+>   只写库，所以只有你点名或设 `KROUTER_ALLOW_CODEX=1` 才用；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。

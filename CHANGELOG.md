@@ -2,7 +2,8 @@
 
 **1.1.x is the stable line.** Until 2026-11-12 it takes fixes only: no new features, no format changes, at most one
 patch release a week (security fixes excepted). New features wait on branches for 1.2.0. The early weeks shipped many
-versions a day; that pace was development, not a support promise.
+versions a day; that pace was development, not a support promise. On 2026-10-19 the maintainer merged the 1.2.0
+features into `main` early; a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
 1.0.2 went out on one day: 1.0.0 at the maintainer's call, 1.0.1 and 1.0.2 as fixes from outside reviews. From 1.0.0 the version follows
@@ -11,6 +12,16 @@ notice, then the details.
 
 ## Unreleased
 
+- **The one-line install is lookup only and asks nothing.** It makes or finds the vault, installs the router,
+  connects the agents, and stops: no session import, no nightly job, nothing leaves the machine. Its last lines say
+  how to turn remembering on: `bootstrap.py --ask` puts the two questions it used to put at install (import recent
+  sessions? install the nightly job?), with the same preview of what is sent; `--import`, `--import-distill` and
+  `--timer` still say yes in advance. An upgrade where you said yes before (session import consent, or a nightly job
+  on disk) keeps it and is not told it is off.
+- **Codex is no longer picked as the nightly writer on its own.** It writes only the vault but can read the
+  whole account, keys file included. It is used when you name it (`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or set
+  `KROUTER_ALLOW_CODEX=1`; otherwise a logged-in grok or claude, both limited to the vault, is used instead, and a
+  Codex-only machine is told why distilling was skipped (`codex:reads-account`).
 - **A question that names something the vault never mentions is refused** (waits for the real-traffic blind judge).
   "Which did I start first, the Ferrari model or the Porsche model?" on a vault that has never mentioned a Porsche was
   answered from the Ferrari page. Now a capitalised word in mid-sentence (`Porsche`, `Seattle`, `iPad`) that no page

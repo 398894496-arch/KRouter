@@ -12,9 +12,11 @@ logged-in CLI the writer would pick (grok, official Codex, claude, cursor-agent,
 vibe, antigravity; `KROUTER_WRITER` pins one). A host that sets `KROUTER_LEARN_CLI` (or passes
 `--cli`) has picked a CLI on purpose; it goes first.
 
-Only grok, Codex and claude are used without asking: KRouter can confine those (a kernel sandbox, a write sandbox, a
-tool allow-list). The others run with no confinement KRouter can set, so a logged-in one is skipped unless the host
-opts in with `KROUTER_ALLOW_UNCONFINED=1` (environment or keys file); it then shows as `<kind>:unconfined`.
+Only grok and claude are used without asking: KRouter keeps what they can read to the vault (a kernel sandbox, a
+tool allow-list). Codex writes only the vault but can read the whole account, so it is used when the host names it
+(`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or says `KROUTER_ALLOW_CODEX=1`; otherwise it shows as `codex:reads-account`.
+The others run with no confinement KRouter can set, so a logged-in one is skipped unless the host opts in with
+`KROUTER_ALLOW_UNCONFINED=1` (environment or keys file); it then shows as `<kind>:unconfined`.
 """
 
 from __future__ import annotations
@@ -209,27 +211,43 @@ CONFINED_KINDS = frozenset({"grok", "codex", "claude"})  # KRouter 能给这三�
 UNCONFINED_FLAG = "KROUTER_ALLOW_UNCONFINED"
 
 
-def allow_unconfined() -> bool:
-    """The host's explicit yes to a CLI KRouter cannot confine: `KROUTER_ALLOW_UNCONFINED=1`, env or keys file."""
-    if os.environ.get(UNCONFINED_FLAG, "").strip() == "1":
+ACCOUNT_READ_KINDS = frozenset({"codex"})  # 只写库，但读得到整个账号（含 key 文件）：宿主点名才用
+CODEX_FLAG = "KROUTER_ALLOW_CODEX"
+
+
+def _flag(name: str) -> bool:
+    if os.environ.get(name, "").strip() == "1":
         return True
     path = keys_file()
     if path.is_file():
-        return _parse(path.read_text(encoding="utf-8", errors="replace")).get(UNCONFINED_FLAG, "").strip() == "1"
+        return _parse(path.read_text(encoding="utf-8", errors="replace")).get(name, "").strip() == "1"
     return False
 
 
-def gate(result: str) -> str:
-    """A logged-in CLI outside CONFINED_KINDS counts only with the opt-in; otherwise `<kind>:unconfined`."""
+def allow_unconfined() -> bool:
+    """The host's explicit yes to a CLI KRouter cannot confine: `KROUTER_ALLOW_UNCONFINED=1`, env or keys file."""
+    return _flag(UNCONFINED_FLAG)
+
+
+def allow_codex() -> bool:
+    """The host's explicit yes to Codex, which can read the whole account: `KROUTER_ALLOW_CODEX=1`, env or keys file."""
+    return _flag(CODEX_FLAG)
+
+
+def gate(result: str, named: bool = False) -> str:
+    """A logged-in CLI outside CONFINED_KINDS counts only with the opt-in (`<kind>:unconfined`); Codex only when the
+    host named it or opted in (`codex:reads-account`)."""
     if writer_ok(result) and writer_kind(result) not in CONFINED_KINDS and not allow_unconfined():
         return f"{writer_kind(result)}:unconfined"
+    if writer_ok(result) and writer_kind(result) in ACCOUNT_READ_KINDS and not (named or allow_codex()):
+        return f"{writer_kind(result)}:reads-account"
     return result
 
 
 def detect_writer(pinned: str = "") -> tuple[str, str]:
     """Return (path, probe_result). Prefer a pinned absolute binary, else first logged-in CLI KRouter may use."""
     if pinned.strip():
-        return pinned.strip(), gate(probe_writer(pinned.strip()))
+        return pinned.strip(), gate(probe_writer(pinned.strip()), named=True)
     first_existing = ""
     first_existing_result = "unset"
     for path in detect_candidates():
@@ -239,7 +257,8 @@ def detect_writer(pinned: str = "") -> tuple[str, str]:
         result = gate(result)
         if writer_ok(result):
             return str(path), result
-        if result.endswith(":unconfined") and not first_existing_result.endswith(":unconfined"):
+        if result.endswith((":unconfined", ":reads-account")) and not first_existing_result.endswith(
+                (":unconfined", ":reads-account")):
             first_existing, first_existing_result = str(path), result  # 记下来，好告诉宿主为什么没用它
             continue
         if path.is_file() and os.access(path, os.X_OK) and not first_existing:

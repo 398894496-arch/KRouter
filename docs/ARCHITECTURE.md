@@ -12,13 +12,14 @@
 >   layer 4): not run yet; it waits for 50 new queries.
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Stable line:** 1.1.x takes fixes only until 2026-11-12, at most one patch a week. Smallest install, nothing in the
->   background: `bootstrap.py --vault <vault> --no-timer --no-import`.
-> - **Nightly job:** the one-line install asks before installing it; the manual `install.sh` installs it
->   (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Stable line:** v1.1.1 is the stable release. `main` already carries the 1.2.0 features (merged 2026-10-19 at the
+>   maintainer's call); a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
+> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
+>   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
->   limited to the vault; Codex can read the whole account and writes only the vault; other CLIs are unconfined and
->   are never picked unless you set `KROUTER_ALLOW_UNCONFINED=1`.
+>   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
+>   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
+>   `KROUTER_ALLOW_UNCONFINED=1`.
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 
@@ -90,7 +91,7 @@ Landings:
 - Derived notes with `source_ref`, `verified_at`, and scope
 
 1. **Derived notes keep source, time, scope, trust, and limits.**
-2. **Two lanes, same job.** API key first: lock the provider's flagship model and run distill + two-step promotion. No key: spawn a logged-in Claudian-class CLI (`grok`, official Codex, `claude`, …) with vault cwd — **subscription unattended**, not Grok-only. Since 0.12.0 no lane skips permission prompts: grok runs in a kernel-enforced sandbox profile (`strict` + the router); Claude runs with tools allow-listed (`dontAsk`: read / edit inside the vault, run the router); Codex runs `exec --sandbox workspace-write` (writes only the vault, reads the whole account); any other CLI is used only with `KROUTER_ALLOW_UNCONFINED=1`. See [`SECURITY.md`](../SECURITY.md). The timer pins this repo's `krouter-obsidian`, never a live `obsidian-knowledge-router`. Do not use a PATH-level `agent`. Chat/IDE login is not a spawnable harness. Mounted agents run `status` and tell the host if `host_action` is present. An in-vault chat plugin is not the writer. On failure, leave a to-summarize note. Do not switch shells and rewrite.
+2. **Two lanes, same job.** API key first: lock the provider's flagship model and run distill + two-step promotion. No key: spawn a logged-in Claudian-class CLI (`grok`, official Codex, `claude`, …) with vault cwd — **subscription unattended**, not Grok-only. Since 0.12.0 no lane skips permission prompts: grok runs in a kernel-enforced sandbox profile (`strict` + the router); Claude runs with tools allow-listed (`dontAsk`: read / edit inside the vault, run the router); Codex runs `exec --sandbox workspace-write` (writes only the vault, reads the whole account; used only when named or with `KROUTER_ALLOW_CODEX=1`); any other CLI is used only with `KROUTER_ALLOW_UNCONFINED=1`. See [`SECURITY.md`](../SECURITY.md). The timer pins this repo's `krouter-obsidian`, never a live `obsidian-knowledge-router`. Do not use a PATH-level `agent`. Chat/IDE login is not a spawnable harness. Mounted agents run `status` and tell the host if `host_action` is present. An in-vault chat plugin is not the writer. On failure, leave a to-summarize note. Do not switch shells and rewrite.
 3. **One product: KRouter.** The writer lives in `extras/host-daily-evolution/`. `extras/dsh` is the DSH socket on the same `OBSIDIAN_VAULT`. Not two repositories, not a side plugin. Uninstalling the DSH socket does not delete notes and does not stop the timer.
 4. Distillation may propose candidates. **It must not write formal `02`.**
 
