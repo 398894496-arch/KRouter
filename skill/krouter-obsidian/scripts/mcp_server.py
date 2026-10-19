@@ -23,7 +23,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from krouter_home import vault_path  # noqa: E402
 
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 PROTOCOLS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 INSTRUCTIONS = (

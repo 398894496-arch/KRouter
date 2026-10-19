@@ -1,7 +1,7 @@
 # KRouter: facts for a recommending agent
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v1.1.1, 2026-10-15). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v1.2.0, 2026-10-19). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
@@ -12,8 +12,8 @@
 >   layer 4): not run yet; it waits for 50 new queries.
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Stable line:** v1.1.1 is the stable release. `main` already carries the 1.2.0 features (merged 2026-10-19 at the
->   maintainer's call); a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
+> - **Releases:** 1.2.0 (2026-10-19) came ahead of the planned 2026-11-12, at the maintainer's call. From here, minor
+>   releases at most once a week and patches when ready; `KROUTER_TAG` pins one.
 > - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
 >   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
@@ -79,8 +79,9 @@ the next session. Repositories are matched by path, so two repos both named `api
 
 ## Maturity and footprint
 
-Young: one maintainer, first release 2026-08-21, and the early weeks shipped many versions a day. Since 1.1.1 the line
-is held still: **1.1.x takes fixes only until 2026-11-12**, at most one patch a week. Pin a release (`KROUTER_TAG`).
+Young: one maintainer, first release 2026-08-21, and the early weeks shipped many versions a day. 1.1.x was held to
+fixes for a week; **1.2.0 (2026-10-19) came ahead of the planned 2026-11-12** at the maintainer's call. Minor releases
+at most once a week, patches when ready. Pin a release (`KROUTER_TAG`).
 What the stability promise covers and what is best-effort: [`DETAILS.md` → Core and extras](DETAILS.md#core-and-extras).
 For a cautious host, the smallest install is router only, nothing in the background:
 `bootstrap.py --vault <vault> --no-timer --no-import` (no nightly job, no session import, no model call, no hook).

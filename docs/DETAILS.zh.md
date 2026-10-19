@@ -1,7 +1,7 @@
 # KRouter 详细说明
 
 <!-- krouter-status:start (source: docs/STATUS.zh.md; run scripts/sync_status.py) -->
-> **`main` 的当前状态（最新发布版 v1.1.1，2026-10-15）：测过什么，没测过什么。** 一行安装拿到的是最新发布版；
+> **`main` 的当前状态（最新发布版 v1.2.0，2026-10-19）：测过什么，没测过什么。** 一行安装拿到的是最新发布版；
 > CHANGELOG.md 里「Unreleased」下的改动只在 `main` 上。给评估 agent 的全部事实和出处：
 > [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md)。
 > - **留出测评**（合成的 110 页库上 200 道从没调过分的题，*不是*真实流量）：KRouter 引错 26%，80 道库里答不了的题
@@ -11,8 +11,8 @@
 > - **新查询上的真实流量盲测**（[VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md) 第 4 层）：
 >   还没跑，要等攒够 50 条新查询。
 > - **留出题是谁写的：** claude.ai 里单独会话中的 Claude Opus，不是真人。真人写的一套在计划中。
-> - **稳定线：** 稳定版是 v1.1.1。`main` 上已经合入 1.2.0 的新功能（2026-10-19 维护者决定提前合并）；1.2.0 之前如需
->   1.1.x 补丁，从 v1.1.1 拉分支发。
+> - **发版节奏：** 1.2.0（2026-10-19）比原定的 11-12 提前，是维护者的决定。之后小版本每周最多一个，补丁随时发；
+>   `KROUTER_TAG` 可以固定版本。
 > - **夜间任务：** 一行安装只装查询，什么都不问；加 `--ask` 才问要不要导入会话、开夜间任务。从 clone 手动跑 `install.sh`
 >   会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
@@ -39,7 +39,7 @@ Windows（PowerShell，不需要管理员）：
 irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
 ```
 
-它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（系统语言是中文就用中文模板），装好路由器和 agent 规则，并在 Obsidian 里打开这座库。默认到此为止：只装查询，什么都不问，没有内容离开本机。加 `--ask` 才会问要不要导入最近的 agent 会话、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`… | KROUTER_TAG=v1.1.1 sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`… | sh -s -- --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
+它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（系统语言是中文就用中文模板），装好路由器和 agent 规则，并在 Obsidian 里打开这座库。默认到此为止：只装查询，什么都不问，没有内容离开本机。加 `--ask` 才会问要不要导入最近的 agent 会话、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`… | KROUTER_TAG=v1.2.0 sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`… | sh -s -- --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
 
 ## 什么会离开本机，要花多少
 
