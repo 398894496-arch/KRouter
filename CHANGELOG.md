@@ -1,9 +1,8 @@
 # Changelog
 
-**1.1.x is the stable line.** Until 2026-11-12 it takes fixes only: no new features, no format changes, at most one
-patch release a week (security fixes excepted). New features wait on branches for 1.2.0. The early weeks shipped many
-versions a day; that pace was development, not a support promise. On 2026-10-19 the maintainer merged the 1.2.0
-features into `main` early; a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
+**Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
+2026-11-12, at the maintainer's call. The early weeks shipped many versions a day; that pace was development, not a
+support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
 1.0.2 went out on one day: 1.0.0 at the maintainer's call, 1.0.1 and 1.0.2 as fixes from outside reviews. From 1.0.0 the version follows
@@ -12,6 +11,25 @@ notice, then the details.
 
 ## Unreleased
 
+Nothing yet.
+
+## 1.2.0 — 2026-10-19
+
+**What you will notice**
+- **Installing changes nothing you did not ask for.** The one-line install is lookup only, asks nothing and sends
+  nothing; `bootstrap.py --ask` turns remembering on. A logged-in Codex, which can read the whole account, is no
+  longer picked as the nightly writer unless you name it.
+- **Session distill writes down more of what was decided, changes of mind first:** on the registered measurement set,
+  missed 52% → 41% and changes of mind 11 → 15 of 24.
+- **A new session no longer starts from an answer you already changed.**
+- **Fewer confident wrong answers:** a question that names something no page mentions is refused, and one that matches
+  a single word of a page says so. This release ships the refusal change before the registered real-traffic blind
+  judge (it waits for 50 fresh queries); its result will be logged in `bench/memory_honesty/HELDOUT.md` against 1.0.3.
+- **Outside numbers:** on LongMemEval (questions and labels by its authors, scored without a model), KRouter cites an
+  answer session for 439 of 470 answerable questions and the latest update for 70 of 72, level with plain BM25. See
+  HELDOUT.md, set 7.
+
+**Details**
 - **Session distill writes down more of what was decided, changes of mind first.** A long session-day is distilled
   in segments of about 6 000 characters, plus one pass over the whole excerpt for changes of mind (decided early,
   changed later, often in different segments); near-duplicates are merged; changes come first; up to 24 lines per page
@@ -32,7 +50,7 @@ notice, then the details.
   whole account, keys file included. It is used when you name it (`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or set
   `KROUTER_ALLOW_CODEX=1`; otherwise a logged-in grok or claude, both limited to the vault, is used instead, and a
   Codex-only machine is told why distilling was skipped (`codex:reads-account`).
-- **A question that names something the vault never mentions is refused** (waits for the real-traffic blind judge).
+- **A question that names something the vault never mentions is refused** (shipped before the real-traffic blind judge; see above).
   "Which did I start first, the Ferrari model or the Porsche model?" on a vault that has never mentioned a Porsche was
   answered from the Ferrari page. Now a capitalised word in mid-sentence (`Porsche`, `Seattle`, `iPad`) that no page
   contains refuses the question; sentence-initial capitals, two-letter words such as `OK`, and month and day names do
@@ -65,6 +83,14 @@ notice, then the details.
 - Docs: 1.1.x is the stable line (fixes only until 2026-11-12, at most one patch a week); DETAILS lists what the
   stability promise covers (core) and what is best-effort (extras); FOR-AGENTS and the status block name the smallest
   install, router only with nothing in the background.
+- Docs: what outside reviews misread, checked against the code (FOR-AGENTS "Common misreadings": Obsidian is optional,
+  no writer skips permission prompts, an existing vault or router is left alone, not only for code); ARCHITECTURE no
+  longer says the claude and grok writers skip permission prompts (untrue since 0.12.0).
+- Docs: `docs/img/demo-content.gif`, the same story as `demo.gif` for short-video work, recorded the same way; plugin,
+  skill and package text call Obsidian optional.
+- Bench: sets 7 (LongMemEval, scored from its authors' labels; `bench/longmemeval/lme.py`), 8 (answers over the
+  vault's own git history) and 9 (written by people: corrections and their neighbours) registered before any run; set
+  7 run and amended (S's unanswerable questions became a development set).
 
 ## 1.1.1 — 2026-10-15
 
