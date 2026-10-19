@@ -144,3 +144,11 @@ def test_weak_hint_is_not_a_host_choice(rows):
 
     assert query_conflict("how", rows, vault=VAULT) is None
     assert query_conflict("home", rows, vault=VAULT) is None
+
+
+def test_hints_need_a_shared_content_pair_not_scattered_characters():
+    """`剪辑` and `剪藏原件` share 剪 and 件; `标题有什么讲究` and `方法什么时候能进` share only 什么. Neither is a hint."""
+    assert near_score("剪辑用什么软件", "剪藏原件") == 0
+    assert near_score("标题有什么讲究", "方法什么时候能进") == 0
+    assert near_score("剪藏的规矩", "剪藏原件") > 0
+    assert near_score("发版流程改了吗", "上次的发版流程") > 0

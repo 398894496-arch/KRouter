@@ -290,3 +290,111 @@ mark on the sheet are compared with GPT's verdicts and reported as a spot check.
 | 2026-10-16 | **Re-measurement registered, before it runs.** Candidate: the distill on `feat/distill-capture` at `adfdc9b` (segments of about 6 000 characters, a change-of-mind pass over the whole excerpt, near-duplicates merged, changes first, up to 24 lines), tuned on ten other sessions (`tune_capture.py`, seed 20261017; these 22 session-days were not used). Baseline: the shipped distill's 143 lines already recorded above. Both scored the same way: a reference rebuilt under the maintainer's definition (Grok's same 94 proposals, re-checked by GPT-5.4 with "what the maintainer said, or went along with when the agent proposed it"; GPT-5.5 is out of quota), pairing by GPT-5.4, and each line classified by GPT-5.4 (steps or discussion, fabricated, and so on). The candidate is better if it captures at least as many changes of mind as the baseline, misses fewer reference decisions, and its steps-or-fabricated share is no more than 5 points above the baseline's; fabricated lines are reported on their own. |
 | 2026-10-16 | **Amendment before scoring the re-measurement.** The reference was rebuilt as registered (GPT-5.4 kept 83 of Grok's 94 proposals and added 48: 131) and the candidate distilled the 22 session-days (252 lines), but every GPT model then returned HTTP 402 (the proxy's OpenAI quota ran out), so pairing and classification did not run. They are done by Grok 4.7 instead, for baseline and candidate alike. Grok also proposed the reference items, so absolute rates may read better than with GPT; the comparison between baseline and candidate, scored by the same judge on the same reference, is what the registered criteria use. |
 | 2026-10-16 | **Re-measurement, scored** (Grok 4.7 pairing and classification, both versions, same 131-item reference under the maintainer's definition). Baseline (shipped): 143 lines, missed 51.9%, changes of mind 11 of 24, steps-or-fabricated 21.7% (30 steps, 1 fabricated). Candidate (`feat/distill-capture` `adfdc9b`): 252 lines, missed 40.5%, changes 15 of 24, steps-or-fabricated 17.1% (43 steps, 0 fabricated). **All three registered criteria met.** One-to-one "wrong rate" rises (55.9% → 69.0%) only because 252 lines are paired against 131 items; by category the share of steps and fabrications falls. The judge is the model that proposed the reference items (amendment above), so the absolute numbers are not quoted; the comparison is. |
+
+## Set 7: LongMemEval, someone else's questions and labels (registered 2026-10-18, before any download or run)
+
+Every earlier set was written by a model we chose (sets 1–3) or drawn from the maintainer's own traffic (sets 5–6).
+Outside reviews named that as the weak point. This set uses a public benchmark nobody here wrote or labelled:
+LongMemEval (Wu et al., ICLR 2025), the cleaned release `longmemeval_s_cleaned.json` (MIT,
+`huggingface.co/datasets/xiaowu0162/longmemeval-cleaned`). 500 questions, each with its own haystack of about 50 chat
+sessions, the session dates, and the authors' labels: which sessions hold the answer (`answer_session_ids`, and
+`has_answer` on the turns), the question type, and `_abs` on the 30 questions that cannot be answered.
+
+**Vault per question.** One Markdown page per haystack session: the date in the title and frontmatter, then the turns
+as written. Nothing else: no distill, no `status: superseded`, no alias rows. This tests recall on raw imported
+sessions, not the write side; KRouter's correction handling depends on the write side and is not exercised here.
+
+**Systems,** each run once at the default it ships with, no tuning on this set:
+- `krouter`: `route_knowledge.py search <question>` at the release current on the run day; up to three cited pages,
+  or a refusal;
+- `bm25-floor`: BM25 over Chinese character pairs and English words, floor picked on dev3 (as in set 3).
+
+**Scored mechanically from the authors' labels** (no model in the loop):
+1. *Evidence cited* (470 answerable questions): at least one cited page is an answer session.
+2. *Knowledge update* (the `knowledge-update` type, answerable ones): the cited pages include the latest-dated answer
+   session (the update); *stale only* = they cite an earlier answer session and not the latest.
+3. *Abstention* (30 `_abs` questions): refused. Against it, the refusal rate on the 470 answerable questions.
+Paired 95% intervals (bootstrap over questions, 10 000 resamples, seed 20261018) for KRouter minus BM25 on each.
+
+**Secondary, model-judged, reported apart:** grok-4.7 reads the question, its date and the cited pages and answers or
+says it does not know; grok-4.7 grades the answer with the benchmark's own per-type judge prompts (the paper used
+GPT-4o; any number says which judge). Not a LongMemEval leaderboard score: the reader sees at most three pages.
+
+**What may be claimed.** The mechanical numbers, all of them, whatever they are. "Better than BM25" on a metric only
+if its paired interval is entirely on the right side of zero. No re-run after a fix: a fix is measured on a fresh
+seed-drawn half of `longmemeval_m` instead, registered before it runs.
+
+`bench/longmemeval/` (convert, run, score). The dataset is not committed; the scripts download nothing.
+
+## Set 8: does an answer stay right as the vault grows? (registered 2026-10-18, before any run)
+
+Rankings of memory systems can flip with tenure (Spencer 2026, "Ground Truth First": a system that leads at three
+weeks fell from 96% to 72% at nine). The maintainer's vault has been a git repository since 2026-10-10, with a commit
+a day, so the question can be asked of real history instead of a synthetic one.
+
+**Events.** Every commit after the first (the 2026-10-10 import) that adds a change of mind (`原来 A → 改成 B` or the
+same in English, in any page) or marks a page `status: superseded`. Extracted by script, none dropped by hand. On
+2026-10-18 there are 9; the set is drawn when it is run.
+
+**Questions.** For each event Grok 4.7 writes, from the diff alone, one question whose answer changed, with the old and
+the new answer. The maintainer does not edit them. Frozen in a private file before any system runs.
+
+**Snapshots.** For each event, the vault (`git archive`, read-only) at the commit that made the change, at three weeks
+after it and at nine weeks after it (or the newest commit, if younger; the age is reported).
+
+**Systems.** `krouter` at the release current on the run day; `bm25-floor` with and without skipping superseded pages.
+
+**Scored.** A Grok 4.7 judge, blind to the system, sees the question, the old and the new answer, and the cited pages,
+and labels the citation *new*, *old*, *both* or *neither*. Reported per snapshot age: share answered with the new value,
+share stale (old only), refused.
+
+**When.** First run on or after 2026-10-31 (three weeks of history), second on or after 2026-12-12 (nine weeks). Both
+reported whatever they show.
+
+**Amendment to set 7, 2026-10-18, after its run and before any change to KRouter.** The 30 `_abs` questions of
+`longmemeval_s_cleaned.json` are now a development set: their results above have been read question by question and
+the refusal gate may be tuned on them, so no abstention number from them is reported again. The plan to give the final
+abstention number on a seed-drawn half of `longmemeval_m` does not work: LongMemEval's S and M files hold the same 500
+questions (the README: 500 evaluation instances in each; they differ in the history around them), so every `_abs`
+question in M has been seen. The final abstention numbers come instead from questions nobody here has read:
+(1) the 80 neighbour questions of heldout3 (written by Claude Opus, never tuned on; at most two candidates a release
+cycle, as registered), and (2) the neighbour questions of set 9, written by people. The answerable 470 of S stay a
+check that a change does not start refusing what it should answer; any number from them is marked as seen.
+
+## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
+
+The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
+written by a model (sets 1–3), drawn from the maintainer's traffic (set 5), or comes from LongMemEval, whose raw
+sessions carry no `superseded` marks. This set is written by people.
+
+**Items.** Each writer fills in, in their own words, one or more cases on a collection page: a topic; what was decided
+first, with a date; what it was changed to later, with a date and why; a question whose answer is the new decision;
+and a neighbour question on the same topic that the two notes do not answer. Writers do not see each other's cases or
+any system's output. The page records whether a case came from the maintainer or someone else, nothing more.
+
+**Vault.** All cases go into one vault built from the Chinese or English template, so cases are each other's
+distractors. Each case becomes two pages: the first decision, and the change written as its own note. Two conditions:
+*marked* (the first page gets `status: superseded`, as a KRouter user marks a correction) and *plain* (no mark; only
+the dates and the wording say which is newer).
+
+**Systems.** `krouter` at the release current on the run day; `bm25-floor` (floor from dev3); plain BM25 with no floor.
+
+**Scored mechanically.** Current question: the change page cited first (right), the first-decision page cited first
+(stale), or refused. Neighbour question: refused, or what was cited. Reported per condition and per writer group
+(maintainer, others), with paired 95% intervals against each baseline (bootstrap over cases, 10 000 resamples, seed
+20261018).
+
+**Who reads what, when.** Nobody tuning KRouter (the maintainer's agents included) reads the cases before the run: the
+build script reads them from the page's store, writes the vault and the questions to a private folder, and prints
+counts only. Collection closes when at least 40 cases are in or on 2026-11-30, whichever comes first; the run follows
+the close. Results are reported whatever they show; cases read after the run are spent, like a revealed held-out set.
+
+### Log, sets 7 and 8
+
+| Date | Event |
+|---|---|
+| 2026-10-18 | Both registered. Set 7 waits for the dataset; set 8 for history. Real-traffic blind judge (VERIFY layer 4): 18 router queries logged since the 2026-10-10 freeze plus 7 in agent sessions, of the 50 it waits for. |
+| 2026-10-18 | **Set 7 run** (`longmemeval_s_cleaned.json`, SHA-256 `d6f21ea9…c3a442`; KRouter v1.1.1 from a worktree at the tag; scored mechanically from the authors' labels). Answerable questions with an answer session among the cited pages: **KRouter 439/470**, bm25-floor 264/470. Refused although answerable: KRouter 12/470, bm25-floor 204/470. Knowledge update, latest answer session cited: **KRouter 70/72**, bm25-floor 48/72; stale only: KRouter 1/72, bm25-floor 0/72. Unanswerable (`_abs`) refused: **KRouter 3/30**, bm25-floor 22/30. Paired 95% intervals, KRouter minus bm25-floor: evidence +37.2 points [+32.8, +41.7]; refused-answerable −40.9 [−45.5, −36.4]; knowledge update +30.6 [+19.4, +41.7]; abstention −63.3 [−80.0, −46.7]. |
+| 2026-10-18 | **Reading it** (exploratory, not registered, said as such): plain BM25 with no floor, top three pages, cites an answer session for 447/470 and the latest update for 69/72, level with KRouter. The registered baseline's floor was picked on dev3, a 60-page Chinese vault, and on these 50-session English haystacks it refuses 43% of answerable questions; KRouter's lead over it comes from that floor, not from ranking, as on heldout3. What does hold: KRouter's refusal gate does not cost answerable questions here (12/470), and on raw sessions with no `superseded` marks it still cites the newest fact for 70 of 72 updates. What fails: it refuses 3 of 30 unanswerable questions. LongMemEval's abstention questions ask about a near neighbour of something the haystack does mention (a pet it never named, a trip it never took), the case KRouter's gate handles worst; it is the next thing to fix, measured on a seed-drawn half of `longmemeval_m` as registered. The model-judged secondary (reader and judge) has not been run. |
+| 2026-10-18 | Set 7 amended (S `_abs` now development; final abstention numbers from heldout3 neighbours and set 9, since M repeats S's questions). Set 9 registered before any item was written. |
+| 2026-10-18 | Development use of S (seen; not a reported score): candidate `fix/named-absent` (PR #61) refuses 9 of the 30 `_abs` questions (3 before) and 14 of 470 answerable (12 before); evidence cited 437 of 470 (439). Set 9 collection page published (owner reads all cases; each writer reads and writes only their own); a probe document was written, read back at owner and at `interact` level (not visible there), and deleted. |

@@ -524,3 +524,24 @@ def test_a_question_that_names_something_the_vault_never_mentions_is_refused(tmp
     assert r.absent_names("Is it OK to start the model project?", {}) == []
     assert r.absent_names("Which project did I start in December?", {}) == []
     assert r.absent_names("Porsche project start?", {}) == []  # 句首
+
+
+def test_a_question_that_matches_one_word_is_answered_as_low_and_says_so(tmp_path, monkeypatch, capsys):
+    """A 20-page vault: `小红书的笔记几点发？` meets only 笔记 on a page about sealing days. Recall may still show the
+    page, but at low confidence, with a note, and without a generated answer."""
+    monkeypatch.setenv("KROUTER_CACHE_DIR", str(tmp_path / "cache"))
+    v = tmp_path / "vault"
+    write(v, "02 经验与方法/自动化/按日志文件判断封账.md",
+          "---\ntitle: 按日志文件判断封账\nstatus: active\n---\n\n已经有真笔记的，只补缺的部分。笔记存在就算封账。\n")
+    write(v, "02 经验与方法/短视频/封面标题规则.md",
+          "---\ntitle: 封面标题规则\nstatus: active\n---\n\n封面标题直接给结论，最多 10 个字，不用问句。\n")
+    for i in range(18):
+        write(v, f"05 时间日志/2026-10/{i:02d}｜日常.md", f"---\ntitle: {i:02d}｜日常\n---\n\n今天剪了第 {i} 条视频的笔记。\n")
+    res = r.recall(v, "小红书的笔记几点发？")
+    assert res["confidence"] in ("none", "low")
+    if res["confidence"] == "low":
+        assert res["partial"] and not any(h.get("answer") for h in res["hits"])
+    full = r.recall(v, "封面标题现在怎么写？")
+    assert full["confidence"] in ("high", "medium") and not full["partial"]
+    assert full["hits"][0]["rel"].endswith("封面标题规则.md")
+    assert "recall_note" in r.PARTIAL_NOTE
