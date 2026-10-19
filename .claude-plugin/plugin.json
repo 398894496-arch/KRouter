@@ -2,7 +2,7 @@
   "name": "krouter",
   "displayName": "KRouter",
   "version": "1.1.1",
-  "description": "Your agents remember what you decided and what you changed — from your own Obsidian vault, with the source of every answer, and \"not in the vault\" instead of a guess.",
+  "description": "Your agents remember what you decided and what you changed — from a folder of Markdown you own (open it in Obsidian if you like), with the source of every answer, and \"not in the vault\" instead of a guess.",
   "author": { "name": "398894496-arch", "url": "https://github.com/398894496-arch" },
   "homepage": "https://github.com/398894496-arch/KRouter",
   "repository": "https://github.com/398894496-arch/KRouter",

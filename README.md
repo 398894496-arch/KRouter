@@ -47,6 +47,12 @@ From then on a nightly job, which also asks first, imports yesterday, distills i
 **Yes**, if you use Claude Code, Codex, Cursor or DeepSeek Harness (often more than one), keep notes in Markdown or
 would, and keep re-explaining the same decision to your agents. **No**, if you want semantic search over
 embeddings, the last chat replayed into the next one, a hosted memory API, or a brain that is full on install.
+
+**Not only for code:** the same story for short-video work, recorded the same way (Claude Code with the plugin, a
+demo vault, real output):
+
+![Monday the cover-title rule is A, Wednesday it changes to B, Thursday the agent answers B and cites the page; a question the vault has no page on is refused](docs/img/demo-content.gif)
+
 **Not needed:** Obsidian (it is an optional viewer), an alias table to maintain, an environment variable to set.
 Already have a vault? `--vault` changes none of its files; to try lookup only, add `--no-timer --no-import`: no nightly
 job, no session import.
