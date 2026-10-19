@@ -90,15 +90,15 @@ def bench_module():
     return run_real, run_real.bench_from(REPO)
 
 
-def run(system: str, limit: int) -> None:
+def run(system: str, limit: int, repo: Path) -> None:
     rows = load_questions()[: limit or None]
     run_real, bench = bench_module()
     out = []
     if system == "krouter":
         cache = STATE / "cache"
         for it in rows:
-            ans = run_real.route_answers(REPO, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"])[0]
-            out.append({"id": it["id"], "cited": ans["cited"], "refused": ans["refused"]})
+            ans = run_real.route_answers(repo, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"])[0]
+            out.append({"id": it["id"], "cited": ans["cited"], "refused": ans["refused"], "repo": str(repo)})
             shutil.rmtree(cache / it["id"], ignore_errors=True)
     else:
         dev = bench.questions("dev3")
@@ -179,6 +179,7 @@ def main() -> int:
     r = sub.add_parser("run")
     r.add_argument("--system", choices=["krouter", "bm25-floor"], required=True)
     r.add_argument("--limit", type=int, default=0)
+    r.add_argument("--repo", default=str(REPO), help="the KRouter checkout to run (e.g. a worktree at the release tag)")
     sub.add_parser("score")
     args = ap.parse_args()
     os.environ["KROUTER_NO_QUERY_LOG"] = "1"
@@ -186,7 +187,7 @@ def main() -> int:
     if args.cmd == "convert":
         convert(Path(args.data))
     elif args.cmd == "run":
-        run(args.system, args.limit)
+        run(args.system, args.limit, Path(args.repo))
     else:
         score()
     return 0
