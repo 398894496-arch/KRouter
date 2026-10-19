@@ -1,7 +1,7 @@
 {
   "name": "dsh-krouter",
   "version": "1.1.1",
-  "description": "Zero-maintenance second brain for coding agents: one-line install, an Obsidian vault distilled every night, exact lock + ranked recall that refuses instead of guessing. Chinese and English; macOS, Linux, Windows. Cursor, Codex, Claude Code, DeepSeek Harness. No vector store.",
+  "description": "Zero-maintenance second brain for coding agents: one-line install, a plain-Markdown vault (Obsidian optional) distilled every night, exact lock + ranked recall that refuses instead of guessing. Chinese and English; macOS, Linux, Windows. Cursor, Codex, Claude Code, DeepSeek Harness. No vector store.",
   "type": "module",
   "main": "extras/dsh/lib/index.js",
   "exports": {
