@@ -350,6 +350,44 @@ share stale (old only), refused.
 **When.** First run on or after 2026-10-31 (three weeks of history), second on or after 2026-12-12 (nine weeks). Both
 reported whatever they show.
 
+**Amendment to set 7, 2026-10-18, after its run and before any change to KRouter.** The 30 `_abs` questions of
+`longmemeval_s_cleaned.json` are now a development set: their results above have been read question by question and
+the refusal gate may be tuned on them, so no abstention number from them is reported again. The plan to give the final
+abstention number on a seed-drawn half of `longmemeval_m` does not work: LongMemEval's S and M files hold the same 500
+questions (the README: 500 evaluation instances in each; they differ in the history around them), so every `_abs`
+question in M has been seen. The final abstention numbers come instead from questions nobody here has read:
+(1) the 80 neighbour questions of heldout3 (written by Claude Opus, never tuned on; at most two candidates a release
+cycle, as registered), and (2) the neighbour questions of set 9, written by people. The answerable 470 of S stay a
+check that a change does not start refusing what it should answer; any number from them is marked as seen.
+
+## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
+
+The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
+written by a model (sets 1–3), drawn from the maintainer's traffic (set 5), or comes from LongMemEval, whose raw
+sessions carry no `superseded` marks. This set is written by people.
+
+**Items.** Each writer fills in, in their own words, one or more cases on a collection page: a topic; what was decided
+first, with a date; what it was changed to later, with a date and why; a question whose answer is the new decision;
+and a neighbour question on the same topic that the two notes do not answer. Writers do not see each other's cases or
+any system's output. The page records whether a case came from the maintainer or someone else, nothing more.
+
+**Vault.** All cases go into one vault built from the Chinese or English template, so cases are each other's
+distractors. Each case becomes two pages: the first decision, and the change written as its own note. Two conditions:
+*marked* (the first page gets `status: superseded`, as a KRouter user marks a correction) and *plain* (no mark; only
+the dates and the wording say which is newer).
+
+**Systems.** `krouter` at the release current on the run day; `bm25-floor` (floor from dev3); plain BM25 with no floor.
+
+**Scored mechanically.** Current question: the change page cited first (right), the first-decision page cited first
+(stale), or refused. Neighbour question: refused, or what was cited. Reported per condition and per writer group
+(maintainer, others), with paired 95% intervals against each baseline (bootstrap over cases, 10 000 resamples, seed
+20261018).
+
+**Who reads what, when.** Nobody tuning KRouter (the maintainer's agents included) reads the cases before the run: the
+build script reads them from the page's store, writes the vault and the questions to a private folder, and prints
+counts only. Collection closes when at least 40 cases are in or on 2026-11-30, whichever comes first; the run follows
+the close. Results are reported whatever they show; cases read after the run are spent, like a revealed held-out set.
+
 ### Log, sets 7 and 8
 
 | Date | Event |
@@ -357,3 +395,4 @@ reported whatever they show.
 | 2026-10-18 | Both registered. Set 7 waits for the dataset; set 8 for history. Real-traffic blind judge (VERIFY layer 4): 18 router queries logged since the 2026-10-10 freeze plus 7 in agent sessions, of the 50 it waits for. |
 | 2026-10-18 | **Set 7 run** (`longmemeval_s_cleaned.json`, SHA-256 `d6f21ea9…c3a442`; KRouter v1.1.1 from a worktree at the tag; scored mechanically from the authors' labels). Answerable questions with an answer session among the cited pages: **KRouter 439/470**, bm25-floor 264/470. Refused although answerable: KRouter 12/470, bm25-floor 204/470. Knowledge update, latest answer session cited: **KRouter 70/72**, bm25-floor 48/72; stale only: KRouter 1/72, bm25-floor 0/72. Unanswerable (`_abs`) refused: **KRouter 3/30**, bm25-floor 22/30. Paired 95% intervals, KRouter minus bm25-floor: evidence +37.2 points [+32.8, +41.7]; refused-answerable −40.9 [−45.5, −36.4]; knowledge update +30.6 [+19.4, +41.7]; abstention −63.3 [−80.0, −46.7]. |
 | 2026-10-18 | **Reading it** (exploratory, not registered, said as such): plain BM25 with no floor, top three pages, cites an answer session for 447/470 and the latest update for 69/72, level with KRouter. The registered baseline's floor was picked on dev3, a 60-page Chinese vault, and on these 50-session English haystacks it refuses 43% of answerable questions; KRouter's lead over it comes from that floor, not from ranking, as on heldout3. What does hold: KRouter's refusal gate does not cost answerable questions here (12/470), and on raw sessions with no `superseded` marks it still cites the newest fact for 70 of 72 updates. What fails: it refuses 3 of 30 unanswerable questions. LongMemEval's abstention questions ask about a near neighbour of something the haystack does mention (a pet it never named, a trip it never took), the case KRouter's gate handles worst; it is the next thing to fix, measured on a seed-drawn half of `longmemeval_m` as registered. The model-judged secondary (reader and judge) has not been run. |
+| 2026-10-18 | Set 7 amended (S `_abs` now development; final abstention numbers from heldout3 neighbours and set 9, since M repeats S's questions). Set 9 registered before any item was written. |
