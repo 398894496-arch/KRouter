@@ -1,6 +1,6 @@
 ---
 name: krouter
-description: Look up what this user already decided, corrected or did before, in their own Obsidian vault, before answering from memory. Use when a question depends on the user's past decisions, rules, preferences, corrections, project history or earlier sessions ("how did we decide…", "what did we change…", "last week we…"). Also sets KRouter up when it is not installed yet.
+description: Look up what this user already decided, corrected or did before, in their own Markdown vault, before answering from memory. Use when a question depends on the user's past decisions, rules, preferences, corrections, project history or earlier sessions ("how did we decide…", "what did we change…", "last week we…"). Also sets KRouter up when it is not installed yet.
 ---
 
 # KRouter

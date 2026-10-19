@@ -2,7 +2,8 @@
 
 **1.1.x is the stable line.** Until 2026-11-12 it takes fixes only: no new features, no format changes, at most one
 patch release a week (security fixes excepted). New features wait on branches for 1.2.0. The early weeks shipped many
-versions a day; that pace was development, not a support promise.
+versions a day; that pace was development, not a support promise. On 2026-10-19 the maintainer merged the 1.2.0
+features into `main` early; a 1.1.x patch, if one is needed before 1.2.0, is cut from a branch off v1.1.1.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
 1.0.2 went out on one day: 1.0.0 at the maintainer's call, 1.0.1 and 1.0.2 as fixes from outside reviews. From 1.0.0 the version follows
@@ -11,16 +12,30 @@ notice, then the details.
 
 ## Unreleased
 
-- **The one-line install is lookup only and asks nothing** (1.2.0). It makes or finds the vault, installs the router,
+- **The one-line install is lookup only and asks nothing.** It makes or finds the vault, installs the router,
   connects the agents, and stops: no session import, no nightly job, nothing leaves the machine. Its last lines say
   how to turn remembering on: `bootstrap.py --ask` puts the two questions it used to put at install (import recent
   sessions? install the nightly job?), with the same preview of what is sent; `--import`, `--import-distill` and
   `--timer` still say yes in advance. An upgrade where you said yes before (session import consent, or a nightly job
   on disk) keeps it and is not told it is off.
-- **Codex is no longer picked as the nightly writer on its own** (1.2.0). It writes only the vault but can read the
+- **Codex is no longer picked as the nightly writer on its own.** It writes only the vault but can read the
   whole account, keys file included. It is used when you name it (`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or set
   `KROUTER_ALLOW_CODEX=1`; otherwise a logged-in grok or claude, both limited to the vault, is used instead, and a
   Codex-only machine is told why distilling was skipped (`codex:reads-account`).
+- **A question that names something the vault never mentions is refused** (waits for the real-traffic blind judge).
+  "Which did I start first, the Ferrari model or the Porsche model?" on a vault that has never mentioned a Porsche was
+  answered from the Ferrari page. Now a capitalised word in mid-sentence (`Porsche`, `Seattle`, `iPad`) that no page
+  contains refuses the question; sentence-initial capitals, two-letter words such as `OK`, and month and day names do
+  not count. Tuned on LongMemEval S's 30 unanswerable questions (now a development set: refused 3 → 9, answerable
+  questions refused 12 → 14 of 470) and dev3 (one more neighbour refused, nothing lost). heldout3, run once: wrong
+  citations 26.6% → 26.1%, neighbours refused 46 → 47 of 80, answerable right 102 of 120 unchanged.
+- **A question that matches one word of a page now says so.** On a 20-page vault, "小红书的笔记几点发？" was answered at
+  medium confidence from a page about sealing days, on the single word 笔记: the score floors scale with vault size,
+  so a new vault lets a one-word match through. On the dev sets such answers are right half the time and the score
+  does not tell which half, so whether to answer is unchanged (dev, dev2, dev3 identical). What changes: confidence is
+  `low`, the receipt carries a `recall_note:` line (only one word matched; say the vault may not cover the question),
+  and no generated answer is attached. Alias hints no longer come from scattered characters or question words
+  ("剪辑" was offered "剪藏原件"; "标题有什么讲究" was offered a page on 什么): a hint needs a shared two-character word.
 - Docs: retrieval described as it is. PROTOCOL, ARCHITECTURE, DETAILS (en, zh) and VERIFY still called it "a lock on short
   nouns" and quoted "25/25 paraphrases miss" without saying that tests the alias lock alone; outside agents read that
   as "you must maintain an alias table and any rewording misses". Ranked recall answers most questions; the alias lock
