@@ -75,6 +75,11 @@ Queries never do: lookup is a local SQLite full-text index, about 110 ms. Sessio
 your machine; CLI lanes differ in what they can read, and the install says which one you are choosing. Details:
 [`SECURITY.md`](SECURITY.md).
 
+**Backups.** `backup.py init --dir <a folder that syncs elsewhere>` turns on a nightly encrypted archive of the whole
+vault, history included, opened again each night before it counts. Point it at iCloud Drive, OneDrive, Dropbox, a
+Netdisk sync folder or a USB disk (or two of them); KRouter talks to no cloud. Why this and not syncing or pushing the
+vault: [`DETAILS.md` → Backing up your vault](docs/DETAILS.md#backing-up-your-vault).
+
 ## Honest numbers
 
 | Measured | Result |

@@ -136,7 +136,8 @@ def test_nightly_dry_run_calls_nothing_and_writes_nothing(tmp_path):
     plan = json.loads(res.stdout)
     steps = {s["step"]: s for s in plan["steps"]}
     assert set(steps) == {"import_sessions", "import_claude_mem", "compile_subconscious", "reconsolidate", "consolidate_topics", "answer_cards",
-                          "checkup"}
+                          "checkup", "backup"}
+    assert steps["backup"]["sends"] == "nothing (no model)"
     assert steps["import_sessions"]["chars"] == 0  # 没同意过：不导入、不发
     assert steps["answer_cards"]["chars"] > 0 and "90 系统文件/自动化/下意识问答.jsonl" in steps["answer_cards"]["writes"]
     assert plan["est_tokens_total"] > 0
