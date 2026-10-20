@@ -96,6 +96,9 @@ machine. What makes it reliable, and why each choice:
 - **The passphrase is the single point of failure.** It lives in the keys file, outside the vault, so it is never
   inside an archive. Lose both the machine and the passphrase and the backups are noise: keep it in a password manager.
 - **Kept on a schedule:** the newest 7, the newest of each of the last 4 weeks and 6 months.
+- **Links stay links.** Empty folders come back; a symbolic link comes back pointing where it pointed. What it points
+  to outside the vault is not in the archive: each run reports `links_outside`, and those folders need their own
+  backup (or `KROUTER_BACKUP_DIR` on a machine where they live inside the vault).
 - **Restoring needs no KRouter.** `backup.py restore <archive> --into <new folder>` (it never writes over a folder), or by
   hand on any machine with openssl and tar:
   `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in <archive> -out vault.tar.gz && tar -xzf vault.tar.gz`.

@@ -6,8 +6,10 @@ laptop. A copy elsewhere does. KRouter does not talk to any cloud: it writes an 
 choose (iCloud Drive, Dropbox, OneDrive, a Baidu or Google Drive sync folder, a USB disk, a NAS), and that folder's
 own client carries it away. Each archive is written once and never edited, so a sync client cannot half-merge it.
 
-- **What is in it:** the whole vault folder, its `.git` included (so the history comes too), minus editor state and
-  caches (`.trash`, `.obsidian/workspace*.json`, `.obsidian/cache`, `__pycache__`, `.DS_Store`).
+- **What is in it:** the whole vault folder, its `.git` included (so the history comes too), empty folders too, minus
+  editor state and caches (`.trash`, `.obsidian/workspace*.json`, `.obsidian/cache`, `__pycache__`, `.DS_Store`).
+  Symbolic links are kept as links and recreated on restore; what a link points to outside the vault is not in the
+  archive, and each run says how many such links there are (`links_outside`): back those folders up on their own.
 - **Encrypted, always.** Vaults hold plugin settings with tokens and pasted text; an archive leaves the machine only as
   AES-256 (`openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256`), with an HMAC-SHA256 over the ciphertext
   (stdlib, its own PBKDF2 salt) so a damaged or altered file is caught before it is opened. No unencrypted mode.
@@ -59,6 +61,7 @@ SKIP_DIRS = {".trash", "__pycache__"}
 SKIP_FILES = {".DS_Store"}
 KEEP_NEWEST, KEEP_WEEKS, KEEP_MONTHS = 7, 4, 6
 STALE_DAYS = 3
+LINKS = ".krouter-links.json"  # 软链接清单，打在加密包里，恢复时按原样重建
 
 
 def state_file() -> Path:
@@ -132,15 +135,39 @@ def _skip(rel: Path) -> bool:
 
 def pack(vault: Path, out: Path) -> dict:
     pages = files = 0
+    covered: set[Path] = set()  # 有文件进了包的目录（含各级上层）
+    dirs: list[Path] = []
+    links: list[dict] = []
     with tarfile.open(out, "w:gz") as tar:
         for path in sorted(vault.rglob("*")):
             rel = path.relative_to(vault)
-            if _skip(rel) or path.is_symlink() or not path.is_file():
+            if _skip(rel):
+                continue
+            if path.is_symlink():  # 链接本身记下来；它指向的库外内容不在这份备份里
+                target = os.readlink(path)
+                outside = not (path.parent / target).resolve().is_relative_to(vault.resolve())
+                links.append({"path": rel.as_posix(), "target": target, "outside": outside})
+                covered.update(rel.parents)
+                continue
+            if path.is_dir():
+                dirs.append(rel)
+                continue
+            if not path.is_file():
                 continue
             tar.add(path, arcname=str(Path(vault.name) / rel), recursive=False)
             files += 1
             pages += path.suffix == ".md" and ".git" not in rel.parts
-    return {"files": files, "pages": pages}
+            covered.update(rel.parents)
+        for rel in dirs:  # 没有任何文件进包的目录也记下来：页面骨架里常有留着待填的目录
+            if rel not in covered:
+                tar.add(vault / rel, arcname=str(Path(vault.name) / rel), recursive=False)
+        if links:
+            raw = json.dumps(links, ensure_ascii=False).encode("utf-8")
+            info = tarfile.TarInfo(str(Path(vault.name) / LINKS))
+            info.size = len(raw)
+            tar.addfile(info, __import__("io").BytesIO(raw))
+    return {"files": files, "pages": pages, "links": len(links),
+            "links_outside": sum(1 for x in links if x["outside"])}
 
 
 def git_head(vault: Path) -> str:
@@ -189,12 +216,23 @@ def open_archive(archive: Path, passphrase: str, into: Path) -> dict:
             members = tar.getmembers()
             for m in members:  # 只解普通文件，路径必须落在目标目录里
                 target = (into / m.name).resolve()
-                if not m.isfile() or not str(target).startswith(str(into.resolve()) + os.sep):
+                if not (m.isfile() or m.isdir()) or not str(target).startswith(str(into.resolve()) + os.sep):
                     raise ValueError(f"unsafe entry in archive: {m.name}")
             safe = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
             tar.extractall(into, members=members, **safe)
     roots = [p for p in into.iterdir() if p.is_dir()]
     root = roots[0] if len(roots) == 1 else into
+    relinked = 0
+    manifest_links = root / LINKS
+    if manifest_links.is_file():
+        for link in json.loads(manifest_links.read_text(encoding="utf-8")):
+            where = (root / link["path"])
+            if not where.resolve().is_relative_to(root.resolve()) or where.exists() or where.is_symlink():
+                continue
+            where.parent.mkdir(parents=True, exist_ok=True)
+            os.symlink(link["target"], where)
+            relinked += 1
+        manifest_links.unlink()
     pages = sum(1 for p in root.rglob("*.md") if ".git" not in p.relative_to(root).parts)
     git_ok = None
     if (root / ".git").is_dir():
@@ -205,7 +243,7 @@ def open_archive(archive: Path, passphrase: str, into: Path) -> dict:
         raise ValueError(f"page count {pages} differs from the manifest's {meta['pages']}")
     if git_ok is False:
         raise ValueError("git fsck failed on the restored history")
-    return {"restored": str(root), "pages": pages, "git_ok": git_ok, "created": meta.get("created")}
+    return {"restored": str(root), "pages": pages, "git_ok": git_ok, "links": relinked, "created": meta.get("created")}
 
 
 def archives(dest: Path) -> list[Path]:
@@ -362,6 +400,7 @@ def main() -> int:
             errors.append(f"{target}: {exc}"[:300])
             continue
         results.append({"archive": made["archive"], "pages": made["pages"], "files": made["files"],
+                        "links": made["links"], "links_outside": made["links_outside"],
                         "bytes": made["bytes"], "git": bool(made["git_head"]), "restore_checked": True,
                         "git_ok": check["git_ok"], "pruned": len(prune(target))})
     now = datetime.now().isoformat(timespec="seconds")

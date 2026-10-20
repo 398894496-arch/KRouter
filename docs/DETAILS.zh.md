@@ -67,6 +67,7 @@ python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
 - **一律加密，一律验证。** 用 `openssl` 做 AES-256 加密（PBKDF2，60 万轮），整个文件再加 HMAC 校验，损坏或被改过在解密前就能发现。之后做一次完整的试恢复：页数和清单对得上，历史过得了 `git fsck`。没有不加密的选项。
 - **密码是唯一的命门。** 它存在钥匙文件里，在库外面，所以不会被打进备份包。如果电脑和密码一起丢了，备份就打不开了，所以一定要在密码管理器里也存一份。
 - **按规则保留：** 最新 7 个，再加最近 4 周、6 个月里每周、每月各最新的一个。
+- **链接还是链接。** 空文件夹会还原；软链接还原后指向原来的位置。但它指向的库外内容不在备份包里：每次备份都会报告 `links_outside`（有几个链接指向库外），那些文件夹要另外备份。
 - **恢复不依赖 KRouter。** 用 `backup.py restore <备份包> --into <新文件夹>`（从不覆盖已有文件夹）；或者在任何装了 openssl 和 tar 的电脑上手动恢复：
   `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in <备份包> -out vault.tar.gz && tar -xzf vault.tar.gz`。
 - **自己亲手试一次。** `backup.py verify --latest` 会在临时文件夹里打开最新的备份，什么都不改；再真的 `restore` 到一个新文件夹一次，用 Obsidian 打开看看。
