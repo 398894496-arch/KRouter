@@ -38,6 +38,10 @@ def _vault(root: Path) -> Path:
     (v / ".obsidian").mkdir()
     (v / ".obsidian/workspace.json").write_text("{}", encoding="utf-8")
     (v / ".obsidian/app.json").write_text("{}", encoding="utf-8")
+    (v / "01 项目/待填").mkdir(parents=True)
+    (v / "01 项目/待填/.DS_Store").write_bytes(b"x")
+    (root / "elsewhere").mkdir(exist_ok=True)
+    (v / "01 项目/实时资料").symlink_to(root / "elsewhere")
     for argv in (["init", "-q"], ["add", "-A"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "x"]):
         subprocess.run(["git", "-C", str(v), *argv], check=True)
     return v
@@ -54,6 +58,9 @@ def test_backup_restores_the_vault_and_its_history(env, tmp_path):
     assert (root / "02 经验与方法/发版.md").read_text(encoding="utf-8") == "# 发版\n只从 main 的 tag 发。\n"
     assert not (root / ".trash").exists() and not (root / ".obsidian/workspace.json").exists()
     assert (root / ".obsidian/app.json").is_file() and res["git_ok"] is True
+    assert (root / "01 项目/待填").is_dir()  # 空文件夹也回来
+    assert (root / "01 项目/实时资料").is_symlink() and res["links"] == 1  # 软链接按原样重建
+    assert made["links"] == 1 and made["links_outside"] == 1 and not (root / ".krouter-links.json").exists()
     head = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True).stdout
     assert head.strip() == made["git_head"]
 

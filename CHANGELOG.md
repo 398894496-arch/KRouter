@@ -18,6 +18,8 @@ notice, then the details.
   week for 4 weeks and one per month for 6 months, are kept. The passphrase lives in the keys file, outside the vault;
   `status` asks the agent to tell you while it is not saved anywhere else, or when no backup has restored cleanly for
   three days. KRouter talks to no cloud. Restoring needs only openssl and tar. DETAILS → Backing up your vault.
+  Empty folders and symbolic links come back as they were; what a link points to outside the vault is not in the
+  archive, and each run says how many such links there are (`links_outside`).
 
 ## 1.2.1 — 2026-10-20
 
