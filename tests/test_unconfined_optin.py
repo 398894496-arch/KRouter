@@ -93,3 +93,19 @@ def test_codex_is_used_when_named_or_allowed(llm, monkeypatch, tmp_path):
     monkeypatch.setattr(llm, "detect_candidates", lambda: [codex])
     (tmp_path / "keys.env").write_text("KROUTER_ALLOW_CODEX=1\n", encoding="utf-8")
     assert llm.detect_writer() == (str(codex), "codex:ok")
+
+
+def test_claude_writer_tools_are_all_scoped_to_the_vault(tmp_path):
+    """A bare `Glob` or `Grep` in the allow-list lets the claude writer read any file in the account (a bare Grep
+    printed a canary line from outside the vault). Every file tool carries the vault path."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "extras/host-daily-evolution"))
+    import resolve
+
+    vault = tmp_path / "vault"
+    allow = resolve.claude_allow(vault, tmp_path / "route_knowledge.sh")
+    for tool in ("Read", "Edit", "Glob", "Grep"):
+        assert tool not in allow, f"bare {tool} in the claude allow-list"
+        assert f"{tool}(/{vault}/**)" in allow
+    assert all(a.startswith(("Read(", "Edit(", "Glob(", "Grep(", "Bash(")) for a in allow)

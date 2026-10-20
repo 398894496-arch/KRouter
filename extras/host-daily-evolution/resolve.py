@@ -366,10 +366,13 @@ def write_grok_sandbox(vault: Path, router: Path) -> None:
 
 def claude_allow(vault: Path, router: Path) -> list[str]:
     """Claude Code has no kernel sandbox here, so its tools are allow-listed instead: read and edit only inside
-    the vault, run only the router, no other shell command, no web fetch; anything else is refused (`dontAsk`)."""
+    the vault, run only the router, no other shell command, no web fetch; anything else is refused (`dontAsk`).
+
+    Glob and Grep carry the vault path too. Up to 1.2.0 they were allowed bare, and a bare Grep prints matching lines
+    from any file in the account (keys file included); measured with a canary file outside the vault."""
     v = str(vault).rstrip("/")
     r = str(router)
-    return [f"Read(/{v}/**)", f"Edit(/{v}/**)", "Glob", "Grep", f"Bash(sh {r}:*)", f"Bash({r}:*)", f"Bash(bash {r}:*)",
+    return [f"Read(/{v}/**)", f"Edit(/{v}/**)", f"Glob(/{v}/**)", f"Grep(/{v}/**)", f"Bash(sh {r}:*)", f"Bash({r}:*)", f"Bash(bash {r}:*)",
             f"Bash(/bin/sh {r}:*)"]
 
 
