@@ -11,6 +11,17 @@ notice, then the details.
 
 ## Unreleased
 
+Nothing yet.
+
+## 1.2.1 — 2026-10-20
+
+**What you will notice**
+- **Security fix: the `claude` nightly writer can no longer read files outside the vault.** Up to 1.2.0 its Grep and
+  Glob were allowed with no path, so it could print lines from any file in the account, the keys file included. Only
+  a nightly job on the `claude` lane (installed by `install.sh`, `--ask` or `--timer`) was affected; upgrade by
+  running the install line again.
+
+**Details**
 - **Security: the claude nightly writer could read files outside the vault through Grep.** Its allow-list scoped Read
   and Edit to the vault but allowed Glob and Grep with no path; in a test with a canary file outside the vault, Grep
   printed the canary line (Read was refused). Glob and Grep now carry the vault path too; the same test leaks nothing
