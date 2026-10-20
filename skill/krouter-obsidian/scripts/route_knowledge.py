@@ -128,6 +128,22 @@ def emit_daily_seal(health: Path) -> None:
         print(f"daily_seal_pending: {pending}")
 
 
+def emit_backup() -> None:
+    """One line on the off-machine backup; a host_action when one is set up but not working (or the passphrase lives
+    only on this machine). Nothing at all when no backup folder is set."""
+    try:
+        from backup import status as backup_status
+
+        st = backup_status()
+    except Exception:  # noqa: BLE001 - 备份状态读不到不影响查询
+        return
+    if st.get("backup") != "on":
+        return
+    print(f"backup: last good {st.get('last_good') or 'never'}; {st.get('archives', 0)} archives in {st.get('dir')}")
+    if st.get("host_action"):
+        print(f"host_action: Backup: {st['host_action']}.")
+
+
 def emit_host_action(health: Path) -> None:
     if not health.is_file():
         return
@@ -410,6 +426,7 @@ def main() -> int:
                     print(f"{field}: {meta[field]}")
         emit_daily_seal(health)
         emit_host_action(health)
+        emit_backup()
         return 0
     if route == "suggest":
         if not query:

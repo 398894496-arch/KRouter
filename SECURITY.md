@@ -38,6 +38,7 @@ where data goes and how to report a problem.
 | One project's claude-mem decisions | The model lane, to sort what is still in force | Only with distilling on |
 | This repository's confirmed decisions and recent corrections | The new Claude Code session's context (plugin `SessionStart` hook): up to 8 lines, each with its page. Only pages whose recorded repository path is this one; a folder name never matches | Only with the plugin, and after you said yes to importing; `KROUTER_INJECT=0` turns it off |
 | Rule and topic pages, topic excerpts, unanswered queries (with, for each, up to 4 candidate pages' first 600 characters, redacted; never secret pages or `03 资料与证据`) | The same model lane | The nightly job, only if you turned it on |
+| The whole vault, `.git` included, encrypted (AES-256, HMAC, test-restored) | The backup folders you named (`KROUTER_BACKUP_DIR`), and from there wherever their sync client takes it. The passphrase stays in the keys file and is never inside an archive | Nightly, only after `backup.py init --dir` |
 | API keys | `~/.dsh-krouter-keys.env` (mode 600). Never the vault, never a prompt, never printed | — |
 | Pages named or marked as secret (凭据 / 密钥 / 钥匙 / credential / secret / password, or `secret: true`) | Nowhere: never sent, never quoted | — |
 

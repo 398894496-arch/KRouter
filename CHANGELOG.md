@@ -11,7 +11,13 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+- **Off-machine backups.** `backup.py init --dir <folder>` turns on a nightly, encrypted archive of the whole vault
+  (its `.git` included, editor state and caches left out) in a folder that syncs elsewhere (iCloud Drive, OneDrive,
+  Dropbox, a Netdisk sync folder, a USB disk; several, separated by `|`). AES-256 via openssl with an HMAC; each
+  archive is restored into a temporary folder (page count, `git fsck`) before it counts; the newest 7, plus one per
+  week for 4 weeks and one per month for 6 months, are kept. The passphrase lives in the keys file, outside the vault;
+  `status` asks the agent to tell you while it is not saved anywhere else, or when no backup has restored cleanly for
+  three days. KRouter talks to no cloud. Restoring needs only openssl and tar. DETAILS → Backing up your vault.
 
 ## 1.2.1 — 2026-10-20
 

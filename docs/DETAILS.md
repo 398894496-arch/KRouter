@@ -64,6 +64,44 @@ It fetches the latest release (a tag, never `main`) and checks its SHA-256 again
 - **Keys never live in the vault, and are never sent or printed.** A key pasted on the key page moves into `~/.dsh-krouter-keys.env` (chmod 600) on the next run. Pages named or marked as secret (凭据 / 密钥 / credential / secret / password, or `secret: true`) are never sent and never quoted; key-shaped text anywhere else prints as `<redacted>`.
 - **Cost**: the first night on the bundled template is about 4,000 tokens; on a vault with ~100 rule and topic pages, about 160,000. Later nights redo only pages that changed. With a CLI subscription this is quota, not money.
 
+## Backing up your vault
+
+The vault's git history (if it has one) undoes a bad edit. It does not survive a dead disk, a stolen laptop or ransomware
+that encrypts the folder. For that you need a copy somewhere else, and one you have actually restored from.
+`backup.py` makes that copy; it is off until you give it a folder.
+
+```bash
+python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py init --dir "<a folder that syncs elsewhere>"
+# copy KROUTER_BACKUP_PASSPHRASE from ~/.dsh-krouter-keys.env into your password manager, then:
+python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
+```
+
+From then on the nightly job writes one archive a night and opens it again before counting it as good; `status` (and
+so your agent) says so when no backup has restored cleanly for three days, or while the passphrase exists only on this
+machine. What makes it reliable, and why each choice:
+
+- **A folder, not a cloud API.** Point it at iCloud Drive (`~/Library/Mobile Documents/com~apple~CloudDocs/…`),
+  OneDrive, Dropbox, a Google or Baidu Netdisk sync folder, a USB disk or a NAS. Their clients already handle accounts,
+  retries and versioning; KRouter talks to none of them. Each archive is written whole, then renamed into place, and
+  never edited, so a sync client never uploads half a file or merges two.
+- **Two places beat one.** `KROUTER_BACKUP_DIR` takes several folders separated by `|` (a cloud folder and a USB disk,
+  say). Each gets its own archive and its own check; one failing does not stop the other.
+- **Do not sync the live vault folder itself** with a cloud drive while git is in it, and do not push it to a public or
+  even private git host in the clear. Sync clients corrupt `.git` when two machines write at once, and vaults hold
+  plugin settings with tokens (KRouter's own scan of one vault found four such files in its history). The archive is
+  the whole folder, `.git` included, encrypted.
+- **Encrypted, always, and checked.** AES-256 via `openssl` (PBKDF2, 600 000 rounds), an HMAC over the file so damage
+  or tampering is caught before it is opened, then a full test restore: page count against the manifest and `git
+  fsck` on the history. There is no unencrypted mode.
+- **The passphrase is the single point of failure.** It lives in the keys file, outside the vault, so it is never
+  inside an archive. Lose both the machine and the passphrase and the backups are noise: keep it in a password manager.
+- **Kept on a schedule:** the newest 7, the newest of each of the last 4 weeks and 6 months.
+- **Restoring needs no KRouter.** `backup.py restore <archive> --into <new folder>` (it never writes over a folder), or by
+  hand on any machine with openssl and tar:
+  `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in <archive> -out vault.tar.gz && tar -xzf vault.tar.gz`.
+- **Test it once yourself.** `backup.py verify --latest` opens the newest archive in a temporary folder and changes
+  nothing; do a real `restore` into a new folder once, and open it in Obsidian.
+
 ## Evidence at a glance
 
 | What | Result | Read it as |

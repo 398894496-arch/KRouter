@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Nightly upkeep runner: the five steps in order, each one's outcome written where the host can see it.
 
-import_sessions → import_claude_mem → compile_subconscious → reconsolidate → consolidate_topics → answer_cards → checkup. The first one
+import_sessions → import_claude_mem → compile_subconscious → reconsolidate → consolidate_topics → answer_cards → checkup → backup.
+The last writes an encrypted, restore-checked archive of the vault into the backup folder when one is set
+(`backup.py init --dir`), and is `off` otherwise. The first one
 imports yesterday's agent sessions only after the host said yes (`import_sessions.py --consent`), the second
 re-imports claude-mem's memory the same way; until then they are `off`, which is not a problem to report. Each step is a
 separate process; one failing does not stop the others. Outcomes (ran / skipped / partial / failed,
@@ -31,7 +33,8 @@ import llm  # noqa: E402
 import notify  # noqa: E402
 import zones  # noqa: E402
 
-STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "reconsolidate", "consolidate_topics", "answer_cards", "checkup")
+STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "reconsolidate", "consolidate_topics", "answer_cards", "checkup",
+         "backup")
 MODEL_STEPS = {"import_sessions", "import_claude_mem", "reconsolidate", "consolidate_topics", "answer_cards"}
 REPORT = "90 系统文件/自动化/夜间维护.md"
 HEALTH = "90 系统文件/自动化/日更健康.md"
@@ -44,6 +47,10 @@ def classify(rc: int, out: str) -> tuple[str, str]:
         return "failed", (out.strip().splitlines() or [f"rc={rc}"])[-1][:200]
     if '"import": "off"' in out:
         return "off", "会话导入没开（import_sessions.py --consent 开启）"
+    if '"backup": "partial"' in out:
+        return "partial", "备份只写成了一部分位置：" + out.split('"errors": ', 1)[-1][:160]
+    if '"backup": "off"' in out:
+        return "off", "备份没开（backup.py init --dir <会同步到别处的文件夹> 开启）"
     if '"claude_mem": "off"' in out or '"claude_mem": "absent"' in out:
         return "off", "claude-mem 导入没开，或本机没有 claude-mem（import_claude_mem.py --consent 开启）"
     for line in out.splitlines():
@@ -103,6 +110,9 @@ def run_step(step: str, vault: Path, extra: list[str], dry: bool) -> dict:
         argv += extra
     if dry:
         if step not in MODEL_STEPS:
+            if step == "backup":
+                return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
+                        "writes": ["an encrypted archive in the backup folder, if one is set"]}
             return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
                     "writes": ["90 系统文件/自动化/下意识.md" if step == "compile_subconscious"
                                else "90 系统文件/自动化/下意识体检.md"]}

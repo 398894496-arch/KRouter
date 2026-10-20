@@ -49,6 +49,28 @@ irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootst
 - **key 从不放在库里，也从不外发、从不打印。** 贴在钥匙页上的 key 下次运行会挪进 `~/.dsh-krouter-keys.env`（权限 600）。名字或标记表明是机密的页（凭据、密钥、credential、secret、password，或 `secret: true`）从不外发、从不引用；其他地方像 key 的文字一律显示为 `<redacted>`。
 - **花费**：自带模板第一晚约 4,000 token；有一百来个规则页和主题页的库约 16 万 token。之后每晚只重做改过的页。用订阅的 CLI，花的是额度不是钱。
 
+## 备份你的库
+
+库的 git 历史（如果有）能撤回一次改坏，但扛不住硬盘坏了、电脑丢了，或者勒索软件把整个文件夹加密。要防这些，得有一份放在别处的副本，而且是真的恢复过的副本。`backup.py` 就做这件事；不给它指定文件夹，它就不运行。
+
+```bash
+python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py init --dir "<一个会同步到别处的文件夹>"
+# 把 ~/.dsh-krouter-keys.env 里的 KROUTER_BACKUP_PASSPHRASE 复制进密码管理器，然后：
+python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
+```
+
+之后夜间任务每晚写一个备份包，并且先把它重新打开验一遍，验过了才算数。连续三天没有一次恢复成功，或者密码还只存在这台电脑上，`status` 都会说出来，你的 agent 也就会告诉你。为什么这样设计：
+
+- **写进文件夹，不接云接口。** 指向 iCloud 云盘（`~/Library/Mobile Documents/com~apple~CloudDocs/…`）、OneDrive、Dropbox、Google 或百度网盘的同步文件夹、移动硬盘或 NAS 都行。账号、重试、版本这些事，它们的客户端本来就会处理，KRouter 不碰任何一家。每个备份包先写完整再改名放进去，之后不再改动，同步客户端不会上传半个文件，也不会把两个版本合在一起。
+- **两个地方比一个可靠。** `KROUTER_BACKUP_DIR` 可以写多个文件夹，用 `|` 隔开（比如一个云盘文件夹加一块移动硬盘）。每处各写一个包、各验一遍，一处失败不影响另一处。
+- **不要拿云盘直接同步正在用的库，也不要把库明文推到 git 托管站**，私有仓库也不行。两台电脑同时写的时候，同步客户端会把 `.git` 弄坏；而且库里常有带 token 的插件设置（KRouter 扫了一个真实的库，历史里就有四个这样的文件）。备份包是整个文件夹连同 `.git` 一起加密。
+- **一律加密，一律验证。** 用 `openssl` 做 AES-256 加密（PBKDF2，60 万轮），整个文件再加 HMAC 校验，损坏或被改过在解密前就能发现。之后做一次完整的试恢复：页数和清单对得上，历史过得了 `git fsck`。没有不加密的选项。
+- **密码是唯一的命门。** 它存在钥匙文件里，在库外面，所以不会被打进备份包。如果电脑和密码一起丢了，备份就打不开了，所以一定要在密码管理器里也存一份。
+- **按规则保留：** 最新 7 个，再加最近 4 周、6 个月里每周、每月各最新的一个。
+- **恢复不依赖 KRouter。** 用 `backup.py restore <备份包> --into <新文件夹>`（从不覆盖已有文件夹）；或者在任何装了 openssl 和 tar 的电脑上手动恢复：
+  `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in <备份包> -out vault.tar.gz && tar -xzf vault.tar.gz`。
+- **自己亲手试一次。** `backup.py verify --latest` 会在临时文件夹里打开最新的备份，什么都不改；再真的 `restore` 到一个新文件夹一次，用 Obsidian 打开看看。
+
 ## 证据一览
 
 | 证明什么 | 结果 | 怎么读 |

@@ -71,6 +71,8 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 查询从不外发：查找走本地的 SQLite 全文索引，每次约 110 ms。导入会话也只在本机做。只有你点过头的步骤才会把文字发给模型，就是提炼会话和夜间整理两步，发给你本来就在用的 CLI 或 API key，用 `--dry-run` 可以先看会发多少。key 和标成机密的页从不外发，也从不引用。夜间写入用 API key 通道时，本机不跑任何写入进程；用 CLI 通道时，
 各家 CLI 能读到的范围不同，安装时会告诉你选的是哪一条。细节见 [`SECURITY.md`](SECURITY.md)。
 
+**备份。** 运行 `backup.py init --dir <一个会同步到别处的文件夹>`，就会每晚给整个库（连同历史）做一个加密备份包，并且当晚重新打开验证过才算数。可以指向 iCloud 云盘、OneDrive、Dropbox、网盘同步文件夹或移动硬盘，也可以同时指两个；KRouter 不连任何云。为什么这样做，而不是直接同步或推送整个库：[`DETAILS.zh.md` → 备份你的库](docs/DETAILS.zh.md#备份你的库)。
+
 ## 老实的数字
 
 | 测了什么 | 结果 |
