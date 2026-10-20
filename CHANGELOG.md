@@ -11,7 +11,14 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+- **Security: the claude nightly writer could read files outside the vault through Grep.** Its allow-list scoped Read
+  and Edit to the vault but allowed Glob and Grep with no path; in a test with a canary file outside the vault, Grep
+  printed the canary line (Read was refused). Glob and Grep now carry the vault path too; the same test leaks nothing
+  and Grep and Glob still work inside the vault. Affects only the nightly job installed by `install.sh` or `--ask` /
+  `--timer` on the `claude` lane; the API-key, grok and Codex lanes, and the model steps (no tools at all), are not
+  affected. Found by an outside review.
+- `first_run.sh` ends by pointing at `bootstrap.py --dry-run` and the lookup-only install, not at `install.sh` (which
+  installs the nightly job).
 
 ## 1.2.0 — 2026-10-19
 

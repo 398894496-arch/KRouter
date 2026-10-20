@@ -123,7 +123,7 @@ fi
 
 printf '%s\n' ""
 printf '%s\n' "First run passed on $OBSIDIAN_VAULT"
-printf '%s\n' "Lock is proven. The nightly job is not installed yet: the one-line install asks first; install.sh installs it (KROUTER_NO_TIMER=1 skips). It needs an API key or a logged-in grok/codex/claude."
-printf '%s\n' "Next: copy template/ to your Obsidian vault and run install.sh with OBSIDIAN_VAULT set; your alias table is 90 系统文件/canonical_sources.psv in that vault (propose_aliases.py drafts rows for you to tick)."
+printf '%s\n' "Lock is proven. Nothing was installed."
+printf '%s\n' "Next: python3 scripts/bootstrap.py --dry-run (every change it would make, made nowhere), then without --dry-run: lookup only, no nightly job, no session import. --vault <path> uses a vault you already have and overwrites nothing; --ask offers the nightly job and the import later."
 
 [ "$fail" -eq 0 ]

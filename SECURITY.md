@@ -50,7 +50,7 @@ and sends nothing. The one-line install asks before it installs the nightly job;
 |---|---|---|---|
 | **API key (recommended)** | Nothing: a direct API call | — (KRouter sends only what `--dry-run` lists) | — |
 | `grok` | grok, in a kernel-enforced sandbox profile (`strict` + the router) | The vault, the router, system paths | The vault, KRouter's cache and state |
-| `claude` | Claude Code, with tools allow-listed (`dontAsk`): read / edit inside the vault, run the router, nothing else | The vault (tool-level rule, no kernel sandbox) | The vault |
+| `claude` | Claude Code, with tools allow-listed (`dontAsk`): read / edit / glob / grep inside the vault, run the router, nothing else | The vault (tool-level rule, no kernel sandbox). Up to 1.2.0 Glob and Grep were allowed without a path, and Grep could print lines from any file in the account, keys file included | The vault |
 | Codex | Codex in its `workspace-write` sandbox. **Not picked on its own**: only when you name it (`KROUTER_WRITER`, `KROUTER_LEARN_CLI`) or set `KROUTER_ALLOW_CODEX=1` | **Your whole account**, keys file included | The vault |
 | Others (opencode, kimi, pi, vibe, antigravity, cursor-agent) | The CLI with no confinement KRouter can set. **Never picked on its own**: only with `KROUTER_ALLOW_UNCONFINED=1` in the environment or the keys file | **Your whole account** | **Your whole account** |
 
