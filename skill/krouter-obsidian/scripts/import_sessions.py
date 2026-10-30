@@ -496,11 +496,13 @@ def old_digest(path: Path | None, turns: int) -> str:
     if meta.get("digest_turns") != str(turns):
         return ""
     text = path.read_text(encoding="utf-8")
-    m = re.search(r"\n" + re.escape(DIGEST_HEAD) + r"\n\n(.*?)\n\n## ", text, re.S)
+    m = re.search(r"\n(?:" + "|".join(re.escape(h) for h in DIGEST_HEADS) + r")\n\n(.*?)\n\n## ", text, re.S)
     return m.group(1).strip() if m else ""
 
 
-DIGEST_HEAD = "## 定了什么、改了什么（模型提炼，待你确认）"
+DIGEST_HEAD = "## 定了什么、改了什么（模型提炼）"
+# 旧页的标题（1.2 及以前要人确认）：读的时候照样认
+DIGEST_HEADS = (DIGEST_HEAD, "## 定了什么、改了什么（模型提炼，待你确认）")
 CONTEXT_TURNS = 2  # 续提炼时往前多带几轮：改主意常常跨过上次提炼停下的地方
 
 
@@ -518,7 +520,8 @@ def prior_digest(path: Path | None, e: dict) -> tuple[list[str], int]:
     if not 0 < done < len(e["turns"]) or meta.get("first_turn") != e.get("first_key"):
         return [], 0
     text = path.read_text(encoding="utf-8")
-    block = text.split(DIGEST_HEAD, 1)[1].split("\n## ", 1)[0] if DIGEST_HEAD in text else ""
+    head = next((h for h in DIGEST_HEADS if h in text), "")
+    block = text.split(head, 1)[1].split("\n## ", 1)[0] if head else ""
     lines = [ln.strip() for ln in block.splitlines() if ln.strip().startswith(("-", "*"))]
     return (lines, done) if lines else ([], 0)
 
@@ -545,7 +548,7 @@ def render(e: dict, digest: str = "") -> str:
     if digest:
         out += [DIGEST_HEAD, "", digest.strip(), ""]
     out += [f"## 摘录（{e['day'].isoformat()} · {e['project'] or '?'} · {e['agent']} · {len(turns)} 轮）", "",
-            "只留你的提问和每轮最后的回答，已脱敏。这是线索，不是结论：定下来的规则写进规则页。", ""]
+            "只留你的提问和每轮最后的回答，已脱敏。上面的提炼由模型自动写入，每一轮改了什么记在「记忆变更记录」里，不对可以一条命令撤销。", ""]
     if e.get("covered_by"):
         out[-1:-1] = [f"当天的日更：[[{e['covered_by'].removesuffix('.md')}]]（那页是当天总结，这页是逐轮原话）。"]
     if e.get("forked_from"):
@@ -671,6 +674,31 @@ def distill(e: dict, page: str, vault: Path, dry: bool, start: int = 0, prior: l
 _LOCK = None
 
 
+def old_lines(path: Path | None) -> list[str]:
+    """The digest lines a page had before this run (any heading version)."""
+    if not path or not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    head = next((h for h in DIGEST_HEADS if h in text), "")
+    block = text.split(head, 1)[1].split("\n## ", 1)[0] if head else ""
+    return [ln.strip() for ln in block.splitlines() if ln.strip().startswith(("-", "*"))]
+
+
+def log_run(vault: Path, rid: str, pages: list[dict], verdicts: list[dict], gone: list[Path],
+            touched: list[Path]) -> None:
+    """Make the run observable: one commit with exactly what it wrote, then its entry in the change ledger."""
+    import capture_ledger
+
+    if not (pages or verdicts or gone):
+        return
+    added = sum(len(p["added"]) for p in pages)
+    sha = capture_ledger.commit(vault, rid, touched, f"run {rid}（{len(pages)} 页新增 {added} 条，判定纠正 {len(verdicts)} 条）")
+    undo = f"python3 {Path(__file__).resolve()} --vault '{vault}' --undo {rid}"
+    entry = capture_ledger.section(vault, rid, pages, verdicts, gone, undo, sha)
+    ledger = capture_ledger.append(vault, entry)
+    capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+
+
 def hold_lock() -> None:
     """One import at a time (a session-end hook and the nightly run, or two windows closing together): the second waits
     and then finds the first one's digest, instead of both sending the same session to the model."""
@@ -702,6 +730,8 @@ def main() -> int:
                          "write no page; saved with --consent")
     ap.add_argument("--intraday", action="store_true", help="today and yesterday, only when consent was given, with the "
                     "lane recorded then (what a daytime timer runs)")
+    ap.add_argument("--undo", default="", metavar="RUN", help="take back everything run RUN wrote (its id is in "
+                    "90 系统文件/自动化/记忆变更记录.md)")
     ap.add_argument("--exclude-root", action="append", default=[], help="never import sessions under this project "
                     "root; repeatable, saved with --consent")
     ap.add_argument("--distill-max", type=int, default=DISTILL_SESSIONS, help="distill at most this many sessions, newest first")
@@ -720,6 +750,12 @@ def main() -> int:
         print("set OBSIDIAN_VAULT", file=sys.stderr)
         return 2
     vault = Path(args.vault).expanduser()
+    if args.undo:
+        import capture_ledger
+
+        res = capture_ledger.undo(vault, args.undo)
+        print(json.dumps(res, ensure_ascii=False))
+        return 0 if res.get("undo") == "done" else 1
     st = load_state()
     scheduled = args.nightly or args.intraday or bool(args.file)
     if scheduled and not st.get("consent"):
@@ -763,6 +799,14 @@ def main() -> int:
     removed = [path for (sid, _day), path in have.items() if sid in dropped]
     to_distill = {id(e) for e in sorted((e for e in entries if len(e["turns"]) >= DISTILL_MIN_TURNS),
                                         key=lambda e: e["turns"][-1]["ts"], reverse=True)[:max(args.distill_max, 0)]}
+    import capture_ledger
+    import corrections
+
+    rid = capture_ledger.run_id()
+    cands = corrections.pending(folder)
+    changed_pages: list[dict] = []   # 这一轮新写进提炼的行，记进变更记录
+    verdicts: list[dict] = []
+    touched: list[Path] = []          # 这一轮写过或删过的文件，进同一个提交
     written, kept, sent, calls, failed, incremental = [], [], 0, 0, 0, 0
     for e in entries:
         target = folder / file_name(e)
@@ -772,6 +816,7 @@ def main() -> int:
         before = have.get((e["id"], e["day"].isoformat()))
         page = render(e)
         digest = old_digest(before, len(e["turns"]))
+        fresh = False
         if not digest and distill_on and id(e) in to_distill:
             prior, done = prior_digest(before, e)
             incremental += bool(done)
@@ -779,11 +824,22 @@ def main() -> int:
                 digest, n = distill(e, page, vault, args.dry_run, start=done, prior=prior)
                 sent += n
                 calls += 1
+                fresh = bool(digest)
             except Exception as exc:  # noqa: BLE001  模型失败不影响本地摘录
                 failed += 1
                 print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
         if digest:
             page = render(e, digest)
+        if fresh and not args.dry_run:
+            had = set(old_lines(before))
+            new = [ln for ln in digest.splitlines() if ln.strip().startswith(("-", "*"))]
+            added = [ln for ln in new if ln not in had and not any(x in ln for x in NONE_LINES)]
+            if added:
+                changed_pages.append({"path": target, "agent": e["agent"], "session": e["id"], "added": added})
+            mine = cands.pop((e["day"].isoformat(), e["id"][:8]), [])
+            if mine:
+                link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
+                verdicts += [{**r, "link": link} for r in corrections.settle(mine, new)]
         if not args.dry_run:
             folder.mkdir(parents=True, exist_ok=True)
             tmp = target.with_name(target.name + ".tmp")
@@ -791,11 +847,20 @@ def main() -> int:
             os.replace(tmp, target)
             if before and before != target and before.exists():
                 before.unlink()  # 会话改了标题：换成新文件名，不留两份
+                touched.append(before)
+            touched.append(target)
         written.append(zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, "/")))
     if not args.dry_run:
+        gone = []
         for path in forked_pages + removed:  # 整段都在另一个会话里的旧页；标了不记的会话以前写过的页
             if path.exists() and frontmatter(path).get("source") == MARK:
                 path.unlink()
+                gone.append(path)
+        if verdicts:
+            # hook 当场记下的候选先原样进一次提交：撤销这一轮时候选回到"待判定"，而不是跟着消失
+            capture_ledger.commit(vault, rid, sorted({v["page"] for v in verdicts}), "纠正候选（hook 记下）", tagged=False)
+        touched += corrections.mark(verdicts)
+        log_run(vault, rid, changed_pages, verdicts, gone, touched + gone)
     if args.consent and not args.dry_run:
         save_state({**st, "consent": True, "distill": bool(args.distill), "overlap": overlap, "cli": args.cli,
                     "exclude_roots": roots_out,

@@ -94,8 +94,9 @@ For a cautious host, the smallest install is router only, nothing in the backgro
    `~/.dsh-krouter-keys.env`. Without either, `krouter_status` says so (`host_action:`).
 3. Queries never leave the machine. Keys and pages marked secret are never sent or quoted. `--dry-run` on the
    install, the import and the nightly job shows what would be sent first.
-4. Session excerpts under `05 时间日志/会话摘录/` are clues, not rules; distilled lines are marked "待你确认"
-   (awaiting the user's confirmation).
+4. Session excerpts under `05 时间日志/会话摘录/` are the turn-by-turn record (time-log tier in recall). Distilled
+   lines take effect without a yes; every run's additions, replaced decisions and settled correction candidates are
+   listed in `90 系统文件/自动化/记忆变更记录.md` with one undo command per run (a git revert of that run's commit).
 
 ## Check it yourself, offline
 

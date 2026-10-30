@@ -46,7 +46,7 @@ def test_correction_is_written_as_a_provisional_candidate(box):
     text = box["page"].read_text(encoding="utf-8")
     assert "status: provisional" in text and "type: correction-candidates" in text
     assert "以后一律放左上角" in text and "`claude:0123abcd`" in text
-    assert "待蒸馏确认" in text and "命中「" in text
+    assert "待下次蒸馏判定" in text and "命中「" in text
 
 
 def test_frontmatter_is_valid_yaml(box):
@@ -61,7 +61,7 @@ def test_two_corrections_append_to_one_page(box):
     _say(box, "改成每 6 小时一次。")
     _say(box, "from now on, always use the API lane.")
     text = box["page"].read_text(encoding="utf-8")
-    assert text.count("待蒸馏确认") == 2 and text.count("type: correction-candidates") == 1
+    assert text.count("待下次蒸馏判定") == 2 and text.count("type: correction-candidates") == 1
 
 
 @pytest.mark.parametrize("text", [

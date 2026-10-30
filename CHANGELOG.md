@@ -34,6 +34,12 @@ notice, then the details.
   match, redacted, no model call; rhetorical questions ("不是吗", "对不对") and KRouter's own model calls
   (`KROUTER_IN_DISTILL`) are not captured. A session with `#不记` (or `#nocapture`) in a question, or under a root
   on `--exclude-root`, is neither imported nor distilled, and a page already written for it is removed.
+- **Capture takes effect without a yes; every run is visible and reversible.** Distilled lines are no longer marked
+  "待你确认" and the SessionStart hook brings all of them (corrections first; `KROUTER_INJECT=confirmed` keeps the old
+  gate). Correction candidates are settled by the next distill of their session (成立 with the matching line, or
+  不成立). Each run that changes something makes one git commit of exactly its files (`[krouter-run <id>]`) and one
+  entry in `90 系统文件/自动化/记忆变更记录.md` (added lines, replaced decisions, source session, verdicts);
+  `import_sessions.py --undo <id>` reverts the run and keeps its record.
 
 - **Off-machine backups.** `backup.py init --dir <folder>` turns on a nightly, encrypted archive of the whole vault
   (its `.git` included, editor state and caches left out) in a folder that syncs elsewhere (iCloud Drive, OneDrive,

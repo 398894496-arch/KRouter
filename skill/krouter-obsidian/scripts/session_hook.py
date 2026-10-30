@@ -11,14 +11,15 @@ happens before you said yes to importing (`import_sessions.py --consent`, or the
 `session_hook.py start` (SessionStart): prints, as context for the new session, up to 8 decisions recorded for this
 repository (matched by its git top level, never by folder name) in the last 30 days, each naming its page,
 corrections first. A decision that a later correction replaced ("原来 A → 改成 B") is left out, so the new session
-does not start from the old answer. By default that is every line of pages you confirmed and only the corrections from the rest, marked
-unconfirmed; `KROUTER_INJECT=all` brings every line, `KROUTER_INJECT=0` nothing. Nothing is printed when the vault
+does not start from the old answer. Every distilled line counts (distilling writes memory without a yes; what it
+wrote is in the change ledger); `KROUTER_INJECT=confirmed` brings only pages marked `confirmed: true` / `status:
+active` plus corrections, as before 1.3, `KROUTER_INJECT=0` nothing. Nothing is printed when the vault
 has none or the import was never turned on. In English unless the lines are Chinese. Reads only the vault; sends
 nothing; well under a second.
 
 `session_hook.py prompt` (UserPromptSubmit): when what you just typed reads like a correction ("改成 B", "以后一律",
 "锁死", "from now on", "that's wrong"), it appends what you typed, redacted and cut to 300 characters, to the day's
-`05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional and awaiting the next distill. Local pattern match
+`05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional; the next distill of that session settles it on its own (`corrections.py`). Local pattern match
 only, no model call, nothing sent; a rhetorical question ("不是吗", "对不对") is not a correction. It does nothing
 before you said yes to importing, for a prompt over 1500 characters, under a KRouter model call (`KROUTER_IN_DISTILL`),
 or in a session marked `#不记`.
@@ -45,7 +46,8 @@ from krouter_redact import redact  # noqa: E402
 DAYS = 30
 MAX_LINES = 8
 MAX_CHARS = 1600
-DIGEST_HEADS = ("## 定了什么、改了什么（模型提炼，待你确认）", "## 现在有效的、被取代的（模型整理，待你确认）")
+DIGEST_HEADS = ("## 定了什么、改了什么（模型提炼）", "## 定了什么、改了什么（模型提炼，待你确认）",
+                "## 现在有效的、被取代的（模型整理，待你确认）")
 OLD_SIDE = re.compile(r"^(原来|以前|之前|起初|最初|was|from|before|previously)\s*[:：]?\s*", re.I)
 NEW_SIDE = re.compile(r"^(改成|改为|改回|换成|换回|变成|现在|now|back to|to|became)\s*[:：]?\s*", re.I)
 TIME = re.compile(r"[（(]\s*(\d{1,2}):(\d{2})\s*[)）]")
@@ -182,9 +184,9 @@ def project_lines(vault: Path, root: str, everything: bool = False) -> list[tupl
     """[(line, page, confirmed)] for the project at `root`, corrections first, then newest first.
 
     A page counts only when its `project_root` is this repo: two repos that are both called `api` never share
-    decisions. Pages from before 1.0.1 have no `project_root` and are left out until re-imported. From a page you
-    confirmed (`status: active`, or `confirmed: true`) every line comes; from an unconfirmed one only corrections
-    ("A → B"), unless `KROUTER_INJECT=all`."""
+    decisions. Pages from before 1.0.1 have no `project_root` and are left out until re-imported. With `everything`
+    (the default) every distilled line comes; without it (`KROUTER_INJECT=confirmed`) only pages you confirmed
+    (`status: active`, or `confirmed: true`) bring every line, the rest only corrections ("A → B")."""
     if not root:
         return []
     cut = (date.today() - timedelta(days=DAYS)).isoformat()
@@ -221,11 +223,10 @@ def project_lines(vault: Path, root: str, everything: bool = False) -> list[tupl
 
 
 HEAD = {
-    "zh": ("KRouter：这个仓库（{name}）最近 {days} 天在你的库里记下的决定。「→」是改过的；"
-           "标「待确认」的是模型提炼、用户还没确认的，只当线索："),
-    "en": ("KRouter: decisions recorded in your vault for this repository ({name}) in the last {days} days. "
-           "\"→\" marks a change of mind; lines marked (unconfirmed) were extracted by a model and not yet confirmed "
-           "by the user, so treat them as clues:"),
+    "zh": ("KRouter：这个仓库（{name}）最近 {days} 天在你的库里记下的决定（模型从会话里提炼，括号里是来源页）。"
+           "「→」是改过主意的，以箭头后面为准："),
+    "en": ("KRouter: decisions recorded in your vault for this repository ({name}) in the last {days} days, distilled "
+           "from sessions by a model (source page in brackets). \"→\" marks a change of mind; the side after it holds:"),
 }
 TAIL = {"zh": "其他问题先用 krouter_ask 查库；库里没有（recall: none）就直说，不要猜。",
         "en": "For anything else, ask the vault with krouter_ask first; if it says recall: none, say so instead of guessing."}
@@ -240,13 +241,14 @@ def start(payload: dict) -> int:
     if not raw or not Path(raw).is_dir():
         return 0
     root = project_root(payload.get("cwd") or os.getcwd())
-    lines = project_lines(Path(raw), root, everything=mode == "all")
+    strict = mode == "confirmed"
+    lines = project_lines(Path(raw), root, everything=not strict)
     if not lines:
         return 0
     lang = "zh" if any(CJK.search(line) for line, _, _ in lines) else "en"
     body = [HEAD[lang].format(name=Path(root).name, days=DAYS)]
     for line, rel, ok in lines:
-        body.append(f"- {line}{'' if ok else MARK_UNCONFIRMED[lang]} 〔{rel}〕")
+        body.append(f"- {line}{MARK_UNCONFIRMED[lang] if strict and not ok else ''} 〔{rel}〕")
     body.append(TAIL[lang])
     text = redact("\n".join(body))[:MAX_CHARS]
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": text}},
@@ -324,7 +326,7 @@ def prompt(payload: dict) -> int:
     cwd = str(payload.get("cwd") or "")
     project = Path(project_root(cwd)).name if cwd else ""
     line = (f"- （{now.strftime('%H:%M')}）{said} — 项目 {project or '未知'}，会话 `claude:{sid[:8] or '?'}`，"
-            f"命中「{cue}」，待蒸馏确认\n")
+            f"命中「{cue}」，待下次蒸馏判定\n")
     folder.mkdir(parents=True, exist_ok=True)
     if not page.exists():
         page.write_text("---\n"
@@ -335,7 +337,8 @@ def prompt(payload: dict) -> int:
                         "source: krouter-hook\n"
                         "---\n\n"
                         f"# {now.date().isoformat()} 纠正候选\n\n"
-                        "你在会话里说过、读起来像纠正的话，hook 当场照录（已脱敏）。只是线索，不是规则：下一次蒸馏确认后才算数。\n\n",
+                        "你在会话里说过、读起来像纠正的话，hook 当场照录（已脱敏）。下一次增量蒸馏自动判定：成立的写进那个会话的提炼，"
+                        "不成立的就地标掉，两种都记进「记忆变更记录」。\n\n",
                         encoding="utf-8")
     with page.open("a", encoding="utf-8") as fh:
         fh.write(line)

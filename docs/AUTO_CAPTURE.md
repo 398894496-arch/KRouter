@@ -98,13 +98,29 @@ late or not at all; it is a top-up, not the trigger. What runs the work on a sch
   State and a one-line summary per run: `~/.local/state/krouter/intraday.json`, `intraday.log`.
 - **Corrections on the spot.** `session_hook.py prompt` (UserPromptSubmit) appends a typed correction to
   `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md` (`status: provisional`, time, project, `claude:<id8>`, the cue word,
-  "待蒸馏确认"). Pattern match only: correction cues (改成/改为/换成/以后都/一律/锁死/不要再/别再/记住/纠正/搞错/说错,
+  "待下次蒸馏判定"). Pattern match only: correction cues (改成/改为/换成/以后都/一律/锁死/不要再/别再/记住/纠正/搞错/说错,
   `from now on`, `instead of`, `that's wrong`, …), minus a sentence that ends as a rhetorical question (不是吗/对不对/
   是不是/难道不是, `isn't it`). Skipped: no consent, a prompt over 1500 characters, a session marked `#不记`, and any
   prompt under a KRouter model call (`llm.cli_env()` sets `KROUTER_IN_DISTILL`, so the distill's own `claude -p`
   never records its excerpt as your correction). Redacted, cut to 300 characters, nothing sent, never fails the
-  session, prints nothing into it. The page is a clue (time-log tier in recall), not a rule; the next distill of
-  that session is where the change is confirmed.
+  session, prints nothing into it. The page is a clue (time-log tier in recall); the next distill of that session
+  settles each candidate on its own (`corrections.py`): a digest line sharing enough of its content words makes it
+  成立 (the verdict names that line and page), none makes it 不成立. No extra model call.
+
+## 3b. Observable, not approved
+
+Capture writes memory without a yes: a yes/no gate on every digest line was one more chore that did not get done, so
+nothing ever took effect. In its place every run that changes something is visible and reversible:
+
+- **One commit per run** (when the vault is a git repository) with exactly the files that run wrote or deleted,
+  tagged `[krouter-run <id>]`. Other changes in the vault are left out of it (`git commit --only`). Hook-written
+  candidates are committed as they were just before they are settled, so undoing a run puts them back to pending.
+- **One ledger entry per run** in `90 系统文件/自动化/记忆变更记录.md` (`status: generated`, so recall never cites
+  it): each page that gained lines and its session, each added line (a change of mind shown as `取代：原来 A → 改成
+  B`), each candidate's verdict, each page removed. The entry is committed separately, so undoing keeps the record.
+- **One command back:** `import_sessions.py --undo <id>` reverts that run's commit and notes the undo in the ledger.
+- The SessionStart hook brings every distilled line (corrections first), unmarked; `KROUTER_INJECT=confirmed`
+  restores the earlier confirmed-pages-only default. A run that changes nothing writes no commit and no entry.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 
