@@ -153,10 +153,7 @@ def main() -> int:
                 unverified_cards += 1
                 if not ri.card_specifics(card["a"]):
                     unchecked_cards.append((rel, card["q"]))
-            raw = [t for t in ri.tokens(card["q"]) if not (len(t) == 1 and ri.CJK_RE.fullmatch(t))]
-            df = ri.term_df(con, raw + [c for t in raw if ri.is_cjk_bigram(t) for c in t])
-            titled = ri.phrase_terms(con, [t for t in raw if ri.is_cjk_bigram(t)], ("title",))
-            if ri.query_content_terms(raw, df, titled) < 2:
+            if ri.broad_question(con, card["q"]):
                 broad_cards.append((rel, card["q"]))
 
     # 4. rule pages with no use in the window
