@@ -24,6 +24,11 @@ lists by id (`` `claude:<id>` ``, or an 8+ hex prefix) or a day the log's collec
 matched by content: turns are keyed by their time and question, the longer session keeps the shared turns and the
 other keeps only its own (`forked_from`); one wholly inside another gets no page.
 
+Keeping a session out. A session with `#不记` (or `#nocapture`) in any of its questions is neither imported nor
+distilled, and a page already written for it is removed; so is every session whose project root is on the
+`--exclude-root` list (saved with `--consent`). `--intraday` is what a daytime timer runs: like `--nightly` it does
+nothing without consent and uses the lane and distill choice recorded then, over today and yesterday.
+
 Env: `KROUTER_CLAUDE_PROJECTS`, `KROUTER_CODEX_SESSIONS`, `KROUTER_CURSOR_PROJECTS` point at other transcript roots
 (tests, other machines).
 """
@@ -53,6 +58,8 @@ PAGE_MAX = 40_000    # 一页（一个会话的一天）的摘录上限
 DISTILL_MAX = 24_000
 DISTILL_MIN_TURNS = 2
 DISTILL_SESSIONS = 40  # 一次最多提炼多少个会话（最新的优先）
+# 提问里带这个标记的会话：不导入、不提炼，已写的页删掉
+NO_CAPTURE = re.compile(r"#(不记|nocapture)(?![0-9A-Za-z_])", re.I)
 # 注入的上下文、命令回显、系统提醒：不是用户说的话
 NOISE = re.compile(r"^\s*(<(environment_context|user_instructions|system-reminder|command-|local-command|"
                    r"task-notification|turn_aborted|permissions)|# AGENTS\.md|Caveat: The messages below|"
@@ -297,11 +304,25 @@ def agent_of(path: Path) -> str:
 READERS = {"claude-code": read_claude, "codex": read_codex, "cursor": read_cursor}
 
 
-def collect(since: date, until: date, files: list[Path] | None = None) -> list[dict]:
-    """One entry per (session, local day): {agent, id, day, project, title, turns}."""
+def excluded(s: dict, roots_out: list[str]) -> bool:
+    """`#不记` in any question of the session, or its project root on the exclude list."""
+    if any(NO_CAPTURE.search(t["ask"] or "") for t in s["turns"]):
+        return True
+    root = project_root(s["cwd"]) if s["cwd"] and roots_out else ""
+    return bool(root) and any(root == r or root.startswith(r.rstrip("/") + "/") for r in roots_out)
+
+
+def collect(since: date, until: date, files: list[Path] | None = None, roots_out: list[str] | None = None,
+            dropped: set[str] | None = None) -> list[dict]:
+    """One entry per (session, local day): {agent, id, day, project, title, turns}. Sessions kept out (`excluded`)
+    are left out and their ids added to `dropped`."""
     out: list[dict] = []
     for agent, path in ([(agent_of(f), f) for f in files] if files else transcripts(since)):
         s = READERS[agent](path)
+        if s["turns"] and excluded(s, roots_out or []):
+            if dropped is not None:
+                dropped.add(s["id"])
+            continue
         by_day: dict[date, list[dict]] = defaultdict(list)
         for t in s["turns"]:
             day = local_day(t["ts"])
@@ -679,6 +700,10 @@ def main() -> int:
     ap.add_argument("--overlap", choices=("link", "skip"), default="",
                     help="a session another collector's daily log already has: link the page to that log (default), or "
                          "write no page; saved with --consent")
+    ap.add_argument("--intraday", action="store_true", help="today and yesterday, only when consent was given, with the "
+                    "lane recorded then (what a daytime timer runs)")
+    ap.add_argument("--exclude-root", action="append", default=[], help="never import sessions under this project "
+                    "root; repeatable, saved with --consent")
     ap.add_argument("--distill-max", type=int, default=DISTILL_SESSIONS, help="distill at most this many sessions, newest first")
     ap.add_argument("--cli", default="", help=argparse.SUPPRESS)
     ap.add_argument("--model", default="", help=argparse.SUPPRESS)
@@ -696,12 +721,13 @@ def main() -> int:
         return 2
     vault = Path(args.vault).expanduser()
     st = load_state()
-    if (args.nightly or args.file) and not st.get("consent"):
+    scheduled = args.nightly or args.intraday or bool(args.file)
+    if scheduled and not st.get("consent"):
         print(json.dumps({"import": "off", "reason": "no consent yet (import_sessions.py --consent)",
                           "chars": 0, "writes": []}))
         return 0
-    distill_on = args.distill or bool((args.nightly or args.file) and st.get("distill"))
-    if (args.nightly or args.file) and st.get("cli") and not args.cli:
+    distill_on = args.distill or bool(scheduled and st.get("distill"))
+    if scheduled and st.get("cli") and not args.cli:
         # 会话结束时在会话自己的环境里跑：shell 里碰巧有哪个 API key 就发给谁，不该由它决定。用同意时点名的那条
         os.environ["KROUTER_LEARN_CLI"] = st["cli"]
     if not args.dry_run:
@@ -709,6 +735,8 @@ def main() -> int:
     today = date.today()
     if args.yesterday or args.nightly:
         since = until = today - timedelta(days=1)
+    elif args.intraday:
+        since, until = today - timedelta(days=1), today
     else:
         since, until = today - timedelta(days=max(args.days, 1) - 1), today
     files = [Path(f).expanduser() for f in args.file if Path(f).expanduser().is_file()]
@@ -717,7 +745,9 @@ def main() -> int:
         if not files:
             print(json.dumps({"import": "skipped", "reason": "transcript not found", "chars": 0, "writes": []}))
             return 0
-    entries = collect(since, until, files or None)
+    roots_out = [str(Path(r).expanduser().resolve()) for r in args.exclude_root] or list(st.get("exclude_roots") or [])
+    dropped: set[str] = set()
+    entries = collect(since, until, files or None, roots_out, dropped)
     folder = zones.path(vault, FOLDER)
     entries, forked_pages, forks_dropped = dedupe_forks(entries, folder)
     overlap = args.overlap or st.get("overlap") or "link"
@@ -730,6 +760,7 @@ def main() -> int:
         skipped_covered = sum(1 for e in entries if e["covered_by"])
         entries = [e for e in entries if not e["covered_by"]]
     have = existing(folder)
+    removed = [path for (sid, _day), path in have.items() if sid in dropped]
     to_distill = {id(e) for e in sorted((e for e in entries if len(e["turns"]) >= DISTILL_MIN_TURNS),
                                         key=lambda e: e["turns"][-1]["ts"], reverse=True)[:max(args.distill_max, 0)]}
     written, kept, sent, calls, failed, incremental = [], [], 0, 0, 0, 0
@@ -762,17 +793,19 @@ def main() -> int:
                 before.unlink()  # 会话改了标题：换成新文件名，不留两份
         written.append(zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, "/")))
     if not args.dry_run:
-        for path in forked_pages:  # 整段都在另一个会话里的旧页：那一页已经有这些轮次
+        for path in forked_pages + removed:  # 整段都在另一个会话里的旧页；标了不记的会话以前写过的页
             if path.exists() and frontmatter(path).get("source") == MARK:
                 path.unlink()
     if args.consent and not args.dry_run:
         save_state({**st, "consent": True, "distill": bool(args.distill), "overlap": overlap, "cli": args.cli,
+                    "exclude_roots": roots_out,
                     "at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
     row = {"import": "dry-run" if args.dry_run else "done", "from": since.isoformat(), "through": until.isoformat(),
            "sessions": len({e["id"] for e in entries}), "pages": len(entries),
            "turns": sum(len(e["turns"]) for e in entries), "agents": sorted({e["agent"] for e in entries}),
            "distilled": calls, "distill_incremental": incremental, "distill_failed": failed, "chars": sent, "overlap": overlap,
            "covered_by_daily_log": covered, "skipped_covered": skipped_covered, "fork_duplicates": forks_dropped,
+           "kept_out": len(dropped), "removed_kept_out": len(removed),
            "writes": written if len(written) <= 20 else written[:20] + [f"… {len(written) - 20} more"],
            "kept_foreign": kept}
     print(json.dumps(row, ensure_ascii=False))

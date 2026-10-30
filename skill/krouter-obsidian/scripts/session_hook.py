@@ -16,7 +16,14 @@ unconfirmed; `KROUTER_INJECT=all` brings every line, `KROUTER_INJECT=0` nothing.
 has none or the import was never turned on. In English unless the lines are Chinese. Reads only the vault; sends
 nothing; well under a second.
 
-Both read the hook's JSON on stdin (`session_id`, `transcript_path`, `cwd`) and never fail the session.
+`session_hook.py prompt` (UserPromptSubmit): when what you just typed reads like a correction ("改成 B", "以后一律",
+"锁死", "from now on", "that's wrong"), it appends what you typed, redacted and cut to 300 characters, to the day's
+`05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional and awaiting the next distill. Local pattern match
+only, no model call, nothing sent; a rhetorical question ("不是吗", "对不对") is not a correction. It does nothing
+before you said yes to importing, for a prompt over 1500 characters, under a KRouter model call (`KROUTER_IN_DISTILL`),
+or in a session marked `#不记`.
+
+All three read the hook's JSON on stdin (`session_id`, `transcript_path`, `cwd`, `prompt`) and never fail the session.
 """
 
 from __future__ import annotations
@@ -26,7 +33,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -42,6 +49,17 @@ DIGEST_HEADS = ("## 定了什么、改了什么（模型提炼，待你确认）
 OLD_SIDE = re.compile(r"^(原来|以前|之前|起初|最初|was|from|before|previously)\s*[:：]?\s*", re.I)
 NEW_SIDE = re.compile(r"^(改成|改为|改回|换成|换回|变成|现在|now|back to|to|became)\s*[:：]?\s*", re.I)
 TIME = re.compile(r"[（(]\s*(\d{1,2}):(\d{2})\s*[)）]")
+# 纠正用语：说的是"以后照这个来"或"刚才那个不对"，不是提问
+CORRECTION = re.compile(r"(改成|改为|改回|换成|换回|以后都|以后一律|一律|锁死|不要再|别再|记住|纠正|纠错|搞错|说错|弄错|你错了|"
+                        r"不对[，,。！!]|应该是|from now on|instead of|that'?s wrong|that is wrong|don'?t ever|never again|"
+                        r"stop doing|always use|you got it wrong)", re.I)
+# 反问不是纠正："……不是吗""对不对""难道不是"
+RHETORICAL = re.compile(r"(不是吗|对不对|是不是|难道不是|对吧|好不好|行不行|可不可以|能不能|isn'?t it|right\?)\s*[？?！!。]*\s*$",
+                        re.I)
+NO_CAPTURE = re.compile(r"#(不记|nocapture)(?![0-9A-Za-z_])", re.I)
+PROMPT_MAX = 1500
+CANDIDATE_MAX = 300
+CANDIDATES = "05 时间日志/会话摘录"
 
 
 def consented() -> bool:
@@ -253,6 +271,77 @@ def end(payload: dict) -> int:
     return 0
 
 
+def correction_cue(text: str) -> str:
+    """The correction word a prompt uses, or "" when it is not a correction (none found, or the sentence that holds
+    it ends as a rhetorical question)."""
+    for sentence in re.split(r"(?<=[。！!？?\n])", text):
+        m = CORRECTION.search(sentence)
+        if m and not RHETORICAL.search(sentence.strip()):
+            return m.group(1)
+    return ""
+
+
+def marked_out(transcript: Path) -> bool:
+    """An earlier question of this session carries `#不记`. Only what the person typed counts: an agent's answer or a
+    tool's output that merely mentions the marker does not."""
+    try:
+        with transcript.open(encoding="utf-8", errors="replace") as fh:
+            for raw in fh:
+                if "#" not in raw or '"user"' not in raw:
+                    continue
+                try:
+                    d = json.loads(raw)
+                except ValueError:
+                    continue
+                msg = d.get("message") if isinstance(d, dict) and d.get("type") == "user" else None
+                content = msg.get("content") if isinstance(msg, dict) else None
+                if isinstance(content, str) and NO_CAPTURE.search(content):
+                    return True
+    except OSError:
+        return False
+    return False
+
+
+def prompt(payload: dict) -> int:
+    text = str(payload.get("prompt") or "")
+    if (not text.strip() or len(text) > PROMPT_MAX or os.environ.get("KROUTER_IN_DISTILL") or NO_CAPTURE.search(text)
+            or not consented()):
+        return 0
+    cue = correction_cue(text)
+    raw = vault_path()
+    if not cue or not raw:
+        return 0
+    sid = str(payload.get("session_id") or "")
+    if marked_out(Path(str(payload.get("transcript_path") or ""))):
+        return 0  # 这个会话前面标过不记
+    vault = Path(raw).expanduser()
+    now = datetime.now()
+    folder = zones.path(vault, CANDIDATES)
+    page = folder / f"{now.date().isoformat()}｜纠正候选.md"
+    said = re.sub(r"\s+", " ", redact(text)).strip()
+    if len(said) > CANDIDATE_MAX:
+        said = said[:CANDIDATE_MAX].rstrip() + " …"
+    cwd = str(payload.get("cwd") or "")
+    project = Path(project_root(cwd)).name if cwd else ""
+    line = (f"- （{now.strftime('%H:%M')}）{said} — 项目 {project or '未知'}，会话 `claude:{sid[:8] or '?'}`，"
+            f"命中「{cue}」，待蒸馏确认\n")
+    folder.mkdir(parents=True, exist_ok=True)
+    if not page.exists():
+        page.write_text("---\n"
+                        f"title: \"{now.date().isoformat()} 纠正候选\"\n"
+                        "type: correction-candidates\n"
+                        "status: provisional\n"
+                        f"date: {now.date().isoformat()}\n"
+                        "source: krouter-hook\n"
+                        "---\n\n"
+                        f"# {now.date().isoformat()} 纠正候选\n\n"
+                        "你在会话里说过、读起来像纠正的话，hook 当场照录（已脱敏）。只是线索，不是规则：下一次蒸馏确认后才算数。\n\n",
+                        encoding="utf-8")
+    with page.open("a", encoding="utf-8") as fh:
+        fh.write(line)
+    return 0
+
+
 def main() -> int:
     which = sys.argv[1] if len(sys.argv) > 1 else ""
     try:
@@ -260,7 +349,7 @@ def main() -> int:
     except ValueError:
         payload = {}
     try:
-        return {"start": start, "end": end}.get(which, lambda p: 0)(payload if isinstance(payload, dict) else {})
+        return {"start": start, "end": end, "prompt": prompt}.get(which, lambda p: 0)(payload if isinstance(payload, dict) else {})
     except Exception as exc:  # noqa: BLE001  hook 永远不能让会话失败
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
         return 0

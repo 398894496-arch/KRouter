@@ -25,6 +25,15 @@ notice, then the details.
   the lane named at consent. `docs/AUTO_CAPTURE.md`.
 - **Decision-capture bench** (`bench/decision_capture/`): 14 fixed sessions, recall and false-extraction rate scored
   by rule, no judge model.
+- **Daytime capture, corrections on the spot, and a way to keep a session out.** `import_sessions.py --intraday`
+  imports and distills today and yesterday with the lane recorded at consent, and does nothing before it;
+  `extras/host-daily-evolution/intraday_capture.py` runs it at fixed wall-clock slots (default 12:10 and 18:10 in
+  `Asia/Shanghai`) from an hourly timer, catches up the latest missed slot after sleep and tries a failed slot once
+  more, then leaves it to the nightly job. `session_hook.py prompt` (UserPromptSubmit) writes a typed correction
+  ("改成", "以后一律", "锁死", "from now on") to the day's `纠正候选` page as a provisional candidate: local pattern
+  match, redacted, no model call; rhetorical questions ("不是吗", "对不对") and KRouter's own model calls
+  (`KROUTER_IN_DISTILL`) are not captured. A session with `#不记` (or `#nocapture`) in a question, or under a root
+  on `--exclude-root`, is neither imported nor distilled, and a page already written for it is removed.
 
 - **Off-machine backups.** `backup.py init --dir <folder>` turns on a nightly, encrypted archive of the whole vault
   (its `.git` included, editor state and caches left out) in a folder that syncs elsewhere (iCloud Drive, OneDrive,

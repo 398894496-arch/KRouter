@@ -79,8 +79,32 @@ no tool output, no thinking. What changes:
 - **Headless runs** (`claude -p` used by the distill itself) end too; their transcripts have no human turns and are
   skipped, after waiting for the lock.
 
-Recommended before leaving it on: a way to keep one session out (a marker in a question, or a list of project roots
-never distilled). Not built here.
+Keeping a session out, built since: `#不记` (or `#nocapture`) in any question of a session keeps it out of import
+and distill, and removes a page already written for it; `--exclude-root <dir>` (repeatable, saved with `--consent`)
+does the same for every session under that project root.
+
+## 3a. When a session "ends" is not a schedule
+
+A desktop window often stays open for days and is archived long after the work in it is done, so `SessionEnd` fires
+late or not at all; it is a top-up, not the trigger. What runs the work on a schedule instead:
+
+- **Daytime slots.** `extras/host-daily-evolution/intraday_capture.py`, from an hourly timer
+  (`launchd.intraday.example.plist`: `StartInterval` 3600), runs `import_sessions.py --intraday` when a slot is due.
+  Slots are wall-clock times in one zone (`--slots 12:10,18:10 --tz Asia/Shanghai` by default), so the machine's
+  daylight-saving change does not move them. A machine asleep at a slot runs it once on the first tick after it
+  wakes (the latest missed slot only); a failed slot is tried once more on the next tick, then left to the nightly
+  job. `--intraday` needs consent, uses the lane and distill choice recorded then, and covers today and yesterday,
+  so a session that crossed midnight is seen; with the incremental digest a page that did not grow sends nothing.
+  State and a one-line summary per run: `~/.local/state/krouter/intraday.json`, `intraday.log`.
+- **Corrections on the spot.** `session_hook.py prompt` (UserPromptSubmit) appends a typed correction to
+  `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md` (`status: provisional`, time, project, `claude:<id8>`, the cue word,
+  "待蒸馏确认"). Pattern match only: correction cues (改成/改为/换成/以后都/一律/锁死/不要再/别再/记住/纠正/搞错/说错,
+  `from now on`, `instead of`, `that's wrong`, …), minus a sentence that ends as a rhetorical question (不是吗/对不对/
+  是不是/难道不是, `isn't it`). Skipped: no consent, a prompt over 1500 characters, a session marked `#不记`, and any
+  prompt under a KRouter model call (`llm.cli_env()` sets `KROUTER_IN_DISTILL`, so the distill's own `claude -p`
+  never records its excerpt as your correction). Redacted, cut to 300 characters, nothing sent, never fails the
+  session, prints nothing into it. The page is a clue (time-log tier in recall), not a rule; the next distill of
+  that session is where the change is confirmed.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 每小时醒一次，由 intraday_capture.py 自己判断槽位（默认上海 12:10、18:10）是否该跑；睡眠中错过的整点，唤醒后补一次。 -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>local.krouter.intraday-capture</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PYTHON__</string>
+    <string>__INTRADAY_PY__</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/krouter-intraday.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/krouter-intraday.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>OBSIDIAN_VAULT</key>
+    <string>__VAULT__</string>
+    <key>KROUTER_ROUTER</key>
+    <string>__ROUTER__</string>
+    <key>KROUTER_KEYS_ENV</key>
+    <string>__KEYS_ENV__</string>
+    <key>HOME</key>
+    <string>__HOME__</string>
+    <key>PATH</key>
+    <string>__PATH__</string>
+  </dict>
+</dict>
+</plist>
