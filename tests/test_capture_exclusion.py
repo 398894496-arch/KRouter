@@ -84,3 +84,14 @@ def test_headless_run_inside_a_desktop_shell_is_not_imported(env):
     _session(env["claude"], "s-real", 0, "发版流程怎么定？")
     row = _run(env, "--days", "1")
     assert row["pages"] == 1 and not any("只回复" in n for n in _pages(env))
+
+
+def test_nightly_reads_a_done_import_as_ok_not_skipped():
+    """`skipped_covered` in the import's summary is a count, not a skipped step."""
+    sys.path.insert(0, str(IMPORT.parent))
+    import nightly
+
+    out = json.dumps({"import": "done", "pages": 9, "distilled": 8, "distill_failed": 0, "skipped_covered": 0})
+    assert nightly.classify(0, out) == ("ok", "")
+    failed = json.dumps({"import": "done", "pages": 3, "distilled": 0, "distill_failed": 3, "skipped_covered": 0})
+    assert nightly.classify(0, failed)[0] == "partial"
