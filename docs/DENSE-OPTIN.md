@@ -11,7 +11,7 @@ Nothing in the product changed: the default stays lexical, nothing was installed
 | Branch / file | What it is | State |
 |---|---|---|
 | `bench/memory_honesty/dense.py` (main, from `recall/dense`) | bench prototype: `dense`, `agree`, `rescue`, `gate`, `vote` | merged; on 2026-10-30 given the vault3 floor fix, BGE-M3, `--ci`, `--by-lang`, and a chunked scorer for long session pages |
-| `feature/dense` (10 commits, last 2026-10-13) | product module `skill/…/dense.py`: its own venv, opt-in (`bootstrap.py --dense`), falls back to lexical and says so, jina-v2-base-zh (640 MB), up to 4 chunks a page, tiered decision; inert logistic-regression decider | **not merged, 84 commits behind main**; rebasing is real work (recall_index, route_knowledge, nightly, bootstrap all moved) |
+| `feature/dense` (10 commits, last 2026-10-13) | product module `skill/…/dense.py`: its own venv, opt-in (`bootstrap.py --dense`), falls back to lexical and says so, jina-v2-base-zh (640 MB), up to 4 chunks a page, tiered decision; inert logistic-regression decider | **not merged, 84 commits behind main**; rebasing is real work (recall_index, route_knowledge and nightly have all changed on main since) |
 | heldout3, 2026-10-13 (on `feature/dense` only) | candidate 1, jina, tiered rules: 14.7% wrong (16 / 109), 64 / 80 refused, 93 / 120 right; failed the default bar (right ≥ 97). Plain `agree` with jina at equal coverage tied it | logged on the branch, not on main |
 | real-traffic set 5, 2026-10-16 | dense candidate met its line, then the line was withdrawn: refusing everything would score higher than every system | **not shipping evidence** (HELDOUT.md) |
 
