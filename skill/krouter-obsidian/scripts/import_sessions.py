@@ -144,7 +144,10 @@ def _lines(path: Path):
 def read_claude(path: Path) -> dict:
     """{turns: [{ts, ask, answer}], cwd, title, id} of one Claude Code transcript; empty turns for a headless run."""
     s = {"turns": [], "cwd": "", "title": "", "id": path.stem}
+    modern = human = False  # 新版 transcript 会给你打的每一轮标 origin.kind=human
     for d in _lines(path):
+        if d.get("type") == "queue-operation":
+            modern = True
         if d.get("type") == "custom-title" and d.get("customTitle"):
             s["title"] = str(d["customTitle"])
             continue
@@ -155,6 +158,8 @@ def read_claude(path: Path) -> dict:
         origin = d.get("origin")
         if isinstance(origin, dict) and origin.get("kind") not in (None, "human"):
             continue  # 后台任务通知之类
+        if isinstance(origin, dict) and origin.get("kind") == "human" and d.get("type") == "user":
+            human = True
         s["cwd"] = d.get("cwd") or s["cwd"]
         msg = d.get("message") or {}
         if d.get("type") == "user":
@@ -165,6 +170,9 @@ def read_claude(path: Path) -> dict:
             said = [t for t in _texts(msg.get("content"), ("text",)) if t.strip()]
             if said:
                 s["turns"][-1]["answer"] = said[-1]  # 这一轮最后说的那段，通常是结论
+    if modern and not human:
+        # 在桌面会话的 shell 里跑的 `claude -p` 继承了 entrypoint=claude-desktop，认不出是 sdk；但它没有一轮是人打的
+        return {**s, "turns": []}
     return s
 
 
@@ -313,15 +321,19 @@ def excluded(s: dict, roots_out: list[str]) -> bool:
 
 
 def collect(since: date, until: date, files: list[Path] | None = None, roots_out: list[str] | None = None,
-            dropped: set[str] | None = None) -> list[dict]:
+            dropped: dict[str, str] | None = None) -> list[dict]:
     """One entry per (session, local day): {agent, id, day, project, title, turns}. Sessions kept out (`excluded`)
-    are left out and their ids added to `dropped`."""
+    and headless runs are left out, `dropped` maps their ids to why ("kept out" / "headless")."""
     out: list[dict] = []
     for agent, path in ([(agent_of(f), f) for f in files] if files else transcripts(since)):
         s = READERS[agent](path)
-        if s["turns"] and excluded(s, roots_out or []):
+        if not s["turns"]:
             if dropped is not None:
-                dropped.add(s["id"])
+                dropped[s["id"]] = "headless"  # 无头调用：以前误导入过的页这一轮删掉
+            continue
+        if excluded(s, roots_out or []):
+            if dropped is not None:
+                dropped[s["id"]] = "kept out"
             continue
         by_day: dict[date, list[dict]] = defaultdict(list)
         for t in s["turns"]:
@@ -782,7 +794,7 @@ def main() -> int:
             print(json.dumps({"import": "skipped", "reason": "transcript not found", "chars": 0, "writes": []}))
             return 0
     roots_out = [str(Path(r).expanduser().resolve()) for r in args.exclude_root] or list(st.get("exclude_roots") or [])
-    dropped: set[str] = set()
+    dropped: dict[str, str] = {}
     entries = collect(since, until, files or None, roots_out, dropped)
     folder = zones.path(vault, FOLDER)
     entries, forked_pages, forks_dropped = dedupe_forks(entries, folder)
@@ -870,7 +882,7 @@ def main() -> int:
            "turns": sum(len(e["turns"]) for e in entries), "agents": sorted({e["agent"] for e in entries}),
            "distilled": calls, "distill_incremental": incremental, "distill_failed": failed, "chars": sent, "overlap": overlap,
            "covered_by_daily_log": covered, "skipped_covered": skipped_covered, "fork_duplicates": forks_dropped,
-           "kept_out": len(dropped), "removed_kept_out": len(removed),
+           "kept_out": sum(1 for v in dropped.values() if v == "kept out"), "removed_kept_out": len(removed),
            "writes": written if len(written) <= 20 else written[:20] + [f"… {len(written) - 20} more"],
            "kept_foreign": kept}
     print(json.dumps(row, ensure_ascii=False))

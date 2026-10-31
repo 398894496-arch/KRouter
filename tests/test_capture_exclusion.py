@@ -70,3 +70,17 @@ def test_intraday_covers_today_and_yesterday_only(env):
 def test_help_lists_the_new_flags():
     out = subprocess.run([sys.executable, str(IMPORT), "--help"], capture_output=True, text=True, timeout=60).stdout
     assert "--intraday" in out and "--exclude-root" in out
+
+
+def test_headless_run_inside_a_desktop_shell_is_not_imported(env):
+    """`claude -p` run from a desktop session's shell inherits entrypoint=claude-desktop; no turn of it is human."""
+    ts = _ts(0)
+    rows = [{"type": "queue-operation", "operation": "enqueue", "timestamp": ts, "content": "只回复 OK"},
+            {"type": "user", "entrypoint": "claude-desktop", "cwd": "/private/tmp", "timestamp": ts, "userType": "external",
+             "message": {"role": "user", "content": "只回复 OK"}},
+            {"type": "assistant", "entrypoint": "claude-desktop", "timestamp": ts,
+             "message": {"content": [{"type": "text", "text": "OK"}]}}]
+    _jsonl(env["claude"] / "-private-tmp" / "21f269cc-headless.jsonl", rows)
+    _session(env["claude"], "s-real", 0, "发版流程怎么定？")
+    row = _run(env, "--days", "1")
+    assert row["pages"] == 1 and not any("只回复" in n for n in _pages(env))

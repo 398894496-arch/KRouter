@@ -62,7 +62,7 @@ def section(vault: Path, rid: str, pages: list[dict], verdicts: list[dict], remo
             else:
                 out.append(f"  - 不成立：「{said}」：{v['why'] or '模型判定不是改主意或新规则'}")
     for path in removed:
-        out.append(f"- 删除 `{path.name}`（标了 #不记，或被另一个会话完整包含）")
+        out.append(f"- 删除 `{path.name}`（标了 #不记、是无头调用，或被另一个会话完整包含）")
     return "\n".join(out) + "\n"
 
 
