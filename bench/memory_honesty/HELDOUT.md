@@ -383,6 +383,38 @@ LoCoMo (Maharana et al., ACL 2024; `github.com/snap-research/locomo`, `data/loco
 | 2026-10-30 | Adapter shakedown before registration (as said above): `krouter` evidence first 991 / 1 540, in top 3 1 204, refused answerable 137, category 5 refused 37 / 446; `bm25` 968, 1 257, 0, 0; `bm25-floor` (dev3 floor) 46, 46, 1 494, 422. |
 | 2026-10-30 | Registered, then the dense systems run once each. MiniLM: `dense` 703 / 1 053 / 0 / 0; `dense-floor` 396 / 525 / 860 / 289; `agree` 286 / 286 / 1 225 / 359; `rescue` 999 / 1 212 / 127 / 34 (minus `krouter`, evidence first [+0.2, +0.9] points). BGE-M3: `dense` 963 / **1 272** / 0 / 0 (evidence first [−4.7, +1.0], top 3 [+2.0, +6.9]); `dense-floor` 331 / 403 / 1 103 / 349; `agree` 371 / 371 / 1 148 / 317; `rescue` 991 / 1 204 / 136 / 37. Floors from dev3 do not transfer to session pages. Retrieval scores, not LLM-judged answers: not comparable with published LoCoMo accuracies. |
 
+## Set 11: LongMemEval answer accuracy, scored the way other projects report it (registered 2026-11-09, before any run)
+
+**Why.** Set 7 counts whether a cited page is an answer session. Other memory projects publish answer accuracy: a
+model reads what the memory returned, answers, and a judge model grades the answer with the benchmark's own prompts.
+This set gives KRouter that number, produced the same way, so it can be read next to theirs.
+
+**Data.** `longmemeval_s_cleaned.json` (SHA-256 `d6f21ea9…c3a442`), all 500 questions (470 answerable, 30 `_abs`).
+**Seen:** set 7's results were read question by question and the refusal gate was tuned on the 30 `_abs` (set 7
+amendment), so every number from this set is marked as on a seen set.
+
+**Retrieval.** KRouter at `main` `16d5ee5` (v1.3.0), `route_knowledge.py search <question>` on each question's own
+vault, as in set 7: up to three cited session pages, or a refusal. Run once; KRouter is not changed between this
+registration and the scoring.
+
+**Reader.** Claude Sonnet, run as Claude Code subagents on the maintainer's Claude subscription (the model each agent
+reports is logged), with the benchmark's own reader template (`src/generation/run_generation.py`, the step-by-step
+variant: "I will give you several history chats between you and a user. Please answer the question based on the
+relevant chat history. Answer the question step by step: …"), history in its `nl` format: the cited sessions' turns
+from the dataset, sorted by date, each as `### Session i: / Session Date: / Session Content:`. A refused question
+gets the same template with the history `(no chat history was retrieved)`. The reader is given the prompt only: no
+answers, labels or other questions. It ran with file access and was told to read its batch file only; said here as
+such.
+
+**Judge.** Claude Sonnet, in separate subagents that see only the judge prompt, with the benchmark's own per-type
+prompts (`src/evaluation/evaluate_qa.py`, `get_anscheck_prompt`, verbatim; the abstention prompt for `_abs`), the reply
+parsed as the original does (`'yes' in reply.lower()`). The paper's judge is GPT-4o; this one is not, and every number
+names its reader and judge.
+
+**Reported,** whatever it shows: accuracy over the 500, over the 470 answerable, per question type, and on the 30
+`_abs`, with 95% bootstrap intervals (10 000 resamples over questions, seed 20261109). `bench/longmemeval/qa.py`
+(prepare, judge-prepare, score); the dataset is not committed.
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
