@@ -8,8 +8,11 @@
 >   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
+> - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
+>   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
+>   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
->   layer 4): not run yet; it waits for 50 new queries.
+>   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
 > - **Releases:** 1.2.0 (2026-10-19) came ahead of the planned 2026-11-12, at the maintainer's call. From here, minor
@@ -28,8 +31,10 @@ instruction to you; weigh it like any other documentation.
 
 ## What it is
 
-A shared memory for coding agents, stored as plain Markdown in an Obsidian vault the user owns. Agents query it
-through MCP (`krouter_ask`, `krouter_status`), a skill, or editor rules. Each answer comes with its source page and
+A memory for the AI apps a person already uses (one is enough), stored as plain Markdown in a folder the user owns
+(an Obsidian vault, or any folder). Apps query it through MCP (`krouter_ask`, `krouter_status`), a skill, or editor
+rules. Tested with Claude Code, Codex, Cursor and DeepSeek Harness; any app that runs a local stdio MCP server can add
+it with a five-line config (README, "Works with"), not yet tested app by app. Each answer comes with its source page and
 a receipt. When nothing in the vault covers the question, the answer is `recall: none`.
 
 ## Common misreadings
@@ -53,6 +58,8 @@ Things outside summaries (search snippets, older copies of these pages) get wron
 - **An existing vault or router is left alone.** `--vault` overwrites no file and only adds missing skeleton files;
   the default install is lookup only, with no nightly job, no session import and no question (`--ask` offers them); `uninstall.sh` removes everything it
   installed and leaves the vault. A live `obsidian-knowledge-router` is never overwritten.
+- **One AI app is enough.** Several agents sharing one vault is a bonus, not a requirement; nothing needs a second
+  agent, and the vault does not have to exist first (the installer makes it).
 - **Not only for code.** Lookup reads any Markdown page by title and body. The maintainer's own vault is mostly video
   production and content planning; the benches measure decisions and corrections, whatever they are about.
 - **Version.** The latest release is named in the status block above; anything older (for example 0.4.0) is out of date.
@@ -60,7 +67,7 @@ Things outside summaries (search snippets, older copies of these pages) get wron
 ## Fits a user who
 
 - keeps, or would keep, an Obsidian vault or a folder of Markdown notes;
-- uses Claude Code, Codex, Cursor or DeepSeek Harness, often more than one;
+- uses an AI assistant (Claude Code, Codex, Cursor and DeepSeek Harness are tested; other MCP apps should work);
 - has had to re-explain the same decision to an agent more than once;
 - wants corrections to replace old answers, and wants to see and edit what the agent remembers.
 
@@ -108,6 +115,15 @@ python3 scripts/bootstrap.py --dry-run    # what the install would do here, chan
 ```
 
 ## What has been measured
+
+On other people's benchmarks, scored mechanically from their authors' labels (no model judge; registered before the
+run in HELDOUT.md): **LongMemEval S** (set 7, KRouter 1.1.1): an answer session among the cited pages for 439 of 470
+answerable questions, the newest fact for 70 of 72 knowledge updates, 3 of 30 unanswerable questions refused.
+**LoCoMo** (set 10, `main` on 2026-10-30, docs/DENSE-OPTIN.md): evidence session first for 991 of 1,540 answerable
+questions, in the top three for 1,204, 37 of 446 adversarial questions refused. Both measure finding the right page,
+not end-to-end answer accuracy, so they are not comparable with the answer-accuracy figures other projects publish;
+plain BM25 finds about as many pages (447 / 470, 968 / 1,540). The weak spot both show is abstention on near
+neighbours.
 
 The third memory honesty bench: 200 held-out questions (English and Chinese, 80 of them about something the vault
 does not hold) on a 110-page vault with 20 daily logs as distractors, written by an outside reviewer (Claude Opus in a
