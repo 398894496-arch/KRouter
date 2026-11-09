@@ -1,5 +1,7 @@
 # KRouter in agent frameworks
 
+[中文](FRAMEWORKS.zh.md)
+
 Every framework below can use KRouter's MCP server, so one server gives each of them the same memory: the page that
 answers, its one-line answer, and `recall: none` when the vault does not know. Set `KROUTER` to the server's path
 once:

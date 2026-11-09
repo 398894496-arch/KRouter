@@ -72,7 +72,7 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：装了这个应用，安装脚本就写它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
-| 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | Python 包里带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端加载这个服务：[`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | LlamaIndex 检索器和官方 MCP Python SDK（stdio 和 HTTP）已实测；其他框架的写法照各家文档，我们还没跑过 |
+| 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | Python 包里带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端加载这个服务：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | LlamaIndex 检索器和官方 MCP Python SDK（stdio 和 HTTP）已实测；其他框架的写法照各家文档，我们还没跑过 |
 | 其他能跑本地 MCP 服务的应用：Devin Desktop（原 Windsurf）、opencode、Continue、Roo Code、VS Code 里的 Cline…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
 | 团队：好几个人共用记忆 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |
 | 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
