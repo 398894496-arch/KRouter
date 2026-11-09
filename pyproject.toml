@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krouter"
+version = "1.3.0"
+description = "Your AI remembers what you decided, and what you changed your mind about: plain-Markdown memory for any MCP app."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [{name = "KRouter contributors"}]
+keywords = ["memory", "mcp", "agent-memory", "obsidian", "second-brain", "claude-code", "codex", "cursor"]
+classifiers = ["License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Operating System :: OS Independent"]
+
+[project.urls]
+Homepage = "https://398894496-arch.github.io/KRouter/"
+Source = "https://github.com/398894496-arch/KRouter"
+Changelog = "https://github.com/398894496-arch/KRouter/blob/main/CHANGELOG.md"
+
+[project.scripts]
+krouter = "krouter.cli:main"
+
+[tool.setuptools]
+packages = ["krouter", "krouter_router"]
+
+[tool.setuptools.package-dir]
+krouter = "sdk/krouter"
+krouter_router = "skill/krouter-obsidian/scripts"
+
+[tool.setuptools.package-data]
+krouter_router = ["*.sh", "*.txt", "*.psv"]
