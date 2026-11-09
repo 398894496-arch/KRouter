@@ -30,6 +30,21 @@ notice, then the details.
   On an Apple M2 laptop: 1,000 pages 0.08 s per lookup (p50), 10,000 0.12 s, 50,000 0.53 s (p95 1.1 s, 76 MB peak);
   the first lookup, which builds the index, takes 0.4 s, 4.8 s and 24 s. Over HTTP, 16 parallel callers on 10,000
   pages right after 200 pages changed: no errors. `docs/BENCHMARK.md` → Scale.
+- **Your AI can write a line down.** A third MCP tool, `krouter_note` (text up to 500 characters; kind `decision`,
+  `correction` or `note`), appends one line to that day's notes page `05 时间日志/会话摘录/<date>｜agent 记下.md`
+  (status `provisional`, so a clue, never a rule page), with secrets redacted and the calling app's name from MCP
+  `initialize`. Each note is a change-ledger entry and, in a git vault, one `[krouter-run <id>]` commit that
+  `import_sessions.py --undo <id>` takes back. On by default over stdio; the HTTP server keeps it off unless started
+  with `--allow-write`.
+- **Claude Desktop is set up by the installer.** When its settings folder exists, `bootstrap.py` merges
+  `mcpServers.krouter` into `claude_desktop_config.json` (other servers kept, a backup `.krouter-bak` written, a file
+  it cannot parse or a `krouter` entry it did not write left alone); `uninstall.sh` removes only that entry.
+  `KROUTER_CLAUDE_DESKTOP_CONFIG` points it elsewhere. Checked by `tests/test_claude_desktop.py`; not yet tested
+  inside the app.
+- **A Python package and a `krouter` command.** `pyproject.toml` builds `krouter` (standard library only):
+  `krouter.ask()` returns the page, the one-line answer, whether it refused and the confidence; `krouter.status()`;
+  `krouter.note()`; the command `krouter ask|status|note|mcp`. Install with
+  `pipx install "git+https://github.com/398894496-arch/KRouter"`; not on PyPI yet. `tests/test_sdk.py`.
 - **README:** a team server and remote-MCP apps in "Works with"; "no hosted service, a self-hosted team server is
   fine"; the install line says the script installs the latest release tag, not `main`; the Chinese ledger path and
   the terms receipt, floor and answer cards are explained where they first appear.

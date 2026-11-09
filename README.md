@@ -74,7 +74,8 @@ remembering, run the line it prints last (`bootstrap.py --ask`), which asks two 
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
 | A team: one shared memory for several people | a self-hosted server over HTTP (`mcp_server.py --http`, or the Docker image `ghcr.io/398894496-arch/krouter`), token required: [`docs/TEAM.md`](docs/TEAM.md) | tested with Claude Code over HTTP |
 | Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |
-| Any app that runs a local MCP server: Claude Desktop, VS Code, Windsurf, Zed, Gemini CLI, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
+| Claude Desktop | MCP: the installer adds KRouter to its MCP settings when the app is installed (restart the app once) | settings written and checked by tests; not yet tested inside the app |
+| Any other app that runs a local MCP server: VS Code, Windsurf, Zed, Gemini CLI, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
@@ -83,8 +84,24 @@ remembering, run the line it prints last (`bootstrap.py --ask`), which asks two 
 
 Use the full path to your home folder (on Windows, `C:\\Users\\you\\.agents\\…` and often `python` instead of
 `python3`). After the one-line install the server finds your memory by itself. It is standard-library Python over
-stdio with two read-only tools, `krouter_ask` and `krouter_status`; a plain MCP client gets through `initialize`,
-`tools/list`, a cited answer and `recall: none` from it.
+stdio with three tools: `krouter_ask` and `krouter_status` read; `krouter_note` lets your AI write one line down (a
+decision, a correction, a fact), which lands on that day's notes page as a clue, never on a rule page, and is listed
+in the change ledger as one git commit you can revert. The HTTP team server leaves `krouter_note` off unless started
+with `--allow-write`. A plain MCP client gets through `initialize`, `tools/list`, a cited answer and `recall: none`.
+
+**From your own code** (Python 3.9+), the same lookups, receipts and notes:
+
+```bash
+pipx install "git+https://github.com/398894496-arch/KRouter"      # or: uvx --from git+https://github.com/398894496-arch/KRouter krouter ask "…"
+krouter ask "how do we ship a release?"
+```
+
+```python
+import krouter
+a = krouter.ask("how do we ship a release?")
+print(a.page, a.how, a.refused)          # the page it came from, the one-line answer, True when the memory does not know
+krouter.note("Releases are tagged from main only.", kind="decision")
+```
 
 ## Five minutes later
 

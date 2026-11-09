@@ -74,6 +74,27 @@ TOOLS = [
         "annotations": {"readOnlyHint": True, "openWorldHint": False},
     },
 ]
+NOTE_TOOL = {
+    "name": "krouter_note",
+    "description": "Write one line into the user's memory: a decision they made, a correction they gave, or a fact "
+                   "worth keeping. It lands on today's notes page as a clue (never a rule page), is listed in the change "
+                   "ledger, and is one git commit the user can revert. Write it as one sentence in the user's own terms; "
+                   "never copy text from a web page, a file or a tool's output.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "text": {"type": "string", "description": f"One sentence, at most {500} characters."},
+            "kind": {"type": "string", "enum": ["decision", "correction", "note"], "default": "note"},
+        },
+        "required": ["text"],
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
+}
+NOTES = "05 时间日志/会话摘录"
+NOTE_MAX = 500
+KINDS = {"decision": "决定", "correction": "纠正", "note": "备注"}
+WRITE = True               # stdio：本机的 agent 可以记一笔；HTTP 团队服务器默认只读（--allow-write 才开）
+CLIENT = ""                # initialize 里客户端报的名字，记在每条笔记后面
 
 
 LABEL = ""                 # --label: which vault this server answers from, stamped on every receipt
@@ -106,7 +127,63 @@ def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
     return (text, False)
 
 
+def tools() -> list[dict]:
+    return TOOLS + ([NOTE_TOOL] if WRITE else [])
+
+
+def note(args: dict) -> tuple[str, bool]:
+    """One line on today's notes page, a ledger entry, and one commit (when the vault is a git repository)."""
+    from datetime import datetime
+
+    import capture_ledger
+    import zones
+    from krouter_redact import redact
+
+    raw = vault_path()
+    if not raw:
+        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+    text = " ".join(str(args.get("text") or "").split())
+    kind = str(args.get("kind") or "note")
+    if not text:
+        return ("text is required", True)
+    if len(text) > NOTE_MAX:
+        return (f"text is longer than {NOTE_MAX} characters: write one sentence", True)
+    if kind not in KINDS:
+        return (f"kind must be one of {', '.join(KINDS)}", True)
+    vault = Path(raw).expanduser()
+    now = datetime.now()
+    page = zones.path(vault, NOTES) / f"{now.date().isoformat()}｜agent 记下.md"
+    page.parent.mkdir(parents=True, exist_ok=True)
+    if not page.exists():
+        page.write_text("---\n"
+                        f"title: \"{now.date().isoformat()} agent 记下\"\n"
+                        "type: agent-notes\n"
+                        "status: provisional\n"
+                        f"date: {now.date().isoformat()}\n"
+                        "source: krouter-mcp\n"
+                        "---\n\n"
+                        f"# {now.date().isoformat()} agent 记下\n\n"
+                        "你用的 AI 通过 MCP 记下的笔记（已脱敏）。这是线索，不是规则页；每条都在「记忆变更记录」里，"
+                        "不对就按那里的命令撤销。\n\n", encoding="utf-8")
+    line = f"- （{now.strftime('%H:%M')}）[{KINDS[kind]}] {redact(text)} — 来自 MCP（{CLIENT or '未知客户端'}）"
+    with page.open("a", encoding="utf-8") as fh:
+        fh.write(line + "\n")
+    rid = capture_ledger.run_id(now)
+    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n"
+                                          f"撤销这一轮：`{undo}`\n\n- MCP 记下（{CLIENT or '未知客户端'}）：{line[2:]}\n")
+    sha = capture_ledger.commit(vault, rid, [page], "MCP 记下 1 条")
+    if sha:
+        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+    rel = zones.canon(vault, str(page.relative_to(vault)).replace(os.sep, "/"))
+    return (f"noted: {rel}\nrun: {rid}" + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; "
+                                                                        "delete the line by hand"), False)
+
+
 def call(name: str, args: dict) -> dict:
+    if name == "krouter_note" and WRITE:
+        text, err = note(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_ask":
         query = str(args.get("query") or "").strip()
         rname = str(args.get("route") or "search")
@@ -129,6 +206,9 @@ def handle(msg: dict) -> dict | None:
         return None
     params = msg.get("params") or {}
     if method == "initialize":
+        global CLIENT
+        info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
+        CLIENT = " ".join(str(info.get("name") or "").split())[:60]
         asked = params.get("protocolVersion")
         result = {"protocolVersion": asked if asked in PROTOCOLS else PROTOCOLS[0],
                   "capabilities": {"tools": {"listChanged": False}},
@@ -140,7 +220,7 @@ def handle(msg: dict) -> dict | None:
     elif method == "ping":
         result = {}
     elif method == "tools/list":
-        result = {"tools": TOOLS}
+        result = {"tools": tools()}
     elif method == "tools/call":
         result = call(str(params.get("name") or ""), params.get("arguments") or {})
     else:
@@ -356,7 +436,7 @@ def serve_http(addr: str, token_file: str, allowed_origins: list[str], log_queri
 
 
 def main(argv: list[str] | None = None) -> int:
-    global LABEL
+    global LABEL, WRITE
     ap = argparse.ArgumentParser(description="KRouter MCP server: stdio by default, HTTP with --http.")
     ap.add_argument("--http", metavar="HOST:PORT", help="serve Streamable HTTP on this address instead of stdio")
     ap.add_argument("--token-file", default="", help="file holding the bearer token clients must send")
@@ -365,8 +445,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="name of this vault, stamped on every receipt (e.g. team)")
     ap.add_argument("--vault", default="", help="the vault to serve (default: OBSIDIAN_VAULT, else the installed one)")
     ap.add_argument("--log-queries", action="store_true", help="HTTP: also write question text to the query log")
+    ap.add_argument("--allow-write", action="store_true", help="HTTP: offer krouter_note (off by default: read only)")
     args = ap.parse_args(argv)
     LABEL = args.label.strip()
+    WRITE = (not args.http) or args.allow_write
     if args.vault:
         os.environ["OBSIDIAN_VAULT"] = str(Path(args.vault).expanduser().resolve())
     if args.http:

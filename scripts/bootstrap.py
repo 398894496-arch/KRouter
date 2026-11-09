@@ -66,6 +66,7 @@ MSG = {
         "distilling": "正在提炼（每个会话一次模型调用）…",
         "try": "现在就可以问你的 agent，比如：「{q}」——它会先查这个库，答案带出处页；库里没有的会直说没有。",
         "mcp": "已把 KRouter 注册成 {cli} 的 MCP 工具（krouter_ask）。",
+        "mcp_desktop": "已把 KRouter 加进 Claude Desktop 的 MCP 设置（重启 Claude Desktop 后生效）。",
         "cmem_ask": "发现 claude-mem 的记忆库：{sessions} 个会话、{decisions} 条决定和改动（{projects} 个项目）。要导进知识库吗？"
         "只读它的库、不改 claude-mem，脱敏后写在本机{distill}；以后每晚同步一次。导入？[y/N] ",
         "cmem_distill": "，并让模型把每个项目的决定理一遍：哪些还有效、哪些被后来的取代了（约 {chars} 字）",
@@ -107,6 +108,7 @@ MSG = {
         "try": "Ask your agent now, for example: \"{q}\" — it checks this vault first and cites the page; what the vault "
         "does not hold, it says so.",
         "mcp": "Registered KRouter as an MCP tool for {cli} (krouter_ask).",
+        "mcp_desktop": "Added KRouter to Claude Desktop's MCP settings (restart Claude Desktop to load it).",
         "cmem_ask": "Found a claude-mem memory: {sessions} sessions, {decisions} decisions and changes ({projects} projects). Import it? "
         "It is read only (claude-mem is not changed), redacted, written on this machine{distill}, then synced nightly. "
         "Import? [y/N] ",
@@ -418,6 +420,53 @@ def try_question(vault: Path, lang: str) -> str:
     return "我们之前定过什么规矩？" if lang == "zh" else "What rules have we set before?"
 
 
+def claude_desktop_config() -> Path | None:
+    """Claude Desktop's MCP settings file, when the app is installed (its settings folder exists); else None."""
+    raw = os.environ.get("KROUTER_CLAUDE_DESKTOP_CONFIG", "")
+    if raw:
+        return Path(raw).expanduser()
+    if platform.system() == "Darwin":
+        base = Path.home() / "Library/Application Support/Claude"
+    elif WINDOWS:
+        base = Path(os.environ.get("APPDATA", "")) / "Claude"
+    else:
+        base = Path.home() / ".config/Claude"
+    return base / "claude_desktop_config.json" if base.is_dir() else None
+
+
+def register_desktop(server: list[str], dry: bool) -> bool:
+    """Add KRouter to Claude Desktop's mcpServers, keeping everything else in the file. Never touches a file it cannot
+    parse, or a `krouter` entry that is not KRouter's mcp_server.py; keeps a copy of the file it changes."""
+    cfg = claude_desktop_config()
+    if cfg is None:
+        return False
+    if dry:
+        print(f"  Claude Desktop: add mcpServers.krouter to {cfg}")
+        return False
+    try:
+        data = json.loads(cfg.read_text(encoding="utf-8")) if cfg.exists() and cfg.read_text(encoding="utf-8").strip() else {}
+    except (OSError, ValueError):
+        print(f"  Claude Desktop: {cfg} is not valid JSON; left as it is")
+        return False
+    if not isinstance(data, dict) or not isinstance(data.get("mcpServers", {}), dict):
+        return False
+    servers = data.setdefault("mcpServers", {})
+    entry = {"command": server[0], "args": server[1:]}
+    old = servers.get("krouter")
+    if old == entry:
+        return True
+    if old is not None and "mcp_server.py" not in json.dumps(old):
+        return False  # 别人的 krouter 条目，不动
+    if cfg.exists():
+        shutil.copy2(cfg, cfg.with_name(cfg.name + ".krouter-bak"))
+    servers["krouter"] = entry
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cfg.with_name(cfg.name + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, cfg)
+    return True
+
+
 def register_mcp(t: dict, dry: bool) -> list[str]:
     """Register the MCP server with the agent CLIs that are installed (user scope). Re-running is harmless."""
     if os.environ.get("KROUTER_NO_MCP") == "1":
@@ -446,6 +495,9 @@ def register_mcp(t: dict, dry: bool) -> list[str]:
         if ok:
             done.append(cli)
             print(t["mcp"].format(cli=cli))
+    if register_desktop(server, dry):
+        done.append("claude-desktop")
+        print(t["mcp_desktop"])
     return done
 
 

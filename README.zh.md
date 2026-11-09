@@ -53,14 +53,29 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | 团队：好几个人共用一份记忆 | 自己部署的 HTTP 服务（`mcp_server.py --http`，或 Docker 镜像 `ghcr.io/398894496-arch/krouter`），必须带 token：[`docs/TEAM.md`](docs/TEAM.md) | 已用 Claude Code 通过 HTTP 实测 |
 | 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
-| 任何能跑本地 MCP 服务的应用：Claude Desktop、VS Code、Windsurf、Zed、Gemini CLI…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
+| Claude Desktop | MCP：装了这个应用的话，安装脚本会把 KRouter 加进它的 MCP 设置（重启一次应用） | 设置的写入由测试检查过；还没在应用里实测 |
+| 其他能跑本地 MCP 服务的应用：VS Code、Windsurf、Zed、Gemini CLI…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
     "args": ["/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"] } } }
 ```
 
-路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python` 而不是 `python3`）。一行安装之后，这个服务自己就能找到你的记忆库。它只用 Python 标准库，走 stdio，提供两个只读工具：`krouter_ask` 和 `krouter_status`。用一个普通的 MCP 客户端连它，`initialize`、`tools/list`、带出处的回答、`recall: none` 都走得通。
+路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python` 而不是 `python3`）。一行安装之后，这个服务自己就能找到你的记忆库。它只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实），写进当天的笔记页当线索，不会写进规则页，并在变更记录里记成一个可以撤销的 git 提交。HTTP 团队服务默认不开 `krouter_note`，启动时加 `--allow-write` 才开。用一个普通的 MCP 客户端连它，`initialize`、`tools/list`、带出处的回答、`recall: none` 都走得通。
+
+**从你自己的代码里用**（Python 3.9+），同样的查询、收据和笔记：
+
+```bash
+pipx install "git+https://github.com/398894496-arch/KRouter"      # 或者：uvx --from git+https://github.com/398894496-arch/KRouter krouter ask "…"
+krouter ask "我们怎么发版？"
+```
+
+```python
+import krouter
+a = krouter.ask("我们怎么发版？")
+print(a.page, a.how, a.refused)          # 出处页、一句话答案、记忆里没有时为 True
+krouter.note("只从 main 打发版标签。", kind="decision")
+```
 
 ## 装完五分钟
 
