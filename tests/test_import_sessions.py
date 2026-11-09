@@ -251,3 +251,134 @@ def test_long_sessions_are_distilled_in_segments():
              "- 原来是手动发版 → 改成用 CI 发版（10:06）", "- 日志级别用 info（10:07）"]
     assert imp.merge_digest(lines) == ["- 原来手动发 → 改成 CI 发（10:06）", "- 发版只从 main 打 tag（10:05）",
                                        "- 日志级别用 info（10:07）"]
+
+
+def _claude_turns(root: Path, sid: str, turns: list[tuple[str, str, str]]) -> Path:
+    """A Claude Code transcript of (timestamp, question, answer) turns."""
+    rows = []
+    for ts, ask, answer in turns:
+        rows.append({"type": "user", "entrypoint": "claude-desktop", "cwd": "/work/shop", "timestamp": ts,
+                     "origin": {"kind": "human"}, "message": {"role": "user", "content": ask}})
+        rows.append({"type": "assistant", "entrypoint": "claude-desktop", "timestamp": ts,
+                     "message": {"content": [{"type": "text", "text": answer}]}})
+    return _jsonl(root / "-work-shop" / f"{sid}.jsonl", rows)
+
+
+def _meta(page: str) -> dict[str, str]:
+    head = page.split("\n---", 1)[0]
+    return dict(line.split(": ", 1) for line in head.splitlines()[1:] if ": " in line)
+
+
+def test_forked_session_keeps_only_its_own_turns_and_a_copy_inside_another_gets_no_page(env):
+    """A fork or resume copies the earlier turns verbatim (same time, same question): they land on one page only."""
+    t1, t2, t3 = _ts(1, 9), _ts(1, 10), _ts(1, 11)
+    base = [(t1, "发版流程怎么定？", "只从 main 打 tag。")]
+    _claude_turns(env["claude"], "aaaa0000-parent", base + [(t2, "测试要全跑吗？", "要，全跑。")])
+    _claude_turns(env["claude"], "bbbb0000-fork", base + [(t2, "换个思路：先灰度？", "先灰度 10%。"),
+                                                         (t3, "灰度多久？", "一天。")])
+    _claude_turns(env["claude"], "cccc0000-copy", base)  # wholly inside the others
+    _claude_turns(env["claude"], "dddd0000-same-question", [(t3, "发版流程怎么定？", "另一次问。")])  # asked again later
+    out = _run(env, "--days", "7")
+    assert out["fork_duplicates"] == 1 and out["pages"] == 3
+    pages = {_meta(p)["session"]: p for p in _pages(env).values()}
+    assert set(pages) == {"aaaa0000-parent", "bbbb0000-fork", "dddd0000-same-question"}
+    assert pages["bbbb0000-fork"].count("发版流程怎么定") >= 1 and "forked_from" not in pages["bbbb0000-fork"]
+    parent = pages["aaaa0000-parent"]
+    assert _meta(parent)["forked_from"] == "bbbb0000-fork" and "测试要全跑吗" in parent
+    assert "- **问**（" in parent and "只从 main 打 tag" not in parent  # the shared turn lives on the fork's page
+    assert _meta(parent)["first_turn"] == _meta(pages["bbbb0000-fork"])["first_turn"]
+    assert "另一次问" in pages["dddd0000-same-question"]  # same words, different time: not a fork
+
+
+def test_session_end_of_a_longer_fork_replaces_the_earlier_page(env):
+    """Hook mode imports one file; the earlier half's page, written the night before, is read back and removed."""
+    t1, t2 = _ts(1, 9), _ts(1, 10)
+    base = [(t1, "缓存过期时间改成多少？", "改成 10 分钟。")]
+    _claude_turns(env["claude"], "aaaa0000-parent", base)
+    _run(env, "--consent", "--days", "7")
+    assert [_meta(p)["session"] for p in _pages(env).values()] == ["aaaa0000-parent"]
+    fork = _claude_turns(env["claude"], "bbbb0000-fork", base + [(t2, "那 CDN 呢？", "CDN 一小时。")])
+    out = _run(env, "--file", str(fork))
+    assert out["fork_duplicates"] == 1
+    assert [_meta(p)["session"] for p in _pages(env).values()] == ["bbbb0000-fork"]
+
+
+def test_sessions_a_daily_log_already_has_are_linked_or_skipped(env):
+    """collect_day-style daily logs: the session is matched by id (or the log's collector covered the day)."""
+    t1 = _ts(1, 9)
+    day = (datetime.now().astimezone() - timedelta(days=1)).date()
+    _claude_turns(env["claude"], "5ee9241f-19e4-49d4-a24c-019946080791", [(t1, "再来一轮对标监控！", "好。")])
+    _claude_turns(env["claude"], "77770000-other-day", [(_ts(3, 9), "别的日子", "嗯。")])
+    log = env["vault"] / "05 时间日志" / day.strftime("%Y-%m") / f"{day.strftime('%d')}｜待总结.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(f"---\ntitle: \"{day.strftime('%d')}｜待总结\"\ntype: daily-log\ndate: {day.isoformat()}\n"
+                   "source_kind: collector-stub\n---\n\n## 会话索引\n\n"
+                   "- `claude:5ee9241f-19e4-49d4-a24c-019946080791` 再来一轮对标监控！\n", encoding="utf-8")
+    note = env["vault"] / "05 时间日志" / "随手记.md"
+    note.write_text("---\ntype: note\n---\n\n`77770000-other-day`\n", encoding="utf-8")  # not a daily log
+    out = _run(env, "--days", "7")
+    assert out["overlap"] == "link" and out["covered_by_daily_log"] == 1 and out["pages"] == 2
+    page = next(p for p in _pages(env).values() if "对标监控" in p)
+    rel = f"05 时间日志/{day.strftime('%Y-%m')}/{day.strftime('%d')}｜待总结"
+    assert f'covered_by: "[[{rel}]]"' in page and f"当天的日更：[[{rel}]]" in page
+    assert "covered_by" not in next(p for p in _pages(env).values() if "别的日子" in p)
+    for p in (env["vault"] / FOLDER).glob("*.md"):
+        p.unlink()
+    out = _run(env, "--days", "7", "--overlap", "skip")
+    assert out["skipped_covered"] == 1 and [_meta(p)["session"] for p in _pages(env).values()] == ["77770000-other-day"]
+    # a distilled log keeps only short ids; the day itself is still covered by its collector
+    log.write_text(f"---\ntype: daily-log\ndate: {day.isoformat()}\nsource_kind: multi-agent-extract\n---\n\n"
+                   "冲突未决：见（`5ee9241f`）。\n", encoding="utf-8")
+    assert _run(env, "--days", "7", "--overlap", "skip")["skipped_covered"] == 1
+
+
+def test_a_daily_log_covers_only_its_own_day(env):
+    """A session that ran past midnight: the first day's log names it, the next day's turns are not covered."""
+    d1 = (datetime.now().astimezone() - timedelta(days=2)).date()
+    sid = "5ee9241f-19e4-49d4-a24c-019946080791"
+    _claude_turns(env["claude"], sid, [(_ts(2, 22), "第一天问", "答。"), (_ts(1, 9), "第二天问", "答。")])
+    log = env["vault"] / "05 时间日志" / d1.strftime("%Y-%m") / f"{d1.strftime('%d')}｜待总结.md"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(f"---\ntype: daily-log\ndate: {d1.isoformat()}\n---\n\n- `claude:{sid}` 第一天问\n", encoding="utf-8")
+    out = _run(env, "--days", "7", "--overlap", "skip")
+    assert out["skipped_covered"] == 1
+    assert ["第二天问" in p for p in _pages(env).values()] == [True]
+
+
+def test_a_session_that_grew_sends_only_its_new_turns(env, monkeypatch):
+    """Session-end distilling: a session ends many times; each end sends the new turns, not the whole excerpt again."""
+    sys.path.insert(0, str(SCRIPTS))
+    import import_sessions as imp
+    import llm
+
+    t = [_ts(1, h) for h in (9, 10, 11, 12)]
+    path = _claude_turns(env["claude"], "aaaa0000-grow", [(t[0], "发版流程怎么定？", "只从 main 打 tag。"),
+                                                         (t[1], "那就这么定", "好。")])
+    sent = []
+    reply = {"n": 0}
+
+    def fake(prompt, vault=None):
+        sent.append(prompt)
+        reply["n"] += 1
+        return "- 发版只从 main 打 tag（09:05）" if reply["n"] <= 2 else "- 灰度先放 10%（11:05）"
+
+    monkeypatch.setattr(llm, "complete", fake)
+    for k in ("OBSIDIAN_VAULT", "KROUTER_CLAUDE_PROJECTS", "KROUTER_CODEX_SESSIONS", "KROUTER_CURSOR_PROJECTS",
+              "KROUTER_STATE_DIR"):
+        monkeypatch.setenv(k, env["env"][k])
+    monkeypatch.setattr(sys, "argv", ["import_sessions.py", "--distill"])
+    assert imp.main() == 0
+    first = len(sent)
+    _claude_turns(env["claude"], "aaaa0000-grow", [(t[0], "发版流程怎么定？", "只从 main 打 tag。"),
+                                                  (t[1], "那就这么定", "好。"), (t[2], "灰度放多少？", "先放 10%。"),
+                                                  (t[3], "就这样", "好。")])
+    sent.clear()
+    assert imp.main() == 0
+    segment_prompts, change_prompt = sent[:-1], sent[-1]
+    assert segment_prompts and all("发版流程怎么定" not in p for p in segment_prompts)  # old turns not re-sent
+    assert all("灰度放多少" in p for p in segment_prompts)
+    assert "这段会话前面已经记下" in change_prompt and "发版只从 main 打 tag" in change_prompt
+    page = next(iter(_pages(env).values()))
+    assert "digest_turns: 4" in page
+    assert "- 发版只从 main 打 tag（09:05）" in page and "- 灰度先放 10%（11:05）" in page  # both halves kept
+    assert first == 2 and path.exists()

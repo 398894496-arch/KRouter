@@ -297,6 +297,7 @@ def cli_env() -> dict[str, str]:
         for name, val in _parse(path.read_text(encoding="utf-8", errors="replace")).items():
             if name in CLI_TOKEN_NAMES and not env.get(name):
                 env[name] = val
+    env["KROUTER_IN_DISTILL"] = "1"  # 用户的 hook 也会在这个 CLI 里跑：session_hook 见到它就不把提示词当成纠正记下来
     return env
 
 

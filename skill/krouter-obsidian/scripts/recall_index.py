@@ -572,6 +572,15 @@ def query_content_terms(raw: list[str], df: dict[str, int], named: set[str] = fr
     return n
 
 
+def broad_question(con: sqlite3.Connection, question: str) -> bool:
+    """A card question with fewer than 2 content words (`logo 底用什么？`): it would pull unrelated asks onto its page.
+    The same test the checkup page counts, so a card the generator keeps is never listed there as too broad."""
+    raw = [t for t in tokens(question) if not (len(t) == 1 and CJK_RE.fullmatch(t))]
+    df = term_df(con, raw + [c for t in raw if is_cjk_bigram(t) for c in t])
+    titled = phrase_terms(con, [t for t in raw if is_cjk_bigram(t)], ("title",))
+    return query_content_terms(raw, df, titled) < 2
+
+
 def soft_weight(t: str, df: dict[str, int]) -> float:
     """跨词拼接的双字降权而不删除，真词（含由常用字组成的少见词）保留部分分量。"""
     if not is_cjk_bigram(t):
@@ -622,7 +631,10 @@ def load_cards(vault: Path) -> dict[str, list[dict]]:
 
 
 SPECIFIC_BACKTICK = re.compile(r"`([^`]+)`")
-SPECIFIC_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./:~+#-]*[A-Za-z0-9]|\d")
+# 结尾的 `_` 算标识符的一部分：`session_item_` 是控件名前缀，截成 `session_item` 就在原文里找不到整词了
+SPECIFIC_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./:~+#-]*[A-Za-z0-9_]|\d")
+# 原文排版留的空格：`1 : 3.3`、`6230 / N70 / N73`、`1.2MB / 498 行`。答案照抄时去掉空格（`1:3.3`）不算改写
+SPACED_JOINER = re.compile(r"[ \t]*([/:])[ \t]*")
 
 
 def card_specifics(answer: str) -> list[str]:
@@ -655,6 +667,7 @@ def faithful(answer: str, page_text: str) -> bool:
     and a reworded sentence that flips the page's meaning still passes; checkup counts those cards.
     """
     page = unicodedata.normalize("NFKC", page_text or "").lower()
+    page = page + "\n" + SPACED_JOINER.sub(r"\1", page)  # 两种写法都留着：原样的整词边界不受影响
 
     def present(spec: str) -> bool:
         spec = spec.lower()

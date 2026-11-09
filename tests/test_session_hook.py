@@ -62,18 +62,25 @@ def _ctx(res: subprocess.CompletedProcess) -> str:
     return json.loads(res.stdout)["hookSpecificOutput"]["additionalContext"] if res.stdout.strip() else ""
 
 
-def test_start_brings_confirmed_decisions_and_corrections_with_their_page(tmp_path):
+def test_start_brings_every_distilled_decision_with_its_page_and_no_human_gate(tmp_path):
+    """Distilling writes memory without a yes (the change ledger shows what it wrote), so every line is brought in,
+    corrections first, none marked as awaiting confirmation."""
     s = _setup(tmp_path)
     ctx = _ctx(_hook(s["env"], "start", {"cwd": str(s["shop"])}))
     lines = ctx.splitlines()
-    assert "shop" in lines[0]
-    assert lines[1].startswith("- 原来手动上传 → 改成 CI 发布") and "（待确认）" in lines[1] and "05 时间日志/会话摘录/" in lines[1]
-    assert "- 数据库每晚 02:00 备份 〔" in ctx  # 确认过的页：整条带上，不标待确认
-    assert "发版只从 main 打 tag" not in ctx  # 没确认、也不是纠错：默认不带
+    assert "shop" in lines[0] and "待确认" not in ctx
+    assert lines[1].startswith("- 原来手动上传 → 改成 CI 发布") and "05 时间日志/会话摘录/" in lines[1]
+    assert "- 数据库每晚 02:00 备份 〔" in ctx
+    assert "- 发版只从 main 打 tag（10:05） 〔" in ctx
     assert "很久以前" not in ctx  # 30 天外
     assert "krouter_ask" in lines[-1]
-    everything = _ctx(_hook({**s["env"], "KROUTER_INJECT": "all"}, "start", {"cwd": str(s["shop"])}))
-    assert "发版只从 main 打 tag（10:05）（待确认）" in everything
+
+
+def test_inject_confirmed_keeps_the_old_gate(tmp_path):
+    s = _setup(tmp_path)
+    strict = _ctx(_hook({**s["env"], "KROUTER_INJECT": "confirmed"}, "start", {"cwd": str(s["shop"])}))
+    assert "发版只从 main 打 tag" not in strict  # 没确认、也不是纠错：不带
+    assert "改成 CI 发布（10:20）（待确认）" in strict and "- 数据库每晚 02:00 备份 〔" in strict
 
 
 def test_same_folder_name_in_two_repos_never_shares_decisions(tmp_path):
@@ -113,7 +120,7 @@ def test_header_follows_the_language_of_the_lines(tmp_path):
     en.mkdir()
     _page(s["folder"], "english", _root(en), ["Was: manual uploads → now: CI uploads (10:20)"])
     ctx = _ctx(_hook(s["env"], "start", {"cwd": str(en)}))
-    assert ctx.startswith("KRouter: decisions recorded") and "(unconfirmed)" in ctx and "krouter_ask" in ctx
+    assert ctx.startswith("KRouter: decisions recorded") and "(unconfirmed)" not in ctx and "krouter_ask" in ctx
     assert not any("一" <= ch <= "鿿" for ch in ctx.replace("05 时间日志/会话摘录", ""))
 
 
@@ -165,8 +172,9 @@ def test_end_does_nothing_without_consent(tmp_path):
     assert not (s["state"] / "session-hook.log").exists()
 
 
-def test_plugin_declares_both_hooks():
+def test_plugin_declares_its_hooks():
+    # 纠正就记（UserPromptSubmit）和压缩前记一笔（PreCompact）也随插件装上；同意导入之前它们什么都不做
     hooks = json.loads((REPO / "hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
-    assert set(hooks) == {"SessionStart", "SessionEnd"}
-    assert hooks["SessionStart"][0]["hooks"][0]["command"].endswith("session_hook.py\" start")
-    assert hooks["SessionEnd"][0]["hooks"][0]["command"].endswith("session_hook.py\" end")
+    assert set(hooks) == {"SessionStart", "SessionEnd", "UserPromptSubmit", "PreCompact"}
+    mode = {ev: hooks[ev][0]["hooks"][0]["command"].rsplit("\" ", 1)[1] for ev in hooks}
+    assert mode == {"SessionStart": "start", "SessionEnd": "end", "UserPromptSubmit": "prompt", "PreCompact": "end"}

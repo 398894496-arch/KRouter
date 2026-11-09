@@ -11,6 +11,36 @@ notice, then the details.
 
 ## Unreleased
 
+- **Answer cards: old cards are re-checked, broad questions are dropped.** Cards written before the whole-token check
+  (the 2026-10-10 batch) stayed in the file for good, blocked only when read; each run now holds kept cards to the
+  current checks and asks a page again once when one fails. A question too broad for the checkup page is dropped when
+  it is written, and the prompt asks for the page's own subject and for values copied as written. Layout spaces
+  (`1 : 3.3`, `6230 / N70 / N73`, `1.2MB / 498`) and a trailing `_` (`session_item_`) no longer fail a verbatim
+  answer: on the author's vault 6 of the 8 cards the checkup listed as unfaithful were this; the other 2 rewrote a
+  date (`08-16` → `8/16`) and are still refused.
+- **Session import next to another collector, and forks.** A session a `type: daily-log` page already lists, or a
+  day its collector covered, is linked to that log (`covered_by`) or, with `--overlap skip`, not written. A fork or
+  resume that copied another session's turns no longer writes them twice. Session-end distilling sends only the
+  turns added since the last digest, waits for a running import instead of sending the same session twice, and uses
+  the lane named at consent. `docs/AUTO_CAPTURE.md`.
+- **Decision-capture bench** (`bench/decision_capture/`): 14 fixed sessions, recall and false-extraction rate scored
+  by rule, no judge model.
+- **Daytime capture, corrections on the spot, and a way to keep a session out.** `import_sessions.py --intraday`
+  imports and distills today and yesterday with the lane recorded at consent, and does nothing before it;
+  `extras/host-daily-evolution/intraday_capture.py` runs it at fixed wall-clock slots (default 12:10 and 18:10 in
+  `Asia/Shanghai`) from an hourly timer, catches up the latest missed slot after sleep and tries a failed slot once
+  more, then leaves it to the nightly job. `session_hook.py prompt` (UserPromptSubmit) writes a typed correction
+  ("改成", "以后一律", "锁死", "from now on") to the day's `纠正候选` page as a provisional candidate: local pattern
+  match, redacted, no model call; rhetorical questions ("不是吗", "对不对") and KRouter's own model calls
+  (`KROUTER_IN_DISTILL`) are not captured. A session with `#不记` (or `#nocapture`) in a question, or under a root
+  on `--exclude-root`, is neither imported nor distilled, and a page already written for it is removed.
+- **Capture takes effect without a yes; every run is visible and reversible.** Distilled lines are no longer marked
+  "待你确认" and the SessionStart hook brings all of them (corrections first; `KROUTER_INJECT=confirmed` keeps the old
+  gate). Correction candidates are settled by the next distill of their session (成立 with the matching line, or
+  不成立). Each run that changes something makes one git commit of exactly its files (`[krouter-run <id>]`) and one
+  entry in `90 系统文件/自动化/记忆变更记录.md` (added lines, replaced decisions, source session, verdicts);
+  `import_sessions.py --undo <id>` reverts the run and keeps its record.
+
 - **Off-machine backups.** `backup.py init --dir <folder>` turns on a nightly, encrypted archive of the whole vault
   (its `.git` included, editor state and caches left out) in a folder that syncs elsewhere (iCloud Drive, OneDrive,
   Dropbox, a Netdisk sync folder, a USB disk; several, separated by `|`). AES-256 via openssl with an HMAC; each

@@ -105,6 +105,12 @@ if [ -z "${OBSIDIAN_VAULT:-}" ]; then
   printf '%s\n' "do not point the timer at the clone template."
 else
   VAULT=$OBSIDIAN_VAULT
+  # 记下库的位置（和一行安装同一个文件）：hook、MCP 服务不继承 OBSIDIAN_VAULT 时靠它找到库；已有就不动
+  VAULT_FILE="${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}"
+  if [ ! -s "$VAULT_FILE" ]; then
+    mkdir -p "$(dirname "$VAULT_FILE")" && printf '%s\n' "$VAULT" > "$VAULT_FILE" \
+      && printf '%s\n' "vault recorded for hooks and MCP: $VAULT_FILE"
+  fi
   # 别名表放进库：库里已有就不动；没有就把旧表（不是样例时）搬进去、原位置留软链；全新安装放一份样例
   VAULT_MAP="$VAULT/90 系统文件/canonical_sources.psv"
   OLD_MAP="$SKILL_DST/scripts/canonical_sources.psv"
