@@ -41,3 +41,13 @@ jobs:
         run: ./scripts/first_run.sh
       - name: One-line install, dry run
         run: python scripts/bootstrap.py --dry-run --lang en --vault ci-vault
+
+  docker:
+    # 团队服务器镜像：每个 PR 都构建一次并跑冒烟测试（不推送；推送只在发版时）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the team-server image
+        run: docker build -t krouter:ci .
+      - name: Smoke test (health, token, labelled receipt, hashed log, read-only vault, not root)
+        run: sh scripts/docker_smoke.sh krouter:ci

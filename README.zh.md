@@ -28,6 +28,8 @@
 curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
 ```
 
+这一行下载的只是一个小脚本；脚本再去装最新发布版（只用 tag，从不拉 `main`），装之前先核对 SHA-256，所以真正运行的是已经发布、带校验的版本。
+
 Windows（PowerShell）：`irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（需要 Claude Code 2.1.275 或更高；在 shell 里用 `claude plugin install krouter --marketplace 398894496-arch/KRouter` 需要 2.1.292）。第三方插件市场不会自动更新：运行 `claude plugin update krouter@krouter`，或在 `/plugin` → Marketplaces → krouter 里选 Enable auto-update。
 
 想先看看再装？下面只有最后一行会改动你的机器：
@@ -49,6 +51,8 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | Codex | MCP（安装脚本自动注册） | 已实测 |
 | Cursor | 规则和 skill（安装脚本自动加上） | 已实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
+| 团队：好几个人共用一份记忆 | 自己部署的 HTTP 服务（`mcp_server.py --http`，或 Docker 镜像 `ghcr.io/398894496-arch/krouter`），必须带 token：[`docs/TEAM.md`](docs/TEAM.md) | 已用 Claude Code 通过 HTTP 实测 |
+| 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
 | 任何能跑本地 MCP 服务的应用：Claude Desktop、VS Code、Windsurf、Zed、Gemini CLI…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
 
 ```json
@@ -75,7 +79,7 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 
 ## 适不适合你
 
-**适合**：你在用 AI 助手，哪一个都行，却总要把同一个决定反复交代，或者它总拿几周前已经改掉的说法来回答你。还没有笔记？安装脚本会帮你建好文件夹。同时用好几个 AI 是加分项，不是前提：它们会共用同一份记忆。**不适合**：你要基于向量的语义搜索、要把上一轮聊天自动塞进下一轮、要给自己开发的应用找一个托管的记忆 API，或者希望装好就是一个装满的大脑。
+**适合**：你在用 AI 助手，哪一个都行，却总要把同一个决定反复交代，或者它总拿几周前已经改掉的说法来回答你。还没有笔记？安装脚本会帮你建好文件夹。同时用好几个 AI 是加分项，不是前提：它们会共用同一份记忆。**不适合**：你要基于向量的语义搜索、要把上一轮聊天自动塞进下一轮、要一个别人替你运营的托管记忆服务（自己部署团队服务器可以，见 [`docs/TEAM.md`](docs/TEAM.md)），或者希望装好就是一个装满的大脑。
 
 **不只用于写代码**：同样的事放到短视频工作里，录法一样（Claude Code 加插件、演示库、真实输出）：
 
@@ -111,6 +115,7 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | LoCoMo，别人的对话和标注（[第 10 套](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels)；KRouter `main`，2026-10-30；只有英文） | 1 540 道可答题里 991 道第一条就引到证据会话，1 204 道在前三条里；**446 道陷阱题只拒了 37 道**。纯 BM25：第一条命中 968 道，前三条 1 257 道 |
 | 该拒答时拒答（公开测试集，CI 跑） | 离题问题英文 12/12、中文 6/6 拒答 |
 | 在一个没人调过分的库上的错误引用率（[第三套测试集](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)，200 道留出题，中英各半，带日志干扰页；方括号是 95% 区间） | 默认设置下：KRouter 引错 26% [19, 33]，80 道近邻题拒答 47 道，120 道可答题答对 102 道；纯全文检索引错 58% [52, 65]。**和认真做的基线比是持平，不是领先**：给纯全文检索加上同样的两条规则（跳过已被取代的旧页、低于分数下限就拒答），答题数相同时它引错 42 页、KRouter 36 页，答对 96 道对 102 道，但两项差距都不显著（配对区间：引错率 [-10.2, +1.3] 个百分点，答对 [-2, +14]）。同样这 200 道题、都用默认设置：claude-mem 13.39 引错 64% [58, 71]，basic-memory 0.23 引错 78% [72, 84]；80 道近邻题两者一道都没拒；60 道「决定改过」的题，它们分别答对 34 和 16 道，KRouter 50 道 |
+| 规模（[`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)；合成库，Apple M2 笔记本，每次查询一个进程） | 1 千页：每次查询 0.08 秒（中位数），第一次查询含建索引 0.4 秒。1 万页：0.12 秒、4.8 秒。5 万页：0.53 秒（p95 1.1 秒）、24 秒，内存峰值 76 MB。HTTP 上 16 个人同时问 1 万页的库：没有出错，中位数 0.96 秒 |
 | 精确命中和向量检索比（「已取代」和「近邻」题，CI 跑） | 精确命中会拒答；TF-IDF、MiniLM、BGE-M3 会引一个近邻。本地向量做成可选档：测过了，没有上线（[`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)） |
 | 作者自己的真实提问 | 208 道历史提问由 Grok 盲评（2026-10-16）：KRouter 0.36，加了两条规则的 BM25 0.25（满分 2），配对区间 [−0.02, +0.24]：**没有显示出差距**。裁判只在约 5% 的题里找到「提问之前就已经存在的答案页」，这种评分方式会奖励拒答，所以这次结果只报告、不当证据（[第 5 套](bench/memory_honesty/HELDOUT.md)）。新提问上的盲测要等攒够 50 条，到 2026-11-09 记下了 30 条。更早的 0.62 → 1.47 是开发集（[VERIFY.md](docs/VERIFY.md)） |
 
@@ -137,6 +142,7 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 ## 更多
 
 - [工作原理和全部选项](docs/DETAILS.zh.md)：安装参数、夜间写手、精确命中和排序召回、问答卡、四种 agent 接入
+- [`docs/TEAM.md`](docs/TEAM.md)：团队共用一份记忆、自己部署的 HTTP 服务和它的 Docker 镜像
 - [`SECURITY.md`](SECURITY.md)：每条模型通道能看到什么、能做什么
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md)：给 agent 判断 KRouter 适不适合它的用户时参考的事实
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md)：适合新人的 issue 都打了标签
