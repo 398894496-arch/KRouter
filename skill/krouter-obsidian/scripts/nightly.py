@@ -47,6 +47,16 @@ def classify(rc: int, out: str) -> tuple[str, str]:
         return "failed", (out.strip().splitlines() or [f"rc={rc}"])[-1][:200]
     if '"import": "off"' in out:
         return "off", "会话导入没开（import_sessions.py --consent 开启）"
+    if '"import": "done"' in out:
+        # 导入的结果按它自己的字段判：里面有 skipped_covered 这样的键，不能拿"skipped"这个词来认
+        try:
+            row = json.loads([ln for ln in out.splitlines() if ln.lstrip().startswith('{"import"')][-1])
+        except (IndexError, ValueError):
+            row = {}
+        if row.get("distill_failed") and not row.get("distilled"):
+            return "partial", f"提炼全部失败（{row['distill_failed']} 个会话），摘录照常写了"
+        if row:
+            return "ok", ""
     if '"backup": "partial"' in out:
         return "partial", "备份只写成了一部分位置：" + out.split('"errors": ', 1)[-1][:160]
     if '"backup": "off"' in out:

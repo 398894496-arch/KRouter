@@ -306,6 +306,17 @@ def test_faithful_joined_words_pass_but_derived_numbers_do_not():
     assert not r.faithful("约 1:3.3", page)  # a ratio the model computed is not in the page
 
 
+def test_faithful_ignores_layout_spaces_and_keeps_trailing_underscore():
+    """Cards the 2026-10-28 checkup listed as unfaithful: the page wrote `1 : 3.3` / `6230 / N70` / `session_item_`
+    and the answer copied it without the spaces. A reformatted date (`08-16` → `8/16`) is still not verbatim."""
+    page = ("32px 配 104px 主标题（约 1 : 3.3）。诺基亚 6230 / N70 / N73。| 1.2MB / 498 行 |"
+            " 控件对不上（`session_item_` / Search）。08-16 无新 `createdAt`。")
+    for ok in ("约 1:3.3", "6230/N70/N73", "1.2MB/498 行", "控件对不上（session_item_ / Search）"):
+        assert r.faithful(ok, page), ok
+    for wrong in ("8/16 没有会话", "约 1:3.4", "6230/N71", "session_item_x"):
+        assert not r.faithful(wrong, page), wrong
+
+
 def test_unfaithful_card_is_not_printed_as_answer(vault):
     rel = "02 经验与方法/搜索与知识库/封账先看时间日志文件.md"
     _card(vault, rel, "怎么判断哪天封账了", "看 `05 时间日志/2099` 目录。")
@@ -382,6 +393,40 @@ def test_answer_cards_verify_drops_what_lexical_checks_cannot_see(vault, monkeyp
     assert ac.main() == 0
     rows = [json.loads(x) for x in (vault / ac.CARDS).read_text(encoding="utf-8").splitlines()]
     assert [x["q"] for x in rows if x.get("rel") == rel and not x.get("empty")] == ["怎么算封账"]
+
+
+def test_answer_cards_recheck_old_cards_and_drop_broad_questions(vault, monkeypatch):
+    """A card written before a check was tightened is not left in the file blocked at read time: its page is asked
+    again once. A new card whose question is too broad (the checkup's own test) is dropped at generation."""
+    import json
+    import re
+
+    import answer_cards as ac
+    import llm
+
+    rel = "02 经验与方法/搜索与知识库/封账先看时间日志文件.md"
+    _card(vault, rel, "封账要看哪个日期目录", "看 `05 时间日志/2099` 目录。")  # current sha, answer not in the page
+    asked = []
+
+    def fake(prompt, v=None):
+        rels = re.findall(r"### 页面路径: (.+)", prompt)
+        if prompt.startswith(ac.VERIFY_PROMPT[:20]):
+            return json.dumps({x: [{"id": int(n), "ok": True} for n in re.findall(r"卡 (\d+)：", prompt)] for x in rels})
+        asked.extend(rels)
+        return json.dumps({x: ([{"q": "怎么算封账", "a": "时间日志文件存在且不是待总结就算封账。"},
+                                {"q": "封账宽问题", "a": "时间日志文件存在就算封账。"}] if x == rel else []) for x in rels},
+                          ensure_ascii=False)
+
+    monkeypatch.setattr(llm, "complete", fake)
+    monkeypatch.setattr(r, "broad_question", lambda con, q: q == "封账宽问题")
+    monkeypatch.setattr("sys.argv", ["answer_cards.py", "--vault", str(vault), "--jobs", "1"])
+    assert ac.main() == 0
+    rows = [json.loads(x) for x in (vault / ac.CARDS).read_text(encoding="utf-8").splitlines()]
+    assert rel in asked
+    assert [x["q"] for x in rows if x.get("rel") == rel and not x.get("empty")] == ["怎么算封账"]
+    asked.clear()
+    assert ac.main() == 0
+    assert asked == []  # the regenerated page passes every check: not asked again
 
 
 def test_llm_plan_order(monkeypatch, tmp_path):
