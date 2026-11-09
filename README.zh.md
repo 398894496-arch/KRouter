@@ -6,7 +6,7 @@
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 
-每次提交都在 Linux、macOS、Windows 上跑测试。每个发布版都带 SHA-256 校验和 GitHub 构建来源证明（`gh attestation verify <安装包> --repo 398894496-arch/KRouter`）。你问的问题从不离开本机。
+每次提交都在 Linux、macOS、Windows 上跑测试。一行安装下载的是最新发布版（只用 tag，从不拉 `main`），运行任何东西之前先核对 SHA-256；每个发布版还带 GitHub 构建来源证明（`gh attestation verify <安装包> --repo 398894496-arch/KRouter`）。你问的问题从不离开本机。
 
 ![周一定了 A，周三改成 B，周四 agent 答 B 并引用那条纠错；库里没有的问题直接拒答](docs/img/demo.gif)
 
@@ -64,7 +64,14 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 2. **「要把本机已有的 agent 会话导进来吗？」**（加 `--ask` 时，适用于 Claude Code、Codex 和 Cursor） 答应后，近 7 天的会话会变成页面，每个会话一页，内容是你的提问和每轮最后的回答。像 key 的文字会先脱敏，全程不出本机。
 3. **「要让模型提炼一下定了什么吗？」** 答应后，你已经在用的模型（登录好的 CLI 或 API key）会在最近几个会话的页面顶上写出「定了什么、改了什么」。发之前它会先告诉你要发多少字。
 
-之后每晚的任务（同样先问你）会导入前一天的会话、做提炼、整理记忆库，不用你维护。
+## 之后它自己跟上
+
+同意导入之后，什么都不用你维护：
+- **每天夜里**（这个任务会先问你）导入前一天的会话、做提炼、整理记忆库。
+- **你纠正 AI 的时候**（装了 Claude Code 插件）：读起来像纠正的话（「以后都……」「改成……」「from now on…」）在你发出的那一刻就记下来，只在本机做、不调模型，下一次提炼时自动判定成不成立。长对话压缩上下文之前、会话结束时，也各记一次。
+- **白天**，可以再开一个定时任务，每天两个固定时间把当天的会话补进来（`extras/host-daily-evolution/intraday_capture.py`，附 macOS launchd 示例）。
+- **不用你批，但每一步都看得见。** 每一轮加了什么、取代了什么，都写进 `90 系统文件/自动化/记忆变更记录.md`。记忆文件夹是 git 仓库时（运行一次 `git init` 就行），每一轮还是一个单独的提交，`import_sessions.py --undo <轮次>` 一条命令就能撤回。
+- **某个会话不想被记**，在它的任何一个提问里写上 `#不记`（或 `#nocapture`）。
 
 ## 适不适合你
 
@@ -87,7 +94,7 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | 每条答案 | 带出处页和回执 | 通常没有出处 |
 | 谁在用 | 本机每个 AI 应用都读同一个文件夹（MCP、skill、规则） | 通常只服务一个工具 |
 
-**在用 [claude-mem](https://github.com/thedotmack/claude-mem)？** 不用卸掉。导入器已经在真实安装的 claude-mem 13.35.0 上完整跑通过。安装时会发现它的记忆库并问你要不要导入：会话总结变成页面，每个项目的决定汇成一页，等你确认。你的模型还能把这些决定理一遍，分出哪些还有效、哪些被后来的决定取代了，这一步是 claude-mem 自己不做的。Claude Code 插件也能做到 claude-mem 让人觉得「有记忆」的那两件事，只是存成纯 Markdown：会话结束时自动记下；开新会话时，自动带上这个仓库里你确认过的决定和最近的纠错，每条都注明出处页。仓库按路径区分，不按文件夹名。这两件事都要你先同意导入才会做。
+**在用 [claude-mem](https://github.com/thedotmack/claude-mem)？** 不用卸掉。导入器已经在真实安装的 claude-mem 13.35.0 上完整跑通过。安装时会发现它的记忆库并问你要不要导入：会话总结变成页面，每个项目的决定汇成一页，等你确认。你的模型还能把这些决定理一遍，分出哪些还有效、哪些被后来的决定取代了，这一步是 claude-mem 自己不做的。Claude Code 插件也能做到 claude-mem 让人觉得「有记忆」的那两件事，只是存成纯 Markdown：会话结束时自动记下；开新会话时，自动带上这个仓库最近的决定，纠错排在前面，每条都注明出处页。仓库按路径区分，不按文件夹名。这两件事都要你先同意导入才会做。
 
 ## 什么会离开本机
 
@@ -133,5 +140,7 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 - [`SECURITY.md`](SECURITY.md)：每条模型通道能看到什么、能做什么
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md)：给 agent 判断 KRouter 适不适合它的用户时参考的事实
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md)：适合新人的 issue 都打了标签
+
+**维护。** 目前只有一个维护者，这是采用它最大的风险，欢迎外部贡献。小版本每周最多一个，补丁随时发；`KROUTER_TAG=v1.2.1`（换成任何 tag）可以固定版本。哪些算稳定接口：[`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions)。问题和 bug 提 [issue](https://github.com/398894496-arch/KRouter/issues)；安全问题见 [`SECURITY.md`](SECURITY.md)。
 
 *原名 DSH-KRouter，旧链接、旧 clone 地址和旧安装命令都会自动跳转。* MIT 协议。

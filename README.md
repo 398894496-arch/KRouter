@@ -10,7 +10,8 @@ work: anything you decide and later change.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
-Tests run on Linux, macOS and Windows on every push. Each release ships SHA-256 sums and a GitHub build-provenance
+Tests run on Linux, macOS and Windows on every push. The one-line install downloads the latest release (a tag, never
+`main`) and checks its SHA-256 before running anything; each release also carries a GitHub build-provenance
 attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). What you ask never leaves your machine.
 
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
@@ -85,7 +86,19 @@ stdio with two read-only tools, `krouter_ask` and `krouter_status`; a plain MCP 
 2. **"Import the agent sessions already on this machine?"** (with `--ask`, for Claude Code, Codex and Cursor) On a yes, the last 7 days of sessions become pages, one per session: your questions and each turn's closing answer. Key-shaped text is redacted first, and nothing leaves the machine.
 3. **"Have your model pull out what was decided?"** On a yes, the model you already use (a logged-in CLI or an API key) writes "what was decided, what changed" at the top of each recent session's page. The installer tells you how many characters that sends before it sends anything.
 
-From then on a nightly job, which also asks first, imports yesterday, distills it, and keeps the memory tidy. Nothing needs maintaining.
+## It keeps up on its own
+
+Once you said yes to importing, nothing needs maintaining:
+- **Every night** (the job asks first) yesterday's sessions are imported and distilled, and the memory is tidied.
+- **When you correct your AI**, with the Claude Code plugin, a line that reads like a correction ("from now on…",
+  "改成…") is written down the moment you send it, locally and without a model call; the next distill settles it.
+  A long conversation is also recorded before it is compacted, and again when it ends.
+- **During the day**, an optional timer catches today's sessions at two set times
+  (`extras/host-daily-evolution/intraday_capture.py`, a macOS launchd example included).
+- **Nothing waits for your approval, and nothing is hidden.** Every run writes what it added and what it replaced to
+  `90 系统文件/自动化/记忆变更记录.md`. When the memory folder is a git repository (`git init` it once), each run is
+  also one commit, and `import_sessions.py --undo <run>` takes it back.
+- **Keep a session out** by putting `#nocapture` (or `#不记`) in any question of it.
 
 ## Is it for you?
 
@@ -113,7 +126,7 @@ import.
 | Every answer | Carries its source page and a receipt | Usually unsourced |
 | Who shares it | Every AI app on the machine reads the same folder (MCP, skill, rules) | Usually one tool |
 
-**Coming from [claude-mem](https://github.com/thedotmack/claude-mem)?** Keep it. The importer has been run end to end against a live claude-mem 13.35.0 install. The installer finds its memory and offers to import it: session summaries become pages, and each project's decisions become one page you confirm. Your model can then sort those decisions into the ones still in force and the ones a later decision replaced, which claude-mem itself does not do. The Claude Code plugin also does what makes claude-mem feel like memory, in plain Markdown: when a session ends it is recorded, and when a new one starts, this repository's confirmed decisions and recent corrections come with it, each naming its page. Repositories are told apart by their path, never by folder name. Both happen only after you said yes to importing.
+**Coming from [claude-mem](https://github.com/thedotmack/claude-mem)?** Keep it. The importer has been run end to end against a live claude-mem 13.35.0 install. The installer finds its memory and offers to import it: session summaries become pages, and each project's decisions become one page you confirm. Your model can then sort those decisions into the ones still in force and the ones a later decision replaced, which claude-mem itself does not do. The Claude Code plugin also does what makes claude-mem feel like memory, in plain Markdown: when a session ends it is recorded, and when a new one starts, this repository's recent decisions come with it, corrections first, each naming its page. Repositories are told apart by their path, never by folder name. Both happen only after you said yes to importing.
 
 ## What leaves your machine
 
@@ -166,5 +179,10 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 - [`SECURITY.md`](SECURITY.md): what each model lane can see and do
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md): facts for an agent deciding whether KRouter fits its user
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md): good first issues are labeled
+
+**Maintenance.** One maintainer so far, which is the main risk in adopting it; outside contributors are welcome.
+Minor releases come at most once a week and patches when ready; `KROUTER_TAG=v1.2.1` (any tag) pins one. What counts
+as the stable surface: [`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions). Bugs and
+questions: [issues](https://github.com/398894496-arch/KRouter/issues); security reports: [`SECURITY.md`](SECURITY.md).
 
 *Formerly DSH-KRouter. Old links, clone URLs and install lines still redirect.* MIT.
