@@ -18,6 +18,14 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 
 ## Measured, not claimed
 
+**Answer accuracy, the number other projects publish:** on LongMemEval (ICLR 2025; 500 questions, each over about 50
+chat sessions), a model given only the pages KRouter cites answered **400 of 500 right (80.0%, 95% interval
+76.4–83.4)**: 371 of 470 answerable, and 29 of 30 unanswerable ones recognised as such. Reader and judge are Claude
+Sonnet 5.5 with the benchmark's own prompts; most published numbers use GPT-4o, so set them side by side with that in
+mind. Weakest: questions that add up several sessions, 69 of 121, because three pages often miss one
+([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run),
+every reply and verdict in [`bench/longmemeval/results/`](bench/longmemeval/results/)).
+
 **On other people's benchmarks**, scored from their authors' own labels, no model judge:
 - **LongMemEval** (ICLR 2025; 500 questions, each over about 50 chat sessions): for 439 of 470 answerable questions an
   answer session is among the pages KRouter cites; for 70 of 72 questions whose fact changed later, it cites the
@@ -25,8 +33,8 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 - **LoCoMo** (ACL 2024; 1,986 questions over 10 long conversations): the first page cited holds the evidence for 991
   of 1,540 answerable questions, and one of the top three does for 1,204.
 
-These count whether the right page was found, not whether a model then answered correctly, so they do not line up with
-the answer-accuracy percentages other projects publish. Plain BM25 finds about as many pages (447 / 470, 968 / 1,540).
+These two count whether the right page was found, not whether a model then answered correctly; the answer accuracy is
+the paragraph above. Plain BM25 finds about as many pages (447 / 470, 968 / 1,540).
 
 **Where it is weak:** a question about a near neighbour of something the memory does mention still gets an answer. It
 refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo trick questions.
@@ -144,6 +152,7 @@ vault: [`DETAILS.md` → Backing up your vault](docs/DETAILS.md#backing-up-your-
 | Measured | Result |
 |---|---|
 | LongMemEval S, someone else's questions and labels ([set 7](bench/memory_honesty/HELDOUT.md#set-7-longmemeval-someone-elses-questions-and-labels-registered-2026-10-18-before-any-download-or-run); KRouter 1.1.1; scored mechanically from the authors' labels, registered before the run) | An answer session among the cited pages for 439 / 470 answerable questions; the newest fact cited for 70 / 72 knowledge updates (stale only: 1); 12 of 470 answerable questions refused; **3 of 30 unanswerable refused**. Plain BM25 with no floor, top three pages: 447 / 470 and 69 / 72, level |
+| LongMemEval S answer accuracy ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run); KRouter 1.3.0's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own prompts; registered before the run; a seen set) | **400 / 500 right, 80.0% [76.4, 83.4]**; answerable 371 / 470, 78.9%; unanswerable recognised 29 / 30. By type: single-session 61 / 64 (user) and 55 / 56 (assistant), knowledge update 69 / 72, temporal 97 / 127, preference 20 / 30, multi-session 69 / 121. A second judge agreed on 100 of 100 re-judged verdicts. Not the same reader as the GPT-4o numbers most projects publish |
 | LoCoMo, someone else's conversations and labels ([set 10](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels); KRouter at `main`, 2026-10-30; English only) | Evidence session cited first for 991 / 1,540 answerable questions, among the top three for 1,204; **37 of 446 adversarial questions refused**. Plain BM25: 968 first, 1,257 in the top three |
 | Refuses instead of guessing (public benches, CI) | Off-topic questions refused 12/12 (English) and 6/6 (Chinese) |
 | Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 26% [19, 33] wrong, 47 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor) at the same coverage cites 42 wrong pages to KRouter's 36 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.3] points, right [-2, +14]). On the same 200 questions at their defaults, claude-mem 13.39 cites a wrong page 64% of the time [58, 71] and basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 questions about a changed decision they get 34 and 16 right, KRouter 50 |

@@ -8,6 +8,9 @@
 >   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
+> - **Answer accuracy** (LongMemEval S, the number other projects publish): 400 of 500 right, 80.0% [76.4, 83.4],
+>   with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
+>   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
@@ -122,9 +125,12 @@ run in HELDOUT.md): **LongMemEval S** (set 7, KRouter 1.1.1): an answer session 
 answerable questions, the newest fact for 70 of 72 knowledge updates, 3 of 30 unanswerable questions refused.
 **LoCoMo** (set 10, `main` on 2026-10-30, docs/DENSE-OPTIN.md): evidence session first for 991 of 1,540 answerable
 questions, in the top three for 1,204, 37 of 446 adversarial questions refused. Both measure finding the right page,
-not end-to-end answer accuracy, so they are not comparable with the answer-accuracy figures other projects publish;
-plain BM25 finds about as many pages (447 / 470, 968 / 1,540). The weak spot both show is abstention on near
-neighbours.
+not end-to-end answer accuracy; plain BM25 finds about as many pages (447 / 470, 968 / 1,540). The weak spot both
+show is abstention on near neighbours. **Answer accuracy** (set 11, KRouter 1.3.0, registered before the run): with
+only the cited pages as context, a reader answered 400 of 500 LongMemEval S questions right (80.0%, 95% interval
+76.4–83.4; answerable 371 / 470; 29 of 30 unanswerable recognised); multi-session 69 / 121 is the weak type. Reader
+and judge are Claude Sonnet 5.5 with the benchmark's own prompts, so compare with GPT-4o-based figures with care;
+every reply and verdict is in `bench/longmemeval/results/`.
 
 The third memory honesty bench: 200 held-out questions (English and Chinese, 80 of them about something the vault
 does not hold) on a 110-page vault with 20 daily logs as distractors, written by an outside reviewer (Claude Opus in a

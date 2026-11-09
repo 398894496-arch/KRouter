@@ -415,6 +415,24 @@ names its reader and judge.
 `_abs`, with 95% bootstrap intervals (10 000 resamples over questions, seed 20261109). `bench/longmemeval/qa.py`
 (prepare, judge-prepare, score); the dataset is not committed.
 
+**Result (2026-11-09).** **400 of 500 right, 80.0%** (95% interval 76.4–83.4); answerable 371 / 470, 78.9%
+[75.1, 82.6]; `_abs` 29 / 30 identified as unanswerable. By type: single-session-user 61 / 64, single-session-assistant
+55 / 56, knowledge-update 69 / 72, temporal-reasoning 97 / 127, single-session-preference 20 / 30, multi-session 69 /
+121. Reader and judge: every agent reported `claude-sonnet-5-5` (Claude Sonnet 5.5); 108 reader agents and 20 judge
+agents, none of which saw another's files by instruction (one judge wrote its output file with a short script and
+said so; one reader listed the answers folder and said so). Retrieval: the v1.3.0 run, an answer session among the
+cited pages for 437 / 470 answerable, 14 answerable and 9 `_abs` refused.
+*Judge check:* four batches (100 verdicts: the two lowest-scoring, 6 / 25 and 9 / 25, another multi-session batch
+at 19 / 25 and a knowledge-update batch at 25 / 25) were judged again by fresh judge agents; they agreed on 100 of 100. Same model twice, so this shows the
+judge is stable, not that another judge would agree.
+*Read with:* most published LongMemEval numbers use GPT-4o as reader and judge; this run uses a newer model for both,
+so a difference from them is partly the model. LongMemEval has been public since 2024, so the reader may have seen
+it in training. The weakest type is the one top-three retrieval limits: multi-session questions add up facts from
+several sessions, and three pages often miss some (in the lowest batch the reader counted 2 of 4 film festivals, 2
+of 3 weddings). Set 7's results were read before this run (see *Seen* above).
+Files: `bench/longmemeval/results/2026-11-09-sonnet-qa.jsonl` (each question's cited sessions, reply and verdict;
+`qa.py score --verdicts bench/longmemeval/results` recomputes the numbers) and `…score.json`.
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
