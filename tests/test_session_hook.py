@@ -172,8 +172,9 @@ def test_end_does_nothing_without_consent(tmp_path):
     assert not (s["state"] / "session-hook.log").exists()
 
 
-def test_plugin_declares_both_hooks():
+def test_plugin_declares_its_hooks():
+    # 纠正就记（UserPromptSubmit）和压缩前记一笔（PreCompact）也随插件装上；同意导入之前它们什么都不做
     hooks = json.loads((REPO / "hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
-    assert set(hooks) == {"SessionStart", "SessionEnd"}
-    assert hooks["SessionStart"][0]["hooks"][0]["command"].endswith("session_hook.py\" start")
-    assert hooks["SessionEnd"][0]["hooks"][0]["command"].endswith("session_hook.py\" end")
+    assert set(hooks) == {"SessionStart", "SessionEnd", "UserPromptSubmit", "PreCompact"}
+    mode = {ev: hooks[ev][0]["hooks"][0]["command"].rsplit("\" ", 1)[1] for ev in hooks}
+    assert mode == {"SessionStart": "start", "SessionEnd": "end", "UserPromptSubmit": "prompt", "PreCompact": "end"}

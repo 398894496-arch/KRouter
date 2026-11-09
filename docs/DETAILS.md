@@ -48,7 +48,8 @@ Everything the front page leaves out: install options, what leaves the machine, 
   name), each naming its page, corrections first: every distilled line, with no confirmation gate (what distilling
   wrote is in `90 系统文件/自动化/记忆变更记录.md`, and `import_sessions.py --undo <run>` takes a run back).
   `UserPromptSubmit` (`session_hook.py prompt`) writes a typed correction down at once as a candidate, settled by the
-  next distill of its session. Nothing happens before consent; `KROUTER_INJECT=confirmed` brings only confirmed pages
+  next distill of its session. `PreCompact` imports the session before a long conversation is compacted, so a window
+  left open for days is still recorded. All four ship with the plugin. Nothing happens before consent; `KROUTER_INJECT=confirmed` brings only confirmed pages
   plus corrections (the pre-1.3 default), `KROUTER_INJECT=0` nothing.
 
 ## Install — one line, nothing to know
