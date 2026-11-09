@@ -77,6 +77,19 @@ def test_fresh_install_seeds_the_sample_into_the_vault(tmp_path):
     assert (vault / "90 系统文件/canonical_sources.psv").read_bytes() == SAMPLE.read_bytes()
 
 
+def test_install_records_the_vault_for_hooks_and_keeps_an_existing_record(tmp_path):
+    # hooks and the MCP server run without OBSIDIAN_VAULT; install.sh must leave them the path, as bootstrap does
+    vault = tmp_path / "vault"
+    shutil.copytree(REPO / "template", vault)
+    res = _sh("install.sh", _env(tmp_path, vault))
+    assert res.returncode == 0, res.stderr
+    record = tmp_path / "home/.config/krouter/vault"
+    assert record.read_text(encoding="utf-8").strip() == str(vault)
+    record.write_text("/somewhere/else\n", encoding="utf-8")
+    assert _sh("install.sh", _env(tmp_path, vault), "--upgrade").returncode == 0
+    assert record.read_text(encoding="utf-8") == "/somewhere/else\n"  # an existing record is the host's
+
+
 def test_uninstall_saves_an_unsaved_table_and_leaves_the_vault(tmp_path):
     vault = tmp_path / "vault"
     shutil.copytree(REPO / "template", vault)
