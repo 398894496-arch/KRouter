@@ -52,12 +52,17 @@ OLD_SIDE = re.compile(r"^(原来|以前|之前|起初|最初|was|from|before|pre
 NEW_SIDE = re.compile(r"^(改成|改为|改回|换成|换回|变成|现在|now|back to|to|became)\s*[:：]?\s*", re.I)
 TIME = re.compile(r"[（(]\s*(\d{1,2}):(\d{2})\s*[)）]")
 # 纠正用语：说的是"以后照这个来"或"刚才那个不对"，不是提问
-CORRECTION = re.compile(r"(改成|改为|改回|换成|换回|以后都|以后一律|一律|锁死|不要再|别再|记住|纠正|纠错|搞错|说错|弄错|你错了|"
+CORRECTION = re.compile(r"(改成|改为|改回|换成|换回|以后都|以后一律|一律|锁死|(?<!要)不要再|别再|记住|纠正|纠错|搞错|说错|弄错|你错了|"
                         r"不对[，,。！!]|应该是|from now on|instead of|that'?s wrong|that is wrong|don'?t ever|never again|"
                         r"stop doing|always use|you got it wrong)", re.I)
 # 反问不是纠正："……不是吗""对不对""难道不是"
 RHETORICAL = re.compile(r"(不是吗|对不对|是不是|难道不是|对吧|好不好|行不行|可不可以|能不能|isn'?t it|right\?)\s*[？?！!。]*\s*$",
                         re.I)
+# 普通提问不是纠正："……有 ECC 纠错吗""应该是这样吗？"
+QUESTION = re.compile(r"(吗|呢|么|[？?])\s*$")
+# 应用替你附上的上下文块、你粘贴进来的整段：不是你此刻说的话，记之前先去掉
+ATTACHED = re.compile(r"<([A-Za-z][\w-]*)\b[^>]*>.*?</\1>|<[A-Za-z][\w-]*\b[^>]*/>"
+                      r"|<(?:pasted_content|artifact-view-context|system-reminder|ide_[\w-]+)\b[^>]*>.*\Z", re.S)  # 没闭合的整段也算
 NO_CAPTURE = re.compile(r"#(不记|nocapture)(?![0-9A-Za-z_])", re.I)
 PROMPT_MAX = 1500
 CANDIDATE_MAX = 300
@@ -278,9 +283,15 @@ def correction_cue(text: str) -> str:
     it ends as a rhetorical question)."""
     for sentence in re.split(r"(?<=[。！!？?\n])", text):
         m = CORRECTION.search(sentence)
-        if m and not RHETORICAL.search(sentence.strip()):
+        s = sentence.strip()
+        if m and not RHETORICAL.search(s) and not QUESTION.search(s.rstrip("。！! ")):
             return m.group(1)
     return ""
+
+
+def own_words(text: str) -> str:
+    """What the person typed: the prompt without the blocks the app attached or the person pasted in."""
+    return ATTACHED.sub(" ", text).strip()
 
 
 def marked_out(transcript: Path) -> bool:
@@ -305,7 +316,7 @@ def marked_out(transcript: Path) -> bool:
 
 
 def prompt(payload: dict) -> int:
-    text = str(payload.get("prompt") or "")
+    text = own_words(str(payload.get("prompt") or ""))
     if (not text.strip() or len(text) > PROMPT_MAX or os.environ.get("KROUTER_IN_DISTILL") or NO_CAPTURE.search(text)
             or not consented()):
         return 0

@@ -123,3 +123,29 @@ def test_bad_input_never_fails_the_session(box):
     res = subprocess.run([sys.executable, str(HOOK), "prompt"], input="not json", env=box["env"],
                          capture_output=True, text=True, timeout=60)
     assert res.returncode == 0
+
+
+def test_questions_attached_blocks_and_suggestions_are_not_corrections():
+    sys.path.insert(0, str(HOOK.parent))
+    import session_hook as h
+    for text in ("另外我们有 ECC 纠错吗", "这两套机器性能上应该是一样的吗？", "你要不要再去社交媒体上查一下！",
+                 '<pasted_content id="p1">验收改成只记录速度</pasted_content>',
+                 '<artifact-view-context artifact="a">{"mode":"edit"}</artifact-view-context>'):
+        assert h.correction_cue(h.own_words(text)) == "", text
+    for text in ("缓存改成 512K", "不是 750B 的模型，你别再搞错！！！", "那就换成 NekoBox"):
+        assert h.correction_cue(h.own_words(text)), text
+    assert h.own_words('前面 <pasted_content id="p">粘贴的</pasted_content> 后面') == "前面   后面"
+    assert h.own_words('改成这样 <pasted_content id="p">粘贴了一半，没有结尾') == "改成这样"
+
+
+def test_settle_needs_shared_content_not_shared_correction_words():
+    sys.path.insert(0, str(HOOK.parent))
+    import corrections as c
+    digest = ["- 4 卡版也保留两颗 CPU，不改成单 CPU（00:01）", "- 原来报价只有一套 → 改成 8 卡和 4 卡两套报价（00:01）",
+              "- 原来缓存 256K → 改成 512K（03:17）"]
+    got = {r["said"]: r for r in c.settle([{"said": "硬盘可以的话改成单块 1.92TB"}, {"said": "改成 512K"},
+                                           {"said": "以后报价一律写两套"}], digest)}
+    assert not got["硬盘可以的话改成单块 1.92TB"]["ok"]  # 只共有"改成"，不是同一件事
+    assert got["改成 512K"]["ok"] and "512K" in got["改成 512K"]["line"]
+    assert not got["以后报价一律写两套"]["ok"]  # 只共有"报价"一个中文词组，不够
+

@@ -100,6 +100,27 @@ Once you said yes to importing, nothing needs maintaining:
   also one commit, and `import_sessions.py --undo <run>` takes it back.
 - **Keep a session out** by putting `#nocapture` (or `#不记`) in any question of it.
 
+**What it did on the maintainer's own machine**, 2026-10-30 → 11-09, every number from its own change ledger
+([method and tables](docs/AUTO_CAPTURE.md#5-back-test-on-the-maintainers-machine-2026-10-30--11-09)):
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/capture-days-dark.svg">
+  <img alt="Lines written to memory per day, 2026-10-30 to 11-09: 714 in all, 407 of them a change of mind" src="docs/img/capture-days-light.svg" width="760">
+</picture>
+
+- **30 runs wrote 714 lines**, 407 of them a change of mind ("was A → now B"), each naming the session it came from.
+  None had to be undone.
+- **Of 8 corrections the maintainer also wrote down by hand, 5 were in the memory by the next run.** 2 were missed by
+  the distill; 1 was about the agent's own tool use, which import does not see. A correction typed in Claude Code is
+  now kept even when the distill misses it: it is written in in your own words.
+- **From correction to memory: median 15 hours** (0.5 to 17.7): the Mac slept through daytime runs. A correction typed
+  in Claude Code is on record the moment you send it.
+- **On the public decision-capture bench** (14 written sessions with 14 labelled decisions, 3 of them changes of mind,
+  and 4 sessions where nothing was decided; scored by rule): all 14 found, all 3 changes, no false line, nothing
+  written for the 4 empty sessions (Claude lane, 2026-11-09; rerun with `python3 bench/decision_capture/run.py --replay
+  bench/decision_capture/results/2026-11-09-claude.jsonl`, or `--cli <your CLI>` to distill afresh). A small set: it shows
+  the distill does not invent decisions, not that it never misses one; the 2 misses above are real.
+
 ## Is it for you?
 
 **Yes**, if you use an AI assistant, any one, and keep telling it the same decision again, or it keeps answering with

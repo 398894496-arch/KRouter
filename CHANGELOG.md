@@ -11,7 +11,18 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+- **A correction the distill misses is no longer lost.** When no line of the session's digest covers a correction you
+  typed, it is written into the digest in your own words (`补记`) and listed in the change ledger, instead of being
+  settled as not holding. Settling no longer counts the correction wording itself (`改成` on both sides) as shared
+  content: a match needs a shared model, number or name, or at least three shared Chinese terms. On the
+  maintainer's pages, 7 of 10 candidates had been tied to an unrelated line, three of them corrections the distill had
+  missed (`docs/AUTO_CAPTURE.md` §5).
+- **The correction catcher keeps only what you typed.** Blocks the app attached and documents you pasted in are left
+  out before matching, and a question (ending in 吗 / 呢 / ？) or a suggestion ("要不要再…") is not a correction. On
+  the same 11 days: 12 kept lines, 7 of them corrections, became 6 kept, all corrections.
+- **README shows what capture did on the maintainer's machine** (30 runs, 714 lines, 407 changes of mind; 5 of 8
+  hand-recorded corrections in the memory by the next run), with a per-day chart, and the decision-capture bench's
+  numbers.
 
 ## 1.3.0 — 2026-11-09
 

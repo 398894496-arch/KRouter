@@ -70,15 +70,17 @@ def test_run_settles_candidates_commits_and_logs(box):
     assert _main(box, "--distill", "--days", "1") == 0
     cands = _candidates(vault)
     assert "判定：成立 → [[05 时间日志/会话摘录/" in cands and "改成 发版一律走 CI 发布" in cands
-    assert "判定：不成立（" in cands and "待下次蒸馏判定" not in cands
+    # 提炼里没有的那句（配色）按原话补记进提炼，不丢
+    assert "判定：补记 → [[05 时间日志/会话摘录/" in cands and "待下次蒸馏判定" not in cands
     ledger = (vault / LEDGER).read_text(encoding="utf-8")
     assert "status: generated" in ledger and "撤销这一轮：`" in ledger and "--undo " in ledger
     assert f"会话 `claude-code:{SID[:8]}`" in ledger and "取代：原来手动上传 → 改成 发版一律走 CI 发布" in ledger
-    assert "纠正候选判定：成立 1，不成立 1" in ledger
+    assert "纠正候选判定：成立 1，补记 1，不成立 0" in ledger and "补记：「配色改成蓝色主题。」" in ledger
     log = _git(vault, "log", "--format=%s%n%b")
     assert re.search(r"\[krouter-run \d{8}T\d{6}\]", log) and "变更记录 run" in log
     page = next(iter(_pages(box["env"]).values()))
     assert "（模型提炼）" in page and "待你确认" not in page
+    assert "- 你说：配色改成蓝色主题。（" in page and "当场记下的纠正，提炼里没有" in page
     assert _git(vault, "status", "--porcelain") == ""  # 这一轮写的全进了提交
 
 

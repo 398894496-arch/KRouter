@@ -849,6 +849,17 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001  模型失败不影响本地摘录
                 failed += 1
                 print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
+        mine = cands.pop((e["day"].isoformat(), e["id"][:8]), []) if fresh and not args.dry_run else []
+        if mine:
+            # 你当场说的纠正，提炼里有对应的行就挂上那一行；没有就用你的原话补记进提炼（提炼漏掉的往往正是这一句）
+            link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
+            settled = corrections.settle(mine, [ln for ln in digest.splitlines() if ln.strip().startswith(("-", "*"))])
+            extra = [corrections.own_line(r) for r in settled if not r["ok"] and r["said"].strip()]
+            if extra:
+                digest = digest.rstrip("\n") + "\n" + "\n".join(extra) + "\n"
+            verdicts += [{**r, "link": link} if r["ok"] or not r["said"].strip()
+                         else {**r, "link": link, "ok": True, "kind": "补记", "line": corrections.own_line(r)[2:]}
+                         for r in settled]
         if digest:
             page = render(e, digest)
         if fresh and not args.dry_run:
@@ -857,10 +868,6 @@ def main() -> int:
             added = [ln for ln in new if ln not in had and not any(x in ln for x in NONE_LINES)]
             if added:
                 changed_pages.append({"path": target, "agent": e["agent"], "session": e["id"], "added": added})
-            mine = cands.pop((e["day"].isoformat(), e["id"][:8]), [])
-            if mine:
-                link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
-                verdicts += [{**r, "link": link} for r in corrections.settle(mine, new)]
         if not args.dry_run:
             folder.mkdir(parents=True, exist_ok=True)
             tmp = target.with_name(target.name + ".tmp")

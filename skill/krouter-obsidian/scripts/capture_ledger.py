@@ -53,11 +53,14 @@ def section(vault: Path, rid: str, pages: list[dict], verdicts: list[dict], remo
             text = ln.lstrip("-* ").strip()
             out.append(f"  - {'取代：' if '→' in text else ''}{text}")
     if verdicts:
-        ok = sum(1 for v in verdicts if v["ok"])
-        out.append(f"- 纠正候选判定：成立 {ok}，不成立 {len(verdicts) - ok}")
+        added = sum(1 for v in verdicts if v.get("kind") == "补记")
+        ok = sum(1 for v in verdicts if v["ok"]) - added
+        out.append(f"- 纠正候选判定：成立 {ok}，补记 {added}，不成立 {len(verdicts) - ok - added}")
         for v in verdicts:
             said = v["said"] if len(v["said"]) <= 80 else v["said"][:80] + " …"
-            if v["ok"]:
+            if v.get("kind") == "补记":
+                out.append(f"  - 补记：「{said}」→ {v['link']}（提炼里没有，按原话补进）")
+            elif v["ok"]:
                 out.append(f"  - 成立：「{said}」→ {v['link']}：{v['line']}")
             else:
                 out.append(f"  - 不成立：「{said}」：{v['why'] or '模型判定不是改主意或新规则'}")

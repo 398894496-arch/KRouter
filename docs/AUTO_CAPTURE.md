@@ -137,6 +137,50 @@ python3 bench/decision_capture/run.py --cli /opt/homebrew/bin/claude --save line
 python3 bench/decision_capture/run.py --replay lines.jsonl
 ```
 
-No baseline yet: on 2026-10-30 the `claude` CLI answered "OAuth session expired and could not be refreshed".
+Baseline, 2026-11-09, `claude` lane: 14 of 14 decisions found, 3 of 3 changes, 20 lines with none false, nothing
+written for the 4 sessions where nothing was decided. The lines are in `results/2026-11-09-claude.jsonl` (`--replay`
+regrades them). (On 2026-10-30 the same run had failed: the CLI's login had expired.)
 Lexical scoring undercounts a correct line worded with none of the listed alternatives; `--show` prints misses and
 false lines to read. Tests: `tests/test_decision_capture_bench.py`.
+
+## 5. Back-test on the maintainer's machine (2026-10-30 → 11-09)
+
+Capture ran on the author's machine from 2026-10-30, so its own record can be checked against what actually happened.
+Only counts are published here, never session content. Sources: the change ledger (`记忆变更记录.md`), the session
+pages it wrote, the day's correction-candidate pages, and the corrections the author recorded by hand in the same
+period (8 entries in the Claude Code correction log, each with the person's own words and date). Labels below were
+assigned by Claude reading the pages, not by a person.
+
+**What it wrote.** 30 runs on 11 days, 68 page writes over 27 sessions, 714 lines: 407 changes of mind ("was A → now B")
+and 307 new decisions. Every line names its session; no run was undone. All sessions in the period were Claude Code
+ones (the machine had no Codex or Cursor sessions after 2026-10-30), so this says nothing about the other importers.
+
+**Against the 8 hand-recorded corrections.**
+
+| | Count |
+|---|---|
+| In the memory as a "was A → now B" line by the next run | 5 |
+| In the session page's turns, missed by the distill | 2 |
+| About the agent's own tool use, which import does not see (it keeps questions and closing answers only) | 1 |
+
+From the turn that made the correction to the run that wrote it down: 0.5 to 17.7 hours, median 15. The machine slept
+through most daytime slots; the slot then runs once after wake.
+
+**The correction catcher** (`session_hook.py prompt`) only worked from 2026-11-04 (a manual install had not recorded
+the vault path; fixed in `install.sh`). On the 12 lines it kept from then to 11-09:
+
+| | 1.3.0 | after this change |
+|---|---|---|
+| Lines kept | 12 | 6 |
+| Of them, a correction or decision the person typed | 7 | 6 |
+| Kept although not the person's words (an app-attached block, a pasted document) | 2 | 0 |
+| Kept although a question or a suggestion ("…有 ECC 纠错吗", "要不要再去…查一下") | 3 | 0 |
+| A real correction now dropped (a decision phrased as a question, "…对吗") | — | 1 |
+
+Settling was the larger fault. Of 10 settled candidates, 7 were tied to the wrong digest line, because the shared
+words counted included the correction wording itself (`改成` on both sides). Three of those were corrections the
+distill had missed altogether (a price, a disk size, a cache size): the old rule tied each to an unrelated line and
+reported it covered. Now correction wording and times are left out of the comparison; a match needs a shared
+distinctive term (a model, a number, a name) or at least three shared Chinese terms; and a candidate no digest line
+covers is written into the digest in the person's own words (`补记`) instead of being settled as not holding. Replayed
+on the same pages, the three missed corrections are now written in, and no candidate is tied to an unrelated line.
