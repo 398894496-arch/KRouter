@@ -7,9 +7,8 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -18,7 +17,7 @@ SCRIPT = REPO / "extras/host-daily-evolution/intraday_capture.py"
 sys.path.insert(0, str(SCRIPT.parent))
 import intraday_capture as ic  # noqa: E402
 
-SH = ZoneInfo("Asia/Shanghai")
+SH = ic.zone("Asia/Shanghai")  # 没有系统时区库的 Windows 上是固定 +8
 SLOTS = ic.parse_slots("12:10,18:10")
 
 
@@ -51,8 +50,8 @@ def test_a_failing_slot_gets_one_more_try():
 
 def test_slots_follow_the_zone_not_the_machine_clock():
     # 同一个 UTC 时刻，机器在夏令时前后换了偏移，上海的槽位不变
-    before = datetime(2026, 10, 31, 4, 15, tzinfo=ZoneInfo("UTC")).astimezone(SH)
-    after = datetime(2026, 11, 2, 4, 15, tzinfo=ZoneInfo("UTC")).astimezone(SH)
+    before = datetime(2026, 10, 31, 4, 15, tzinfo=timezone.utc).astimezone(SH)
+    after = datetime(2026, 11, 2, 4, 15, tzinfo=timezone.utc).astimezone(SH)
     assert ic.due_slot(before, SLOTS).strftime("%H:%M") == ic.due_slot(after, SLOTS).strftime("%H:%M") == "12:10"
 
 
@@ -99,3 +98,13 @@ def test_failure_is_logged_with_exit_code(fake):
     assert code == 1 and row["ok"] is False
     st = json.loads((fake["state"] / "intraday.json").read_text(encoding="utf-8"))
     assert st["ok"] is False
+
+
+def test_zone_falls_back_to_a_fixed_offset_without_a_tz_database(monkeypatch):
+    def missing(name):
+        raise ic.ZoneInfoNotFoundError(name)
+    monkeypatch.setattr(ic, "ZoneInfo", missing)
+    sh = ic.zone("Asia/Shanghai")
+    assert datetime(2026, 11, 1, 4, 10, tzinfo=timezone.utc).astimezone(sh).strftime("%H:%M") == "12:10"
+    with pytest.raises(SystemExit):
+        ic.zone("America/New_York")  # has daylight saving: no fixed offset is right, so say what to install
