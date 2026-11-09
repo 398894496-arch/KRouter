@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -11,6 +11,26 @@ notice, then the details.
 
 ## Unreleased
 
+Nothing yet.
+
+## 1.3.0 — 2026-11-09
+
+**What you will notice**
+- **Once you said yes to importing, the memory keeps itself current, and shows you everything it changed.** Distilled
+  decisions take effect without a confirmation step and a new session starts from all of them, corrections first.
+  Each run writes what it added and what it replaced to `90 系统文件/自动化/记忆变更记录.md`; in a vault that is a git
+  repository each run is also one commit, and `import_sessions.py --undo <run>` takes it back.
+  `KROUTER_INJECT=confirmed` keeps the 1.2 behaviour.
+- **Corrections are written down the moment you make them.** With the Claude Code plugin, a line that reads like a
+  correction is kept as a candidate on the spot (local, no model call) and settled by the next distill. A long
+  conversation is also recorded before it is compacted.
+- **Daytime capture** at two set times, from an optional timer (`extras/host-daily-evolution/intraday_capture.py`).
+- **Keep a session out** with `#nocapture` / `#不记` in a question, or a whole folder with `--exclude-root`.
+- **A manual install (`install.sh`) now records where the vault is**, so the hooks work there too.
+- **The README speaks to anyone with one AI app**, and leads with benchmarks other people wrote (LongMemEval, LoCoMo),
+  with what they do not measure and the weakness they show.
+
+**Details**
 - **Answer cards: old cards are re-checked, broad questions are dropped.** Cards written before the whole-token check
   (the 2026-10-10 batch) stayed in the file for good, blocked only when read; each run now holds kept cards to the
   current checks and asks a page again once when one fails. A question too broad for the checkup page is dropped when
