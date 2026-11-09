@@ -317,7 +317,16 @@ def excluded(s: dict, roots_out: list[str]) -> bool:
     if any(NO_CAPTURE.search(t["ask"] or "") for t in s["turns"]):
         return True
     root = project_root(s["cwd"]) if s["cwd"] and roots_out else ""
-    return bool(root) and any(root == r or root.startswith(r.rstrip("/") + "/") for r in roots_out)
+    return bool(root) and any(_within(root, r) for r in roots_out)
+
+
+def _within(path: str, base: str) -> bool:
+    """`path` is `base` or under it, by path parts (Windows separators and case included), never by string prefix."""
+    try:
+        Path(path).relative_to(base)
+        return True
+    except ValueError:
+        return False
 
 
 def collect(since: date, until: date, files: list[Path] | None = None, roots_out: list[str] | None = None,
