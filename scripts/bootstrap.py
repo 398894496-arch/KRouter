@@ -26,6 +26,7 @@ import json
 import locale
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -78,6 +79,13 @@ MSG = {
         "capture_on": "从现在起它自己记：{how}。只写进本机这个库，先脱敏，不调任何模型。某个会话不想记，在提问里写 #不记；"
         "整个停掉：{revoke}；这次导入的每一页都记在 90 系统文件/自动化/记忆变更记录.md，按里面的 run 编号可以撤回。",
         "capture_how_plugin": "Claude Code 的每个会话结束时记下",
+        "capture_how_live": "{apps} 每轮结束时当场记下",
+        "hooks_done": "已把 KRouter 的钩子加进 {app}（{file}）：开会话时带上本项目的决定，每轮结束记下这一轮，你当场纠正的话也会记下。",
+        "hooks_skip": "{app} 的钩子文件 {file} 不是纯 JSON，没动它，也就没加上 {app} 的钩子。",
+        "hooks_codex_shape": "{file} 的写法这个版本的 Codex 读不了：事件名要放在顶层的 \"hooks\" 下面（Codex 文档的写法），"
+        "现在 Codex 会整份跳过它，里面原有的钩子也没在跑。KRouter 没动它，也就没加上 Codex 的钩子。",
+        "hooks_codex_trust": "Codex 只跑你信任过的钩子：下次打开 Codex 输入 /hooks，把 KRouter 的 4 个钩子标为信任；信任之前 Codex 不跑它们。",
+        "hooks_codex_off": "你在 Codex 的 config.toml 里关了钩子（[features] hooks = false），KRouter 的钩子要等你打开才会跑。",
         "capture_how_nightly": "其他 agent 的会话，打开每晚任务后每晚导入前一天的（{ask}）",
         "plugin_hint": "用 Claude Code 的话，装上插件还能在会话结束时自动记下、开会话时自动带上本项目的决定："
         "/plugin install krouter --marketplace 398894496-arch/KRouter",
@@ -129,6 +137,13 @@ MSG = {
         "called. To keep a session out, put #nocapture in a question; to stop it: {revoke}; every page this import wrote is "
         "listed in 90 系统文件/自动化/记忆变更记录.md, and its run number takes it back.",
         "capture_how_plugin": "each Claude Code session when it ends",
+        "capture_how_live": "each turn in {apps}, as it ends",
+        "hooks_done": "Added KRouter's hooks to {app} ({file}): a session starts with this project's decisions, each turn is recorded as it ends, and a correction you type is noted on the spot.",
+        "hooks_skip": "{app}'s hooks file {file} is not plain JSON, so it was left alone and {app} got no KRouter hooks.",
+        "hooks_codex_shape": "{file} is not in the shape this Codex reads: event names belong under a top-level \"hooks\" key (as Codex's docs show), "
+        "so Codex skips the whole file and the hooks already in it are not running. KRouter left it alone and added no Codex hooks.",
+        "hooks_codex_trust": "Codex runs only hooks you have trusted: next time you open Codex, type /hooks and trust KRouter's 4 hooks; until then Codex skips them.",
+        "hooks_codex_off": "Hooks are turned off in Codex's config.toml ([features] hooks = false); KRouter's hooks run once you turn them back on.",
         "capture_how_nightly": "other agents' sessions each night once the nightly job is on ({ask})",
         "plugin_hint": "On Claude Code, the plugin also records each session when it ends and brings this project's "
         "decisions when one starts: /plugin install krouter --marketplace 398894496-arch/KRouter",
@@ -326,6 +341,18 @@ def decide_timer(args: argparse.Namespace, vault: Path, t: dict) -> tuple[bool, 
 
 
 IMPORT = ROOT / "skill/krouter-obsidian/scripts/import_sessions.py"
+
+
+def capture_consented() -> bool:
+    """The host said yes to importing sessions (the hooks do nothing before that, so they are only wired after it:
+    no "trust these hooks" prompt in Codex for hooks that would not run)."""
+    try:
+        sys.path.insert(0, str(IMPORT.parent))
+        import import_sessions
+
+        return bool(import_sessions.load_state().get("consent"))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def remembering_already() -> bool:
@@ -561,6 +588,167 @@ def register_desktop(server: list[str], dry: bool) -> bool:
     return register_app(MCP_APPS[0], server, dry)
 
 
+def codex_home() -> Path:
+    return Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+
+# 每轮记下来的钩子：Codex 和 Cursor 各自的事件名 → session_hook.py 的动作。格式照各家官方文档，2026-11-09 核对；
+# Codex 那份用 codex-cli 0.155 实测过（事件必须放在顶层 "hooks" 下面，否则整份被跳过）。Claude Code 的在插件里。
+HOOK_APPS = (
+    {"id": "codex", "name": "Codex", "dir": codex_home, "file": lambda: codex_home() / "hooks.json",
+     "events": (("SessionStart", "start", 10), ("UserPromptSubmit", "prompt", 10), ("Stop", "turn", 10),
+                ("SessionEnd", "end", 3))},  # Codex 的 SessionEnd 最多等 3 秒；导入本身在后台跑
+    {"id": "cursor", "name": "Cursor", "dir": lambda: app_settings("Cursor"), "file": lambda: Path.home() / ".cursor" / "hooks.json",
+     "events": (("sessionStart", "start", 10), ("beforeSubmitPrompt", "prompt", 10), ("stop", "turn", 10),
+                ("sessionEnd", "end", 10))},
+)
+
+
+def hooks_config(app: dict) -> Path | None:
+    """The app's hooks file when the app is installed (its folder exists); `KROUTER_HOOKS_CONFIG_<ID>` points it elsewhere."""
+    raw = os.environ.get("KROUTER_HOOKS_CONFIG_" + app["id"].upper(), "")
+    if raw:
+        return Path(raw).expanduser()
+    return app["file"]() if app["dir"]().is_dir() else None
+
+
+def _arg(x: str) -> str:
+    if WINDOWS:
+        return f'"{x}"' if " " in x else x
+    import shlex
+
+    return shlex.quote(x)
+
+
+def _ours(entry, agent: str) -> bool:
+    text = json.dumps(entry, ensure_ascii=False)
+    return "session_hook.py" in text and f"--agent {agent}" in text
+
+
+def _write_json(cfg: Path, data: dict) -> None:
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cfg.with_name(cfg.name + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, cfg)
+
+
+def _drop_ours(hooks: dict, app: dict) -> bool:
+    """Take KRouter's entries out of `hooks` (Codex: inside each matcher group); True when something was removed."""
+    gone = False
+    for event in list(hooks):
+        groups = hooks[event]
+        if not isinstance(groups, list):
+            continue
+        keep = []
+        for g in groups:
+            if app["id"] == "codex" and isinstance(g, dict) and isinstance(g.get("hooks"), list):
+                inner = [h for h in g["hooks"] if not _ours(h, "codex")]
+                gone |= len(inner) != len(g["hooks"])
+                if inner:
+                    keep.append({**g, "hooks": inner})
+            elif _ours(g, app["id"]):
+                gone = True
+            else:
+                keep.append(g)
+        if keep:
+            hooks[event] = keep
+        else:
+            hooks.pop(event)
+    return gone
+
+
+def codex_hooks_off() -> bool:
+    try:
+        text = (codex_home() / "config.toml").read_text(encoding="utf-8")
+    except OSError:
+        return False
+    try:
+        import tomllib  # Python 3.11+
+
+        feats = tomllib.loads(text).get("features") or {}
+        return feats.get("hooks", feats.get("codex_hooks", True)) is False
+    except ImportError:
+        block = re.split(r"(?m)^\s*\[features\]\s*$", text, maxsplit=1)
+        return len(block) == 2 and bool(re.search(r"(?m)^\s*(codex_)?hooks\s*=\s*false\b", re.split(r"(?m)^\s*\[", block[1])[0]))
+    except ValueError:
+        return False
+
+
+def register_hooks(t: dict, dry: bool) -> list[str]:
+    """Add the turn-by-turn hooks to Codex and Cursor when they are installed, keeping every hook already there.
+    Never touches a file it cannot parse; keeps a copy of a file it changes; re-running replaces only its own entries."""
+    if os.environ.get("KROUTER_NO_HOOKS") == "1":
+        return []
+    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+    py = sys.executable if WINDOWS else (shutil.which("python3") or sys.executable)
+    script = str(skill / "scripts" / "session_hook.py")
+    done = []
+    for app in HOOK_APPS:
+        cfg = hooks_config(app)
+        if cfg is None:
+            continue
+        if dry:
+            print(f"  {app['name']}: add KRouter's hooks ({', '.join(e for e, _, _ in app['events'])}) to {cfg}")
+            continue
+        try:
+            text = cfg.read_text(encoding="utf-8") if cfg.exists() else ""
+            data = json.loads(text) if text.strip() else {}
+        except (OSError, ValueError):
+            print(t["hooks_skip"].format(app=app["name"], file=cfg))
+            continue
+        if not isinstance(data, dict) or not isinstance(data.get("hooks", {}), dict):
+            print(t["hooks_skip"].format(app=app["name"], file=cfg))
+            continue
+        if app["id"] == "codex" and set(data) - {"hooks", "description"}:
+            print(t["hooks_codex_shape"].format(file=cfg))  # 不包 "hooks" 的旧写法：Codex 整份跳过，别替人改
+            continue
+        before = json.dumps(data, sort_keys=True)
+        if app["id"] == "cursor":
+            data.setdefault("version", 1)
+        hooks = data.setdefault("hooks", {})
+        _drop_ours(hooks, app)
+        for event, which, timeout in app["events"]:
+            cmd = " ".join(_arg(x) for x in (py, script, which, "--agent", app["id"]))
+            if app["id"] == "codex":
+                entry = {"hooks": [{"type": "command", "command": cmd, "timeout": timeout}]}
+            else:
+                entry = {"command": cmd, "timeout": timeout}
+            hooks.setdefault(event, []).append(entry)
+        if json.dumps(data, sort_keys=True) != before:
+            if cfg.exists():
+                shutil.copy2(cfg, cfg.with_name(cfg.name + ".krouter-bak"))
+            _write_json(cfg, data)
+        done.append(app["id"])
+        print(t["hooks_done"].format(app=app["name"], file=cfg))
+        if app["id"] == "codex":
+            print(t["hooks_codex_off"] if codex_hooks_off() else t["hooks_codex_trust"])
+    return done
+
+
+def unregister_hooks(dry: bool) -> list[str]:
+    """Take KRouter's entries out of Codex's and Cursor's hooks files; keep everything else."""
+    gone = []
+    for app in HOOK_APPS:
+        cfg = hooks_config(app)
+        if cfg is None or not cfg.is_file():
+            continue
+        try:
+            data = json.loads(cfg.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        hooks = data.get("hooks") if isinstance(data, dict) else None
+        if not isinstance(hooks, dict) or not _drop_ours(json.loads(json.dumps(hooks)), app):
+            continue
+        if dry:
+            print(f"would: remove KRouter's hooks from {cfg}")
+            continue
+        _drop_ours(hooks, app)
+        _write_json(cfg, data)
+        print(f"removed: KRouter hooks ({app['name']})")
+        gone.append(app["id"])
+    return gone
+
+
 def install_plugin(exe: str) -> bool:
     """The Claude Code plugin (session hooks) from this very release, added as a local marketplace, so what installs is
     the checksummed package, not GitHub's `main`. An older Claude Code without `claude plugin` just gets the hint."""
@@ -653,6 +841,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.unregister_mcp:
         unregister_apps(args.dry_run)
+        unregister_hooks(args.dry_run)
         return 0
     lang = system_lang() if args.lang == "auto" else args.lang
     t = MSG[lang]
@@ -672,6 +861,8 @@ def main() -> int:
         return rc
     if args.dry_run:
         register_mcp(t, True)
+        if not args.no_import:
+            register_hooks(t, True)
         print("  nightly job: " + ("yes (--timer)" if args.timer else "no (--no-timer)" if args.no_timer
                                    else "asks first (--ask)" if args.ask else "no (--ask to be asked)"))
         print("  session import: " + ("no (--no-import)" if args.no_import else "yes (--import)" if args.import_sessions
@@ -697,23 +888,28 @@ def main() -> int:
     lane_kind = "" if not lane else ("key" if lane == "API key" else lane.split(" ")[0])
     do_import, do_distill, tell_later = decide_import(args, vault, t, lane_kind)
     imported = {}
+    hooked: list[str] = []
     if do_import:
         extra = ["--consent"] + (["--distill", "--distill-max", str(DISTILL_AT_INSTALL)] if do_distill else [])
         if do_distill:
             print(t["distilling"])
         imported = run_import(vault, *extra)
+        hooked = register_hooks(t, False) if capture_consented() else []
         n = imported.get("distilled") or 0
         if imported.get("pages"):
             print(t["import_done"].format(pages=imported.get("pages", 0), folder="05 时间日志/会话摘录",
                                           distilled=t["distilled"].format(n=n) if n else ""))
         py = "python" if WINDOWS else "python3"
-        how = ([t["capture_how_plugin"]] if "claude-plugin" in mcp else []) + (
+        live = (["Claude Code"] if "claude-plugin" in mcp else []) + [a["name"] for a in HOOK_APPS if a["id"] in hooked]
+        how = ([t["capture_how_live"].format(apps=(" / " if lang == "en" else "、").join(live))] if live else []) + (
             [] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
         print(t["capture_on"].format(how="；".join(how) if lang == "zh" else "; ".join(how),
                                      revoke=f'{py} "{IMPORT}" --revoke'))
     elif tell_later:
         cmd = f"{'python' if WINDOWS else 'python3'} \"{IMPORT}\" --consent --vault \"{vault}\""
         print(t["import_off"].format(cmd=cmd))
+    if not do_import and capture_consented():
+        hooked = register_hooks(t, False)  # 升级：以前同意过导入，钩子照样接上（换成这一版的路径）
     cmem = offer_claude_mem(args, vault, t, do_distill)
     if not (timer or do_import or args.ask or remembering_already()):
         cmd = f"{'python' if WINDOWS else 'python3'} \"{ROOT / 'scripts' / 'bootstrap.py'}\" --ask --vault \"{vault}\""
@@ -729,7 +925,7 @@ def main() -> int:
     print(json.dumps({"vault": str(vault), "lang": lang, "state": state, "added": len(added), "model": lane or None,
                       "timer": timer, "imported": imported.get("pages", 0), "distilled": imported.get("distilled", 0),
                       "claude_mem": cmem.get("sessions", 0),
-                      "mcp": mcp},
+                      "mcp": mcp, "hooks": hooked},
                      ensure_ascii=False))
     return 0
 

@@ -19,8 +19,10 @@
 >   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
 > - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
 >   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed) and imports the last 7 days of
->   sessions locally, with no model call; `--no-import` is lookup only. Distilling with a model and the nightly job ask
->   first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+>   sessions locally, with no model call; `--no-import` is lookup only. After that, Claude Code, Codex and Cursor each
+>   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
+>   in `/hooks`; Cursor's checked against its docs, not yet inside Cursor). Distilling with a model and the nightly job
+>   ask first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
 >   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
 >   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
@@ -86,8 +88,8 @@ Things outside summaries (search snippets, older copies of these pages) get wron
 ## Coming from claude-mem
 
 claude-mem can stay. KRouter imports its memory read-only (run end to end against claude-mem 13.35.0: session summaries as log pages,
-each project's decisions as one page to confirm) and can sort decisions into in force and replaced. The Claude Code plugin records
-each session when it ends and puts this repository's confirmed decisions and corrections, with their pages, into
+each project's decisions as one page to confirm) and can sort decisions into in force and replaced. Its session hooks (the
+Claude Code plugin, and Codex's and Cursor's hooks files, which the installer fills in) record every turn as it ends and put this repository's confirmed decisions and corrections, with their pages, into
 the next session. Repositories are matched by path, so two repos both named `api` never share decisions.
 
 ## Maturity and footprint

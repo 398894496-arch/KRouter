@@ -83,7 +83,8 @@ Python 3 is the only requirement, and the installer asks nothing. It makes a mem
 `--vault`, overwriting nothing), connects every app on [the list below](#works-with) that it finds on the machine,
 adds the Claude Code plugin from the same checksummed release, and imports the last 7 days of agent sessions as
 pages: locally, redacted, with no model call, each page listed in the change ledger and undoable. From then on it
-remembers by itself, and nothing leaves the machine. `--no-import` installs lookup only; `--ask` asks first, and is
+remembers by itself, turn by turn, in Claude Code, Codex and Cursor (it adds their session hooks), and nothing leaves
+the machine. `--no-import` installs lookup only; `--ask` asks first, and is
 how you turn on distilling with your model and the nightly job, the two steps that send text out.
 
 ## Works with
@@ -95,8 +96,8 @@ write, and `uninstall.sh` takes out only its own entries.
 | App | How it connects | Status |
 |---|---|---|
 | Claude Code | plugin (session hooks) and MCP, both added by the installer | tested |
-| Codex | MCP (the installer registers it) | tested |
-| Cursor | rule and skill, and MCP (`~/.cursor/mcp.json`) | rule and skill tested; MCP settings checked by tests |
+| Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`; Codex runs no hook you have not trusted) | MCP tested; hooks tested in codex-cli 0.155 |
+| Cursor | rule and skill, MCP (`~/.cursor/mcp.json`), and session hooks (`~/.cursor/hooks.json`) | rule and skill tested; MCP settings and hooks checked by tests against Cursor's documented format, not yet inside Cursor |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
 | Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed | MCP: the installer writes each app's settings file when the app is installed; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
 | Any other app that runs a local MCP server: Windsurf, opencode, Cline, Continue, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
@@ -142,9 +143,12 @@ krouter.note("Releases are tagged from main only.", kind="decision")
 
 Nothing needs maintaining, and nothing waits for a yes except the two steps that send text to a model:
 - **Every night** (the job asks first) yesterday's sessions are imported and distilled, and the memory is tidied.
-- **When you correct your AI**, with the Claude Code plugin, a line that reads like a correction ("from now on…",
-  "改成…") is written down the moment you send it, locally and without a model call; the next distill settles it.
-  A long conversation is also recorded before it is compacted, and again when it ends.
+- **After every turn**, in Claude Code, Codex and Cursor, the session so far is written to its page the moment the
+  agent finishes answering (locally, no model call, under a second in the background), so another window's agent
+  can already find it. When the session ends it is distilled, if you said yes to that.
+- **When you correct your AI**, in the same three, a line that reads like a correction ("from now on…", "改成…") is
+  written down the moment you send it, locally and without a model call; the next distill settles it. A new session
+  starts with this repository's recorded decisions, corrections first, each with its page.
 - **During the day**, an optional timer catches today's sessions at two set times
   (`extras/host-daily-evolution/intraday_capture.py`, a macOS launchd example included).
 - **Nothing waits for your approval, and nothing is hidden.** Every run writes what it added and what it replaced to

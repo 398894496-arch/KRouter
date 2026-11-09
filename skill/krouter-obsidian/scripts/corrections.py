@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 PENDING = ("待下次蒸馏判定", "待蒸馏确认")
-LINE = re.compile(r"^- （(\d{2}:\d{2})）(.*) — 项目 (.*?)，会话 `claude:([0-9A-Za-z?-]+)`，命中「(.*?)」，(.+)$")
+LINE = re.compile(r"^- （(\d{2}:\d{2})）(.*) — 项目 (.*?)，会话 `(?:claude|codex|cursor):([0-9A-Za-z?-]+)`，命中「(.*?)」，(.+)$")
 PAGE = re.compile(r"^(\d{4}-\d{2}-\d{2})｜纠正候选\.md$")
 MIN_SHARED = 2      # 候选和提炼行至少共有这么多个实词
 MIN_SHARE = 0.3     # 或者占候选实词的这么大比例

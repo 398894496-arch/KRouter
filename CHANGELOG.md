@@ -11,6 +11,20 @@ notice, then the details.
 
 ## Unreleased
 
+- **Codex and Cursor now remember turn by turn too, not only overnight.** Once you said yes to importing, the
+  installer merges KRouter's session hooks into `~/.codex/hooks.json` and `~/.cursor/hooks.json` (each app's
+  documented format, checked 2026-11-09), keeping every hook already there and a `.krouter-bak` copy; `uninstall.sh`
+  takes out only its own. In all three agents a session starts with this repository's recorded decisions, each turn is
+  written to its page as it ends (`import_sessions.py --file … --local`: no model call even when distilling is on,
+  0.4–0.9 s in the background on 80–355 MB transcripts), a correction is noted the moment it is typed (`codex:` /
+  `cursor:` candidates, settled by the next distill), and the session is distilled when it ends if you said yes to
+  that. Claude Code's plugin gains the same per-turn `Stop` hook. A page distilled when its session was shorter now
+  keeps that digest (and the turn count it covers) until the next distill, instead of losing it when the session
+  grows. Checked in codex-cli 0.155 against a local mock model: the decisions arrive as developer context, the
+  correction is noted, `Stop` and `SessionEnd` run the import. Codex runs a hook only after you trust it (`/hooks`),
+  and the installer says so. A Codex `hooks.json` with event names at the top level (no `"hooks"` key) is skipped
+  whole by Codex (`unknown field`); the installer leaves such a file alone and says why. Cursor's hooks are checked
+  by tests against its documented format, not yet inside Cursor. `tests/test_live_hooks.py`.
 - **One install wires every app it finds.** Besides Claude Code and Codex, the installer now writes KRouter into the
   MCP settings of Claude Desktop, Cursor, VS Code (Copilot), GitHub Copilot CLI, Gemini CLI, Kiro and Zed when each is
   installed, in the format each app documents (checked 2026-11-09): everything else in the file is kept and copied to

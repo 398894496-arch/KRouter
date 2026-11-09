@@ -97,7 +97,7 @@ late or not at all; it is a top-up, not the trigger. What runs the work on a sch
   so a session that crossed midnight is seen; with the incremental digest a page that did not grow sends nothing.
   State and a one-line summary per run: `~/.local/state/krouter/intraday.json`, `intraday.log`.
 - **Corrections on the spot.** `session_hook.py prompt` (UserPromptSubmit) appends a typed correction to
-  `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md` (`status: provisional`, time, project, `claude:<id8>`, the cue word,
+  `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md` (`status: provisional`, time, project, `claude:<id8>` (or `codex:`, `cursor:`), the cue word,
   "待下次蒸馏判定"). Pattern match only: correction cues (改成/改为/换成/以后都/一律/锁死/不要再/别再/记住/纠正/搞错/说错,
   `from now on`, `instead of`, `that's wrong`, …), minus a sentence that ends as a rhetorical question (不是吗/对不对/
   是不是/难道不是, `isn't it`). Skipped: no consent, a prompt over 1500 characters, a session marked `#不记`, and any
@@ -121,6 +121,50 @@ nothing ever took effect. In its place every run that changes something is visib
 - **One command back:** `import_sessions.py --undo <id>` reverts that run's commit and notes the undo in the ledger.
 - The SessionStart hook brings every distilled line (corrections first), unmarked; `KROUTER_INJECT=confirmed`
   restores the earlier confirmed-pages-only default. A run that changes nothing writes no commit and no entry.
+
+## 3c. Every turn, in Claude Code, Codex and Cursor
+
+Reviewers comparing memory tools in November 2026 put it plainly: real-time capture was Claude Code only, Codex and
+Cursor were batch. Codex and Cursor both have documented lifecycle hooks now, so the same four hooks run in all three:
+
+| `session_hook.py` | Claude Code (plugin) | Codex (`~/.codex/hooks.json`) | Cursor (`~/.cursor/hooks.json`) | What it does |
+|---|---|---|---|---|
+| `start` | `SessionStart` | `SessionStart` → `hookSpecificOutput.additionalContext` | `sessionStart` → `additional_context` | this repository's recorded decisions, corrections first, each with its page |
+| `prompt` | `UserPromptSubmit` | `UserPromptSubmit`, prints nothing (Codex adds plain output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` | a typed correction becomes a candidate |
+| `turn` | `Stop` | `Stop` | `stop`, prints `{}` (a `followup_message` would be sent as your next question) | `import_sessions.py --file … --local` in the background |
+| `end` | `SessionEnd`, `PreCompact` | `SessionEnd` (Codex waits at most 3 s; the import is detached) | `sessionEnd` | the same import, distilled if you said yes to that |
+
+- **The turn hook never calls a model**, even when distilling is on: `--local` writes the excerpt only. A page that
+  was distilled when its session was shorter keeps that digest, with `digest_turns` still the number of turns it
+  covers, so the decisions do not vanish from the page (and from the next session's context) between distills, and
+  the next distill sends only the new turns. Cost per turn: one python process, 0.4–0.9 s on the author's six
+  largest recent Claude Code transcripts (80–355 MB, 35–215 turns), about 0.2 s on an 18 MB one; no git commit (a run that
+  only rewrites an excerpt has nothing for the change ledger).
+- **Cursor sends other field names**: `conversation_id`, `workspace_roots` (the first is the project) and a
+  `transcript_path` that may be empty; a missing transcript is found by the session id under
+  `~/.cursor/projects/*/agent-transcripts/<id>/<id>.jsonl` (Codex: under `~/.codex/sessions/`).
+- **Installed only after a yes to importing**, by `bootstrap.py` (`register_hooks`), merged into the app's own file:
+  every entry already there is kept, the file is copied to `.krouter-bak`, re-running replaces only KRouter's entries
+  (`session_hook.py … --agent codex|cursor`), a file that is not plain JSON is left alone, and
+  `bootstrap.py --unregister-mcp` (what `uninstall.sh` runs) takes out only KRouter's. An app counts as installed
+  when its folder exists (`~/.codex`, or Cursor's own settings folder; `~/.cursor` alone does not count, since
+  `install.sh` creates it for the rule).
+- **Codex runs no hook you have not trusted.** Trust is recorded against the hook's hash in Codex's `/hooks`; the
+  installer cannot and does not grant it, and says to open `/hooks` once. `[features] hooks = false` in Codex's
+  `config.toml` turns hooks off; the installer says so instead.
+- **A Codex `hooks.json` with event names at the top level** (`{"Stop": […]}`, no `"hooks"` key) does not load:
+  codex-cli 0.155 prints ``failed to parse hooks config …: unknown field `Stop`, expected `description` or `hooks` `` and
+  skips the whole file, the hooks already in it included. The installer leaves such a file alone and says why,
+  rather than rewriting someone's hooks into a shape that would suddenly start running them.
+
+**Checked inside Codex** (codex-cli 0.155.0-alpha.9.2, 2026-11-09), with a throwaway `CODEX_HOME`, a throwaway vault
+and a local mock of the Responses API, hooks installed by `register_hooks` and run with
+`--dangerously-bypass-hook-trust` (the same as trusting them in `/hooks`): the recorded decision reached the model as
+a developer message, "以后一律用 pnpm" became a `codex:` candidate, and `Stop` and `SessionEnd` both ran the import.
+`codex exec` sessions are headless, so the import writes no page for them (by design); the rollout that run wrote
+was read back correctly as an interactive session. Without the bypass the untrusted hooks did not run. **Not checked
+inside Cursor**: no Cursor agent CLI on the test machine; the hook formats follow Cursor's hooks documentation and are
+covered by `tests/test_live_hooks.py`, which also runs the installed command line through a shell.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 

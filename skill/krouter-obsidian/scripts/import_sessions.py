@@ -29,6 +29,11 @@ distilled, and a page already written for it is removed; so is every session who
 `--exclude-root` list (saved with `--consent`). `--intraday` is what a daytime timer runs: like `--nightly` it does
 nothing without consent and uses the lane and distill choice recorded then, over today and yesterday.
 
+Every turn. `--file X --local` is what the turn-end hooks (Claude Code `Stop`, Codex `Stop`, Cursor `stop`) run: the
+page follows the session turn by turn, with no model call even when distilling was turned on; the session-end hook
+distills. A page that was distilled when the session was shorter keeps that digest (and the turn count it covers)
+until the next distill, which then sends only the new turns.
+
 Env: `KROUTER_CLAUDE_PROJECTS`, `KROUTER_CODEX_SESSIONS`, `KROUTER_CURSOR_PROJECTS` point at other transcript roots
 (tests, other machines).
 """
@@ -547,7 +552,8 @@ def prior_digest(path: Path | None, e: dict) -> tuple[list[str], int]:
     return (lines, done) if lines else ([], 0)
 
 
-def render(e: dict, digest: str = "") -> str:
+def render(e: dict, digest: str = "", covers: int | None = None) -> str:
+    """The page for one session and day. `covers`: how many turns the digest was made from (all of them by default)."""
     turns = e["turns"]
     meta = ["---", "type: session-excerpt", f"source: {MARK}", "status: imported", f"date: {e['day'].isoformat()}",
             f"agent: {e['agent']}", f"session: {e['id']}", f"project: {e['project'] or '-'}",
@@ -560,7 +566,7 @@ def render(e: dict, digest: str = "") -> str:
     title = clean(e["title"], 80).replace("\n", " ")
     meta.append(f"title: {title}")
     if digest:
-        meta.append(f"digest_turns: {len(turns)}")
+        meta.append(f"digest_turns: {len(turns) if covers is None else covers}")
         first = re.sub(r"^[-*]\s*", "", digest.strip().splitlines()[0])
         meta.append(f"how: {first}")  # 召回命中这页时先给的那一句：这段会话定下来的第一件事
     else:
@@ -749,6 +755,8 @@ def main() -> int:
     ap.add_argument("--overlap", choices=("link", "skip"), default="",
                     help="a session another collector's daily log already has: link the page to that log (default), or "
                          "write no page; saved with --consent")
+    ap.add_argument("--local", action="store_true", help="write the excerpt only, never call a model (what the "
+                    "turn-end hooks run; the session-end hook distills)")
     ap.add_argument("--intraday", action="store_true", help="today and yesterday, only when consent was given, with the "
                     "lane recorded then (what a daytime timer runs)")
     ap.add_argument("--undo", default="", metavar="RUN", help="take back everything run RUN wrote (its id is in "
@@ -783,7 +791,7 @@ def main() -> int:
         print(json.dumps({"import": "off", "reason": "no consent yet (import_sessions.py --consent)",
                           "chars": 0, "writes": []}))
         return 0
-    distill_on = args.distill or bool(scheduled and st.get("distill"))
+    distill_on = (args.distill or bool(scheduled and st.get("distill"))) and not args.local
     if scheduled and st.get("cli") and not args.cli:
         # 会话结束时在会话自己的环境里跑：shell 里碰巧有哪个 API key 就发给谁，不该由它决定。用同意时点名的那条
         os.environ["KROUTER_LEARN_CLI"] = st["cli"]
@@ -837,6 +845,7 @@ def main() -> int:
         before = have.get((e["id"], e["day"].isoformat()))
         page = render(e)
         digest = old_digest(before, len(e["turns"]))
+        covers = len(e["turns"])
         fresh = False
         if not digest and distill_on and id(e) in to_distill:
             prior, done = prior_digest(before, e)
@@ -849,8 +858,14 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001  模型失败不影响本地摘录
                 failed += 1
                 print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
+        if not digest:
+            # 这次没提炼（每轮的本地导入、提炼失败、超出这一轮的上限）：上次提炼的留着，并照实记它只覆盖到第几轮，
+            # 下次提炼只发新增的那几轮
+            prior, done = prior_digest(before, e)
+            if prior:
+                digest, covers = "\n".join(prior), done
         if digest:
-            page = render(e, digest)
+            page = render(e, digest, covers)
         if fresh and not args.dry_run:
             had = set(old_lines(before))
             new = [ln for ln in digest.splitlines() if ln.strip().startswith(("-", "*"))]

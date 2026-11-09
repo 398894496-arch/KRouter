@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Claude Code hooks: remember a session when it ends, bring this project's decisions when one starts.
+"""Agent hooks (Claude Code, Codex, Cursor): remember each turn as it ends, bring this project's decisions when a session
+starts, note a correction the moment you type it.
 
 The two things that make claude-mem feel like memory, done the KRouter way: what is captured is a plain Markdown
 page you can read and fix, and what is brought back is a handful of decisions, each with the page it came from.
 
+`session_hook.py turn` (Stop: the agent finished a turn): imports the session so far (`import_sessions.py --file …
+--local`), in the background, with no model call, so what was just said is in the vault before the next question, and
+another window's agent can find it. A digest made earlier stays on the page.
+
 `session_hook.py end` (SessionEnd): imports the session that just ended (`import_sessions.py --file`), in the
-background so Claude Code is not held up; it also distills that session when you said yes to distilling. Nothing
-happens before you said yes to importing (`import_sessions.py --consent`, or the install's question).
+background so the agent is not held up; it also distills that session when you said yes to distilling. Nothing
+happens before you said yes to importing (`import_sessions.py --consent`, or the install).
 
 `session_hook.py start` (SessionStart): prints, as context for the new session, up to 8 decisions recorded for this
 repository (matched by its git top level, never by folder name) in the last 30 days, each naming its page,
@@ -24,7 +29,18 @@ only, no model call, nothing sent; a rhetorical question ("不是吗", "对不�
 before you said yes to importing, for a prompt over 1500 characters, under a KRouter model call (`KROUTER_IN_DISTILL`),
 or in a session marked `#不记`.
 
-All three read the hook's JSON on stdin (`session_id`, `transcript_path`, `cwd`, `prompt`) and never fail the session.
+All four read the hook's JSON on stdin and never fail the session. `--agent` says whose hook it is (default `claude`):
+
+| | Claude Code (plugin) | Codex (`~/.codex/hooks.json`) | Cursor (`~/.cursor/hooks.json`) |
+|---|---|---|---|
+| start | `SessionStart` | `SessionStart` | `sessionStart`, prints `additional_context` |
+| prompt | `UserPromptSubmit` | `UserPromptSubmit` (prints nothing: Codex adds plain output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` |
+| turn | `Stop` | `Stop` | `stop`, prints `{}` (never a follow-up message) |
+| end | `SessionEnd`, `PreCompact` | `SessionEnd` | `sessionEnd` |
+
+Codex and Claude Code send `session_id`, `transcript_path`, `cwd` (and `prompt`); Cursor sends `conversation_id`,
+`workspace_roots` and `transcript_path`. A missing transcript path is looked up by the session id. Under a KRouter
+model call (`KROUTER_IN_DISTILL`) none of them does anything.
 """
 
 from __future__ import annotations
@@ -62,6 +78,9 @@ NO_CAPTURE = re.compile(r"#(不记|nocapture)(?![0-9A-Za-z_])", re.I)
 PROMPT_MAX = 1500
 CANDIDATE_MAX = 300
 CANDIDATES = "05 时间日志/会话摘录"
+
+
+AGENTS = {"claude": "claude", "codex": "codex", "cursor": "cursor"}  # --agent → 候选行里的会话前缀
 
 
 def consented() -> bool:
@@ -233,7 +252,23 @@ TAIL = {"zh": "其他问题先用 krouter_ask 查库；库里没有（recall: no
 MARK_UNCONFIRMED = {"zh": "（待确认）", "en": " (unconfirmed)"}
 
 
-def start(payload: dict) -> int:
+def normalize(payload: dict, agent: str) -> dict:
+    """The fields the handlers read (`session_id`, `transcript_path`, `cwd`, `prompt`), whichever agent sent the hook."""
+    p = dict(payload)
+    p["session_id"] = str(p.get("session_id") or p.get("conversation_id") or "")
+    if not p.get("cwd"):
+        roots = p.get("workspace_roots")
+        p["cwd"] = str(roots[0]) if isinstance(roots, list) and roots else ""
+    path = str(p.get("transcript_path") or "")
+    if agent in ("codex", "cursor") and p["session_id"] and not (path and Path(path).is_file()):
+        import import_sessions
+
+        found = import_sessions.find_transcript(agent, p["session_id"])
+        p["transcript_path"] = str(found) if found else path
+    return p
+
+
+def start(payload: dict, agent: str = "claude") -> int:
     mode = os.environ.get("KROUTER_INJECT", "")
     if mode == "0" or not consented():
         return 0
@@ -251,21 +286,25 @@ def start(payload: dict) -> int:
         body.append(f"- {line}{MARK_UNCONFIRMED[lang] if strict and not ok else ''} 〔{rel}〕")
     body.append(TAIL[lang])
     text = redact("\n".join(body))[:MAX_CHARS]
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": text}},
-                     ensure_ascii=False))
+    if agent == "cursor":
+        print(json.dumps({"additional_context": text}, ensure_ascii=False))
+    else:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": text}},
+                         ensure_ascii=False))
     return 0
 
 
-def end(payload: dict) -> int:
+def end(payload: dict, agent: str = "claude", local: bool = False) -> int:
     transcript = payload.get("transcript_path") or ""
-    if not transcript or not consented():
+    if not transcript or os.environ.get("KROUTER_IN_DISTILL") or not consented():
         return 0
     raw = vault_path()
     if not raw:
         return 0
     log = Path(os.environ.get("KROUTER_STATE_DIR") or Path.home() / ".local/state/krouter") / "session-hook.log"
     log.parent.mkdir(parents=True, exist_ok=True)
-    argv = [sys.executable, str(HERE / "import_sessions.py"), "--vault", raw, "--file", transcript]
+    argv = [sys.executable, str(HERE / "import_sessions.py"), "--vault", raw, "--file", transcript,
+            *(["--local"] if local else [])]
     with log.open("a", encoding="utf-8") as fh:
         kw = {"start_new_session": True} if os.name != "nt" else {"creationflags": 0x00000008}  # DETACHED_PROCESS
         subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=fh, stderr=fh,
@@ -283,9 +322,21 @@ def correction_cue(text: str) -> str:
     return ""
 
 
-def marked_out(transcript: Path) -> bool:
+def turn(payload: dict, agent: str = "claude") -> int:
+    return end(payload, agent, local=True)
+
+
+def marked_out(transcript: Path, agent: str = "claude") -> bool:
     """An earlier question of this session carries `#不记`. Only what the person typed counts: an agent's answer or a
     tool's output that merely mentions the marker does not."""
+    if agent != "claude":
+        import import_sessions
+
+        try:
+            turns = import_sessions.READERS[import_sessions.agent_of(transcript)](transcript)["turns"]
+        except (OSError, ValueError, KeyError):
+            return False
+        return any(NO_CAPTURE.search(t["ask"]) for t in turns)
     try:
         with transcript.open(encoding="utf-8", errors="replace") as fh:
             for raw in fh:
@@ -304,7 +355,7 @@ def marked_out(transcript: Path) -> bool:
     return False
 
 
-def prompt(payload: dict) -> int:
+def prompt(payload: dict, agent: str = "claude") -> int:
     text = str(payload.get("prompt") or "")
     if (not text.strip() or len(text) > PROMPT_MAX or os.environ.get("KROUTER_IN_DISTILL") or NO_CAPTURE.search(text)
             or not consented()):
@@ -314,7 +365,8 @@ def prompt(payload: dict) -> int:
     if not cue or not raw:
         return 0
     sid = str(payload.get("session_id") or "")
-    if marked_out(Path(str(payload.get("transcript_path") or ""))):
+    transcript = str(payload.get("transcript_path") or "")
+    if transcript and marked_out(Path(transcript), agent):
         return 0  # 这个会话前面标过不记
     vault = Path(raw).expanduser()
     now = datetime.now()
@@ -325,7 +377,7 @@ def prompt(payload: dict) -> int:
         said = said[:CANDIDATE_MAX].rstrip() + " …"
     cwd = str(payload.get("cwd") or "")
     project = Path(project_root(cwd)).name if cwd else ""
-    line = (f"- （{now.strftime('%H:%M')}）{said} — 项目 {project or '未知'}，会话 `claude:{sid[:8] or '?'}`，"
+    line = (f"- （{now.strftime('%H:%M')}）{said} — 项目 {project or '未知'}，会话 `{AGENTS.get(agent, 'claude')}:{sid[:8] or '?'}`，"
             f"命中「{cue}」，待下次蒸馏判定\n")
     folder.mkdir(parents=True, exist_ok=True)
     if not page.exists():
@@ -345,17 +397,29 @@ def prompt(payload: dict) -> int:
     return 0
 
 
+# Cursor 要的回执：提问照常发出；一轮结束不追加任何消息（stop 的 followup_message 会被当成下一条提问）
+CURSOR_REPLY = {"prompt": {"continue": True}, "turn": {}}
+
+
 def main() -> int:
-    which = sys.argv[1] if len(sys.argv) > 1 else ""
+    argv = sys.argv[1:]
+    which = argv[0] if argv else ""
+    agent = argv[argv.index("--agent") + 1] if "--agent" in argv[:-1] else "claude"
+    agent = agent if agent in AGENTS else "claude"
     try:
         payload = json.loads(sys.stdin.read() or "{}")
     except ValueError:
         payload = {}
     try:
-        return {"start": start, "end": end, "prompt": prompt}.get(which, lambda p: 0)(payload if isinstance(payload, dict) else {})
+        payload = normalize(payload if isinstance(payload, dict) else {}, agent)
+        handler = {"start": start, "end": end, "turn": turn, "prompt": prompt}.get(which)
+        return handler(payload, agent) if handler else 0
     except Exception as exc:  # noqa: BLE001  hook 永远不能让会话失败
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
         return 0
+    finally:
+        if agent == "cursor" and which in CURSOR_REPLY:
+            print(json.dumps(CURSOR_REPLY[which]))
 
 
 if __name__ == "__main__":
