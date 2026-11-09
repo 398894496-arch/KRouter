@@ -17,8 +17,12 @@
 >   set is planned.
 > - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
 >   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
+> - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
+>   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
+>   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
+>   The Kubernetes manifest and systemd unit are checked by tests, not yet run on a cluster or host.
 > - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
->   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed) and imports the last 7 days of
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI) and imports the last 7 days of
 >   sessions locally, with no model call; `--no-import` is lookup only. After that, Claude Code, Codex and Cursor each
 >   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
 >   in `/hooks`; Cursor's checked against its docs, not yet inside Cursor). Distilling with a model and the nightly job

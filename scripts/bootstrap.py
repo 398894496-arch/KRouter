@@ -505,6 +505,11 @@ MCP_APPS = (
      "file": lambda: Path.home() / ".kiro" / "settings" / "mcp.json", "key": "mcpServers", "entry": _plain},
     {"id": "zed", "name": "Zed", "dir": _zed_dir, "file": lambda: _zed_dir() / "settings.json", "key": "context_servers",
      "entry": lambda c, a: {"command": c, "args": a, "env": {}}},
+    # Cline CLI：~/.cline/data/settings/cline_mcp_settings.json（CLINE_MCP_SETTINGS_PATH 可改），文档 2026-11-09 核对；
+    # Cline 的 VS Code 扩展文档没写文件位置，不自动写
+    {"id": "cline", "name": "Cline CLI", "dir": lambda: Path.home() / ".cline",
+     "file": lambda: Path(os.environ.get("CLINE_MCP_SETTINGS_PATH") or Path.home() / ".cline/data/settings/cline_mcp_settings.json"),
+     "key": "mcpServers", "entry": lambda c, a: {"command": c, "args": a, "disabled": False}},
 )
 
 

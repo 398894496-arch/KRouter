@@ -11,6 +11,37 @@ notice, then the details.
 
 ## Unreleased
 
+- **The team server is 15–25 times faster and holds up under load.** At 10,000 pages a lookup over HTTP takes 13 ms
+  instead of 210 ms and the server answers 301 questions a second with 32 callers instead of 15; at 50,000 pages,
+  54 ms and 75/s instead of 980 ms and 3/s (`bench/scale/serve_load.py`, new; the table is in the README's new
+  "Running it for a team" section and `docs/TEAM.md` §4). Each memory keeps up to 4 resident lookup processes
+  (`route_worker.py`; `--workers N`, `--workers 0` for the old one process per lookup), which re-check the vault's
+  files at most every 2 s (`--refresh-every`; a note written through the server is found by the next lookup); a
+  lookup that hangs is cut off after 120 s and its process replaced. The literal fallback (what a question the vault
+  cannot answer costs) now reads only the pages the index says can hold the question, and prints the same lines as
+  reading every file (2,442 pieces of page text compared; `tests/test_resident_lookups.py`); this also makes a
+  one-shot lookup at 50,000 pages 0.35 s instead of 0.53 s. The index cache keeps each page's frontmatter for that
+  check (cache schema v14: rebuilt once on upgrade). Resident memory is about 200–270 MB with 4 processes, against
+  15–29 MB before; `/metrics` gains `krouter_lookup_workers`.
+- **Fixed: two lookups that found the same changed pages at once could index them twice.** Each then indexed the
+  pages it had seen change, and the index held two entries for a page (the old one-process-per-lookup server and
+  parallel `krouter ask` runs could hit it too; reproduced 3 of 3 times with 6 processes and 150 changed pages).
+  Re-indexing now takes SQLite's write lock and re-reads what is indexed first, and a refresh that finds nothing
+  changed takes no lock. Also fixed: `recall()` left its SQLite connection open until the garbage collector ran
+  (about 2.7 MB each in a long-running process).
+- **Kubernetes and systemd.** `deploy/kubernetes/krouter.yaml` (Deployment and Service: an init container clones
+  each memory, a sidecar pulls it, tokens and deploy key from Secrets, read-only root filesystem, `/healthz` probes,
+  Prometheus annotations) and a hardened `deploy/systemd/krouter.service`, next to the Compose file. Checked by
+  `tests/test_deploy.py`; not yet applied to a cluster or a systemd host by us.
+- **Agent frameworks and JavaScript.** `krouter.integrations.llamaindex.KRouterRetriever` (a LlamaIndex retriever:
+  the answering page as a node with its source, no node on `recall: none`; `pip install "krouter[llamaindex]"`),
+  a JavaScript / TypeScript client with no dependencies (`sdk/js`: stdio or a team server over HTTP; not on npm yet),
+  and `docs/FRAMEWORKS.md` with the way LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI and the
+  Vercel AI SDK load an MCP server (from each framework's docs, 2026-11-09; not yet run by us). The official MCP
+  Python SDK is now tested against the server over stdio and Streamable HTTP (`tests/test_mcp_official_sdk.py`).
+- **Cline CLI** is wired by the installer too (`~/.cline/data/settings/cline_mcp_settings.json`, per Cline's docs).
+- **Try it in your app.** `CONTRIBUTING.md` lists every app, framework and deployment still marked "not yet run by
+  us", and a "Works in my app" issue form takes the report that moves it to tested.
 - **Codex and Cursor now remember turn by turn too, not only overnight.** Once you said yes to importing, the
   installer merges KRouter's session hooks into `~/.codex/hooks.json` and `~/.cursor/hooks.json` (each app's
   documented format, checked 2026-11-09), keeping every hook already there and a `.krouter-bak` copy; `uninstall.sh`

@@ -71,11 +71,12 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次，Codex 不跑没信任过的钩子） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
 | Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
-| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed | MCP：装了这个应用，安装脚本就写它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
-| 其他能跑本地 MCP 服务的应用：Windsurf、opencode、Cline、Continue…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
-| 团队：好几个人共用记忆 | 自己部署的 HTTP 服务（`mcp_server.py --http`、Docker 镜像 `ghcr.io/398894496-arch/krouter`，或 [Compose](deploy/docker-compose.yml)）；一个服务可以挂好几个互不相通的库，各有各的 token；有 Prometheus `/metrics`：[`docs/TEAM.md`](docs/TEAM.md) | 已用 Claude Code 通过 HTTP 实测 |
+| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：装了这个应用，安装脚本就写它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
+| 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | Python 包里带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端加载这个服务：[`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | LlamaIndex 检索器和官方 MCP Python SDK（stdio 和 HTTP）已实测；其他框架的写法照各家文档，我们还没跑过 |
+| 其他能跑本地 MCP 服务的应用：Devin Desktop（原 Windsurf）、opencode、Continue、Roo Code、VS Code 里的 Cline…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
+| 团队：好几个人共用记忆 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |
 | 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
-| 你自己的代码 | Python 包和 `krouter` 命令（见下） | 已实测 |
+| 你自己的代码 | Python 包和 `krouter` 命令；不依赖任何包的 JavaScript / TypeScript 客户端（见下） | 已实测 |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
@@ -99,6 +100,39 @@ a = krouter.ask("我们怎么发版？")
 print(a.page, a.how, a.refused)          # 出处页、一句话答案、记忆里没有时为 True
 krouter.note("只从 main 打发版标签。", kind="decision")
 ```
+
+JavaScript / TypeScript（Node 18+），本机的或团队服务都行（[`sdk/js`](sdk/js)；还没发到 npm）：
+
+```js
+import { KRouter } from "./sdk/js/index.js";
+const a = await KRouter.local().ask("我们怎么发版？");   // 团队服务：KRouter.remote(url, { token })
+console.log(a.page, a.how, a.refused);
+```
+
+## 给团队用
+
+一个服务装下一个团队的几份记忆，每份是一个放 Markdown 的文件夹、在各自的 git 仓库里；每个人的 agent 通过 MCP 问它。要自己部署，没有 KRouter 云服务。
+
+| | |
+|---|---|
+| **部署** | `mcp_server.py --http`（只用 Python 标准库，不装包）、Docker 镜像 `ghcr.io/398894496-arch/krouter`、[Compose](deploy/docker-compose.yml)（两份记忆，加一个定时 git pull 的边车）、[Kubernetes 清单](deploy/kubernetes/krouter.yaml)、加固过的 [systemd 服务](deploy/systemd/krouter.service) |
+| **隔离** | 一个服务挂好几份记忆，各在 `/mcp/NAME`，各有自己的索引、每条回答上的标签和 token；查一份记忆从不读另一份的文件夹 |
+| **鉴权** | 每份记忆一个 bearer token；只要有一份没设 token，服务就拒绝监听本机以外的地址；浏览器来源按白名单放行；访问日志只记问题的哈希，不记原文 |
+| **速度** | 见下面的实测；每份记忆常驻 4 个查询进程（`--workers`），查一次不用重新启动 Python |
+| **新鲜度** | 最多每 2 秒重新检查一次文件（`--refresh-every`）；通过服务写进去的笔记，下一次查询就查得到；Compose 和 Kubernetes 每 5 分钟拉一次各个仓库 |
+| **监控** | `GET /healthz`；Prometheus `GET /metrics`：按记忆、工具、结果分的调用数，拒答数，延迟直方图，启动时建索引的耗时，查询进程数 |
+| **写入** | 默认只读；加 `--allow-write` 才开 `krouter_note`：一行一条，一次 git 提交，记进变更记录 |
+| **备份、回滚** | 记忆就是那个 git 仓库：像代码一样备份，`git revert` 撤回一次改动；索引是从文件夹重建的缓存 |
+
+用 [`bench/scale/serve_load.py`](bench/scale/serve_load.py) 在合成记忆库上实测，一台 Apple M2 笔记本（8 GB），服务和调用方在同一台机器上，每行 300 次调用，没有一次失败：
+
+| 页数 | 1 个调用方：中位数、每秒答几次 | 8 个调用方：每秒答几次 | 32 个调用方：中位数、p95、每秒答几次 | 常驻内存 | 启动时建索引 |
+|---|---|---|---|---|---|
+| 1,000 | 5 ms，195 次 | 646 次 | 42 ms，77 ms，742 次 | 203 MB | 0.5 秒 |
+| 10,000 | 13 ms，77 次 | 267 次 | 104 ms，112 ms，301 次 | 216 MB | 3.5 秒 |
+| 50,000 | 54 ms，17 次 | 72 次 | 377 ms，651 ms，75 次 | 267 MB | 24 秒 |
+
+同一台机器上，1.3.0 的服务（每次查询起一个进程、每次都把所有文件检查一遍）：1 万页时 210 ms、每秒 15 次，5 万页时 980 ms、每秒 3 次。自己复现：`python3 bench/scale/gen.py 10000 /tmp/v10000`，再 `python3 bench/scale/serve_load.py /tmp/v10000`。部署步骤、token 和 TLS 见 [`docs/TEAM.md`](docs/TEAM.md)。
 
 ## 装完五分钟
 
@@ -167,7 +201,7 @@ krouter.note("只从 main 打发版标签。", kind="decision")
 | LoCoMo，别人的对话和标注（[第 10 套](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels)；KRouter `main`，2026-10-30；只有英文） | 1 540 道可答题里 991 道第一条就引到证据会话，1 204 道在前三条里；**446 道陷阱题只拒了 37 道**。纯 BM25：第一条命中 968 道，前三条 1 257 道 |
 | 该拒答时拒答（公开测试集，CI 跑） | 离题问题英文 12/12、中文 6/6 拒答 |
 | 在一个没人调过分的库上的错误引用率（[第三套测试集](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)，200 道留出题，中英各半，带日志干扰页；方括号是 95% 区间） | 默认设置下：KRouter 引错 26% [19, 33]，80 道近邻题拒答 47 道，120 道可答题答对 102 道；纯全文检索引错 58% [52, 65]。**和认真做的基线比是持平，不是领先**：给纯全文检索加上同样的两条规则（跳过已被取代的旧页、低于分数下限就拒答），答题数相同时它引错 42 页、KRouter 36 页，答对 96 道对 102 道，但两项差距都不显著（配对区间：引错率 [-10.2, +1.3] 个百分点，答对 [-2, +14]）。同样这 200 道题、都用默认设置：claude-mem 13.39 引错 64% [58, 71]，basic-memory 0.23 引错 78% [72, 84]；80 道近邻题两者一道都没拒；60 道「决定改过」的题，它们分别答对 34 和 16 道，KRouter 50 道 |
-| 规模（[`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)；合成库，Apple M2 笔记本，每次查询一个进程） | 1 千页：每次查询 0.08 秒（中位数），第一次查询含建索引 0.4 秒。1 万页：0.12 秒、4.8 秒。5 万页：0.53 秒（p95 1.1 秒）、24 秒，内存峰值 76 MB。HTTP 上 16 个人同时问 1 万页的库：没有出错，中位数 0.96 秒 |
+| 规模（[`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)；合成库，Apple M2 笔记本） | 团队服务走 HTTP：1 万页每次查询 13 ms（中位数），32 个调用方时每秒答 301 次；5 万页 54 ms、每秒 75 次；改完 200 页马上有 16 个人同时问：没有出错，中位数 0.14 秒。单独一个进程查一次：1 万页 0.13 秒，5 万页 0.35 秒 |
 | 精确命中和向量检索比（「已取代」和「近邻」题，CI 跑） | 精确命中会拒答；TF-IDF、MiniLM、BGE-M3 会引一个近邻。本地向量做成可选档：测过了，没有上线（[`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)） |
 | 作者自己的真实提问 | 208 道历史提问由 Grok 盲评（2026-10-16）：KRouter 0.36，加了两条规则的 BM25 0.25（满分 2），配对区间 [−0.02, +0.24]：**没有显示出差距**。裁判只在约 5% 的题里找到「提问之前就已经存在的答案页」，这种评分方式会奖励拒答，所以这次结果只报告、不当证据（[第 5 套](bench/memory_honesty/HELDOUT.md)）。新提问上的盲测要等攒够 50 条，到 2026-11-09 记下了 30 条。更早的 0.62 → 1.47 是开发集（[VERIFY.md](docs/VERIFY.md)） |
 

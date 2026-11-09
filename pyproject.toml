@@ -21,11 +21,15 @@ Changelog = "https://github.com/398894496-arch/KRouter/blob/main/CHANGELOG.md"
 [project.scripts]
 krouter = "krouter.cli:main"
 
+[project.optional-dependencies]
+llamaindex = ["llama-index-core>=0.12"]
+
 [tool.setuptools]
-packages = ["krouter", "krouter_router", "krouter_template", "krouter_template_zh"]
+packages = ["krouter", "krouter.integrations", "krouter_router", "krouter_template", "krouter_template_zh"]
 
 [tool.setuptools.package-dir]
 krouter = "sdk/krouter"
+"krouter.integrations" = "sdk/krouter/integrations"
 krouter_router = "skill/krouter-obsidian/scripts"
 krouter_template = "template"
 krouter_template_zh = "template-zh"

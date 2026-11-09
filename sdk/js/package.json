@@ -1,0 +1,15 @@
+{
+  "name": "krouter",
+  "version": "1.3.0",
+  "description": "Ask your KRouter memory from JavaScript or TypeScript: the page that answers, its one-line answer, or \"not in the vault\". No dependencies.",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": { ".": { "types": "./index.d.ts", "default": "./index.js" } },
+  "files": ["index.js", "index.d.ts", "README.md"],
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test test/krouter.test.js" },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/398894496-arch/KRouter.git", "directory": "sdk/js" },
+  "keywords": ["memory", "mcp", "agents", "obsidian", "second-brain"]
+}

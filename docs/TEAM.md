@@ -88,12 +88,25 @@ name on every receipt (`vault_label: ops`). A token opens only its own bank; a b
 
 **Monitoring.** `GET /metrics` is Prometheus text: `krouter_tool_calls_total{vault,tool,outcome}`,
 `krouter_refusals_total{vault}` (answers that were `recall: none`), `krouter_request_seconds` (a histogram per vault),
-`krouter_index_build_seconds{vault}` and `krouter_uptime_seconds`. It holds counts only, never a question; when the
+`krouter_index_build_seconds{vault}`, `krouter_lookup_workers{vault}` (resident lookup processes) and
+`krouter_uptime_seconds`. It holds counts only, never a question; when the
 server has tokens, it takes any of them (`authorization: {credentials_file: …}` in the Prometheus scrape config).
 
-**Compose.** [`deploy/docker-compose.yml`](../deploy/docker-compose.yml) runs the server with two banks, read-only
-and as user 10001, next to a small container that pulls each vault every five minutes. Checked with
-`docker compose config`; the multi-bank server itself is tested in `tests/test_mcp_banks.py`.
+**Resident lookups.** Each bank keeps up to 4 lookup processes (`--workers N`; started as callers arrive, so an
+idle bank holds one), and each re-checks its vault's files at most every 2 seconds (`--refresh-every`). A note written
+through the server makes the next lookup re-check at once. A lookup that hangs for 120 s is cut off and its process
+replaced; a process that dies is replaced on the next call (that call runs the old way, one process). `--workers 0`
+is the old way for every call.
+
+**Compose, Kubernetes, systemd.** [`deploy/docker-compose.yml`](../deploy/docker-compose.yml) runs the server with
+two banks, read-only and as user 10001, next to a small container that pulls each vault every five minutes.
+[`deploy/kubernetes/krouter.yaml`](../deploy/kubernetes/krouter.yaml) is the same as a Deployment (an init container
+clones each vault, a sidecar pulls it, tokens and the deploy key from Secrets, read-only root filesystem, `/healthz`
+probes, Prometheus annotations) and a Service. [`deploy/systemd/krouter.service`](../deploy/systemd/krouter.service)
+runs it on a Linux host with the vaults on disk, as its own user with `ProtectSystem=strict` and the vaults read-only.
+The Compose file is checked with `docker compose config`; the Kubernetes manifest and the unit are checked by
+`tests/test_deploy.py` (shape, probes, read-only mounts, and that every flag they pass exists), not yet applied to a
+cluster or a systemd host by us. The multi-bank server itself is tested in `tests/test_mcp_banks.py`.
 
 | Running it | What KRouter does |
 |---|---|
@@ -101,8 +114,8 @@ and as user 10001, next to a small container that pulls each vault every five mi
 | Isolation | one bank per memory: own URL, own token, own index, own label on every answer |
 | Access | bearer token per bank or per server, constant-time compare; loopback only without one; origin check |
 | Monitoring | `/metrics` (Prometheus), `/healthz`, one JSON access-log line per request with a hash of the question |
-| Deployment | `python3 mcp_server.py --http`, the Docker image (non-root, read-only vault, provenance attestation), Compose |
-| Scale | 10,000 pages: 0.12 s per lookup (p50); 50,000: 0.53 s ([§4](#4-how-big-it-can-get)) |
+| Deployment | `python3 mcp_server.py --http`, the Docker image (non-root, read-only vault, provenance attestation), Compose, Kubernetes, systemd |
+| Scale | over HTTP, 10,000 pages: 13 ms per lookup (median), 301 answers/s with 32 callers; 50,000: 54 ms, 75/s ([§4](#4-how-big-it-can-get)) |
 | Backups | the git remote, and `backup.py` for an encrypted nightly copy of a personal vault |
 | Not offered | a hosted service, SSO, per-user permissions inside one bank: give each group its own bank |
 
@@ -130,25 +143,43 @@ timed out before the first call), and other remote-MCP apps.
 
 ## 4. How big it can get
 
-Measured with `bench/scale/` on synthetic vaults (the template plus N generated pages), on an Apple M2 laptop with
-8 GB of memory, each lookup in its own process as the MCP server runs it:
+Measured on synthetic vaults (the template plus N generated pages) on an Apple M2 laptop with 8 GB of memory, the
+server and its callers on the same machine.
+
+**The server**, as a team uses it (`bench/scale/serve_load.py`: `krouter_ask` over HTTP, 4 resident lookup processes,
+300 calls per row, none failed):
+
+| Pages | One caller: median, answers/s | 8 callers: answers/s | 32 callers: median, p95, answers/s | Resident memory | Ready after |
+|---|---|---|---|---|---|
+| 1,000 | 5 ms, 195/s | 646/s | 42 ms, 77 ms, 742/s | 203 MB | 0.5 s |
+| 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
+| 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
+
+1.3.0's server on the same machine started one process per lookup and re-checked every file each time: 91 ms and
+42 answers/s at most on 1,000 pages, 210 ms and 15/s on 10,000, 980 ms and 3/s on 50,000 (32 callers: p95 14.8 s);
+it held 15–29 MB. The server builds each memory's index before it starts listening, so the first person to ask does
+not wait for it ("Ready after"). Three changes made the difference: resident lookup processes, the file re-check at most every
+2 seconds, and the literal fallback (what a question the vault cannot answer costs) reading only the pages that can
+hold the question, found in the index, instead of every file; it prints the same lines as reading every file (checked
+on 2,442 pieces of real page text and in `tests/test_resident_lookups.py`). A resident process also no longer keeps
+every SQLite connection it opened (each was about 2.7 MB until the garbage collector ran).
+
+**One lookup in its own process**, as an agent's skill rule or `krouter ask` runs it (`bench/scale/run.py`, 30
+lookups):
 
 | Pages | First lookup (builds the index) | Later lookups, p50 / p95 | Peak memory | Index on disk |
 |---|---|---|---|---|
-| 1,000 | 0.4 s | 0.08 s / 0.09 s | 37 MB | 3 MB |
-| 10,000 | 4.8 s | 0.12 s / 0.19 s | 41 MB | 27 MB |
-| 50,000 | 24 s | 0.53 s / 1.14 s | 76 MB | 139 MB |
+| 1,000 | 0.6 s | 0.07 s / 0.08 s | 37 MB | 3 MB |
+| 10,000 | 4.9 s | 0.13 s / 0.17 s | 43 MB | 29 MB |
+| 50,000 | 25 s | 0.35 s / 0.36 s | 84 MB | 150 MB |
 
-Over HTTP on the 10,000-page vault, 16 parallel callers right after 200 pages changed got every answer (none
-failed, slowest 2.2 s); 64 calls from 16 threads took 0.96 s at the median and 1.28 s at p95. The server builds the
-index before it starts listening, so the first person to ask does not wait for it.
-
-Past about 10,000 pages the time goes to checking every file's modification time on each lookup. A team vault of a
-few thousand pages answers in about a tenth of a second.
+Here the time goes to checking every file's modification time on each lookup, which is why the server re-checks at
+most every 2 seconds.
 
 Rerun on your machine:
 
 ```bash
 python3 bench/scale/gen.py 10000 /tmp/v10000
+python3 bench/scale/serve_load.py /tmp/v10000 --concurrency 1,8,32 --calls 300
 python3 bench/scale/run.py /tmp/v10000 --queries 30
 ```

@@ -260,12 +260,59 @@ def canonical_lookup(query: str, vault: Path, map_path: Path, route: str) -> boo
     return True
 
 
-def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 24) -> None:
+LITERAL_FULL_SCAN = 400  # 候选页比这还多：直接扫整个范围，比把几百个路径交给 rg 省事
+
+
+def literal_candidates(needle: str, scope: Path, vault: Path) -> list[str] | None:
+    """The pages that can hold `needle` word for word, read from the full-text index instead of every file: a page
+    holds the needle only if its title or body holds every word strictly inside it (Chinese two-character pairs, and
+    Latin words other than a first or last one the page may continue, `ploy` in `deploy`), or its frontmatter holds
+    the needle as written.
+    The index covers what ranked recall covers (no `Clippings`, `迁移备份`, `node_modules` or dot folders).
+    None: nothing to narrow by (a single word, a single file) or no index: read every file in scope as before."""
+    if not scope.is_dir():
+        return None
+    try:
+        import sqlite3
+        import unicodedata
+
+        import recall_index as ri
+    except Exception:  # noqa: BLE001
+        return None
+    norm = unicodedata.normalize("NFKC", needle).lower().strip()
+    words = [m.group(0) for m in ri.LATIN_RE.finditer(norm) if m.start() > 0 and m.end() < len(norm)
+             and len(m.group(0)) >= 2]
+    pairs = [run[i:i + 2] for run in ri.CJK_RE.findall(norm) if len(run) >= 2 for i in range(len(run) - 1)]
+    inner = list(dict.fromkeys(words + pairs))
+    db = ri.cache_path(vault)
+    if not inner or not db.is_file():
+        return None
+    try:
+        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+        match = "{title triggers body} : (" + " AND ".join('"' + t.replace('"', "") + '"' for t in inner) + ")"
+        rels = {r[0] for r in con.execute("SELECT rel FROM docs WHERE docs MATCH ?", (match,))}
+        # frontmatter 不进全文索引：另存的原文里按子串找（和 rg -i 一样不分大小写）
+        rels |= {r[0] for r in con.execute("SELECT rel FROM fm WHERE instr(text, ?) > 0", (needle.strip().lower(),))}
+        con.close()
+    except sqlite3.Error:
+        return None
+    base = "" if scope == vault else scope.relative_to(vault).as_posix().rstrip("/") + "/"
+    return sorted(str(vault / rel) for rel in rels if rel.startswith(base))
+
+
+def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 24, vault: Path | None = None) -> None:
     rg = shutil.which("rg")
-    if rg:
+    # 先用索引挑出可能原样含这句话的页，只读这几页：五万页的库里，答不上来的问题不再把每个文件读一遍
+    cand = literal_candidates(needle, scope, vault) if vault is not None else None
+    if cand is not None and len(cand) > LITERAL_FULL_SCAN:
+        cand = None
+    if cand == []:
+        lines: list[str] = []
+    elif rg:
         proc = subprocess.run(
             [
                 rg,
+                "-H",  # 只交一个候选文件时 rg 默认不打文件名；输出要和扫整个目录时一样
                 "-L",
                 "-F",
                 "-n",
@@ -280,7 +327,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
                 "!Clippings/**",
                 "--",
                 needle,
-                str(scope),
+                *(cand if cand is not None else [str(scope)]),
             ],
             capture_output=True,
             text=True,
@@ -289,7 +336,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
     else:
         lines = []
         needle_l = needle.lower()
-        paths = [scope] if scope.is_file() else list(scope.rglob("*.md"))
+        paths = [Path(c) for c in cand] if cand is not None else [scope] if scope.is_file() else list(scope.rglob("*.md"))
         for path in paths:
             if "Clippings" in path.parts:
                 continue
@@ -376,7 +423,7 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     print(f"scope: {scope}")
     if res is not None:
         print("recall: none (no page covers enough of the question; do not guess)")
-    md_search(query, scope)
+    md_search(query, scope, vault=vault)
 
 
 def main() -> int:

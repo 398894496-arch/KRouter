@@ -1,0 +1,100 @@
+# KRouter team server on Kubernetes: one Deployment serving two isolated memories ("banks"), each cloned from its own
+# git repository at start and pulled every 5 minutes by a sidecar; the server only reads them.
+#
+#   kubectl create namespace krouter
+#   kubectl -n krouter create secret generic krouter-tokens \
+#     --from-literal=team="$(openssl rand -hex 24)" --from-literal=ops="$(openssl rand -hex 24)"
+#   kubectl -n krouter create secret generic krouter-git --from-file=ssh-privatekey=$HOME/.ssh/krouter_deploy_key \
+#     --from-file=known_hosts=$HOME/.ssh/known_hosts
+#   kubectl -n krouter apply -f deploy/kubernetes/krouter.yaml
+#
+# Then point clients at https://<your ingress>/mcp/team and /mcp/ops with their token (docs/TEAM.md). Replace the two
+# repository URLs below. One replica: the index is rebuilt from the vault, so a second replica is a second copy, not
+# shared state; scale by giving each team its own bank or its own Deployment. Not yet applied to a cluster by us:
+# the manifest is checked by tests/test_deploy.py (shape, flags, probes), the same server and flags as the Compose file.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: krouter
+  labels: {app: krouter}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: krouter}
+  template:
+    metadata:
+      labels: {app: krouter}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8787"
+        prometheus.io/path: /metrics
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+      initContainers:
+        - name: clone
+          image: alpine/git:v2.47.2
+          env:
+            - {name: GIT_SSH_COMMAND, value: "ssh -i /git/ssh-privatekey -o UserKnownHostsFile=/git/known_hosts"}
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              [ -d /vault/team/.git ] || git clone --depth 50 git@github.com:your-org/team-vault.git /vault/team
+              [ -d /vault/ops/.git ] || git clone --depth 50 git@github.com:your-org/ops-vault.git /vault/ops
+          volumeMounts:
+            - {name: vaults, mountPath: /vault}
+            - {name: git, mountPath: /git, readOnly: true}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true}
+      containers:
+        - name: krouter
+          image: ghcr.io/398894496-arch/krouter:v1.3.0
+          command: ["python", "/app/skill/krouter-obsidian/scripts/mcp_server.py", "--http", "0.0.0.0:8787"]
+          args: ["--bank", "team=/vault/team", "--bank-token", "team=/tokens/team",
+                 "--bank", "ops=/vault/ops", "--bank-token", "ops=/tokens/ops",
+                 "--workers", "4", "--refresh-every", "2"]
+          ports:
+            - {name: http, containerPort: 8787}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            limits: {memory: 1Gi}
+          volumeMounts:
+            - {name: vaults, mountPath: /vault, readOnly: true}
+            - {name: tokens, mountPath: /tokens, readOnly: true}
+            - {name: cache, mountPath: /home/krouter/.cache}
+            - {name: state, mountPath: /home/krouter/.local}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true,
+                            capabilities: {drop: ["ALL"]}}
+        - name: pull
+          image: alpine/git:v2.47.2
+          env:
+            - {name: GIT_SSH_COMMAND, value: "ssh -i /git/ssh-privatekey -o UserKnownHostsFile=/git/known_hosts"}
+          command: ["sh", "-c", "while true; do for v in /vault/*/; do git -C \"$v\" pull --ff-only --quiet || true; done; sleep 300; done"]
+          volumeMounts:
+            - {name: vaults, mountPath: /vault}
+            - {name: git, mountPath: /git, readOnly: true}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true}
+      volumes:
+        - {name: vaults, emptyDir: {}}
+        - {name: cache, emptyDir: {}}
+        - {name: state, emptyDir: {}}
+        - name: tokens
+          secret: {secretName: krouter-tokens, defaultMode: 0400}
+        - name: git
+          secret: {secretName: krouter-git, defaultMode: 0400}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: krouter
+  labels: {app: krouter}
+spec:
+  selector: {app: krouter}
+  ports:
+    - {name: http, port: 8787, targetPort: http}

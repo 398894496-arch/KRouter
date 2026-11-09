@@ -36,11 +36,27 @@ jobs:
       - name: DSH bridge
         if: runner.os != 'Windows'
         run: node extras/dsh/test-bridge.mjs && node extras/dsh/test-apply.mjs
+      - name: JavaScript client against the real server (stdio and HTTP)
+        if: runner.os != 'Windows'
+        run: node --test sdk/js/test/krouter.test.js
       - name: First run
         if: runner.os != 'Windows'
         run: ./scripts/first_run.sh
       - name: One-line install, dry run
         run: python scripts/bootstrap.py --dry-run --lang en --vault ci-vault
+
+  integrations:
+    # 第三方客户端：官方 MCP Python SDK（stdio 和 HTTP）、LlamaIndex 检索器、Kubernetes 清单的结构
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the clients
+        run: python -m pip install -r requirements-dev.txt "mcp>=1.27" "llama-index-core>=0.14" pyyaml
+      - name: Official MCP SDK, LlamaIndex, deployment files
+        run: python -m pytest -q tests/test_mcp_official_sdk.py tests/test_sdk_llamaindex.py tests/test_deploy.py
 
   docker:
     # 团队服务器镜像：每个 PR 都构建一次并跑冒烟测试（不推送；推送只在发版时）

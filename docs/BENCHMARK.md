@@ -20,8 +20,12 @@
 >   set is planned.
 > - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
 >   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
+> - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
+>   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
+>   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
+>   The Kubernetes manifest and systemd unit are checked by tests, not yet run on a cluster or host.
 > - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
->   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed) and imports the last 7 days of
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI) and imports the last 7 days of
 >   sessions locally, with no model call; `--no-import` is lookup only. After that, Claude Code, Codex and Cursor each
 >   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
 >   in `/hooks`; Cursor's checked against its docs, not yet inside Cursor). Distilling with a model and the nightly job
@@ -289,7 +293,20 @@ not one question asked twice. Whether learning *helps* needs one intent in two w
 
 ## Scale: how big a vault can get (2026-11-09)
 
-`bench/scale/` builds a synthetic vault (the template plus N generated decision pages, seeded by N) and times
+**The team server** (`bench/scale/serve_load.py`: `mcp_server.py --http` on loopback, `krouter_ask` from 1, 8 and 32
+threads, 300 calls each, none failed; 4 resident lookup processes, files re-checked at most every 2 s):
+
+| Pages | One caller: median, answers/s | 8 callers | 32 callers: median, p95, answers/s | Resident | Ready after |
+|---|---|---|---|---|---|
+| 1,017 | 5 ms, 195/s | 646/s | 42 ms, 77 ms, 742/s | 203 MB | 0.5 s |
+| 10,017 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
+| 50,017 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
+
+1.3.0's server, same machine and script (one process per lookup): 210 ms and 15/s at 10,017 pages, 980 ms and 3/s
+at 50,017. On the 10,017-page vault right after 200 pages changed, 64 calls from 16 threads: no errors, 0.14 s
+median, 0.41 s slowest, and the index held exactly one entry per page.
+
+**One lookup per process**, as the agent rules and `krouter ask` run it: `bench/scale/` builds a synthetic vault (the template plus N generated decision pages, seeded by N) and times
 `route_knowledge.py search` the way the MCP server and the agent rules run it: one process per lookup, interpreter
 start included. The first lookup builds the full-text index in an empty cache; the next 30 (two in three about
 something on the generated pages, one in three about nothing in the vault) only check file times. Apple M2, 8 GB,
@@ -297,18 +314,18 @@ Python 3.14, macOS.
 
 | Pages | Markdown | First lookup | Later lookups p50 / p95 | Peak memory (a lookup process) | Index on disk |
 |---|---|---|---|---|---|
-| 1,017 | 0.7 MB | 0.4 s | 0.079 s / 0.088 s | 37 MB | 2.8 MB |
-| 10,017 | 7.2 MB | 4.8 s | 0.121 s / 0.194 s | 41 MB | 27 MB |
-| 50,017 | 36 MB | 24 s | 0.527 s / 1.138 s | 76 MB | 139 MB |
+| 1,017 | 0.7 MB | 0.55 s | 0.071 s / 0.077 s | 37 MB | 3.0 MB |
+| 10,017 | 7.2 MB | 4.9 s | 0.129 s / 0.167 s | 43 MB | 29 MB |
+| 50,017 | 36 MB | 25 s | 0.345 s / 0.361 s | 84 MB | 150 MB |
 
-Over HTTP (`mcp_server.py --http`, the 10,017-page vault): 16 parallel callers right after 200 pages changed all
-got an answer (slowest 2.2 s, no errors); 64 calls from 16 threads, 0.96 s median and 1.28 s p95 on 8 cores. The cost
-past about 10,000 pages is the file-time walk on every lookup, not the index. These are latency numbers on generated
-text, not retrieval quality.
+(Before the literal fallback read only the pages that can hold the question: 0.527 s / 1.138 s at 50,017 pages.) The
+cost past about 10,000 pages is the file-time walk on every lookup, not the index, which is why the server re-checks at
+most every 2 s. These are latency numbers on generated text, not retrieval quality.
 
 ```bash
 python3 bench/scale/gen.py 10000 /tmp/v10000
 python3 bench/scale/run.py /tmp/v10000 --queries 30
+python3 bench/scale/serve_load.py /tmp/v10000 --concurrency 1,8,32 --calls 300
 ```
 
 ## Run it

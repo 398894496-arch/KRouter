@@ -16,8 +16,12 @@
 > - **留出题是谁写的：** claude.ai 里单独会话中的 Claude Opus，不是真人。真人写的一套在计划中。
 > - **发版节奏：** 1.3.0（2026-11-09）：同意导入之后，记忆自己保持更新，不再逐条等你确认；每一轮都有记录、能撤回。
 >   小版本每周最多一个，补丁随时发；`KROUTER_TAG` 可以固定版本。
+> - **团队服务**（自己部署，没有 KRouter 云）：一个服务挂几份互不相通的记忆，各有 token，有 Prometheus `/metrics`；
+>   有 Docker、Compose、Kubernetes 和 systemd 的部署文件。一台 M2 笔记本上走 HTTP：1 万页每次 13 ms、32 个调用方时每秒
+>   答 301 次，5 万页 54 ms、每秒 75 次（合成库，`bench/scale/serve_load.py`）。Kubernetes 清单和 systemd 服务由测试检查过，
+>   还没在真集群、真主机上跑过。
 > - **安装和自动记：** 一行安装什么都不问，把本机装了的应用都接上（Claude Code 连同插件、Codex、Cursor、Claude Desktop、
->   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。之后
+>   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed、Cline CLI），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。之后
 >   Claude Code、Codex、Cursor 都通过会话钩子在每一轮结束时记下（只在本机、不调模型；Codex 要先在 `/hooks` 里信任；Cursor
 >   的照它的文档检查过，还没在 Cursor 里实测）。用模型提炼和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、

@@ -25,6 +25,7 @@ EXPECT = {
     "gemini-cli": ("mcpServers", {"command": SERVER[0], "args": SERVER[1:]}),
     "kiro": ("mcpServers", {"command": SERVER[0], "args": SERVER[1:]}),
     "zed": ("context_servers", {"command": SERVER[0], "args": SERVER[1:], "env": {}}),
+    "cline": ("mcpServers", {"command": SERVER[0], "args": SERVER[1:], "disabled": False}),
 }
 
 
@@ -39,6 +40,7 @@ def home(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / ".config"))
     monkeypatch.setenv("APPDATA", str(tmp_path / "AppData"))
     monkeypatch.delenv("COPILOT_HOME", raising=False)
+    monkeypatch.delenv("CLINE_MCP_SETTINGS_PATH", raising=False)
     monkeypatch.delenv("KROUTER_CLAUDE_DESKTOP_CONFIG", raising=False)
     for a in APPS:
         monkeypatch.delenv(env_name(a), raising=False)

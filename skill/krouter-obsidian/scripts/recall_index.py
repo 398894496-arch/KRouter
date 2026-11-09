@@ -26,7 +26,7 @@ import krouter_redact  # noqa: E402
 redact = krouter_redact.redact
 is_secret_page = krouter_redact.is_secret_page  # 其他夜间脚本经 ri.is_secret_page 用它
 
-SCHEMA_VERSION = "recall-v13"  # v13：机密页不存 how、脱敏规则扩大，旧缓存必须重建
+SCHEMA_VERSION = "recall-v14"  # v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
 STRONG_W = 0.5  # 软权重 ≥ 此值才算"有效匹配词"
 MIN_STRONG_MATCH = 2
 SCORE_MIN = 8.5  # bm25×分层权重的绝对下限
@@ -222,14 +222,14 @@ def iter_markdown(vault: Path):
 
 def connect(db: Path) -> sqlite3.Connection:
     db.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(db)
+    con = sqlite3.connect(db, timeout=60)  # 另一个进程在重建索引时等它（五万页全量约 25 秒）
     con.execute("PRAGMA journal_mode=WAL")
     con.execute("CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT)")
     row = con.execute("SELECT v FROM meta WHERE k='schema'").fetchone()
     if not row or row[0] != SCHEMA_VERSION:
         con.executescript(
             """
-            DROP TABLE IF EXISTS vcol; DROP TABLE IF EXISTS vinst; DROP TABLE IF EXISTS vrow; DROP TABLE IF EXISTS docs; DROP TABLE IF EXISTS files;
+            DROP TABLE IF EXISTS vcol; DROP TABLE IF EXISTS vinst; DROP TABLE IF EXISTS vrow; DROP TABLE IF EXISTS docs; DROP TABLE IF EXISTS files; DROP TABLE IF EXISTS fm;
             CREATE VIRTUAL TABLE docs USING fts5(
                 rel UNINDEXED, title, triggers, body, uni, tier UNINDEXED, status UNINDEXED, how UNINDEXED, name UNINDEXED,
                 tokenize='unicode61');
@@ -237,6 +237,8 @@ def connect(db: Path) -> sqlite3.Connection:
             CREATE VIRTUAL TABLE vinst USING fts5vocab(docs, 'instance');
             CREATE VIRTUAL TABLE vcol USING fts5vocab(docs, 'col');
             CREATE TABLE files(rel TEXT PRIMARY KEY, mtime_ns INTEGER, size INTEGER, rid INTEGER);
+            -- 每页 frontmatter 的原文（已脱敏、小写），只给字面检索预筛用：frontmatter 不进全文索引
+            CREATE TABLE fm(rel TEXT PRIMARY KEY, text TEXT);
             """
         )
         con.execute("INSERT OR REPLACE INTO meta VALUES('schema', ?)", (SCHEMA_VERSION,))
@@ -253,10 +255,20 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         except OSError:
             continue
         seen[rel] = (st.st_mtime_ns, st.st_size, full)
-    known = {rel: (m, s, rid) for rel, m, s, rid in con.execute("SELECT rel, mtime_ns, size, rid FROM files")}
+
+    def indexed() -> tuple[dict, str]:
+        rows = {rel: (m, s, rid) for rel, m, s, rid in con.execute("SELECT rel, mtime_ns, size, rid FROM files")}
+        return rows, (con.execute("SELECT v FROM meta WHERE k='map_sha'").fetchone() or [""])[0]
+
+    known, old_sha = indexed()
     aliases, map_sha = alias_map(vault)
+    if map_sha == old_sha and known.keys() == seen.keys() and all(known[r][:2] == seen[r][:2] for r in seen):
+        return {"added": 0, "changed": 0, "removed": 0, "docs": len(seen)}  # 没变：不加锁、不写
+    # 有变化：先拿写锁再重读一遍。几个进程（服务的常驻查询进程、同时跑的几次查询）同时发现同一批改动时，
+    # 后拿到锁的看到的是前一个已经写好的索引，不会把同一页再索引一遍、留下两条
+    con.execute("BEGIN IMMEDIATE")
+    known, old_sha = indexed()
     cards = card_triggers(vault)
-    old_sha = (con.execute("SELECT v FROM meta WHERE k='map_sha'").fetchone() or [""])[0]
     if map_sha != old_sha:
         # 别名或触发词变了：全部重建（一次约 1–2 秒），避免被删掉的触发词残留
         known = {rel: (-1, s, rid) for rel, (_m, s, rid) in known.items()}
@@ -266,6 +278,7 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         if rel not in seen:
             con.execute("DELETE FROM docs WHERE rowid=?", (rid,))
             con.execute("DELETE FROM files WHERE rel=?", (rel,))
+            con.execute("DELETE FROM fm WHERE rel=?", (rel,))
             removed += 1
     for rel, (mtime, size, path) in seen.items():
         old = known.get(rel)
@@ -311,9 +324,12 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
             ),
         )
         con.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?)", (rel, mtime, size, cur.lastrowid))
+        head = text.replace("\r\n", "\n")
+        end = head.find("\n---", 4) if head.startswith("---\n") else -1
+        con.execute("INSERT OR REPLACE INTO fm VALUES(?,?)", (rel, head[:end + 4].lower() if end >= 0 else ""))
     if changed or added or removed:
         con.execute("INSERT OR REPLACE INTO meta VALUES('built_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%S"),))
-        con.commit()
+    con.commit()
     return {"added": added, "changed": changed, "removed": removed, "docs": len(seen)}
 
 
@@ -331,10 +347,51 @@ PARTIAL_NOTE = ("recall_note: only one word of the question matched these pages;
                 "Say what they say and that the vault may not cover the question; do not give it as the answer.")
 
 
+_REFRESHED: dict[str, float] = {}
+
+
+def refresh_due(vault: Path) -> bool:
+    """Whether this lookup should re-check the vault's files first. Always, unless `KROUTER_REFRESH_EVERY` (seconds)
+    is set, as a long-running server's workers set it: then at most once in that window per process, so a lookup on a
+    50,000-page vault does not stat every file each time. A page changed inside the window shows up when it ends."""
+    try:
+        every = float(os.environ.get("KROUTER_REFRESH_EVERY") or 0)
+    except ValueError:
+        every = 0.0
+    if every <= 0:
+        return True
+    import time
+
+    last = _REFRESHED.get(str(vault))
+    return last is None or time.monotonic() - last >= every
+
+
+def mark_refreshed(vault: Path) -> None:
+    import time
+
+    _REFRESHED[str(vault)] = time.monotonic()
+
+
+def forget_refresh() -> None:
+    """The next lookup re-checks every vault (a write just happened)."""
+    _REFRESHED.clear()
+
+
 def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_first: bool = True,
            gate: bool = True) -> dict:
     con = connect(cache_path(vault))
-    stats = refresh(vault, con) if refresh_first else {}
+    try:
+        return _recall(con, vault, query, scope, limit, refresh_first, gate)
+    finally:
+        con.close()  # 常驻的查询进程里不关就攒着：连接挂在引用环上，要等垃圾回收才放，每个约 2.7 MB
+
+
+def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit: int, refresh_first: bool,
+            gate: bool) -> dict:
+    stats = {}
+    if refresh_first and refresh_due(vault):
+        stats = refresh(vault, con)
+        mark_refreshed(vault)
     raw: list[str] = []
     for t in tokens(query):
         if len(t) == 1 and CJK_RE.fullmatch(t):

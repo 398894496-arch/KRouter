@@ -19,6 +19,11 @@ otherwise, and refuses to listen on any other address without `--token-file` (cl
 `Authorization: Bearer <token>`). The access log (stderr, one JSON line a request) holds a hash of each question,
 never the question; questions are not written to the query log either, unless `--log-queries`. `--label` puts
 `vault_label: <label>` at the top of every receipt, so an answer says which vault it came from.
+
+Lookups run in a few resident processes per vault (`route_worker.py`; `--workers N`, default 4 over HTTP, 1 over
+stdio, created as callers arrive), so a lookup does not start Python, and they re-check the vault's files at most
+every `--refresh-every` seconds (default 2; a write through `krouter_note` makes the next lookup re-check at once).
+`--workers 0` is the old way: one process per lookup, re-checking every file each time.
 """
 
 from __future__ import annotations
@@ -28,6 +33,7 @@ import hashlib
 import hmac
 import json
 import os
+import queue
 import subprocess
 import sys
 import threading
@@ -139,6 +145,10 @@ class Metrics:
             h[next((i for i, b in enumerate(self.BUCKETS) if seconds <= b), len(self.BUCKETS))] += 1
             self.sums[vault] = self.sums.get(vault, 0.0) + seconds
 
+    def workers(self) -> dict[str, int]:
+        names = {b["vault"]: n for n, b in BANKS.items()}
+        return {names.get(v, LABEL or "default"): p.count() for v, p in list(POOLS.items())}
+
     def render(self, started: float) -> str:
         esc = lambda v: str(v).replace("\\", "\\\\").replace('"', '\\"')  # noqa: E731
         out = ["# HELP krouter_up 1 while the server runs.", "# TYPE krouter_up gauge", "krouter_up 1",
@@ -158,6 +168,9 @@ class Metrics:
                     out.append(f'krouter_request_seconds_bucket{{vault="{esc(v)}",le="{b}"}} {acc}')
                 out += [f'krouter_request_seconds_sum{{vault="{esc(v)}"}} {round(self.sums[v], 4)}',
                         f'krouter_request_seconds_count{{vault="{esc(v)}"}} {acc}']
+            out += ["# HELP krouter_lookup_workers Resident lookup processes running, by vault.",
+                    "# TYPE krouter_lookup_workers gauge"]
+            out += [f'krouter_lookup_workers{{vault="{esc(v)}"}} {n}' for v, n in sorted(self.workers().items())]
             out += ["# HELP krouter_index_build_seconds Time the first lookup took to build the index at start.",
                     "# TYPE krouter_index_build_seconds gauge"]
             out += [f'krouter_index_build_seconds{{vault="{esc(v)}"}} {round(t, 3)}' for v, t in sorted(self.index_s.items())]
@@ -165,6 +178,103 @@ class Metrics:
 
 
 METRICS = Metrics()
+
+WORKERS = 0                # 每个库常驻几个查询进程；0 = 每次查询起一个进程（老办法）
+REFRESH_EVERY = 2.0        # 常驻进程最多每隔几秒重新检查一次库里的文件
+LOOKUP_TIMEOUT = 120
+
+
+class Worker:
+    """One resident `route_worker.py` for one vault. A reader thread hands its reply lines over, so a lookup that
+    hangs times out (and the process is killed) instead of holding a server thread forever."""
+
+    def __init__(self, vault: str) -> None:
+        env = {**os.environ, "OBSIDIAN_VAULT": vault, "KROUTER_REFRESH_EVERY": str(REFRESH_EVERY),
+               "PYTHONIOENCODING": "utf-8"}
+        self.proc = subprocess.Popen([sys.executable, str(HERE / "route_worker.py")], stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env, text=True,
+                                     encoding="utf-8", bufsize=1)
+        self.replies: queue.Queue = queue.Queue()
+        self.stale = False
+        threading.Thread(target=self._read, daemon=True).start()
+
+    def _read(self) -> None:
+        for line in self.proc.stdout:
+            self.replies.put(line)
+        self.replies.put(None)
+
+    def alive(self) -> bool:
+        return self.proc.poll() is None
+
+    def ask(self, argv: list[str], env: dict, timeout: float) -> dict:
+        req = {"argv": argv, "env": env, "refresh": self.stale}
+        self.stale = False
+        self.proc.stdin.write(json.dumps(req, ensure_ascii=False) + "\n")
+        self.proc.stdin.flush()
+        try:
+            line = self.replies.get(timeout=timeout)
+        except queue.Empty:
+            self.close()
+            raise TimeoutError from None
+        if line is None:
+            raise OSError("lookup process exited")
+        return json.loads(line)
+
+    def close(self) -> None:
+        try:
+            self.proc.kill()
+        except OSError:
+            pass
+
+
+class Pool:
+    """Up to `size` workers for one vault, started as callers arrive. The queue holds a free worker, or None for a
+    free slot not started yet (or whose worker died)."""
+
+    def __init__(self, vault: str, size: int) -> None:
+        self.vault = vault
+        self.idle: queue.LifoQueue = queue.LifoQueue()
+        for _ in range(size):
+            self.idle.put(None)
+        self.started: list[Worker] = []
+        self.lock = threading.Lock()
+
+    def ask(self, argv: list[str], env: dict) -> dict:
+        try:
+            w = self.idle.get(timeout=LOOKUP_TIMEOUT)
+        except queue.Empty:
+            raise TimeoutError from None
+        try:
+            if w is None or not w.alive():
+                w = Worker(self.vault)
+                with self.lock:
+                    self.started = [x for x in self.started if x.alive()] + [w]
+            return w.ask(argv, env, LOOKUP_TIMEOUT)
+        except BaseException:
+            w = None if w is None or not w.alive() else w
+            raise
+        finally:
+            self.idle.put(w if w is not None and w.alive() else None)
+
+    def mark_stale(self) -> None:
+        with self.lock:
+            for w in self.started:
+                w.stale = True
+
+    def count(self) -> int:
+        with self.lock:
+            return sum(1 for w in self.started if w.alive())
+
+
+POOLS: dict[str, Pool] = {}
+_POOLS_LOCK = threading.Lock()
+
+
+def pool_for(vault: str) -> Pool:
+    with _POOLS_LOCK:
+        if vault not in POOLS:
+            POOLS[vault] = Pool(vault, WORKERS)
+        return POOLS[vault]
 
 
 def route(name: str, query: str, extra_env: dict | None = None) -> tuple[str, bool]:
@@ -176,6 +286,18 @@ def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
     vault = cur_vault()
     if not vault:
         return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+    if WORKERS > 0:
+        try:
+            res = pool_for(vault).ask([name, query], extra_env or {})
+        except TimeoutError:
+            return (f"KRouter timed out after {LOOKUP_TIMEOUT} s.", True)
+        except (OSError, ValueError):
+            res = None  # 常驻进程起不来或回了坏行：这一次退回老办法
+        if res is not None:
+            text = (res.get("out") or "").strip()
+            if res.get("code"):
+                return ((text + "\n" + (res.get("err") or "")).strip()[-2000:] or f"KRouter exited {res['code']}", True)
+            return (text, False)
     env = {**os.environ, "OBSIDIAN_VAULT": vault, **(extra_env or {})}
     try:
         proc = subprocess.run([sys.executable, str(HERE / "route_knowledge.py"), name, query], env=env,
@@ -233,6 +355,8 @@ def note(args: dict) -> tuple[str, bool]:
     undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
     ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n"
                                           f"撤销这一轮：`{undo}`\n\n- MCP 记下（{CLIENT or '未知客户端'}）：{line[2:]}\n")
+    if str(raw) in POOLS:
+        POOLS[str(raw)].mark_stale()  # 刚写的这条，下一次查询就要查得到
     sha = capture_ledger.commit(vault, rid, [page], "MCP 记下 1 条")
     if sha:
         capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
@@ -544,7 +668,7 @@ def serve_http(addr: str, token_file: str, allowed_origins: list[str], log_queri
 
 
 def main(argv: list[str] | None = None) -> int:
-    global LABEL, WRITE
+    global LABEL, WRITE, WORKERS, REFRESH_EVERY
     ap = argparse.ArgumentParser(description="KRouter MCP server: stdio by default, HTTP with --http.")
     ap.add_argument("--http", metavar="HOST:PORT", help="serve Streamable HTTP on this address instead of stdio")
     ap.add_argument("--token-file", default="", help="file holding the bearer token clients must send")
@@ -554,6 +678,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--vault", default="", help="the vault to serve (default: OBSIDIAN_VAULT, else the installed one)")
     ap.add_argument("--log-queries", action="store_true", help="HTTP: also write question text to the query log")
     ap.add_argument("--allow-write", action="store_true", help="HTTP: offer krouter_note (off by default: read only)")
+    ap.add_argument("--workers", type=int, default=None, metavar="N",
+                    help="resident lookup processes per vault (default 4 over HTTP, 1 over stdio; 0: one process per lookup)")
+    ap.add_argument("--refresh-every", type=float, default=None, metavar="SECONDS",
+                    help="re-check the vault's files at most this often (default 2; 0: before every lookup)")
     ap.add_argument("--bank", action="append", default=[], metavar="NAME=PATH",
                     help="HTTP: serve this vault at /mcp/NAME (repeat for several; each is isolated: its own index, "
                          "its own label on every receipt)")
@@ -561,6 +689,11 @@ def main(argv: list[str] | None = None) -> int:
                     help="HTTP: the bearer token one bank needs (default: --token-file)")
     args = ap.parse_args(argv)
     LABEL = args.label.strip()
+    env_workers = os.environ.get("KROUTER_WORKERS", "")
+    WORKERS = max(0, args.workers if args.workers is not None else
+                  int(env_workers) if env_workers.isdigit() else (4 if args.http else 1))
+    REFRESH_EVERY = max(0.0, args.refresh_every if args.refresh_every is not None else
+                        float(os.environ.get("KROUTER_REFRESH_EVERY") or 2))
     WRITE = (not args.http) or args.allow_write
     BANKS.clear()
     tokens = dict(t.split("=", 1) for t in args.bank_token if "=" in t)

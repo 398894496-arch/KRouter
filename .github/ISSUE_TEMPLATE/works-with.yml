@@ -1,0 +1,34 @@
+name: Works in my app (or does not)
+description: You ran KRouter in an app, agent framework or deployment the README lists as not yet tested
+labels: [works-with]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: App, framework or deployment, and its version
+      placeholder: "Zed 0.210.4 / OpenAI Agents SDK 0.9.1 / Kubernetes 1.34 (k3s)"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Did it work?
+      options: ["Yes: it answered from my memory and cited the page", "Partly", "No"]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS, Python version, KRouter version (`krouter --version` or the release tag)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What you asked and what came back
+      description: One question your memory knows and one it does not; paste the answers (redact anything private).
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything you had to change (a path, a setting, a flag)

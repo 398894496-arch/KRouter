@@ -107,11 +107,12 @@ write, and `uninstall.sh` takes out only its own entries.
 | Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`; Codex runs no hook you have not trusted) | MCP tested; hooks tested in codex-cli 0.155 |
 | Cursor | rule and skill, MCP (`~/.cursor/mcp.json`), and session hooks (`~/.cursor/hooks.json`) | rule and skill tested; MCP settings and hooks checked by tests against Cursor's documented format, not yet inside Cursor |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
-| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed | MCP: the installer writes each app's settings file when the app is installed; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
-| Any other app that runs a local MCP server: Windsurf, opencode, Cline, Continue, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
-| A team: shared memories for several people | a self-hosted HTTP server (`mcp_server.py --http`, the Docker image `ghcr.io/398894496-arch/krouter`, or [Compose](deploy/docker-compose.yml)); several isolated memories on one server, each with its own token; Prometheus `/metrics`: [`docs/TEAM.md`](docs/TEAM.md) | tested with Claude Code over HTTP |
+| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file when the app is installed; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
+| Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever in the Python package; the others load the MCP server through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | LlamaIndex retriever and the official MCP Python SDK (stdio and HTTP) tested; the other snippets follow each framework's docs, not yet run by us |
+| Any other app that runs a local MCP server: Devin Desktop (Windsurf), opencode, Continue, Roo Code, Cline in VS Code, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
+| A team: shared memories for several people | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
 | Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |
-| Your own code | a Python package and a `krouter` command (below) | tested |
+| Your own code | a Python package and a `krouter` command; a JavaScript / TypeScript client with no dependencies (below) | tested |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
@@ -140,6 +141,43 @@ a = krouter.ask("how do we ship a release?")
 print(a.page, a.how, a.refused)          # the page it came from, the one-line answer, True when the memory does not know
 krouter.note("Releases are tagged from main only.", kind="decision")
 ```
+
+JavaScript / TypeScript (Node 18+), local or a team server ([`sdk/js`](sdk/js); not on npm yet):
+
+```js
+import { KRouter } from "./sdk/js/index.js";
+const a = await KRouter.local().ask("how do we ship a release?");   // or KRouter.remote(url, { token })
+console.log(a.page, a.how, a.refused);
+```
+
+## Running it for a team
+
+One server holds the memories of a team, each one a folder of Markdown in its own git repository; everyone's agent
+asks it over MCP. It is self-hosted: there is no KRouter cloud.
+
+| | |
+|---|---|
+| **Deploy** | `mcp_server.py --http` (standard-library Python, no packages), the Docker image `ghcr.io/398894496-arch/krouter`, [Compose](deploy/docker-compose.yml) (two memories and a git-pull sidecar), a [Kubernetes manifest](deploy/kubernetes/krouter.yaml), a hardened [systemd unit](deploy/systemd/krouter.service) |
+| **Isolation** | several memories ("banks") on one server, each at `/mcp/NAME` with its own index, its own label on every answer and its own token; one bank's lookups never read another's folder |
+| **Auth** | bearer tokens, one per memory; the server refuses to listen beyond this machine while any memory has none; browser Origins allow-listed; the access log keeps a hash of each question, never the text |
+| **Speed** | below, measured; 4 resident lookup processes per memory (`--workers`), so a lookup does not start Python |
+| **Freshness** | files re-checked at most every 2 s (`--refresh-every`); a note written through the server is found by the very next lookup; Compose and Kubernetes pull each repository every 5 minutes |
+| **Monitoring** | `GET /healthz`; Prometheus `GET /metrics`: calls by memory, tool and outcome, refusals, a latency histogram, index build time, lookup processes |
+| **Writes** | read-only by default; `--allow-write` offers `krouter_note`: one line, one git commit, listed in the change ledger |
+| **Backup, rollback** | the memory is the git repository: back it up like code, take a change back with `git revert`; the index is a cache rebuilt from the folder |
+
+Measured with [`bench/scale/serve_load.py`](bench/scale/serve_load.py) on synthetic memories, one Apple M2 laptop
+(8 GB), the server and its callers on the same machine, 300 calls per row, none failed:
+
+| Pages | One caller: median, answers/s | 8 callers: answers/s | 32 callers: median, p95, answers/s | Resident memory | Index build at start |
+|---|---|---|---|---|---|
+| 1,000 | 5 ms, 195/s | 646/s | 42 ms, 77 ms, 742/s | 203 MB | 0.5 s |
+| 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
+| 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
+
+The same machine with 1.3.0's server (one process per lookup, every file re-checked each time): 210 ms and 15
+answers/s at 10,000 pages, 980 ms and 3 answers/s at 50,000. Rerun: `python3 bench/scale/gen.py 10000 /tmp/v10000`,
+then `python3 bench/scale/serve_load.py /tmp/v10000`. Setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
 
 ## Five minutes later
 
@@ -235,7 +273,7 @@ vault: [`DETAILS.md` → Backing up your vault](docs/DETAILS.md#backing-up-your-
 | LoCoMo, someone else's conversations and labels ([set 10](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels); KRouter at `main`, 2026-10-30; English only) | Evidence session cited first for 991 / 1,540 answerable questions, among the top three for 1,204; **37 of 446 adversarial questions refused**. Plain BM25: 968 first, 1,257 in the top three |
 | Refuses instead of guessing (public benches, CI) | Off-topic questions refused 12/12 (English) and 6/6 (Chinese) |
 | Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 26% [19, 33] wrong, 47 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor: a minimum match score) at the same coverage cites 42 wrong pages to KRouter's 36 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.3] points, right [-2, +14]). On the same 200 questions at their defaults, claude-mem 13.39 cites a wrong page 64% of the time [58, 71] and basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 questions about a changed decision they get 34 and 16 right, KRouter 50 |
-| Scale ([`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09); synthetic vaults, Apple M2 laptop, one process per lookup) | 1,000 pages: 0.08 s per lookup (p50), first lookup with index build 0.4 s. 10,000: 0.12 s, 4.8 s. 50,000: 0.53 s (p95 1.1 s), 24 s, 76 MB peak memory. Over HTTP, 16 parallel callers on 10,000 pages: no errors, 0.96 s median |
+| Scale ([`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09); synthetic vaults, Apple M2 laptop) | The team server over HTTP: 10,000 pages 13 ms per lookup (median), 301 answers/s with 32 callers; 50,000 pages 54 ms, 75/s; 16 callers right after 200 pages changed: no errors, 0.14 s median. One lookup in its own process: 0.13 s at 10,000 pages, 0.35 s at 50,000 |
 | Exact match vs embeddings on a supersede / neighbor set (CI) | Exact match refuses where TF-IDF, MiniLM and BGE-M3 cite a neighbor. Local embeddings as an opt-in tier: measured, not shipped ([`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)) |
 | Real traffic, the author's own questions | 208 past questions judged blind by Grok (2026-10-16): KRouter 0.36, BM25 with the two rules 0.25 of 2, paired interval [−0.02, +0.24]: **no difference shown**. The judge found a page that answered the question before it was asked for only about 5% of them, so this scoring rewards refusing; the run is reported, not used as evidence ([set 5](bench/memory_honesty/HELDOUT.md)). The blind test on fresh questions waits for 50 of them; 30 were logged by 2026-11-09. The older 0.62 → 1.47 gain is a development set ([VERIFY.md](docs/VERIFY.md)) |
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import os
 import sys
 import unicodedata
@@ -97,7 +98,10 @@ def live_rows(
     return kept
 
 
+@functools.lru_cache(maxsize=65536)
 def normalize(value: str) -> str:
+    """Pure: the same string always normalizes the same way, so a resident lookup process keeps the results
+    (each lookup otherwise re-normalizes every alias in the table)."""
     chars: list[str] = []
     for char in value:
         if char in PARTICLES or char.isspace():

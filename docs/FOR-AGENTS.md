@@ -20,8 +20,12 @@
 >   set is planned.
 > - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
 >   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
+> - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
+>   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
+>   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
+>   The Kubernetes manifest and systemd unit are checked by tests, not yet run on a cluster or host.
 > - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
->   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed) and imports the last 7 days of
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI) and imports the last 7 days of
 >   sessions locally, with no model call; `--no-import` is lookup only. After that, Claude Code, Codex and Cursor each
 >   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
 >   in `/hooks`; Cursor's checked against its docs, not yet inside Cursor). Distilling with a model and the nightly job
@@ -43,8 +47,10 @@ A memory for the AI apps a person already uses (one is enough), stored as plain 
 rules. Tested with Claude Code, Codex, Cursor and DeepSeek Harness; any app that runs a local stdio MCP server can add
 it with a five-line config (README, "Works with"), not yet tested app by app. A team shares a second vault through
 the same server over HTTP (`mcp_server.py --http`, bearer token, read-only; Docker image `ghcr.io/398894496-arch/krouter`);
-every receipt from it starts with `vault_label: <label>`. Measured scale: 0.12 s a lookup at 10,000 pages, 0.53 s at
-50,000 (docs/BENCHMARK.md, Scale). Each answer comes with its source page and
+every receipt from it starts with `vault_label: <label>`. Measured scale over HTTP: 13 ms a lookup and 301 answers/s
+with 32 callers at 10,000 pages, 54 ms and 75/s at 50,000 (docs/BENCHMARK.md, Scale). Agent frameworks:
+a LlamaIndex retriever (tested), and the MCP clients of LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK,
+CrewAI and the Vercel AI SDK (docs/FRAMEWORKS.md; not yet run by us); a JavaScript / TypeScript client (sdk/js, tested). Each answer comes with its source page and
 a receipt. When nothing in the vault covers the question, the answer is `recall: none`.
 
 ## Common misreadings
