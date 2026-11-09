@@ -124,6 +124,6 @@ fi
 printf '%s\n' ""
 printf '%s\n' "First run passed on $OBSIDIAN_VAULT"
 printf '%s\n' "Lock is proven. Nothing was installed."
-printf '%s\n' "Next: python3 scripts/bootstrap.py --dry-run (every change it would make, made nowhere), then without --dry-run: lookup only, no nightly job, no session import. --vault <path> uses a vault you already have and overwrites nothing; --ask offers the nightly job and the import later."
+printf '%s\n' "Next: python3 scripts/bootstrap.py --dry-run (every change it would make, made nowhere), then without --dry-run: connects the apps it finds and imports recent sessions locally, no model call, no nightly job (--no-import: lookup only). --vault <path> uses a vault you already have and overwrites nothing; --ask offers the nightly job and the import later."
 
 [ "$fail" -eq 0 ]

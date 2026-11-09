@@ -42,12 +42,41 @@ class Answer:
     fields: dict = field(default_factory=dict)
 
     @property
+    def hits(self) -> list[dict]:
+        """The pages recall listed, best first: `{"page", "tier", "status", "how"}`. A replaced page can be listed
+        (tier `dead`, status `superseded`) so you see it was replaced; it is never the answer."""
+        out: list[dict] = []
+        inside = False
+        for line in self.text.splitlines():
+            if line.startswith("recall:"):
+                inside = line.strip() == "recall:"
+                continue
+            if not inside:
+                continue
+            if line.startswith("- "):
+                head, _, rest = line[2:].partition(" tier=")
+                meta = dict(kv.split("=", 1) for kv in ("tier=" + rest).split() if "=" in kv) if rest else {}
+                out.append({"page": head.strip(), "tier": meta.get("tier", ""), "status": meta.get("status", ""), "how": ""})
+            elif line.startswith("  how: ") and out:
+                out[-1]["how"] = line[len("  how: "):].strip()
+            elif not line.startswith(" "):
+                inside = False
+        return out
+
+    def _top(self) -> dict:
+        return next((h for h in self.hits if h["tier"] != "dead" and h["status"] != "superseded"), {})
+
+    @property
     def page(self) -> str:
-        return self.fields.get("source", "")
+        """The page the answer comes from: the locked page on an exact match, else recall's best live page."""
+        if self.fields.get("canonical_match") == "true":
+            return self.fields.get("source", "")
+        return "" if self.refused else self._top().get("page", "")
 
     @property
     def how(self) -> str:
-        return self.fields.get("how", "")
+        """The one line that answers it (recall's `how:`), empty when the memory does not know."""
+        return "" if self.refused else (self._top().get("how") or self.fields.get("how", ""))
 
     @property
     def refused(self) -> bool:

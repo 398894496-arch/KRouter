@@ -16,7 +16,8 @@
 > - **留出题是谁写的：** claude.ai 里单独会话中的 Claude Opus，不是真人。真人写的一套在计划中。
 > - **发版节奏：** 1.3.0（2026-11-09）：同意导入之后，记忆自己保持更新，不再逐条等你确认；每一轮都有记录、能撤回。
 >   小版本每周最多一个，补丁随时发；`KROUTER_TAG` 可以固定版本。
-> - **夜间任务：** 一行安装只装查询，什么都不问；加 `--ask` 才问要不要导入会话、开夜间任务。从 clone 手动跑 `install.sh`
->   会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
+> - **安装和自动记：** 一行安装什么都不问，把本机装了的应用都接上（Claude Code 连同插件、Codex、Cursor、Claude Desktop、
+>   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。用模型提炼
+>   和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
 >   只写库，所以只有你点名或设 `KROUTER_ALLOW_CODEX=1` 才用；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。

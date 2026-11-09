@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from . import ROUTES, __version__, ask, note, router_dir, status
@@ -20,6 +21,9 @@ def main(argv: list[str] | None = None) -> int:
     n = sub.add_parser("note", help="write one line into the memory")
     n.add_argument("text")
     n.add_argument("--kind", default="note", choices=("decision", "correction", "note"))
+    d = sub.add_parser("demo", help="decide, change your mind, ask: on a throwaway memory, no install, no key")
+    d.add_argument("--lang", choices=("en", "zh"), default="zh" if os.environ.get("LANG", "").startswith("zh") else "en")
+    d.add_argument("--keep", action="store_true", help="keep the demo memory to look at")
     m = sub.add_parser("mcp", help="run the MCP server (stdio; --http for a team server)")
     m.add_argument("rest", nargs=argparse.REMAINDER)
     args = ap.parse_args(argv)
@@ -27,6 +31,10 @@ def main(argv: list[str] | None = None) -> int:
         print(ask(args.question, args.route, args.vault))
     elif args.cmd == "status":
         print(status(args.vault))
+    elif args.cmd == "demo":
+        from .demo import run
+
+        return run(args.lang, args.keep)
     elif args.cmd == "note":
         print(note(args.text, args.kind, args.vault))
     else:

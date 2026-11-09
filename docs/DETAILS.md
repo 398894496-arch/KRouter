@@ -20,8 +20,10 @@
 >   set is planned.
 > - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
 >   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
-> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
->   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed) and imports the last 7 days of
+>   sessions locally, with no model call; `--no-import` is lookup only. Distilling with a model and the nightly job ask
+>   first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
 >   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
 >   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
@@ -61,16 +63,16 @@ Everything the front page leaves out: install options, what leaves the machine, 
 ## Install — one line, nothing to know
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
 ```
 
 Windows (PowerShell, no admin):
 
 ```powershell
-irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
+irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex
 ```
 
-It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` (`Documents/第二大脑` with the Chinese template when the system language is Chinese), installs the router and the agent rules, and opens the vault in Obsidian. That is all by default: lookup only, no questions, nothing leaves the machine. `--ask` asks whether to import recent agent sessions and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v1.3.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`… | sh -s -- --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
+It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` (`Documents/第二大脑` with the Chinese template when the system language is Chinese), installs the router and the agent rules, connects every app it finds (the table in the README: each app's own MCP settings file, plus the Claude Code plugin from the same release), imports the last 7 days of agent sessions as pages (locally, redacted, no model call, listed in the change ledger), and opens the vault in Obsidian. That is all by default: no questions, nothing leaves the machine; `--no-import` leaves out the import. `--ask` asks before importing, whether to distill with your model and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v1.3.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`… | sh -s -- --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
 
 ## What leaves your machine, and what it costs
 

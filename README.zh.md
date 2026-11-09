@@ -10,6 +10,22 @@
 
 ![周一定了 A，周三改成 B，周四 agent 答 B 并引用那条纠错；库里没有的问题直接拒答](docs/img/demo.gif)
 
+**不用安装、不用 key，几秒钟亲眼看一遍**：同样的过程，在一个用完即删的临时记忆库上跑。
+
+```bash
+uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh      # 或者在 clone 里：PYTHONPATH=sdk python3 -m krouter.cli demo --lang zh
+```
+
+| 我想…… | 从这里开始 |
+|---|---|
+| 装之前先看它怎么答、怎么被纠正、怎么拒答 | `krouter demo`（上面这行） |
+| 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个 |
+| 看能接哪些应用 | [能接哪些应用](#能接哪些应用) |
+| 从自己的代码里调用 | [从你自己的代码里用](#从你自己的代码里用) |
+| 团队共用一份记忆，或者跑好几份 | [`docs/TEAM.md`](docs/TEAM.md) |
+| 自己复现这些数字 | [自己复现](#自己复现) |
+| 弄清楚什么会离开本机 | [什么会离开本机](#什么会离开本机) |
+
 ## 用数字说话
 
 **答案准确率，也就是别家公布的那个数**：在 LongMemEval（ICLR 2025；500 道题，每道题配约 50 段聊天）上，模型只看 KRouter 引用的页面作答，**500 道答对 400 道（80.0%，95% 区间 76.4–83.4）**：470 道可答题答对 371 道，30 道无答案题认出了 29 道。作答和评判都用 Claude Sonnet 5.5，提示词用的是这个基准自带的原版；别家公布的数字大多用 GPT-4o，放在一起看时要记得这一点。最弱的是要把好几段聊天加起来的题，121 道答对 69 道，因为只取三页，常常漏掉一段（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)，每道题的回答和判定都在 [`bench/longmemeval/results/`](bench/longmemeval/results/)）。
@@ -27,12 +43,12 @@
 ## 安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
 ```
 
-这一行下载的只是一个小脚本；脚本再去装最新发布版（只用 tag，从不拉 `main`），装之前先核对 SHA-256，所以真正运行的是已经发布、带校验的版本。
+这一行下载的小脚本，和它接着安装的包，都来自最新发布版（只用 tag，从不拉 `main`）；包在运行前先核对发布版里的 SHA-256，两者都带构建来源证明。
 
-Windows（PowerShell）：`irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（需要 Claude Code 2.1.275 或更高；在 shell 里用 `claude plugin install krouter --marketplace 398894496-arch/KRouter` 需要 2.1.292）。第三方插件市场不会自动更新：运行 `claude plugin update krouter@krouter`，或在 `/plugin` → Marketplaces → krouter 里选 Enable auto-update。
+Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（需要 Claude Code 2.1.275 或更高；在 shell 里用 `claude plugin install krouter --marketplace 398894496-arch/KRouter` 需要 2.1.292）。第三方插件市场不会自动更新：运行 `claude plugin update krouter@krouter`，或在 `/plugin` → Marketplaces → krouter 里选 Enable auto-update。
 
 想先看看再装？下面只有最后一行会改动你的机器：
 
@@ -43,20 +59,23 @@ python3 scripts/bootstrap.py --dry-run      # 列出安装会做的每一处改�
 python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的库，先不开夜间任务
 ```
 
-唯一的前提是 Python 3。安装脚本会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖）；本机装了 Claude Code 或 Codex 的话，通过 MCP 把它们接上，就到此为止：只装查询，什么都不问，没有任何内容离开本机。用的是别的 AI 应用？看[能接哪些应用](#能接哪些应用)。想让它开始记住，运行它最后打印的那一行（`bootstrap.py --ask`），它会问你两个问题。
+唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，从同一个校验过的发布包装上 Claude Code 插件，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记，没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，要开「用你的模型提炼」和夜间任务也走它，这两步会把文字发出去。
 
 ## 能接哪些应用
 
+一次安装，本机装了哪个就接哪个。每个应用都按它自己文档里的格式写进它的 MCP 设置，文件里原有的内容全部保留、另存一份备份；读不懂的文件、不是我们写的 `krouter` 条目一律不动；`uninstall.sh` 只删自己加的那一项。
+
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
-| Claude Code | 插件，或 MCP（安装脚本自动注册） | 已实测 |
+| Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
 | Codex | MCP（安装脚本自动注册） | 已实测 |
-| Cursor | 规则和 skill（安装脚本自动加上） | 已实测 |
+| Cursor | 规则和 skill，加上 MCP（`~/.cursor/mcp.json`） | 规则和 skill 已实测；MCP 设置由测试检查 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
-| 团队：好几个人共用一份记忆 | 自己部署的 HTTP 服务（`mcp_server.py --http`，或 Docker 镜像 `ghcr.io/398894496-arch/krouter`），必须带 token：[`docs/TEAM.md`](docs/TEAM.md) | 已用 Claude Code 通过 HTTP 实测 |
+| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed | MCP：装了这个应用，安装脚本就写它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
+| 其他能跑本地 MCP 服务的应用：Windsurf、opencode、Cline、Continue…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
+| 团队：好几个人共用记忆 | 自己部署的 HTTP 服务（`mcp_server.py --http`、Docker 镜像 `ghcr.io/398894496-arch/krouter`，或 [Compose](deploy/docker-compose.yml)）；一个服务可以挂好几个互不相通的库，各有各的 token；有 Prometheus `/metrics`：[`docs/TEAM.md`](docs/TEAM.md) | 已用 Claude Code 通过 HTTP 实测 |
 | 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
-| Claude Desktop | MCP：装了这个应用的话，安装脚本会把 KRouter 加进它的 MCP 设置（重启一次应用） | 设置的写入由测试检查过；还没在应用里实测 |
-| 其他能跑本地 MCP 服务的应用：VS Code、Windsurf、Zed、Gemini CLI…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
+| 你自己的代码 | Python 包和 `krouter` 命令（见下） | 已实测 |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
@@ -65,7 +84,9 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 
 路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python` 而不是 `python3`）。一行安装之后，这个服务自己就能找到你的记忆库。它只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实），写进当天的笔记页当线索，不会写进规则页，并在变更记录里记成一个可以撤销的 git 提交。HTTP 团队服务默认不开 `krouter_note`，启动时加 `--allow-write` 才开。用一个普通的 MCP 客户端连它，`initialize`、`tools/list`、带出处的回答、`recall: none` 都走得通。
 
-**从你自己的代码里用**（Python 3.9+），同样的查询、收据和笔记：
+### 从你自己的代码里用
+
+Python 3.9+，同样的查询、收据和笔记：
 
 ```bash
 pipx install "git+https://github.com/398894496-arch/KRouter"      # 或者：uvx --from git+https://github.com/398894496-arch/KRouter krouter ask "…"
@@ -82,12 +103,12 @@ krouter.note("只从 main 打发版标签。", kind="decision")
 ## 装完五分钟
 
 1. 问你的 AI：*「上周我们关于 X 是怎么定的？」* 它会从记忆里查，给出答案和出处页；记忆里没有，就直说没有。
-2. **「要把本机已有的 agent 会话导进来吗？」**（加 `--ask` 时，适用于 Claude Code、Codex 和 Cursor） 答应后，近 7 天的会话会变成页面，每个会话一页，内容是你的提问和每轮最后的回答。像 key 的文字会先脱敏，全程不出本机。
+2. 打开记忆文件夹：近 7 天的 Claude Code、Codex、Cursor 会话已经在里面了，每个会话一页，内容是你的提问和每轮最后的回答，像 key 的文字已经脱敏，全程没出本机。（加 `--ask` 会先问你再导。）
 3. **「要让模型提炼一下定了什么吗？」** 答应后，你已经在用的模型（登录好的 CLI 或 API key）会在最近几个会话的页面顶上写出「定了什么、改了什么」。发之前它会先告诉你要发多少字。
 
 ## 之后它自己跟上
 
-同意导入之后，什么都不用你维护：
+什么都不用你维护，也不用你批；只有会把文字发给模型的那两步要先问你：
 - **每天夜里**（这个任务会先问你）导入前一天的会话、做提炼、整理记忆库。
 - **你纠正 AI 的时候**（装了 Claude Code 插件）：读起来像纠正的话（「以后都……」「改成……」「from now on…」）在你发出的那一刻就记下来，只在本机做、不调模型，下一次提炼时自动判定成不成立。长对话压缩上下文之前、会话结束时，也各记一次。
 - **白天**，可以再开一个定时任务，每天两个固定时间把当天的会话补进来（`extras/host-daily-evolution/intraday_capture.py`，附 macOS launchd 示例）。
@@ -115,7 +136,7 @@ krouter.note("只从 main 打发版标签。", kind="decision")
 ![周一定了封面标题规则 A，周三改成 B，周四 agent 答 B 并给出处页；库里没有的问题直接说没有](docs/img/demo-content.gif)
 
 **不需要**：装 Obsidian（它只是可选的查看器）、维护别名表、
-自己设环境变量。已经有库？`--vault` 一个文件都不改。默认就只装查询：不装夜间任务，不导入会话。
+自己设环境变量。已经有库？`--vault` 一个文件都不改。默认什么都不往外发：只在本机导入会话，不装夜间任务，不调模型（`--no-import` 只装查询）。
 
 ## 和常见 agent 记忆的区别
 

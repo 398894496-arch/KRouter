@@ -23,6 +23,35 @@ notice, then the details.
 - **README shows what capture did on the maintainer's machine** (30 runs, 714 lines, 407 changes of mind; 5 of 8
   hand-recorded corrections in the memory by the next run), with a per-day chart, and the decision-capture bench's
   numbers.
+- **One install wires every app it finds.** Besides Claude Code and Codex, the installer now writes KRouter into the
+  MCP settings of Claude Desktop, Cursor, VS Code (Copilot), GitHub Copilot CLI, Gemini CLI, Kiro and Zed when each is
+  installed, in the format each app documents (checked 2026-11-09): everything else in the file is kept and copied to
+  `.krouter-bak`, a file it cannot parse (Zed's comments, say) or a `krouter` entry it did not write is left alone,
+  and `uninstall.sh` takes out only its own entries (`bootstrap.py --unregister-mcp`). `tests/test_mcp_apps.py`
+  checks each format. Not yet tested inside these apps.
+- **The Claude Code plugin is installed with the rest**, from the same checksummed release added as a local
+  marketplace, not from GitHub's `main`; an older Claude Code without `claude plugin` gets the one-line hint as before.
+- **It starts remembering at install, without a question, and nothing leaves the machine.** The default install now
+  imports the last 7 days of agent sessions (local, redacted, no model call, each page in the change ledger and
+  undoable) and records that, so the plugin's hooks record each session as it ends and catch corrections from the
+  first session on. `--no-import` is the old lookup-only install; distilling with a model and the nightly job still
+  ask first (`--ask`), as they send text out. `import_sessions.py --revoke` stops it.
+- **Several isolated memories on one team server, and metrics.** `--bank NAME=PATH` (repeat) serves each vault at
+  `/mcp/NAME`, with its own index, its own label on every receipt and, with `--bank-token NAME=FILE`, its own token; the
+  server refuses to start off loopback while any bank has no token. `GET /metrics` is Prometheus text (tool calls by
+  vault, tool and outcome; refusals; a latency histogram; index build time), counts only, behind the tokens.
+  `deploy/docker-compose.yml`: two banks, read-only, non-root, with a container pulling each vault every five
+  minutes (checked with `docker compose config`). `docs/TEAM.md` gains a "Running it" table. `tests/test_mcp_banks.py`.
+- **`krouter demo`**: decide, change your mind, ask, on a throwaway memory in a few seconds, with no install and no
+  key (`uvx --from git+https://github.com/398894496-arch/KRouter krouter demo`, `--lang zh`); the templates ship in
+  the package for it. The README opens with it and with a "Start here" table.
+- **Fixed: `krouter.ask()` gave the vault folder as `page` and an empty `how` for ordinary lookups.** They now come
+  from recall's best live hit (the locked page on an exact match), and `Answer.hits` lists every hit with its tier and
+  status, a replaced page included but never as the answer.
+- **The one-line install's script comes from the release too.** Releases attach `bootstrap.sh` and `bootstrap.ps1`
+  (in `SHA256SUMS`, with a provenance attestation), and the install lines read
+  `https://github.com/398894496-arch/KRouter/releases/latest/download/…` instead of `main`. Until the first release that
+  carries them, that address does not resolve: publish the release before pointing people at the new line.
 - **A memory for a team, self-hosted.** `mcp_server.py --http HOST:PORT` serves the same two read-only tools over
   Streamable HTTP (`POST /mcp`, JSON replies; `GET /healthz`). It binds to 127.0.0.1 unless told otherwise and refuses
   any other address without `--token-file` (bearer token, compared in constant time, at least 16 characters). Browser

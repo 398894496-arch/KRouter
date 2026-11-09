@@ -18,6 +18,23 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
 
+**See it for yourself in a few seconds, with nothing installed and no key:** the same story on a throwaway memory,
+deleted afterwards.
+
+```bash
+uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or, in a clone: PYTHONPATH=sdk python3 -m krouter.cli demo
+```
+
+| I want to… | Start here |
+|---|---|
+| see it answer, correct itself and refuse, before installing anything | `krouter demo` (above) |
+| give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds |
+| check which apps it connects to | [Works with](#works-with) |
+| call it from my own code | [From your own code](#from-your-own-code) |
+| share a memory with my team, or run several | [`docs/TEAM.md`](docs/TEAM.md) |
+| check the numbers myself | [Check it yourself](#check-it-yourself) |
+| know exactly what leaves my machine | [What leaves your machine](#what-leaves-your-machine) |
+
 ## Measured, not claimed
 
 **Answer accuracy, the number other projects publish:** on LongMemEval (ICLR 2025; 500 questions, each over about 50
@@ -52,13 +69,14 @@ answer: the page it came from, why that page, how sure) and a memory you can edi
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
 ```
 
-The line downloads a short script; the script installs the latest release (a tag, never `main`) after checking its
-SHA-256, so what runs is a published, checksummed version.
+Both the short script this line downloads and the package it then installs come from the latest release (a tag,
+never `main`), and the package is checked against the release's SHA-256 before anything runs; both carry a
+build-provenance attestation.
 
-Windows (PowerShell): `irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` (Claude Code 2.1.275 or later; from a shell, `claude plugin install krouter --marketplace 398894496-arch/KRouter` needs 2.1.292). Third-party marketplaces do not auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable auto-update.
+Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` (Claude Code 2.1.275 or later; from a shell, `claude plugin install krouter --marketplace 398894496-arch/KRouter` needs 2.1.292). Third-party marketplaces do not auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable auto-update.
 
 Rather look first? Nothing below changes your machine until the last line:
 
@@ -69,23 +87,30 @@ python3 scripts/bootstrap.py --dry-run      # every change the install would mak
 python3 scripts/bootstrap.py --vault ~/notes --no-timer   # install against your vault, nightly job off
 ```
 
-Python 3 is the only requirement. The installer makes a memory folder (or uses yours with `--vault`, overwriting
-nothing), connects Claude Code and Codex to it through MCP when they are installed, and stops there: lookup only, no
-questions, nothing leaves the machine. Another app? See [Works with](#works-with). When you want it to start
-remembering, run the line it prints last (`bootstrap.py --ask`), which asks two questions.
+Python 3 is the only requirement, and the installer asks nothing. It makes a memory folder (or uses yours with
+`--vault`, overwriting nothing), connects every app on [the list below](#works-with) that it finds on the machine,
+adds the Claude Code plugin from the same checksummed release, and imports the last 7 days of agent sessions as
+pages: locally, redacted, with no model call, each page listed in the change ledger and undoable. From then on it
+remembers by itself, and nothing leaves the machine. `--no-import` installs lookup only; `--ask` asks first, and is
+how you turn on distilling with your model and the nightly job, the two steps that send text out.
 
 ## Works with
 
+One install wires every app it finds. It writes each app's own MCP settings in the format that app documents, keeps
+everything else in the file and a copy of it, never touches a file it cannot parse or a `krouter` entry it did not
+write, and `uninstall.sh` takes out only its own entries.
+
 | App | How it connects | Status |
 |---|---|---|
-| Claude Code | plugin, or MCP (the installer registers it) | tested |
+| Claude Code | plugin (session hooks) and MCP, both added by the installer | tested |
 | Codex | MCP (the installer registers it) | tested |
-| Cursor | rule and skill (the installer adds them) | tested |
+| Cursor | rule and skill, and MCP (`~/.cursor/mcp.json`) | rule and skill tested; MCP settings checked by tests |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
-| A team: one shared memory for several people | a self-hosted server over HTTP (`mcp_server.py --http`, or the Docker image `ghcr.io/398894496-arch/krouter`), token required: [`docs/TEAM.md`](docs/TEAM.md) | tested with Claude Code over HTTP |
+| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed | MCP: the installer writes each app's settings file when the app is installed; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
+| Any other app that runs a local MCP server: Windsurf, opencode, Cline, Continue, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
+| A team: shared memories for several people | a self-hosted HTTP server (`mcp_server.py --http`, the Docker image `ghcr.io/398894496-arch/krouter`, or [Compose](deploy/docker-compose.yml)); several isolated memories on one server, each with its own token; Prometheus `/metrics`: [`docs/TEAM.md`](docs/TEAM.md) | tested with Claude Code over HTTP |
 | Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |
-| Claude Desktop | MCP: the installer adds KRouter to its MCP settings when the app is installed (restart the app once) | settings written and checked by tests; not yet tested inside the app |
-| Any other app that runs a local MCP server: VS Code, Windsurf, Zed, Gemini CLI, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
+| Your own code | a Python package and a `krouter` command (below) | tested |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
@@ -99,7 +124,9 @@ decision, a correction, a fact), which lands on that day's notes page as a clue,
 in the change ledger as one git commit you can revert. The HTTP team server leaves `krouter_note` off unless started
 with `--allow-write`. A plain MCP client gets through `initialize`, `tools/list`, a cited answer and `recall: none`.
 
-**From your own code** (Python 3.9+), the same lookups, receipts and notes:
+### From your own code
+
+Python 3.9+, the same lookups, receipts and notes:
 
 ```bash
 pipx install "git+https://github.com/398894496-arch/KRouter"      # or: uvx --from git+https://github.com/398894496-arch/KRouter krouter ask "…"
@@ -116,12 +143,12 @@ krouter.note("Releases are tagged from main only.", kind="decision")
 ## Five minutes later
 
 1. Ask your AI: *"what did we decide about X last week?"* It answers from the memory, names the page, and says plainly when the memory has nothing on it.
-2. **"Import the agent sessions already on this machine?"** (with `--ask`, for Claude Code, Codex and Cursor) On a yes, the last 7 days of sessions become pages, one per session: your questions and each turn's closing answer. Key-shaped text is redacted first, and nothing leaves the machine.
+2. Open the memory folder: the last 7 days of Claude Code, Codex and Cursor sessions are already there, one page per session with your questions and each turn's closing answer, key-shaped text redacted. Nothing left the machine. (`--ask` asks before importing.)
 3. **"Have your model pull out what was decided?"** On a yes, the model you already use (a logged-in CLI or an API key) writes "what was decided, what changed" at the top of each recent session's page. The installer tells you how many characters that sends before it sends anything.
 
 ## It keeps up on its own
 
-Once you said yes to importing, nothing needs maintaining:
+Nothing needs maintaining, and nothing waits for a yes except the two steps that send text to a model:
 - **Every night** (the job asks first) yesterday's sessions are imported and distilled, and the memory is tidied.
 - **When you correct your AI**, with the Claude Code plugin, a line that reads like a correction ("from now on…",
   "改成…") is written down the moment you send it, locally and without a model call; the next distill settles it.
@@ -169,8 +196,8 @@ demo vault, real output):
 ![Monday the cover-title rule is A, Wednesday it changes to B, Thursday the agent answers B and cites the page; a question the vault has no page on is refused](docs/img/demo-content.gif)
 
 **Not needed:** Obsidian (it is an optional viewer), an alias table to maintain, an environment variable to set.
-Already have a vault? `--vault` changes none of its files. The default is lookup only: no nightly job, no session
-import.
+Already have a vault? `--vault` changes none of its files. The default sends nothing anywhere: local session import,
+no nightly job, no model call (`--no-import` for lookup only).
 
 ## How it is different
 

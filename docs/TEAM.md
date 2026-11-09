@@ -60,13 +60,51 @@ itself speaks plain HTTP. What the server does on its own:
 - binds to `127.0.0.1` unless you name another address, and refuses to start on another address without
   `--token-file`; every `POST /mcp` must carry `Authorization: Bearer <token>` (compared in constant time);
 - rejects browser origins other than localhost unless you list them with `--allow-origin` (DNS-rebinding guard);
-- serves only the two read-only tools, `krouter_ask` and `krouter_status`; bodies over 1 MB are refused;
+- serves only the two read-only tools, `krouter_ask` and `krouter_status` (`--allow-write` adds `krouter_note`);
+  bodies over 1 MB are refused;
 - logs one JSON line per request to stderr with a SHA-256 prefix of the question, never the question; it does not
   write questions to the query log either (`--log-queries` turns that on, for a team that wants nightly learning);
 - `GET /healthz` answers `{"ok": true, "version": …, "label": …}` for a load balancer or the Docker health check,
   without the vault's path.
 
 To change the token, write a new one to the file and restart the server.
+
+## 2b. Several memories on one server, monitoring, Compose
+
+**Banks.** One server can hold several memories that never see each other: a vault per team, per project or per
+customer, each at its own URL and, if you like, with its own token.
+
+```bash
+python3 skill/krouter-obsidian/scripts/mcp_server.py --http 0.0.0.0:8787 \
+  --bank team=/srv/team-vault --bank-token team=/etc/krouter/team.token \
+  --bank ops=/srv/ops-vault   --bank-token ops=/etc/krouter/ops.token
+# → https://krouter.your-team.example/mcp/team and …/mcp/ops
+```
+
+Each bank has its own index (the cache is keyed by the vault's path), answers only from its own pages, and stamps its
+name on every receipt (`vault_label: ops`). A token opens only its own bank; a bank without its own token uses
+`--token-file`, and the server refuses to start off loopback while any bank has neither. With banks there is no bare
+`/mcp`. `GET /healthz` lists each bank and whether its folder is there.
+
+**Monitoring.** `GET /metrics` is Prometheus text: `krouter_tool_calls_total{vault,tool,outcome}`,
+`krouter_refusals_total{vault}` (answers that were `recall: none`), `krouter_request_seconds` (a histogram per vault),
+`krouter_index_build_seconds{vault}` and `krouter_uptime_seconds`. It holds counts only, never a question; when the
+server has tokens, it takes any of them (`authorization: {credentials_file: …}` in the Prometheus scrape config).
+
+**Compose.** [`deploy/docker-compose.yml`](../deploy/docker-compose.yml) runs the server with two banks, read-only
+and as user 10001, next to a small container that pulls each vault every five minutes. Checked with
+`docker compose config`; the multi-bank server itself is tested in `tests/test_mcp_banks.py`.
+
+| Running it | What KRouter does |
+|---|---|
+| Storage | Markdown files in a git repository you own; the index is a rebuildable SQLite cache |
+| Isolation | one bank per memory: own URL, own token, own index, own label on every answer |
+| Access | bearer token per bank or per server, constant-time compare; loopback only without one; origin check |
+| Monitoring | `/metrics` (Prometheus), `/healthz`, one JSON access-log line per request with a hash of the question |
+| Deployment | `python3 mcp_server.py --http`, the Docker image (non-root, read-only vault, provenance attestation), Compose |
+| Scale | 10,000 pages: 0.12 s per lookup (p50); 50,000: 0.53 s ([§4](#4-how-big-it-can-get)) |
+| Backups | the git remote, and `backup.py` for an encrypted nightly copy of a personal vault |
+| Not offered | a hosted service, SSO, per-user permissions inside one bank: give each group its own bank |
 
 ## 3. Each person
 

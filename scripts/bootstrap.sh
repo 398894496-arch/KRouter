@@ -1,6 +1,6 @@
 #!/bin/sh
 # One line for anyone on macOS / Linux:
-#   curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
+#   curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
 # Options pass through to bootstrap.py, e.g. `| sh -s -- --vault ~/MyVault --lang en`.
 # Fetches the latest release (a tag, never main) into ~/.dsh-krouter/<tag>, checks its SHA-256 against the release's
 # SHA256SUMS, points ~/.dsh-krouter/current at it, and runs scripts/bootstrap.py from there. Run again to upgrade;
