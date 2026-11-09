@@ -66,6 +66,11 @@ notice, then the details.
 - **README:** a team server and remote-MCP apps in "Works with"; "no hosted service, a self-hosted team server is
   fine"; the install line says the script installs the latest release tag, not `main`; the Chinese ledger path and
   the terms receipt, floor and answer cards are explained where they first appear.
+- **An answer-accuracy number you can set next to other projects'.** LongMemEval S, all 500 questions: a
+  reader given only the pages KRouter 1.3.0 cites answered 400 right (80.0%, 95% interval 76.4–83.4), with the
+  benchmark's own reader and judge prompts; reader and judge are Claude Sonnet 5.5, not GPT-4o. Registered before the
+  run as set 11 (`bench/memory_honesty/HELDOUT.md`); `bench/longmemeval/qa.py` writes the prompts and scores the
+  replies; every reply and verdict is in `bench/longmemeval/results/`.
 
 ## 1.3.0 — 2026-11-09
 
