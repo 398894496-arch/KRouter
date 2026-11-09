@@ -20,8 +20,9 @@
 > - **发版节奏：** 1.3.0（2026-11-09）：同意导入之后，记忆自己保持更新，不再逐条等你确认；每一轮都有记录、能撤回。
 >   小版本每周最多一个，补丁随时发；`KROUTER_TAG` 可以固定版本。
 > - **安装和自动记：** 一行安装什么都不问，把本机装了的应用都接上（Claude Code 连同插件、Codex、Cursor、Claude Desktop、
->   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。用模型提炼
->   和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
+>   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。之后
+>   Claude Code、Codex、Cursor 都通过会话钩子在每一轮结束时记下（只在本机、不调模型；Codex 要先在 `/hooks` 里信任；Cursor
+>   的照它的文档检查过，还没在 Cursor 里实测）。用模型提炼和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
 >   只写库，所以只有你点名或设 `KROUTER_ALLOW_CODEX=1` 才用；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。
 <!-- krouter-status:end -->
@@ -32,7 +33,7 @@
 
 - **agent 会话**（`import_sessions.py`）：Claude Code、Codex 和 Cursor agent 的会话记录，每个会话每天一页，放在 `05 时间日志/会话摘录/`。只留你的提问和每轮最后的回答，先脱敏；工具输出、思考过程、注入的上下文、子 agent 和无头运行都不收。加 `--distill` 让模型写出「定了什么、改了什么」。`--consent` 之后，夜间任务每天导入前一天的会话；`--file 路径` 只导一个会话，插件的会话结束 hook 用的就是这个。
 - **claude-mem**（`import_claude_mem.py`，已在 claude-mem 13.35.0 的真实安装上跑通）：按会话所在仓库的路径（claude-mem 的 `cwd`）区分项目；老版本没有这个字段，那些会话照样导入，但不会自动带进新会话。只读打开 `~/.claude-mem/claude-mem.db`。会话总结和记录写进 `05 时间日志/claude-mem/`；每个项目的「决定」汇成一页，放在 `02 经验与方法/从 claude-mem 导入/`，状态是 `status: candidate`。加 `--distill` 会把这些决定分成「还有效的」和「被取代的」。
-- **会话 hook**（Claude Code 插件里的 `session_hook.py`）：会话结束时，在后台导入刚结束的这个会话；新会话开始时，带上这个仓库（按 git 根目录匹配，不按文件夹名）最近的至多 8 条决定，每条注明出处页。纠错排在前面，提炼出来的条目全部带上，不再要人确认：每一轮写了什么记在 `90 系统文件/自动化/记忆变更记录.md`，`import_sessions.py --undo <run>` 一条命令撤回。`UserPromptSubmit`（`session_hook.py prompt`）把你打的纠正当场记成候选，下一次提炼那个会话时自动判定。没同意之前都不做；`KROUTER_INJECT=confirmed` 只带确认过的页加纠错（1.3 以前的默认），`KROUTER_INJECT=0` 都不带。会话比上次提炼时长了，只发新增的轮次；同一时刻只跑一个导入；hook 用同意时点名的模型通道（`--cli`），不看会话 shell 里碰巧有哪个 key。和别的采集器共存：`05 时间日志/` 下 `type: daily-log` 的日记已经列出的会话（`` `agent:id` `` 或 8 位以上十六进制前缀，只算那篇日记自己那天），或那篇日记的采集器覆盖了的那天，默认链接到日记（`covered_by`，`--overlap link`），也可以不写页（`--overlap skip`）。分叉、续接复制了别的会话的轮次（时间和问题都一样）按内容认出来：长的那个留共有轮次，短的只留自己的（`forked_from`），整段都在别的会话里的不写页。设计和成本见 [`docs/AUTO_CAPTURE.md`](AUTO_CAPTURE.md)。 长对话压缩上下文之前（`PreCompact`）也会导入一次，开着好几天的窗口也能记下。这四个 hook 都随插件一起装上。
+- **会话 hook**（`session_hook.py`；Claude Code 走插件，Codex 走 `~/.codex/hooks.json`，Cursor 走 `~/.cursor/hooks.json`，后两个在你同意导入后由安装脚本并进去）：每一轮结束（`Stop`，Cursor 叫 `stop`）把这个会话到目前为止的内容写进它那一页，只在本机、不调模型；会话结束时，在后台导入刚结束的这个会话，同意过提炼的话再提炼；新会话开始时，带上这个仓库（按 git 根目录匹配，不按文件夹名）最近的至多 8 条决定，每条注明出处页。纠错排在前面，提炼出来的条目全部带上，不再要人确认：每一轮写了什么记在 `90 系统文件/自动化/记忆变更记录.md`，`import_sessions.py --undo <run>` 一条命令撤回。`UserPromptSubmit`（`session_hook.py prompt`）把你打的纠正当场记成候选，下一次提炼那个会话时自动判定。没同意之前都不做；`KROUTER_INJECT=confirmed` 只带确认过的页加纠错（1.3 以前的默认），`KROUTER_INJECT=0` 都不带。会话比上次提炼时长了，只发新增的轮次；同一时刻只跑一个导入；hook 用同意时点名的模型通道（`--cli`），不看会话 shell 里碰巧有哪个 key。和别的采集器共存：`05 时间日志/` 下 `type: daily-log` 的日记已经列出的会话（`` `agent:id` `` 或 8 位以上十六进制前缀，只算那篇日记自己那天），或那篇日记的采集器覆盖了的那天，默认链接到日记（`covered_by`，`--overlap link`），也可以不写页（`--overlap skip`）。分叉、续接复制了别的会话的轮次（时间和问题都一样）按内容认出来：长的那个留共有轮次，短的只留自己的（`forked_from`），整段都在别的会话里的不写页。设计和成本见 [`docs/AUTO_CAPTURE.md`](AUTO_CAPTURE.md)。 长对话压缩上下文之前（`PreCompact`）也会导入一次，开着好几天的窗口也能记下。这四个 hook 都随插件一起装上。
 
 ## 安装 —— 一行，什么都不用懂
 

@@ -59,7 +59,7 @@ python3 scripts/bootstrap.py --dry-run      # 列出安装会做的每一处改�
 python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的库，先不开夜间任务
 ```
 
-唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，从同一个校验过的发布包装上 Claude Code 插件，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记，没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，要开「用你的模型提炼」和夜间任务也走它，这两步会把文字发出去。
+唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，从同一个校验过的发布包装上 Claude Code 插件，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记：Claude Code、Codex、Cursor 每一轮结束就记下（安装时给它们接上会话钩子），没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，要开「用你的模型提炼」和夜间任务也走它，这两步会把文字发出去。
 
 ## 能接哪些应用
 
@@ -68,8 +68,8 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
 | Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
-| Codex | MCP（安装脚本自动注册） | 已实测 |
-| Cursor | 规则和 skill，加上 MCP（`~/.cursor/mcp.json`） | 规则和 skill 已实测；MCP 设置由测试检查 |
+| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次，Codex 不跑没信任过的钩子） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
+| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed | MCP：装了这个应用，安装脚本就写它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
 | 其他能跑本地 MCP 服务的应用：Windsurf、opencode、Cline、Continue…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
@@ -110,7 +110,8 @@ krouter.note("只从 main 打发版标签。", kind="decision")
 
 什么都不用你维护，也不用你批；只有会把文字发给模型的那两步要先问你：
 - **每天夜里**（这个任务会先问你）导入前一天的会话、做提炼、整理记忆库。
-- **你纠正 AI 的时候**（装了 Claude Code 插件）：读起来像纠正的话（「以后都……」「改成……」「from now on…」）在你发出的那一刻就记下来，只在本机做、不调模型，下一次提炼时自动判定成不成立。长对话压缩上下文之前、会话结束时，也各记一次。
+- **每一轮结束时**（Claude Code、Codex、Cursor 都是）：agent 一答完，这个会话到目前为止的内容就写进它那一页。只在本机做、不调模型，在后台不到一秒，别的窗口的 agent 马上就查得到。会话结束时再提炼一次（你同意过提炼的话）。
+- **你纠正 AI 的时候**（同样是这三个）：读起来像纠正的话（「以后都……」「改成……」「from now on…」）在你发出的那一刻就记下来，只在本机做、不调模型，下一次提炼时自动判定成不成立。开新会话时，先带上这个仓库记下的决定，纠正排在前面，每条都带来源页。
 - **白天**，可以再开一个定时任务，每天两个固定时间把当天的会话补进来（`extras/host-daily-evolution/intraday_capture.py`，附 macOS launchd 示例）。
 - **不用你批，但每一步都看得见。** 每一轮加了什么、取代了什么，都写进 `90 系统文件/自动化/记忆变更记录.md`。记忆文件夹是 git 仓库时（运行一次 `git init` 就行），每一轮还是一个单独的提交，`import_sessions.py --undo <轮次>` 一条命令就能撤回。
 - **某个会话不想被记**，在它的任何一个提问里写上 `#不记`（或 `#nocapture`）。

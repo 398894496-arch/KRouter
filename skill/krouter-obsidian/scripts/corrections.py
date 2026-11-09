@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 
 PENDING = ("待下次蒸馏判定", "待蒸馏确认")
-LINE = re.compile(r"^- （(\d{2}:\d{2})）(.*) — 项目 (.*?)，会话 `claude:([0-9A-Za-z?-]+)`，命中「(.*?)」，(.+)$")
+LINE = re.compile(r"^- （(\d{2}:\d{2})）(.*) — 项目 (.*?)，会话 `(?:claude|codex|cursor):([0-9A-Za-z?-]+)`，命中「(.*?)」，(.+)$")
 PAGE = re.compile(r"^(\d{4}-\d{2}-\d{2})｜纠正候选\.md$")
 MIN_CJK = 3         # 没有共同的专有词时，至少要共有这么多个中文词组
 MIN_SHARE = 0.3     # 而且占候选词组的这么大比例
