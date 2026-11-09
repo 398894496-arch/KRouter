@@ -16,6 +16,12 @@ The dataset is not in this repository and this script downloads nothing; pass th
     python3 bench/longmemeval/lme.py run --system bm25-floor
     python3 bench/longmemeval/lme.py score
 
+The dense prototype (`bench/memory_honesty/dense.py`, local embeddings, floors from dev3) runs on a seed-drawn sample
+of the answerable questions; those are seen (HELDOUT.md, set 7 amendment), so its numbers are marked as such:
+
+    KROUTER_DENSE_MODEL=BAAI/bge-m3 python3 bench/longmemeval/lme.py run --system rescue --sample 60
+    python3 bench/longmemeval/lme.py run --system krouter-inproc --sample 60   # the same sample, KRouter in-process
+
 State (vaults, outputs, report) lives in `~/.local/state/krouter-eval/lme/` (`KROUTER_LME_STATE` to move it).
 """
 
@@ -37,6 +43,7 @@ STATE = Path(os.environ.get("KROUTER_LME_STATE") or Path.home() / ".local/state/
 SESSIONS = "05 时间日志/会话摘录"  # KRouter 自己导入会话时放的位置
 SEED = 20261018
 RESAMPLES = 10_000
+DENSE_SYSTEMS = {"dense", "dense-floor", "agree", "rescue"}
 
 
 def day_of(raw: str) -> str:
@@ -90,11 +97,39 @@ def bench_module():
     return run_real, run_real.bench_from(REPO)
 
 
-def run(system: str, limit: int, repo: Path) -> None:
+def dense_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("mh_dense_lme", REPO / "bench/memory_honesty/dense.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def sample_of(rows: list[dict], n: int) -> list[dict]:
+    """n answerable questions drawn with a fixed seed (the `_abs` ones are a development set)."""
+    pool = [r for r in rows if not r["abs"]]
+    return sorted(random.Random(SEED).sample(pool, n), key=lambda r: r["id"])
+
+
+def run(system: str, limit: int, repo: Path, sample: int = 0) -> None:
     rows = load_questions()[: limit or None]
+    if sample:
+        rows = sample_of(rows, sample)
     run_real, bench = bench_module()
     out = []
-    if system == "krouter":
+    name = system
+    if system in DENSE_SYSTEMS or system == "krouter-inproc":
+        d = dense_module()
+        floors = d.session_floors() if system in DENSE_SYSTEMS else None
+        for it in rows:
+            q = [{"id": it["id"], "q": it["q"]}]
+            ans = (d.session_answers(system, Path(it["vault"]), q, floors) if floors else
+                   [{**a, "cited": [] if a["refused"] else a["cited"]} for a in d._krouter_raw(q, Path(it["vault"]))])[0]
+            out.append({"id": it["id"], "cited": ans["cited"][:3], "refused": ans["refused"]})
+        if floors:
+            name = f"{system}.{re.sub(r'[^a-z0-9]+', '-', d.MODEL.split('/')[-1].lower()).strip('-')}"
+    elif system == "krouter":
         cache = STATE / "cache"
         for it in rows:
             ans = run_real.route_answers(repo, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"])[0]
@@ -109,9 +144,9 @@ def run(system: str, limit: int, repo: Path) -> None:
                                        vault_src=Path(it["vault"]), cjk=True)
             ans = bench.floor_answers(scored, floor)[0]
             out.append({"id": it["id"], "cited": ans["cited"][:3], "refused": ans["refused"]})
-    path = STATE / f"outputs.{system}.jsonl"
+    path = STATE / f"outputs.{name}{f'.s{sample}' if sample else ''}.jsonl"
     path.write_text("".join(json.dumps(o, ensure_ascii=False) + "\n" for o in out), encoding="utf-8")
-    print(json.dumps({"system": system, "questions": len(out), "refused": sum(o["refused"] for o in out)}))
+    print(json.dumps({"system": name, "sample": sample, "questions": len(out), "refused": sum(o["refused"] for o in out)}))
 
 
 def judge(it: dict, ans: dict) -> dict:
@@ -144,13 +179,27 @@ def score() -> None:
     qs = {q["id"]: q for q in load_questions()}
     systems = {}
     for path in sorted(STATE.glob("outputs.*.jsonl")):
-        name = path.name.split(".", 1)[1].rsplit(".", 1)[0]
+        name = path.name[len("outputs."):-len(".jsonl")]
         ans = {a["id"]: a for a in map(json.loads, path.read_text(encoding="utf-8").splitlines())}
         systems[name] = {qid: judge(qs[qid], a) for qid, a in ans.items() if qid in qs}
     report = {"questions": len(qs), "systems": {}}
     for name, res in systems.items():
         outs = list(res.values())
         report["systems"][name] = {m: "{}/{}".format(*rate(outs, *spec)) for m, spec in METRICS.items()}
+    for name in systems:  # samples: each system against KRouter in-process on the same questions
+        if name.endswith(tuple(f".s{n}" for n in range(1, 10_000))) and not name.startswith("krouter-inproc"):
+            base = "krouter-inproc." + name.rsplit(".", 1)[1]
+            if base in systems:
+                common = sorted(systems[name].keys() & systems[base].keys())
+                rng = random.Random(SEED)
+                for m, (subset, field) in METRICS.items():
+                    d = [int(systems[name][i][field]) - int(systems[base][i][field]) for i in common
+                         if (not systems[base][i]["answerable"] if subset == "abs" else systems[base][i][subset])]
+                    if d:
+                        boots = sorted(sum(rng.choice(d) for _ in d) / len(d) for _ in range(RESAMPLES))
+                        report.setdefault("paired_vs_krouter", {}).setdefault(name, {})[m] = {
+                            "diff": round(sum(d) / len(d), 4), "n": len(d),
+                            "ci95": [round(boots[int(0.025 * RESAMPLES)], 4), round(boots[int(0.975 * RESAMPLES)], 4)]}
     if {"krouter", "bm25-floor"} <= systems.keys():
         common = sorted(systems["krouter"].keys() & systems["bm25-floor"].keys())
         rng = random.Random(SEED)
@@ -177,7 +226,8 @@ def main() -> int:
     c = sub.add_parser("convert")
     c.add_argument("--data", required=True)
     r = sub.add_parser("run")
-    r.add_argument("--system", choices=["krouter", "bm25-floor"], required=True)
+    r.add_argument("--system", choices=["krouter", "bm25-floor", "krouter-inproc", *sorted(DENSE_SYSTEMS)], required=True)
+    r.add_argument("--sample", type=int, default=0, help="a seed-drawn sample of this many answerable questions")
     r.add_argument("--limit", type=int, default=0)
     r.add_argument("--repo", default=str(REPO), help="the KRouter checkout to run (e.g. a worktree at the release tag)")
     sub.add_parser("score")
@@ -187,7 +237,7 @@ def main() -> int:
     if args.cmd == "convert":
         convert(Path(args.data))
     elif args.cmd == "run":
-        run(args.system, args.limit, Path(args.repo))
+        run(args.system, args.limit, Path(args.repo), args.sample)
     else:
         score()
     return 0

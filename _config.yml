@@ -1,0 +1,26 @@
+# GitHub Pages：从仓库根目录直接生成文档站，README.md 是首页，.md 之间的相对链接自动换成网页链接。
+# 测试用的小库、模板库和测试夹具不上站（几百个测试页，不是文档）。
+title: KRouter
+description: Your AI remembers what you decided — and what you changed your mind about.
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-titles-from-headings
+relative_links:
+  enabled: true
+  collections: false
+exclude:
+  - tests
+  - template
+  - template-zh
+  - bench/memory_honesty/vault
+  - bench/memory_honesty/vault2
+  - bench/memory_honesty/vault3
+  - plugin
+  - hooks
+  - package.json
+  - requirements.txt
+  - requirements-dev.txt
+  - requirements-dense.txt

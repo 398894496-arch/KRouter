@@ -40,7 +40,17 @@ notice, then the details.
   不成立). Each run that changes something makes one git commit of exactly its files (`[krouter-run <id>]`) and one
   entry in `90 系统文件/自动化/记忆变更记录.md` (added lines, replaced decisions, source session, verdicts);
   `import_sessions.py --undo <id>` reverts the run and keeps its record.
-
+- **`install.sh` records the vault path for hooks and the MCP server.** They do not inherit `OBSIDIAN_VAULT` from
+  the host app; bootstrap already wrote `~/.config/krouter/vault`, `install.sh` did not, so after a manual install
+  the correction hook and the session-end import found no vault and did nothing, silently. An existing record is
+  left alone.
+- **README speaks to anyone with one AI app.** The first screen no longer assumes several coding agents: one AI app is
+  enough, and any app that runs a local stdio MCP server gets a five-line config ("Works with", marked untested
+  where it is). Someone else's benchmarks now lead the numbers: LongMemEval S (439 / 470 answer sessions cited, 70 / 72
+  newest facts) and LoCoMo (991 / 1,540 evidence first), with what they do not measure and the abstention weakness
+  they show (3 / 30, 37 / 446). The stale real-traffic row is replaced by the 2026-10-16 run and why it is not
+  evidence. The bench-only LoCoMo adapter and the dense opt-in evaluation (`docs/DENSE-OPTIN.md`) are merged; nothing
+  in the product changed.
 - **Off-machine backups.** `backup.py init --dir <folder>` turns on a nightly, encrypted archive of the whole vault
   (its `.git` included, editor state and caches left out) in a folder that syncs elsewhere (iCloud Drive, OneDrive,
   Dropbox, a Netdisk sync folder, a USB disk; several, separated by `|`). AES-256 via openssl with an HMAC; each
