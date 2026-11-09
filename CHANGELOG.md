@@ -45,6 +45,12 @@ notice, then the details.
   `krouter.ask()` returns the page, the one-line answer, whether it refused and the confidence; `krouter.status()`;
   `krouter.note()`; the command `krouter ask|status|note|mcp`. Install with
   `pipx install "git+https://github.com/398894496-arch/KRouter"`; not on PyPI yet. `tests/test_sdk.py`.
+- **`MAINTAINERS.md`:** one maintainer, said plainly; what you keep if the project stops (your Markdown folder, the
+  MIT standard-library code, no hosted service), how a fork releases and re-measures, when the repository would be
+  handed over, and how to become a maintainer.
+- **`server.json`** for the MCP registry (`io.github.398894496-arch/krouter`, the PyPI package run as `uvx krouter mcp`)
+  and the `mcp-name` marker in the README; `tests/test_server_json.py` keeps its version in step with `pyproject.toml`.
+  Not listed yet: it needs the package on PyPI first.
 - **README:** a team server and remote-MCP apps in "Works with"; "no hosted service, a self-hosted team server is
   fine"; the install line says the script installs the latest release tag, not `main`; the Chinese ledger path and
   the terms receipt, floor and answer cards are explained where they first appear.
