@@ -280,6 +280,30 @@ Right answers did not change in either version, because the dev pairs are two di
 not one question asked twice. Whether learning *helps* needs one intent in two wordings, written by a person:
 `bench/memory_honesty/human_set/`.
 
+## Scale: how big a vault can get (2026-11-09)
+
+`bench/scale/` builds a synthetic vault (the template plus N generated decision pages, seeded by N) and times
+`route_knowledge.py search` the way the MCP server and the agent rules run it: one process per lookup, interpreter
+start included. The first lookup builds the full-text index in an empty cache; the next 30 (two in three about
+something on the generated pages, one in three about nothing in the vault) only check file times. Apple M2, 8 GB,
+Python 3.14, macOS.
+
+| Pages | Markdown | First lookup | Later lookups p50 / p95 | Peak memory (a lookup process) | Index on disk |
+|---|---|---|---|---|---|
+| 1,017 | 0.7 MB | 0.4 s | 0.079 s / 0.088 s | 37 MB | 2.8 MB |
+| 10,017 | 7.2 MB | 4.8 s | 0.121 s / 0.194 s | 41 MB | 27 MB |
+| 50,017 | 36 MB | 24 s | 0.527 s / 1.138 s | 76 MB | 139 MB |
+
+Over HTTP (`mcp_server.py --http`, the 10,017-page vault): 16 parallel callers right after 200 pages changed all
+got an answer (slowest 2.2 s, no errors); 64 calls from 16 threads, 0.96 s median and 1.28 s p95 on 8 cores. The cost
+past about 10,000 pages is the file-time walk on every lookup, not the index. These are latency numbers on generated
+text, not retrieval quality.
+
+```bash
+python3 bench/scale/gen.py 10000 /tmp/v10000
+python3 bench/scale/run.py /tmp/v10000 --queries 30
+```
+
 ## Run it
 
 ```bash

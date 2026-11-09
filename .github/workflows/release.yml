@@ -11,6 +11,8 @@ permissions:
   # 构建来源证明：由 GitHub 的工作流身份签名，不和安装包放在一起，`gh attestation verify` 可查
   id-token: write
   attestations: write
+  # 团队服务器镜像推到 GHCR
+  packages: write
 
 jobs:
   pack:
@@ -54,3 +56,39 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dsh-krouter-*.tgz SHA256SUMS --clobber
+
+  image:
+    # 团队服务器镜像：版本检查通过后才构建；冒烟测试过了才推送；镜像本身也带构建来源证明
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Build
+        run: docker build -t krouter:release .
+      - name: Smoke test
+        run: sh scripts/docker_smoke.sh krouter:release
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Push
+        id: push
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          IMG=ghcr.io/398894496-arch/krouter
+          docker tag krouter:release "$IMG:$TAG"
+          docker tag krouter:release "$IMG:latest"
+          docker push "$IMG:$TAG"
+          docker push "$IMG:latest"
+          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMG:$TAG" | cut -d@ -f2)" >> "$GITHUB_OUTPUT"
+      - name: Attest the image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/398894496-arch/krouter
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

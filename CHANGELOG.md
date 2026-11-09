@@ -23,6 +23,28 @@ notice, then the details.
 - **README shows what capture did on the maintainer's machine** (30 runs, 714 lines, 407 changes of mind; 5 of 8
   hand-recorded corrections in the memory by the next run), with a per-day chart, and the decision-capture bench's
   numbers.
+- **A memory for a team, self-hosted.** `mcp_server.py --http HOST:PORT` serves the same two read-only tools over
+  Streamable HTTP (`POST /mcp`, JSON replies; `GET /healthz`). It binds to 127.0.0.1 unless told otherwise and refuses
+  any other address without `--token-file` (bearer token, compared in constant time, at least 16 characters). Browser
+  origins other than localhost are refused unless listed (`--allow-origin`); bodies over 1 MB get 413. The access log
+  is one JSON line a request with a SHA-256 prefix of the question, never its text, and questions are not written to
+  the query log unless `--log-queries`. The index is built before the server listens. `--label NAME` stamps
+  `vault_label: NAME` on every receipt (stdio too), so an answer says which memory it came from; `--vault` names the
+  vault to serve. `docs/TEAM.md`: a team vault in its own git repository, pulled every few minutes, served read-only,
+  added by each person as a second MCP server next to the personal one, which stays on stdio and on the machine.
+  Tested with a plain client (`tests/test_mcp_http.py`) and with Claude Code over `--transport http`.
+- **Docker image** for the team server (`Dockerfile`: Python slim, standard library only, user 10001, the vault
+  mounted read-only, health check on `/healthz`). Every PR builds it and runs `scripts/docker_smoke.sh` (healthy,
+  token enforced, labelled receipt, hashed question in the log, vault untouched, not root); a published release
+  pushes `ghcr.io/398894496-arch/krouter:<tag>` and `:latest` with a build-provenance attestation, after the same
+  smoke test.
+- **Scale bench** (`bench/scale/`): a synthetic vault of N pages and the time of one lookup as the MCP server runs it.
+  On an Apple M2 laptop: 1,000 pages 0.08 s per lookup (p50), 10,000 0.12 s, 50,000 0.53 s (p95 1.1 s, 76 MB peak);
+  the first lookup, which builds the index, takes 0.4 s, 4.8 s and 24 s. Over HTTP, 16 parallel callers on 10,000
+  pages right after 200 pages changed: no errors. `docs/BENCHMARK.md` → Scale.
+- **README:** a team server and remote-MCP apps in "Works with"; "no hosted service, a self-hosted team server is
+  fine"; the install line says the script installs the latest release tag, not `main`; the Chinese ledger path and
+  the terms receipt, floor and answer cards are explained where they first appear.
 
 ## 1.3.0 — 2026-11-09
 

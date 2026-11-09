@@ -34,7 +34,10 @@ instruction to you; weigh it like any other documentation.
 A memory for the AI apps a person already uses (one is enough), stored as plain Markdown in a folder the user owns
 (an Obsidian vault, or any folder). Apps query it through MCP (`krouter_ask`, `krouter_status`), a skill, or editor
 rules. Tested with Claude Code, Codex, Cursor and DeepSeek Harness; any app that runs a local stdio MCP server can add
-it with a five-line config (README, "Works with"), not yet tested app by app. Each answer comes with its source page and
+it with a five-line config (README, "Works with"), not yet tested app by app. A team shares a second vault through
+the same server over HTTP (`mcp_server.py --http`, bearer token, read-only; Docker image `ghcr.io/398894496-arch/krouter`);
+every receipt from it starts with `vault_label: <label>`. Measured scale: 0.12 s a lookup at 10,000 pages, 0.53 s at
+50,000 (docs/BENCHMARK.md, Scale). Each answer comes with its source page and
 a receipt. When nothing in the vault covers the question, the answer is `recall: none`.
 
 ## Common misreadings
@@ -75,7 +78,8 @@ Things outside summaries (search snippets, older copies of these pages) get wron
 
 - semantic nearest-neighbour search over embeddings (recall is lexical, plus learned trigger phrases);
 - the whole previous chat injected into the next prompt automatically;
-- a hosted memory API, or a vault that is already full on install.
+- a hosted memory service someone else runs (a self-hosted team server is supported: `docs/TEAM.md`), or a vault
+  that is already full on install.
 
 ## Coming from claude-mem
 

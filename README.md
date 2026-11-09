@@ -35,7 +35,8 @@ refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo 
 sessions): KRouter cites a wrong page 26% of the time; claude-mem 64%, basic-memory 78%. Of 80 questions the memory
 cannot answer, it refuses 47; the other two refuse none. Of 60 questions about a decision that was later changed, it
 gets 50 right; they get 34 and 16. Part of that gap is by construction: plain full-text search given KRouter's two
-rules is level with it. What KRouter adds is having those rules on by default, plus receipts and a memory you can edit.
+rules is level with it. What KRouter adds is having those rules on by default, plus receipts (a few lines with each
+answer: the page it came from, why that page, how sure) and a memory you can edit.
 [Every number and its method](#honest-numbers) · [rerun them](#check-it-yourself)
 
 ## Install
@@ -43,6 +44,9 @@ rules is level with it. What KRouter adds is having those rules on by default, p
 ```bash
 curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
 ```
+
+The line downloads a short script; the script installs the latest release (a tag, never `main`) after checking its
+SHA-256, so what runs is a published, checksummed version.
 
 Windows (PowerShell): `irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` (Claude Code 2.1.275 or later; from a shell, `claude plugin install krouter --marketplace 398894496-arch/KRouter` needs 2.1.292). Third-party marketplaces do not auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable auto-update.
 
@@ -68,6 +72,8 @@ remembering, run the line it prints last (`bootstrap.py --ask`), which asks two 
 | Codex | MCP (the installer registers it) | tested |
 | Cursor | rule and skill (the installer adds them) | tested |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
+| A team: one shared memory for several people | a self-hosted server over HTTP (`mcp_server.py --http`, or the Docker image `ghcr.io/398894496-arch/krouter`), token required: [`docs/TEAM.md`](docs/TEAM.md) | tested with Claude Code over HTTP |
+| Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |
 | Any app that runs a local MCP server: Claude Desktop, VS Code, Windsurf, Zed, Gemini CLI, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
 
 ```json
@@ -96,7 +102,8 @@ Once you said yes to importing, nothing needs maintaining:
 - **During the day**, an optional timer catches today's sessions at two set times
   (`extras/host-daily-evolution/intraday_capture.py`, a macOS launchd example included).
 - **Nothing waits for your approval, and nothing is hidden.** Every run writes what it added and what it replaced to
-  `90 系统文件/自动化/记忆变更记录.md`. When the memory folder is a git repository (`git init` it once), each run is
+  `90 系统文件/自动化/记忆变更记录.md` (the change ledger; the default folders have Chinese names, and a
+  `krouter-zones.psv` at the vault root maps them to yours). When the memory folder is a git repository (`git init` it once), each run is
   also one commit, and `import_sessions.py --undo <run>` takes it back.
 - **Keep a session out** by putting `#nocapture` (or `#不记`) in any question of it.
 
@@ -126,7 +133,8 @@ Once you said yes to importing, nothing needs maintaining:
 **Yes**, if you use an AI assistant, any one, and keep telling it the same decision again, or it keeps answering with
 something you changed weeks ago. No notes yet? The installer makes the folder. Using several assistants is a bonus,
 not a requirement: they then share one memory. **No**, if you want semantic search over embeddings, the last chat
-replayed into the next one, a hosted memory API for an app you are building, or a brain that is full on install.
+replayed into the next one, a hosted memory service run for you (a self-hosted team server is fine:
+[`docs/TEAM.md`](docs/TEAM.md)), or a brain that is full on install.
 
 **Not only for code:** the same story for short-video work, recorded the same way (Claude Code with the plugin, a
 demo vault, real output):
@@ -167,7 +175,8 @@ vault: [`DETAILS.md` → Backing up your vault](docs/DETAILS.md#backing-up-your-
 | LongMemEval S, someone else's questions and labels ([set 7](bench/memory_honesty/HELDOUT.md#set-7-longmemeval-someone-elses-questions-and-labels-registered-2026-10-18-before-any-download-or-run); KRouter 1.1.1; scored mechanically from the authors' labels, registered before the run) | An answer session among the cited pages for 439 / 470 answerable questions; the newest fact cited for 70 / 72 knowledge updates (stale only: 1); 12 of 470 answerable questions refused; **3 of 30 unanswerable refused**. Plain BM25 with no floor, top three pages: 447 / 470 and 69 / 72, level |
 | LoCoMo, someone else's conversations and labels ([set 10](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels); KRouter at `main`, 2026-10-30; English only) | Evidence session cited first for 991 / 1,540 answerable questions, among the top three for 1,204; **37 of 446 adversarial questions refused**. Plain BM25: 968 first, 1,257 in the top three |
 | Refuses instead of guessing (public benches, CI) | Off-topic questions refused 12/12 (English) and 6/6 (Chinese) |
-| Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 26% [19, 33] wrong, 47 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor) at the same coverage cites 42 wrong pages to KRouter's 36 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.3] points, right [-2, +14]). On the same 200 questions at their defaults, claude-mem 13.39 cites a wrong page 64% of the time [58, 71] and basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 questions about a changed decision they get 34 and 16 right, KRouter 50 |
+| Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 26% [19, 33] wrong, 47 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor: a minimum match score) at the same coverage cites 42 wrong pages to KRouter's 36 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.3] points, right [-2, +14]). On the same 200 questions at their defaults, claude-mem 13.39 cites a wrong page 64% of the time [58, 71] and basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 questions about a changed decision they get 34 and 16 right, KRouter 50 |
+| Scale ([`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09); synthetic vaults, Apple M2 laptop, one process per lookup) | 1,000 pages: 0.08 s per lookup (p50), first lookup with index build 0.4 s. 10,000: 0.12 s, 4.8 s. 50,000: 0.53 s (p95 1.1 s), 24 s, 76 MB peak memory. Over HTTP, 16 parallel callers on 10,000 pages: no errors, 0.96 s median |
 | Exact match vs embeddings on a supersede / neighbor set (CI) | Exact match refuses where TF-IDF, MiniLM and BGE-M3 cite a neighbor. Local embeddings as an opt-in tier: measured, not shipped ([`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)) |
 | Real traffic, the author's own questions | 208 past questions judged blind by Grok (2026-10-16): KRouter 0.36, BM25 with the two rules 0.25 of 2, paired interval [−0.02, +0.24]: **no difference shown**. The judge found a page that answered the question before it was asked for only about 5% of them, so this scoring rewards refusing; the run is reported, not used as evidence ([set 5](bench/memory_honesty/HELDOUT.md)). The blind test on fresh questions waits for 50 of them; 30 were logged by 2026-11-09. The older 0.62 → 1.47 gain is a development set ([VERIFY.md](docs/VERIFY.md)) |
 
@@ -196,7 +205,8 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 
 ## More
 
-- [How it works, every option](docs/DETAILS.md): install flags, the nightly writer, exact match and ranked recall, answer cards, the four agent mounts
+- [How it works, every option](docs/DETAILS.md): install flags, the nightly writer, exact match and ranked recall, answer cards (short question-and-answer pairs precomputed from each rule page), the four agent mounts
+- [`docs/TEAM.md`](docs/TEAM.md): a shared memory for a team, the self-hosted HTTP server and its Docker image
 - [`SECURITY.md`](SECURITY.md): what each model lane can see and do
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md): facts for an agent deciding whether KRouter fits its user
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md): good first issues are labeled
