@@ -24,14 +24,28 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 SLOTS = "12:10,18:10"
 TZ = "Asia/Shanghai"
 ATTEMPTS = 2           # 一个槽位最多跑几次（失败后下一次整点再试一次）
 RUN_TIMEOUT = 45 * 60  # 一次导入加提炼最多跑多久
+# Windows 不带系统时区库（要 pip install tzdata）；这些时区没有夏令时，按固定时差算结果一样
+FIXED_ZONES = {"Asia/Shanghai": 8, "Asia/Hong_Kong": 8, "Asia/Taipei": 8, "Asia/Singapore": 8,
+               "Asia/Tokyo": 9, "Asia/Seoul": 9, "UTC": 0, "Etc/UTC": 0}
+
+
+def zone(name: str):
+    """The slot time zone; a fixed offset for a zone without daylight saving when the system has no tz database."""
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        if name in FIXED_ZONES:
+            return timezone(timedelta(hours=FIXED_ZONES[name]), name)
+        raise SystemExit(f"time zone {name!r} not found: install the tzdata package (pip install tzdata), "
+                         "or pass --tz with a zone this machine knows")
 
 
 def state_dir() -> Path:
@@ -96,7 +110,7 @@ def main() -> int:
     ap.add_argument("--force", action="store_true", help="run now even when no slot is due")
     args = ap.parse_args()
 
-    now = datetime.now(ZoneInfo(args.tz))
+    now = datetime.now(zone(args.tz))
     sdir = state_dir()
     state_path, log_path = sdir / "intraday.json", sdir / "intraday.log"
     st = load(state_path)
