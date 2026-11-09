@@ -15,14 +15,14 @@ Windows 上是 `C:\\Users\\you\\.agents\\skills\\krouter-obsidian\\scripts\\mcp_
 | [MCP Python SDK](#mcp-python-sdk)（`pip install mcp`） | stdio，或 Streamable HTTP | 已实测：`tests/test_mcp_official_sdk.py`（mcp 1.27） |
 | [LlamaIndex](#llamaindex) | `krouter.integrations.llamaindex.KRouterRetriever` | 已实测：`tests/test_sdk_llamaindex.py`（llama-index-core 0.14） |
 | [JavaScript / TypeScript](#javascript--typescript) | `sdk/js`，不依赖任何包 | 已实测：`sdk/js/test/krouter.test.js`（Node 22） |
-| [LangChain / LangGraph](#langchain--langgraph) | `langchain-mcp-adapters` | 写法照适配器的 README（2026-11-09）；我们还没跑过 |
-| [OpenAI Agents SDK](#openai-agents-sdk) | `agents.mcp.MCPServerStdio` | 写法照 SDK 的 MCP 文档（2026-11-09）；我们还没跑过 |
-| [Pydantic AI](#pydantic-ai) | `pydantic_ai.mcp.MCPToolset` | 写法照 Pydantic AI 的 MCP 客户端文档（2026-11-09）；我们还没跑过 |
-| [Google ADK](#google-adk) | `McpToolset` | 写法照 ADK 的 MCP 工具文档（2026-11-09）；我们还没跑过 |
-| [CrewAI](#crewai) | agent 的 `mcps=` 字段 | 写法照 CrewAI 的 MCP 文档（2026-11-09）；我们还没跑过 |
-| [Vercel AI SDK](#vercel-ai-sdk) | `@ai-sdk/mcp` 的 `createMCPClient` | 写法照 AI SDK 的 MCP 文档（2026-11-09）；我们还没跑过 |
+| [LangChain / LangGraph](#langchain--langgraph) | `langchain-mcp-adapters` | 已实测，含完整 agent 流程（LangChain 自带的假聊天模型）：`tests/test_frameworks.py`（langchain 1.4、langgraph 1.2、适配器 0.3） |
+| [OpenAI Agents SDK](#openai-agents-sdk) | `agents.mcp.MCPServerStdio` | 已实测：`tests/test_frameworks.py`（openai-agents 0.24） |
+| [Pydantic AI](#pydantic-ai) | `pydantic_ai.mcp.MCPToolset` | 已实测，含完整 agent 流程（Pydantic AI 的 `FunctionModel`）：`tests/test_frameworks.py`（pydantic-ai-slim 2.66、fastmcp 4.1） |
+| [Google ADK](#google-adk) | `McpToolset` | 已实测：`tests/test_frameworks.py`（google-adk 2.14，带 `mcp` 扩展） |
+| [CrewAI](#crewai) | agent 的 `mcps=` 字段 | 已实测：`tests/test_frameworks.py`（crewai 1.15） |
+| [Vercel AI SDK](#vercel-ai-sdk) | `@ai-sdk/mcp` 的 `createMCPClient` | 已实测，用 SDK 自带的假模型：`tests/frameworks/vercel/`（ai 7.0、@ai-sdk/mcp 2.0） |
 
-「我们还没跑过」是说：这段写法是那个框架文档里加载本地 stdio MCP 服务的标准写法，只是把路径换成了 KRouter 的；我们这边还没有人拿那个框架实际连过 KRouter。你跑过的话，开个 issue 说一声成没成，这一行就能改成已实测。
+每一行都在 2026-11-09 对着 KRouter 真实的服务跑过，版本写在括号里：框架照下面的写法通过 stdio 加载服务、列出工具，库里有的问题拿回带出处的页，库里没有的拿回 `recall: none`。自带假模型的框架（LangChain、Pydantic AI、Vercel AI SDK）还把整个 agent 流程跑了一遍：模型调 `krouter_ask`，再照查回来的页作答。全程不调任何模型，也不用 key。CI 里每个框架各装在自己的环境里跑（`.github/workflows/ci.yml` 的 `frameworks` 和 `vercel-ai-sdk` 两个任务）。测过的客户端带的是两个大版本的 MCP SDK（1.30 和 2.3）。
 
 不管用哪个框架，都要告诉模型这个工具是干什么的，就像 KRouter 自己的服务说明那样：用户问到做事的习惯、以前定过什么，先查库；用 `how` 那一行回答并注明出处页；遇到 `recall: none` 就直说库里没有，不要猜。
 
@@ -103,6 +103,7 @@ async with MCPServerStdio(name="KRouter", params={"command": "python3", "args": 
 ## Pydantic AI
 
 ```python
+# pip install "pydantic-ai-slim[mcp]" fastmcp
 from fastmcp.client.transports import StdioTransport
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPToolset
@@ -115,6 +116,7 @@ async with agent:
 ## Google ADK
 
 ```python
+# pip install "google-adk[mcp]"     （2.x 起 MCP 支持放进了 mcp 扩展；只装 google-adk 没有 McpToolset）
 from google.adk.agents import LlmAgent
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
@@ -131,6 +133,7 @@ root_agent = LlmAgent(
 ## CrewAI
 
 ```python
+# pip install crewai
 from crewai import Agent
 from crewai.mcp import MCPServerStdio
 

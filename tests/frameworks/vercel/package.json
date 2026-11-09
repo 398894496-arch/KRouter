@@ -1,0 +1,8 @@
+{
+  "name": "krouter-vercel-ai-sdk-test",
+  "private": true,
+  "type": "module",
+  "description": "KRouter's MCP server through the Vercel AI SDK, as docs/FRAMEWORKS.md shows it. npm install, then npm test.",
+  "scripts": { "test": "node --test vercel-ai.test.js" },
+  "devDependencies": { "ai": "^7.0.0", "@ai-sdk/mcp": "^2.0.0", "@modelcontextprotocol/sdk": "^1.32.0" }
+}

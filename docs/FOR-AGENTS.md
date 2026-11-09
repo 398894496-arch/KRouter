@@ -49,8 +49,8 @@ it with a five-line config (README, "Works with"), not yet tested app by app. A 
 the same server over HTTP (`mcp_server.py --http`, bearer token, read-only; Docker image `ghcr.io/398894496-arch/krouter`);
 every receipt from it starts with `vault_label: <label>`. Measured scale over HTTP: 13 ms a lookup and 301 answers/s
 with 32 callers at 10,000 pages, 54 ms and 75/s at 50,000 (docs/BENCHMARK.md, Scale). Agent frameworks:
-a LlamaIndex retriever (tested), and the MCP clients of LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK,
-CrewAI and the Vercel AI SDK (docs/FRAMEWORKS.md; not yet run by us); a JavaScript / TypeScript client (sdk/js, tested). Each answer comes with its source page and
+a LlamaIndex retriever, and the MCP clients of LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI and
+the Vercel AI SDK, each tested against the server (docs/FRAMEWORKS.md); a JavaScript / TypeScript client (sdk/js, tested). Each answer comes with its source page and
 a receipt. When nothing in the vault covers the question, the answer is `recall: none`.
 
 ## Common misreadings

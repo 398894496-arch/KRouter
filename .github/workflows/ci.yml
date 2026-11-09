@@ -58,6 +58,44 @@ jobs:
       - name: Official MCP SDK, LlamaIndex, deployment files
         run: python -m pytest -q tests/test_mcp_official_sdk.py tests/test_sdk_llamaindex.py tests/test_deploy.py
 
+  frameworks:
+    # docs/FRAMEWORKS.md 里每个框架各装在自己的环境里，照那页的写法连 KRouter 的服务（不调模型、不要 key）
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: langchain, pip: "langchain-mcp-adapters langchain langgraph"}
+          - {name: openai_agents, pip: "openai-agents"}
+          - {name: pydantic_ai, pip: "pydantic-ai-slim[mcp] fastmcp"}
+          - {name: google_adk, pip: "google-adk"}
+          - {name: crewai, pip: "crewai"}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ${{ matrix.name }}
+        run: python -m pip install -r requirements-dev.txt ${{ matrix.pip }}
+      - name: ${{ matrix.name }} against the server
+        env:
+          KROUTER_REQUIRE_FRAMEWORKS: "1"
+        run: python -m pytest -q tests/test_frameworks.py -k ${{ matrix.name }}
+
+  vercel-ai-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Vercel AI SDK against the server
+        working-directory: tests/frameworks/vercel
+        run: npm install --no-audit --no-fund && npm test
+
   docker:
     # 团队服务器镜像：每个 PR 都构建一次并跑冒烟测试（不推送；推送只在发版时）
     runs-on: ubuntu-latest

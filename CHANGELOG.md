@@ -36,9 +36,13 @@ notice, then the details.
 - **Agent frameworks and JavaScript.** `krouter.integrations.llamaindex.KRouterRetriever` (a LlamaIndex retriever:
   the answering page as a node with its source, no node on `recall: none`; `pip install "krouter[llamaindex]"`),
   a JavaScript / TypeScript client with no dependencies (`sdk/js`: stdio or a team server over HTTP; not on npm yet),
-  and `docs/FRAMEWORKS.md` with the way LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI and the
-  Vercel AI SDK load an MCP server (from each framework's docs, 2026-11-09; not yet run by us). The official MCP
-  Python SDK is now tested against the server over stdio and Streamable HTTP (`tests/test_mcp_official_sdk.py`).
+  and `docs/FRAMEWORKS.md` (and `.zh.md`) with the way LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK,
+  CrewAI and the Vercel AI SDK load the server, each tested against it on 2026-11-09 in its own environment
+  (`tests/test_frameworks.py`, `tests/frameworks/vercel/`; langchain 1.4, openai-agents 0.24, pydantic-ai-slim 2.66,
+  google-adk 2.14, crewai 1.15, ai 7.0), LangChain, Pydantic AI and the Vercel AI SDK through their whole agent loop
+  with their own stand-in models; CI runs each one (jobs `frameworks`, `vercel-ai-sdk`). Testing caught that
+  google-adk 2.x needs its `mcp` extra (`pip install "google-adk[mcp]"`). The official MCP Python SDK is tested
+  over stdio and Streamable HTTP (`tests/test_mcp_official_sdk.py`).
 - **Cline CLI** is wired by the installer too (`~/.cline/data/settings/cline_mcp_settings.json`, per Cline's docs).
 - **Try it in your app.** `CONTRIBUTING.md` lists every app, framework and deployment still marked "not yet run by
   us", and a "Works in my app" issue form takes the report that moves it to tested.

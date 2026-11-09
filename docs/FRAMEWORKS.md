@@ -19,16 +19,19 @@ instead of `python3`. For a team server, use the framework's Streamable HTTP cli
 | [MCP Python SDK](#mcp-python-sdk) (`pip install mcp`) | stdio, or Streamable HTTP | tested: `tests/test_mcp_official_sdk.py` (mcp 1.27) |
 | [LlamaIndex](#llamaindex) | `krouter.integrations.llamaindex.KRouterRetriever` | tested: `tests/test_sdk_llamaindex.py` (llama-index-core 0.14) |
 | [JavaScript / TypeScript](#javascript--typescript) | `sdk/js`, no dependencies | tested: `sdk/js/test/krouter.test.js` (Node 22) |
-| [LangChain / LangGraph](#langchain--langgraph) | `langchain-mcp-adapters` | snippet follows the adapter's README (2026-11-09); not yet run by us |
-| [OpenAI Agents SDK](#openai-agents-sdk) | `agents.mcp.MCPServerStdio` | snippet follows the SDK's MCP docs (2026-11-09); not yet run by us |
-| [Pydantic AI](#pydantic-ai) | `pydantic_ai.mcp.MCPToolset` | snippet follows Pydantic AI's MCP client docs (2026-11-09); not yet run by us |
-| [Google ADK](#google-adk) | `McpToolset` | snippet follows ADK's MCP tools docs (2026-11-09); not yet run by us |
-| [CrewAI](#crewai) | the agent's `mcps=` field | snippet follows CrewAI's MCP docs (2026-11-09); not yet run by us |
-| [Vercel AI SDK](#vercel-ai-sdk) | `createMCPClient` from `@ai-sdk/mcp` | snippet follows the AI SDK's MCP docs (2026-11-09); not yet run by us |
+| [LangChain / LangGraph](#langchain--langgraph) | `langchain-mcp-adapters` | tested, agent loop included (LangChain's fake chat model): `tests/test_frameworks.py` (langchain 1.4, langgraph 1.2, adapters 0.3) |
+| [OpenAI Agents SDK](#openai-agents-sdk) | `agents.mcp.MCPServerStdio` | tested: `tests/test_frameworks.py` (openai-agents 0.24) |
+| [Pydantic AI](#pydantic-ai) | `pydantic_ai.mcp.MCPToolset` | tested, agent loop included (Pydantic AI's `FunctionModel`): `tests/test_frameworks.py` (pydantic-ai-slim 2.66, fastmcp 4.1) |
+| [Google ADK](#google-adk) | `McpToolset` | tested: `tests/test_frameworks.py` (google-adk 2.14 with the `mcp` extra) |
+| [CrewAI](#crewai) | the agent's `mcps=` field | tested: `tests/test_frameworks.py` (crewai 1.15) |
+| [Vercel AI SDK](#vercel-ai-sdk) | `createMCPClient` from `@ai-sdk/mcp` | tested, with the SDK's mock model: `tests/frameworks/vercel/` (ai 7.0, @ai-sdk/mcp 2.0) |
 
-"Not yet run by us" means the snippet is the framework's documented way to load a local stdio MCP server, with
-KRouter's path in it; nobody here has run that framework against KRouter yet. If you do, an issue saying it worked
-(or did not) moves it up the table.
+Every row is run against KRouter's real server on 2026-11-09, with the versions in brackets: the framework loads
+the server over stdio the way its snippet below shows, lists the tools, gets the cited page for a question the vault
+knows and `recall: none` for one it does not. Where a framework ships a stand-in model (LangChain, Pydantic AI, the
+Vercel AI SDK), its whole agent loop runs too: the model calls `krouter_ask` and answers from the page. No model is
+called and no key is needed. CI runs each framework in its own environment (`.github/workflows/ci.yml`, jobs
+`frameworks` and `vercel-ai-sdk`). The tested clients carry two major versions of the MCP SDK (1.30 and 2.3).
 
 Whatever the framework, tell the model what the tool is for, as KRouter's own server instructions do: ask the vault
 before answering a question about how the user does things or what was decided; answer from the `how` line and cite
@@ -114,6 +117,7 @@ async with MCPServerStdio(name="KRouter", params={"command": "python3", "args": 
 ## Pydantic AI
 
 ```python
+# pip install "pydantic-ai-slim[mcp]" fastmcp
 from fastmcp.client.transports import StdioTransport
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPToolset
@@ -126,6 +130,7 @@ async with agent:
 ## Google ADK
 
 ```python
+# pip install "google-adk[mcp]"     (since 2.x MCP support is the `mcp` extra; plain google-adk has no McpToolset)
 from google.adk.agents import LlmAgent
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
@@ -142,6 +147,7 @@ root_agent = LlmAgent(
 ## CrewAI
 
 ```python
+# pip install crewai
 from crewai import Agent
 from crewai.mcp import MCPServerStdio
 
