@@ -22,11 +22,15 @@ Changelog = "https://github.com/398894496-arch/KRouter/blob/main/CHANGELOG.md"
 krouter = "krouter.cli:main"
 
 [tool.setuptools]
-packages = ["krouter", "krouter_router"]
+packages = ["krouter", "krouter_router", "krouter_template", "krouter_template_zh"]
 
 [tool.setuptools.package-dir]
 krouter = "sdk/krouter"
 krouter_router = "skill/krouter-obsidian/scripts"
+krouter_template = "template"
+krouter_template_zh = "template-zh"
 
 [tool.setuptools.package-data]
 krouter_router = ["*.sh", "*.txt", "*.psv"]
+krouter_template = ["**/*"]       # krouter demo 用的示例库
+krouter_template_zh = ["**/*"]

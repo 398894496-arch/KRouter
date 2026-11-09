@@ -96,27 +96,12 @@ if [ "${KROUTER_NO_MCP:-0}" != 1 ]; then
     run codex mcp remove krouter >/dev/null 2>&1 || true
     printf '%s\n' "removed: MCP server krouter (codex)"
   fi
-  # Claude Desktop: drop only our mcpServers.krouter entry (the one pointing at mcp_server.py), keep the rest
-  case "$(uname -s)" in
-    Darwin) DESKTOP_CFG="$HOME/Library/Application Support/Claude/claude_desktop_config.json" ;;
-    *) DESKTOP_CFG="${XDG_CONFIG_HOME:-$HOME/.config}/Claude/claude_desktop_config.json" ;;
-  esac
-  DESKTOP_CFG="${KROUTER_CLAUDE_DESKTOP_CONFIG:-$DESKTOP_CFG}"
-  if [ -f "$DESKTOP_CFG" ] && grep -q 'mcp_server.py' "$DESKTOP_CFG" 2>/dev/null; then
-    if [ "$DRY" -eq 1 ]; then
-      printf '%s\n' "would: remove mcpServers.krouter from $DESKTOP_CFG"
-    elif python3 - "$DESKTOP_CFG" <<'PY'
-import json, sys
-p = sys.argv[1]
-d = json.load(open(p, encoding="utf-8"))
-s = d.get("mcpServers") or {}
-if "mcp_server.py" in json.dumps(s.get("krouter", "")):
-    s.pop("krouter")
-    open(p, "w", encoding="utf-8").write(json.dumps(d, ensure_ascii=False, indent=2) + "\n")
-PY
-    then
-      printf '%s\n' "removed: MCP server krouter (Claude Desktop)"
-    fi
+  # Desktop apps and editors the installer wired (Claude Desktop, Cursor, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed):
+  # drop only our krouter entry (the one pointing at mcp_server.py), keep the rest of each settings file
+  if [ "$DRY" -eq 1 ]; then
+    python3 "$ROOT/scripts/bootstrap.py" --unregister-mcp --dry-run || true
+  else
+    python3 "$ROOT/scripts/bootstrap.py" --unregister-mcp || true
   fi
 fi
 VAULT_FILE="${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}"

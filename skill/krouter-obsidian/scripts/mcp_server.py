@@ -30,6 +30,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -100,10 +101,70 @@ CLIENT = ""                # initialize 里客户端报的名字，记在每条�
 LABEL = ""                 # --label: which vault this server answers from, stamped on every receipt
 MAX_BODY = 1_000_000       # bytes; a JSON-RPC call is a few hundred
 LOOPBACK = {"127.0.0.1", "::1", "localhost"}
+BANKS: dict[str, dict] = {}  # --bank NAME=PATH：一个服务挂几个互不相通的库，各在 /mcp/NAME，各自可有 token
+_ctx = threading.local()   # 这一个 HTTP 请求在答哪个库（每个请求一个线程）
+
+
+def cur_vault() -> str | None:
+    return getattr(_ctx, "vault", None) or vault_path()
+
+
+def cur_label() -> str:
+    return getattr(_ctx, "label", None) or LABEL
 
 
 def labelled(text: str) -> str:
-    return f"vault_label: {LABEL}\n{text}" if LABEL else text
+    return f"vault_label: {cur_label()}\n{text}" if cur_label() else text
+
+
+class Metrics:
+    """Prometheus counters for GET /metrics: calls by vault, tool and outcome, refusals, latency. No question text."""
+    BUCKETS = (0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30)
+
+    def __init__(self) -> None:
+        self.lock = threading.Lock()
+        self.calls: dict[tuple, int] = {}
+        self.refused: dict[str, int] = {}
+        self.hist: dict[str, list[int]] = {}
+        self.sums: dict[str, float] = {}
+        self.index_s: dict[str, float] = {}
+
+    def observe(self, vault: str, tool: str, outcome: str, seconds: float, refused: bool) -> None:
+        with self.lock:
+            key = (vault, tool or "-", outcome)
+            self.calls[key] = self.calls.get(key, 0) + 1
+            if refused:
+                self.refused[vault] = self.refused.get(vault, 0) + 1
+            h = self.hist.setdefault(vault, [0] * (len(self.BUCKETS) + 1))
+            h[next((i for i, b in enumerate(self.BUCKETS) if seconds <= b), len(self.BUCKETS))] += 1
+            self.sums[vault] = self.sums.get(vault, 0.0) + seconds
+
+    def render(self, started: float) -> str:
+        esc = lambda v: str(v).replace("\\", "\\\\").replace('"', '\\"')  # noqa: E731
+        out = ["# HELP krouter_up 1 while the server runs.", "# TYPE krouter_up gauge", "krouter_up 1",
+               "# TYPE krouter_uptime_seconds gauge", f"krouter_uptime_seconds {round(time.time() - started)}",
+               "# HELP krouter_tool_calls_total MCP tool calls by vault, tool and outcome (ok, error).",
+               "# TYPE krouter_tool_calls_total counter"]
+        with self.lock:
+            for (v, tool, outcome), n in sorted(self.calls.items()):
+                out.append(f'krouter_tool_calls_total{{vault="{esc(v)}",tool="{esc(tool)}",outcome="{outcome}"}} {n}')
+            out += ["# HELP krouter_refusals_total Lookups answered with recall: none.", "# TYPE krouter_refusals_total counter"]
+            out += [f'krouter_refusals_total{{vault="{esc(v)}"}} {n}' for v, n in sorted(self.refused.items())]
+            out += ["# HELP krouter_request_seconds Time to answer one MCP request.", "# TYPE krouter_request_seconds histogram"]
+            for v, h in sorted(self.hist.items()):
+                acc = 0
+                for b, n in zip((*self.BUCKETS, "+Inf"), h):
+                    acc += n
+                    out.append(f'krouter_request_seconds_bucket{{vault="{esc(v)}",le="{b}"}} {acc}')
+                out += [f'krouter_request_seconds_sum{{vault="{esc(v)}"}} {round(self.sums[v], 4)}',
+                        f'krouter_request_seconds_count{{vault="{esc(v)}"}} {acc}']
+            out += ["# HELP krouter_index_build_seconds Time the first lookup took to build the index at start.",
+                    "# TYPE krouter_index_build_seconds gauge"]
+            out += [f'krouter_index_build_seconds{{vault="{esc(v)}"}} {round(t, 3)}' for v, t in sorted(self.index_s.items())]
+        return "\n".join(out) + "\n"
+
+
+METRICS = Metrics()
 
 
 def route(name: str, query: str, extra_env: dict | None = None) -> tuple[str, bool]:
@@ -112,7 +173,7 @@ def route(name: str, query: str, extra_env: dict | None = None) -> tuple[str, bo
 
 
 def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
-    vault = vault_path()
+    vault = cur_vault()
     if not vault:
         return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
     env = {**os.environ, "OBSIDIAN_VAULT": vault, **(extra_env or {})}
@@ -139,7 +200,7 @@ def note(args: dict) -> tuple[str, bool]:
     import zones
     from krouter_redact import redact
 
-    raw = vault_path()
+    raw = cur_vault()
     if not raw:
         return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
     text = " ".join(str(args.get("text") or "").split())
@@ -212,11 +273,11 @@ def handle(msg: dict) -> dict | None:
         asked = params.get("protocolVersion")
         result = {"protocolVersion": asked if asked in PROTOCOLS else PROTOCOLS[0],
                   "capabilities": {"tools": {"listChanged": False}},
-                  "serverInfo": {"name": "krouter", "title": f"KRouter ({LABEL})" if LABEL else "KRouter",
+                  "serverInfo": {"name": "krouter", "title": f"KRouter ({cur_label()})" if cur_label() else "KRouter",
                                  "version": VERSION},
-                  "instructions": INSTRUCTIONS + (f" This server answers from the '{LABEL}' vault "
+                  "instructions": INSTRUCTIONS + (f" This server answers from the '{cur_label()}' vault "
                                                   "(`vault_label:` in each receipt); say which vault an answer "
-                                                  "came from." if LABEL else "")}
+                                                  "came from." if cur_label() else "")}
     elif method == "ping":
         result = {}
     elif method == "tools/list":
@@ -317,22 +378,47 @@ def make_handler(token: str, allowed_origins: list[str], started: float):
             else:
                 self._json(code, obj, headers=hdrs)
 
-        def _authorized(self) -> bool:
-            if not token:
+        def _authorized(self, need: str | None = None) -> bool:
+            """`need`: the token this request must carry (the bank's own, else the server's); none → open."""
+            need = token if need is None else need
+            if not need:
                 return True
             got = self.headers.get("Authorization", "")
-            return got.startswith("Bearer ") and hmac.compare_digest(got[7:].strip().encode(), token.encode())
+            return got.startswith("Bearer ") and hmac.compare_digest(got[7:].strip().encode(), need.encode())
+
+        def _metrics_ok(self) -> bool:  # 计数里没有问题原文；有 token 时，服务的或任一库的 token 都可以读
+            tokens = [t for t in [token, *(b["token"] for b in BANKS.values())] if t]
+            return not tokens or any(self._authorized(t) for t in tokens)
+
+        def _bank(self, path: str):
+            """(name, settings) for /mcp/NAME when the server holds banks; ("", None) for /mcp; None for anything else."""
+            path = path.rstrip("/")
+            if not BANKS:
+                return ("", None) if path == "/mcp" else None
+            name = path[len("/mcp/"):] if path.startswith("/mcp/") else None
+            return (name, BANKS[name]) if name in BANKS else None
 
         def do_GET(self):  # noqa: N802
             t0 = time.perf_counter()
             path = urlsplit(self.path).path
             if path == "/healthz":
-                vault = vault_path()
-                ok = bool(vault) and Path(vault).expanduser().is_dir()
-                self._json(200 if ok else 503, {"ok": ok, "version": VERSION, "label": LABEL or None,
-                                                "uptime_s": round(time.time() - started)})
+                if BANKS:
+                    banks = {n: Path(b["vault"]).is_dir() for n, b in BANKS.items()}
+                    ok = all(banks.values())
+                    body = {"ok": ok, "version": VERSION, "banks": banks, "uptime_s": round(time.time() - started)}
+                else:
+                    vault = vault_path()
+                    ok = bool(vault) and Path(vault).expanduser().is_dir()
+                    body = {"ok": ok, "version": VERSION, "label": LABEL or None, "uptime_s": round(time.time() - started)}
+                self._json(200 if ok else 503, body)
                 return self._log(200 if ok else 503, t0)
-            if path == "/mcp":  # no server-to-client stream: every reply comes back on its POST
+            if path == "/metrics":
+                if not self._metrics_ok():
+                    self._send(401, headers={"WWW-Authenticate": "Bearer"})
+                    return self._log(401, t0)
+                self._send(200, METRICS.render(started).encode("utf-8"), ctype="text/plain; version=0.0.4")
+                return self._log(200, t0)
+            if self._bank(path) is not None:  # no server-to-client stream: every reply comes back on its POST
                 self._send(405, headers={"Allow": "POST"})
                 return self._log(405, t0)
             self._send(404)
@@ -345,13 +431,15 @@ def make_handler(token: str, allowed_origins: list[str], started: float):
 
         def do_POST(self):  # noqa: N802
             t0 = time.perf_counter()
-            if urlsplit(self.path).path != "/mcp":
+            hit = self._bank(urlsplit(self.path).path)
+            if hit is None:
                 self._reject(404)
                 return self._log(404, t0)
+            name, bank = hit
             if not _origin_ok(self.headers.get("Origin", ""), allowed_origins):
                 self._reject(403, {"error": "origin not allowed"})
                 return self._log(403, t0)
-            if not self._authorized():
+            if not self._authorized(bank["token"] if bank and bank["token"] else None):
                 self._reject(401, {"error": "missing or wrong bearer token"}, headers={"WWW-Authenticate": "Bearer"})
                 return self._log(401, t0)
             proto = self.headers.get("MCP-Protocol-Version", "")
@@ -376,10 +464,21 @@ def make_handler(token: str, allowed_origins: list[str], started: float):
                 self._json(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}})
                 return self._log(400, t0)
             batch = isinstance(msg, list)
-            replies = [r for r in (handle(m) if isinstance(m, dict) else
-                                   {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
-                                   for m in (msg if batch else [msg])) if r is not None]
+            _ctx.vault, _ctx.label = (bank["vault"], name) if bank else (None, None)
+            try:
+                replies = [r for r in (handle(m) if isinstance(m, dict) else
+                                       {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
+                                       for m in (msg if batch else [msg])) if r is not None]
+            finally:
+                _ctx.vault = _ctx.label = None
             summary = _rpc_summary(msg[0] if batch and msg else msg)
+            if summary.get("rpc") == "tools/call":
+                res = (replies[0].get("result") or {}) if replies else {}
+                text = "".join(c.get("text", "") for c in res.get("content") or [] if isinstance(c, dict))
+                METRICS.observe(name or LABEL or "default", str(summary.get("tool") or ""),
+                                "error" if res.get("isError") else "ok", time.perf_counter() - t0, "recall: none" in text)
+            if name:
+                summary["bank"] = name
             if not replies:  # only notifications or responses: accepted, nothing to say
                 self._send(202)
                 return self._log(202, t0, summary)
@@ -411,21 +510,30 @@ def serve_http(addr: str, token_file: str, allowed_origins: list[str], log_queri
             return 2
         if os.name != "nt" and Path(token_file).expanduser().stat().st_mode & 0o077:
             print(f"warning: {token_file} is readable by other users (chmod 600 it)", file=sys.stderr)
-    if host not in LOOPBACK and not token:
-        print(f"refusing to listen on {host}: anyone who can reach it could read the vault. "
-              "Pass --token-file, or bind to 127.0.0.1.", file=sys.stderr)
+    open_banks = [n for n, b in BANKS.items() if not (b["token"] or token)]
+    if host not in LOOPBACK and (open_banks or (not BANKS and not token)):
+        print(f"refusing to listen on {host}: anyone who can reach it could read "
+              + (f"the vaults {', '.join(open_banks)}" if open_banks else "the vault")
+              + ". Pass --token-file (or --bank-token NAME=FILE for each), or bind to 127.0.0.1.", file=sys.stderr)
         return 2
     if not log_queries:  # 团队服务器默认不把同事的问题原文写进查询日志
         os.environ["KROUTER_NO_QUERY_LOG"] = "1"
     started = time.time()
-    if vault_path():  # 先建好索引，第一位提问的人不用等
-        t0 = time.perf_counter()
-        _route("search", "krouter index warm-up", {"KROUTER_NO_QUERY_LOG": "1"})
-        print(f"index ready in {time.perf_counter() - t0:.1f} s", file=sys.stderr)
+    for name, bank in (BANKS.items() if BANKS else [("", None)]):  # 先建好索引，第一位提问的人不用等
+        _ctx.vault = bank["vault"] if bank else None
+        if cur_vault():
+            t0 = time.perf_counter()
+            _route("search", "krouter index warm-up", {"KROUTER_NO_QUERY_LOG": "1"})
+            METRICS.index_s[name or LABEL or "default"] = time.perf_counter() - t0
+            print(f"index ready{' for ' + name if name else ''} in {time.perf_counter() - t0:.1f} s", file=sys.stderr)
+    _ctx.vault = None
     server = ThreadingHTTPServer((host, port_n), make_handler(token, allowed_origins, started))
     server.daemon_threads = True
-    print(json.dumps({"listening": f"http://{host}:{server.server_address[1]}/mcp", "label": LABEL or None,
-                      "auth": "bearer" if token else "none (loopback only)"}), file=sys.stderr, flush=True)
+    base = f"http://{host}:{server.server_address[1]}"
+    print(json.dumps({"listening": f"{base}/mcp", "label": LABEL or None,
+                      **({"banks": {n: f"{base}/mcp/{n}" for n in BANKS}} if BANKS else {}),
+                      "auth": "bearer" if token or BANKS and not open_banks else "none (loopback only)"}),
+          file=sys.stderr, flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -446,9 +554,35 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--vault", default="", help="the vault to serve (default: OBSIDIAN_VAULT, else the installed one)")
     ap.add_argument("--log-queries", action="store_true", help="HTTP: also write question text to the query log")
     ap.add_argument("--allow-write", action="store_true", help="HTTP: offer krouter_note (off by default: read only)")
+    ap.add_argument("--bank", action="append", default=[], metavar="NAME=PATH",
+                    help="HTTP: serve this vault at /mcp/NAME (repeat for several; each is isolated: its own index, "
+                         "its own label on every receipt)")
+    ap.add_argument("--bank-token", action="append", default=[], metavar="NAME=FILE",
+                    help="HTTP: the bearer token one bank needs (default: --token-file)")
     args = ap.parse_args(argv)
     LABEL = args.label.strip()
     WRITE = (not args.http) or args.allow_write
+    BANKS.clear()
+    tokens = dict(t.split("=", 1) for t in args.bank_token if "=" in t)
+    for spec in args.bank:
+        name, sep, path = spec.partition("=")
+        if not sep or not name or not all(c.isalnum() or c in "-_" for c in name):
+            print(f"--bank takes NAME=PATH (NAME: letters, digits, - and _), got {spec!r}", file=sys.stderr)
+            return 2
+        tok = ""
+        if name in tokens:
+            try:
+                tok = Path(tokens[name]).expanduser().read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                print(f"cannot read --bank-token for {name}: {exc}", file=sys.stderr)
+                return 2
+            if len(tok) < 16:
+                print(f"the token for bank {name} must be at least 16 characters", file=sys.stderr)
+                return 2
+        BANKS[name] = {"vault": str(Path(path).expanduser().resolve()), "token": tok}
+    if BANKS and not args.http:
+        print("--bank needs --http", file=sys.stderr)
+        return 2
     if args.vault:
         os.environ["OBSIDIAN_VAULT"] = str(Path(args.vault).expanduser().resolve())
     if args.http:

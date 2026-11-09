@@ -67,11 +67,18 @@ MSG = {
         "try": "现在就可以问你的 agent，比如：「{q}」——它会先查这个库，答案带出处页；库里没有的会直说没有。",
         "mcp": "已把 KRouter 注册成 {cli} 的 MCP 工具（krouter_ask）。",
         "mcp_desktop": "已把 KRouter 加进 Claude Desktop 的 MCP 设置（重启 Claude Desktop 后生效）。",
+        "mcp_app": "已把 KRouter 加进 {app} 的 MCP 设置（{file}；重启 {app} 后生效）。",
+        "mcp_app_skip": "{app} 的设置文件 {file} 不是纯 JSON（可能带注释），没动它；要接上，把 krouter 这一项手动加进 {key}。",
         "cmem_ask": "发现 claude-mem 的记忆库：{sessions} 个会话、{decisions} 条决定和改动（{projects} 个项目）。要导进知识库吗？"
         "只读它的库、不改 claude-mem，脱敏后写在本机{distill}；以后每晚同步一次。导入？[y/N] ",
         "cmem_distill": "，并让模型把每个项目的决定理一遍：哪些还有效、哪些被后来的取代了（约 {chars} 字）",
         "cmem_done": "从 claude-mem 导入了 {sessions} 个会话、{decisions} 条决定和改动{distilled}。",
         "cmem_distilled": "，{n} 个项目已理出现在有效的决定",
+        "plugin_done": "已装上 Claude Code 插件（来自这份校验过的发布包）：会话结束时自动记下，开新会话时带上本项目的决定，你当场纠正的话也会记下。",
+        "capture_on": "从现在起它自己记：{how}。只写进本机这个库，先脱敏，不调任何模型。某个会话不想记，在提问里写 #不记；"
+        "整个停掉：{revoke}；这次导入的每一页都记在 90 系统文件/自动化/记忆变更记录.md，按里面的 run 编号可以撤回。",
+        "capture_how_plugin": "Claude Code 的每个会话结束时记下",
+        "capture_how_nightly": "其他 agent 的会话，打开每晚任务后每晚导入前一天的（{ask}）",
         "plugin_hint": "用 Claude Code 的话，装上插件还能在会话结束时自动记下、开会话时自动带上本项目的决定："
         "/plugin install krouter --marketplace 398894496-arch/KRouter",
     },
@@ -109,12 +116,20 @@ MSG = {
         "does not hold, it says so.",
         "mcp": "Registered KRouter as an MCP tool for {cli} (krouter_ask).",
         "mcp_desktop": "Added KRouter to Claude Desktop's MCP settings (restart Claude Desktop to load it).",
+        "mcp_app": "Added KRouter to {app}'s MCP settings ({file}; restart {app} to load it).",
+        "mcp_app_skip": "{app}'s settings file {file} is not plain JSON (comments?), so it was left alone; to connect it, add the krouter entry under {key} by hand.",
         "cmem_ask": "Found a claude-mem memory: {sessions} sessions, {decisions} decisions and changes ({projects} projects). Import it? "
         "It is read only (claude-mem is not changed), redacted, written on this machine{distill}, then synced nightly. "
         "Import? [y/N] ",
         "cmem_distill": ", and the model sorts each project's decisions into still in force and replaced (about {chars} characters)",
         "cmem_done": "Imported {sessions} sessions and {decisions} decisions and changes from claude-mem{distilled}.",
         "cmem_distilled": "; {n} projects sorted into the decisions in force",
+        "plugin_done": "Installed the Claude Code plugin (from this checksummed release): each session is recorded when it ends, a new one starts with this project's decisions, and a correction you type is noted on the spot.",
+        "capture_on": "From now on it keeps up by itself: {how}. Written only to this vault on this machine, redacted, no model "
+        "called. To keep a session out, put #nocapture in a question; to stop it: {revoke}; every page this import wrote is "
+        "listed in 90 系统文件/自动化/记忆变更记录.md, and its run number takes it back.",
+        "capture_how_plugin": "each Claude Code session when it ends",
+        "capture_how_nightly": "other agents' sessions each night once the nightly job is on ({ask})",
         "plugin_hint": "On Claude Code, the plugin also records each session when it ends and brings this project's "
         "decisions when one starts: /plugin install krouter --marketplace 398894496-arch/KRouter",
     },
@@ -349,8 +364,11 @@ def run_import(vault: Path, *extra: str) -> dict:
 def decide_import(args: argparse.Namespace, vault: Path, t: dict, lane_kind: str) -> tuple[bool, bool, bool]:
     """(import, distill, worth saying how to do it later). Copying chat text into the vault, and sending it to a
     model, each need a yes: a flag, or `y` at the prompt. No terminal to ask on: nothing is imported."""
-    if args.no_import or not (args.ask or args.import_sessions or args.import_distill):
+    if args.no_import or os.environ.get("KROUTER_NO_IMPORT") == "1":
         return False, False, False
+    if not (args.ask or args.import_sessions or args.import_distill):
+        # 默认就记（像 claude-mem 一样装完就开始）：只在本机导入、脱敏、不调模型；记下同意，之后的会话钩子才会工作
+        return True, False, False
     preview = run_import(vault, "--dry-run")
     if not preview.get("pages"):
         print(t["import_none"])
@@ -385,12 +403,12 @@ def run_claude_mem(vault: Path, *extra: str) -> dict:
 
 def offer_claude_mem(args: argparse.Namespace, vault: Path, t: dict, distill: bool) -> dict:
     """claude-mem users already have a memory: offer to bring it in. Same rule as the sessions — a yes or a flag."""
-    if args.no_import or not (args.ask or args.import_sessions or args.import_distill):
+    if args.no_import or os.environ.get("KROUTER_NO_IMPORT") == "1":
         return {}
     preview = run_claude_mem(vault, "--dry-run", *(["--distill"] if distill else []))
     if preview.get("claude_mem") != "dry-run" or not preview.get("sessions"):
         return {}
-    if not (args.import_sessions or args.import_distill):
+    if args.ask and not (args.import_sessions or args.import_distill):
         note = t["cmem_distill"].format(chars=preview.get("chars") or 0) if distill else ""
         answer = ask_tty(t["cmem_ask"].format(sessions=preview["sessions"], decisions=preview.get("decisions", 0),
                                               projects=preview.get("projects", 0), distill=note))
@@ -420,38 +438,84 @@ def try_question(vault: Path, lang: str) -> str:
     return "我们之前定过什么规矩？" if lang == "zh" else "What rules have we set before?"
 
 
-def claude_desktop_config() -> Path | None:
-    """Claude Desktop's MCP settings file, when the app is installed (its settings folder exists); else None."""
-    raw = os.environ.get("KROUTER_CLAUDE_DESKTOP_CONFIG", "")
+def app_settings(*parts: str) -> Path:
+    """Where desktop apps keep their settings: Application Support on macOS, %APPDATA% on Windows, ~/.config elsewhere."""
+    if platform.system() == "Darwin":
+        base = Path.home() / "Library/Application Support"
+    elif WINDOWS:
+        base = Path(os.environ.get("APPDATA", ""))
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    return base.joinpath(*parts)
+
+
+def _zed_dir() -> Path:
+    return Path(os.environ.get("APPDATA", "")) / "Zed" if WINDOWS else Path(
+        os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "zed"
+
+
+def _plain(cmd: str, args: list[str]) -> dict:
+    return {"command": cmd, "args": args}
+
+
+# 安装脚本自动接上的应用：名字、应用装了才会有的文件夹、MCP 设置文件、放服务器的键、条目写法。
+# 格式照各家官方文档（2026-11-09 核对）；文档对不上或版本间格式不同的（opencode、Windsurf）不自动写。
+MCP_APPS = (
+    {"id": "claude-desktop", "name": "Claude Desktop", "dir": lambda: app_settings("Claude"),
+     "file": lambda: app_settings("Claude", "claude_desktop_config.json"), "key": "mcpServers", "entry": _plain},
+    # Cursor：看应用自己的设置目录；~/.cursor 不算数（install.sh 放规则时自己会建它）
+    {"id": "cursor", "name": "Cursor", "dir": lambda: app_settings("Cursor"),
+     "file": lambda: Path.home() / ".cursor" / "mcp.json", "key": "mcpServers", "entry": _plain},
+    {"id": "vscode", "name": "VS Code", "dir": lambda: app_settings("Code", "User"),
+     "file": lambda: app_settings("Code", "User", "mcp.json"), "key": "servers",
+     "entry": lambda c, a: {"type": "stdio", "command": c, "args": a}},
+    {"id": "copilot-cli", "name": "GitHub Copilot CLI", "dir": lambda: Path(os.environ.get("COPILOT_HOME") or Path.home() / ".copilot"),
+     "file": lambda: Path(os.environ.get("COPILOT_HOME") or Path.home() / ".copilot") / "mcp-config.json", "key": "mcpServers",
+     "entry": lambda c, a: {"type": "local", "command": c, "args": a, "tools": ["*"]}},
+    {"id": "gemini-cli", "name": "Gemini CLI", "dir": lambda: Path.home() / ".gemini",
+     "file": lambda: Path.home() / ".gemini" / "settings.json", "key": "mcpServers", "entry": _plain},
+    {"id": "kiro", "name": "Kiro", "dir": lambda: Path.home() / ".kiro",
+     "file": lambda: Path.home() / ".kiro" / "settings" / "mcp.json", "key": "mcpServers", "entry": _plain},
+    {"id": "zed", "name": "Zed", "dir": _zed_dir, "file": lambda: _zed_dir() / "settings.json", "key": "context_servers",
+     "entry": lambda c, a: {"command": c, "args": a, "env": {}}},
+)
+
+
+def app_config(app: dict) -> Path | None:
+    """The app's MCP settings file when the app is installed (its folder exists); else None.
+    `KROUTER_MCP_CONFIG_<ID>` points it elsewhere (tests; an unusual install)."""
+    env = "KROUTER_MCP_CONFIG_" + app["id"].upper().replace("-", "_")
+    raw = os.environ.get(env, "") or (os.environ.get("KROUTER_CLAUDE_DESKTOP_CONFIG", "") if app["id"] == "claude-desktop" else "")
     if raw:
         return Path(raw).expanduser()
-    if platform.system() == "Darwin":
-        base = Path.home() / "Library/Application Support/Claude"
-    elif WINDOWS:
-        base = Path(os.environ.get("APPDATA", "")) / "Claude"
-    else:
-        base = Path.home() / ".config/Claude"
-    return base / "claude_desktop_config.json" if base.is_dir() else None
+    return app["file"]() if app["dir"]().is_dir() else None
 
 
-def register_desktop(server: list[str], dry: bool) -> bool:
-    """Add KRouter to Claude Desktop's mcpServers, keeping everything else in the file. Never touches a file it cannot
+def claude_desktop_config() -> Path | None:
+    """Claude Desktop's MCP settings file, when the app is installed (its settings folder exists); else None."""
+    return app_config(MCP_APPS[0])
+
+
+def register_app(app: dict, server: list[str], dry: bool, t: dict | None = None) -> bool:
+    """Add KRouter to one app's MCP settings, keeping everything else in the file. Never touches a file it cannot
     parse, or a `krouter` entry that is not KRouter's mcp_server.py; keeps a copy of the file it changes."""
-    cfg = claude_desktop_config()
+    cfg = app_config(app)
     if cfg is None:
         return False
     if dry:
-        print(f"  Claude Desktop: add mcpServers.krouter to {cfg}")
+        print(f"  {app['name']}: add {app['key']}.krouter to {cfg}")
         return False
     try:
-        data = json.loads(cfg.read_text(encoding="utf-8")) if cfg.exists() and cfg.read_text(encoding="utf-8").strip() else {}
+        text = cfg.read_text(encoding="utf-8") if cfg.exists() else ""
+        data = json.loads(text) if text.strip() else {}
     except (OSError, ValueError):
-        print(f"  Claude Desktop: {cfg} is not valid JSON; left as it is")
+        if t:
+            print(t["mcp_app_skip"].format(app=app["name"], file=cfg, key=app["key"]))
         return False
-    if not isinstance(data, dict) or not isinstance(data.get("mcpServers", {}), dict):
+    if not isinstance(data, dict) or not isinstance(data.get(app["key"], {}), dict):
         return False
-    servers = data.setdefault("mcpServers", {})
-    entry = {"command": server[0], "args": server[1:]}
+    servers = data.setdefault(app["key"], {})
+    entry = app["entry"](server[0], server[1:])
     old = servers.get("krouter")
     if old == entry:
         return True
@@ -465,6 +529,53 @@ def register_desktop(server: list[str], dry: bool) -> bool:
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     os.replace(tmp, cfg)
     return True
+
+
+def unregister_apps(dry: bool) -> list[str]:
+    """Take our krouter entry (the one pointing at mcp_server.py) out of every app's MCP settings; keep the rest."""
+    gone = []
+    for app in MCP_APPS:
+        cfg = app_config(app)
+        if cfg is None or not cfg.is_file():
+            continue
+        try:
+            data = json.loads(cfg.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        servers = data.get(app["key"]) if isinstance(data, dict) else None
+        if not isinstance(servers, dict) or "mcp_server.py" not in json.dumps(servers.get("krouter", "")):
+            continue
+        if dry:
+            print(f"would: remove {app['key']}.krouter from {cfg}")
+            continue
+        servers.pop("krouter")
+        tmp = cfg.with_name(cfg.name + ".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        os.replace(tmp, cfg)
+        print(f"removed: MCP server krouter ({app['name']})")
+        gone.append(app["id"])
+    return gone
+
+
+def register_desktop(server: list[str], dry: bool) -> bool:
+    return register_app(MCP_APPS[0], server, dry)
+
+
+def install_plugin(exe: str) -> bool:
+    """The Claude Code plugin (session hooks) from this very release, added as a local marketplace, so what installs is
+    the checksummed package, not GitHub's `main`. An older Claude Code without `claude plugin` just gets the hint."""
+    if os.environ.get("KROUTER_NO_PLUGIN") == "1" or not (ROOT / ".claude-plugin" / "marketplace.json").is_file():
+        return False
+
+    def run(*a: str) -> bool:
+        return subprocess.run([exe, "plugin", *a], capture_output=True, text=True, timeout=180).returncode == 0
+
+    try:
+        if run("install", "krouter@krouter"):  # 已经加过 krouter 市场（GitHub 或本地）就直接装
+            return True
+        return run("marketplace", "add", str(ROOT)) and run("install", "krouter@krouter")
+    except (OSError, subprocess.TimeoutExpired):
+        return False
 
 
 def register_mcp(t: dict, dry: bool) -> list[str]:
@@ -495,9 +606,13 @@ def register_mcp(t: dict, dry: bool) -> list[str]:
         if ok:
             done.append(cli)
             print(t["mcp"].format(cli=cli))
-    if register_desktop(server, dry):
-        done.append("claude-desktop")
-        print(t["mcp_desktop"])
+            if cli == "claude" and install_plugin(exe):
+                done.append("claude-plugin")
+                print(t["plugin_done"])
+    for app in MCP_APPS:  # 本机装了哪个就接哪个，和 claude / codex 一样不问
+        if register_app(app, server, dry, t):
+            done.append(app["id"])
+            print(t["mcp_desktop"] if app["id"] == "claude-desktop" else t["mcp_app"].format(app=app["name"], file=app_config(app)))
     return done
 
 
@@ -532,9 +647,13 @@ def main() -> int:
     ap.add_argument("--import-distill", action="store_true", help="import, and have the model lane distill the latest sessions")
     ap.add_argument("--no-import", action="store_true", help="do not import agent sessions, and do not ask")
     ap.add_argument("--ask", action="store_true",
-                    help="ask whether to import sessions and turn on the nightly job (default: lookup only, no questions)")
+                    help="ask before importing sessions, and about distilling and the nightly job (default: import locally without asking, no model, no nightly job)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--unregister-mcp", action="store_true", help=argparse.SUPPRESS)  # uninstall.sh 用
     args = ap.parse_args()
+    if args.unregister_mcp:
+        unregister_apps(args.dry_run)
+        return 0
     lang = system_lang() if args.lang == "auto" else args.lang
     t = MSG[lang]
     if sys.version_info < (3, 9):
@@ -554,9 +673,9 @@ def main() -> int:
     if args.dry_run:
         register_mcp(t, True)
         print("  nightly job: " + ("yes (--timer)" if args.timer else "no (--no-timer)" if args.no_timer
-                                   else "asks first (--ask)" if args.ask else "no (lookup only; --ask to be asked)"))
+                                   else "asks first (--ask)" if args.ask else "no (--ask to be asked)"))
         print("  session import: " + ("no (--no-import)" if args.no_import else "yes (--import)" if args.import_sessions
-                                      else "asks first (--ask)" if args.ask else "no (lookup only; --ask to be asked)"))
+                                      else "asks first (--ask)" if args.ask else "yes, local only, no model (--no-import to skip)"))
         return 0
     sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
     from krouter_home import remember
@@ -584,8 +703,14 @@ def main() -> int:
             print(t["distilling"])
         imported = run_import(vault, *extra)
         n = imported.get("distilled") or 0
-        print(t["import_done"].format(pages=imported.get("pages", 0), folder="05 时间日志/会话摘录",
-                                      distilled=t["distilled"].format(n=n) if n else ""))
+        if imported.get("pages"):
+            print(t["import_done"].format(pages=imported.get("pages", 0), folder="05 时间日志/会话摘录",
+                                          distilled=t["distilled"].format(n=n) if n else ""))
+        py = "python" if WINDOWS else "python3"
+        how = ([t["capture_how_plugin"]] if "claude-plugin" in mcp else []) + (
+            [] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
+        print(t["capture_on"].format(how="；".join(how) if lang == "zh" else "; ".join(how),
+                                     revoke=f'{py} "{IMPORT}" --revoke'))
     elif tell_later:
         cmd = f"{'python' if WINDOWS else 'python3'} \"{IMPORT}\" --consent --vault \"{vault}\""
         print(t["import_off"].format(cmd=cmd))
@@ -593,7 +718,7 @@ def main() -> int:
     if not (timer or do_import or args.ask or remembering_already()):
         cmd = f"{'python' if WINDOWS else 'python3'} \"{ROOT / 'scripts' / 'bootstrap.py'}\" --ask --vault \"{vault}\""
         print(t["lookup_only"].format(cmd=cmd))
-    if "claude" in mcp:
+    if "claude" in mcp and "claude-plugin" not in mcp:
         print(t["plugin_hint"])
     skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
     router = skill / "scripts" / ("route_knowledge.py" if WINDOWS else "route_knowledge.sh")

@@ -1,0 +1,23 @@
+# KRouter team server: two isolated memories ("banks") on one server, each pulled from its own git repository.
+# Start: put each token in a file (openssl rand -hex 24 > secrets/team.token; chmod 600; chown 10001), clone the
+# repositories into ./vaults/team and ./vaults/ops, then `docker compose up -d`. See docs/TEAM.md.
+services:
+  krouter:
+    image: ghcr.io/398894496-arch/krouter:v1.3.0
+    restart: unless-stopped
+    ports: ["8787:8787"]
+    entrypoint: ["python", "/app/skill/krouter-obsidian/scripts/mcp_server.py", "--http", "0.0.0.0:8787"]
+    command: ["--bank", "team=/vault/team", "--bank-token", "team=/run/secrets/team_token",
+              "--bank", "ops=/vault/ops", "--bank-token", "ops=/run/secrets/ops_token"]
+    volumes: ["./vaults:/vault:ro"]
+    secrets: [team_token, ops_token]
+    read_only: true
+    tmpfs: ["/home/krouter/.cache", "/home/krouter/.local"]
+  pull:  # keeps each vault current; the server never writes to them
+    image: alpine/git:v2.47.2
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "while true; do for v in /vault/*/; do git -C \"$$v\" pull --ff-only --quiet || true; done; sleep 300; done"]
+    volumes: ["./vaults:/vault", "~/.ssh:/root/.ssh:ro"]
+secrets:
+  team_token: {file: ./secrets/team.token}
+  ops_token: {file: ./secrets/ops.token}

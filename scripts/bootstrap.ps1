@@ -1,5 +1,5 @@
 # One line for anyone on Windows (PowerShell, as yourself, no admin):
-#   irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
+#   irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex
 # Fetches the latest release into %LOCALAPPDATA%\dsh-krouter\<tag>, checks its SHA-256 against the release's SHA256SUMS,
 # and runs scripts\bootstrap.py from there. Set $env:KROUTER_TAG first to stay on one release.
 # If Python is missing it installs it for the current user with winget. Run again to upgrade.
