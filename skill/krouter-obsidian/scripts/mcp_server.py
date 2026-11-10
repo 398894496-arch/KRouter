@@ -57,6 +57,9 @@ INSTRUCTIONS = (
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
     "instead of guessing; `recall_note:` means only part of the question matched: say that too. If a receipt has `host_action:`, tell the user that line."
 )
+CORRECT_INSTRUCTION = (" When the user corrects a decision or says to do something differently from now on, call "
+                       "krouter_correct in the same turn (new, old, and the page that gave the old answer), so the "
+                       "next lookup already has the new answer.")
 LEARN_INSTRUCTION = (" When a session solved a problem in a way that would help on other tasks in the same situation, record "
                      "the lesson with krouter_learn before the session ends.")
 TOOLS = [
@@ -109,11 +112,28 @@ LEARN_TOOL = {
             "action": {"type": "string", "description": "What was done."},
             "result": {"type": "string", "description": "How it turned out."},
             "lesson": {"type": "string", "description": "The lesson without the subject: \"When …, …\"."},
-            "when": {"type": "array", "items": {"type": "string"},
-                     "description": "3–5 short phrases a person in this situation would say; no subject nouns."},
             "title": {"type": "string", "description": "Optional: the lesson in one line."},
         },
-        "required": ["situation", "action", "result", "lesson", "when"],
+        "required": ["situation", "action", "result", "lesson"],
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
+}
+CORRECT_TOOL = {
+    "name": "krouter_correct",
+    "description": "Make a correction hold now, in this turn, with no model and no nightly wait: when the user changes "
+                   "a decision or says to do something differently from now on (\"use SQLite from now on\"). Writes a "
+                   "correction page that supersedes the old one, marks the page that gave the old answer as superseded "
+                   "(or annotates the old line when that page says other things too), logs it in the corrections "
+                   "page and the change ledger, one git commit the user can revert. Use the user's own words for new.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "new": {"type": "string", "description": "The decision as it stands now, one sentence."},
+            "old": {"type": "string", "description": "The sentence that no longer holds, as the old page says it."},
+            "page": {"type": "string", "description": "Vault-relative path of the page that gave the old answer "
+                                                      "(from a krouter_ask receipt); leave out when there is none."},
+        },
+        "required": ["new"],
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }
@@ -346,12 +366,45 @@ def learn_on() -> bool:
 
 
 def tools() -> list[dict]:
-    out = TOOLS + ([NOTE_TOOL] if WRITE else [])
+    out = TOOLS + ([NOTE_TOOL, CORRECT_TOOL] if WRITE else [])
     if learn_on():
         import experience
 
         out = out + [{**LEARN_TOOL, "description": experience.LEARN_HELP}]
     return out
+
+
+def correct(args: dict) -> tuple[str, bool]:
+    """One correction made to hold now (corrections.apply_now), in the ledger, one commit."""
+    from datetime import datetime
+
+    import capture_ledger
+    import corrections
+    import zones
+
+    raw = cur_vault()
+    if not raw:
+        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+    vault = Path(raw).expanduser()
+    res = corrections.apply_now(vault, str(args.get("new") or ""), str(args.get("old") or ""),
+                                str(args.get("page") or ""), f"MCP（{CLIENT or 'unknown client'}）")
+    if "error" in res:
+        return (res["error"], True)
+    now = datetime.now()
+    rid = capture_ledger.run_id(now)
+    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+    what = {"page": "旧页整页标为 superseded", "line": "旧页那一行下面加了「已改」", "recorded": "没有指出旧页"}[res["mode"]]
+    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
+                                          f"- 会话内纠正（MCP，{CLIENT or '未知客户端'}）：[[{res['written'].removesuffix('.md')}]]"
+                                          + (f"，取代 [[{res['superseded'].removesuffix('.md')}]]（{what}）" if res["superseded"] else "")
+                                          + (f"；判定当天的纠正候选 {res['settled']} 条" if res["settled"] else "") + "\n")
+    if str(raw) in POOLS:
+        POOLS[str(raw)].mark_stale()  # 下一次查询就要看到取代
+    sha = capture_ledger.commit(vault, rid, res["touched"], "会话内纠正 1 条")
+    if sha:
+        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+    return (f"corrected: {res['written']}\nsuperseded: {res['superseded'] or '(none named)'} ({res['mode']})\nrun: {rid}"
+            + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; revert the pages by hand"), False)
 
 
 def learn(args: dict) -> tuple[str, bool]:
@@ -442,6 +495,9 @@ def call(name: str, args: dict) -> dict:
     if name == "krouter_note" and WRITE:
         text, err = note(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
+    if name == "krouter_correct" and WRITE:
+        text, err = correct(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_learn" and learn_on():
         text, err = learn(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
@@ -481,7 +537,7 @@ def handle(msg: dict) -> dict | None:
                   "capabilities": {"tools": {"listChanged": False}},
                   "serverInfo": {"name": "krouter", "title": f"KRouter ({cur_label()})" if cur_label() else "KRouter",
                                  "version": VERSION},
-                  "instructions": INSTRUCTIONS + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
+                  "instructions": INSTRUCTIONS + (CORRECT_INSTRUCTION if WRITE else "") + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
                                                   "(`vault_label:` in each receipt); say which vault an answer "
                                                   "came from." if cur_label() else "")}
     elif method == "ping":

@@ -162,7 +162,6 @@ def test_extract_writes_a_readable_card_and_skips_a_repeat(tmp_path, monkeypatch
     {**GOOD, "result": ""},                                            # 字段不全
     {**GOOD, "action": "填上 api_key=" + "sk-" + "Abc123XyZ" * 4},       # 像密钥
     {**GOOD, "situation": "部署服务失败", "action": "重启容器"},          # 摘录里没有
-    {**GOOD, "situation": "nginx 吃着发平", "when": ["nginx 发平", "nginx 寡淡", "层次"]},  # 触发语带题材
 ])
 def test_extract_drops_cards_that_do_not_hold_up(tmp_path, monkeypatch, bad):
     import llm
@@ -383,3 +382,15 @@ def test_extraction_scorer_counts_written_subject_free_and_duplicates():
             "lesson": "报错一大片时，后面的多半是被第一个错误连带出来的，先只解决最前面那一条", "when": ["满屏报错", "一大堆错误"]}]
     assert extract.score_one(sessions["D01"], json.dumps(dup, ensure_ascii=False))["written"] == []
     assert extract.score_one(sessions["N01"], "[]")["proposed"] == 0
+
+
+def test_when_phrases_are_optional_and_subject_names_are_dropped(tmp_path, monkeypatch):
+    import llm
+
+    item = {**GOOD, "situation": "nginx 吃着发平", "when": ["nginx 发平", "层次不够"]}
+    monkeypatch.setattr(llm, "complete", lambda prompt, vault=None: json.dumps([item], ensure_ascii=False))
+    written, _ = experience.extract(_entry(), EXCERPT + "nginx", tmp_path, "[[x]]")
+    assert experience.load_cards(tmp_path)[0]["when"] == ["层次不够"]  # 带题材名的短语去掉，卡照写
+    bare = {k: v for k, v in GOOD.items() if k != "when"}
+    path, why = experience.learn(tmp_path / "v2", bare, "x") if (tmp_path / "v2").mkdir() is None else (None, "")
+    assert path and "适用于" not in path.read_text(encoding="utf-8") and "when:" not in path.read_text(encoding="utf-8")

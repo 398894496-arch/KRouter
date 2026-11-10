@@ -20,7 +20,8 @@ over MCP, or `experience.py learn` (JSON on stdin) for a host without MCP; `lear
 with `KROUTER_EXPERIENCE=1`, `extract()` runs where a session is distilled (`import_sessions.py`): one more call through
 `llm.py` (a key, or the host's own CLI on the user's login) asks for at most two cards. A card is kept when its fields
 are filled, nothing in it looks like a key, its situation and action share words with the excerpt (model-lane cards
-only), its `when` phrases do not name the subject, and no card with the same lesson is on file. With no model lane
+only), `when` phrases, if any are given (no longer asked for), are kept only when they do not name the subject, and no
+card with the same lesson is on file. With no model lane
 (`llm.NoModel`) the model step does nothing and says nothing.
 
 **Use records.** When sessions are imported (every turn, no model call), an answer that cites a card id in brackets
@@ -399,9 +400,8 @@ PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段会话摘
 - "situation"：当时的处境，照摘录写，可以带题材（例：「红烧肉炖好了，咸是够了，但吃着发平」）
 - "action"：当时怎么做的
 - "result"：结果怎样，只写摘录里看得到的
-- "lesson"：去掉题材的通用说法，写成「……时，……」（例：「东西整体发平、缺一点层次时，加一点点与主调相反的元素」）
-- "when"：3–5 个短语，2–10 字，是人遇到这个处境时会说的话，不能带题材里的名词
-  （例：["发平", "没有层次", "寡淡", "缺点什么"]，不写「红烧肉」）
+- "lesson"：去掉题材的通用说法，写成「……时，……」（例：「东西整体发平、缺一点层次时，加一点点与主调相反的元素」），
+  里面不能出现题材里的名词（不写「红烧肉」「nginx」）
 不写密钥、token、密码、人名和私人信息。只输出 JSON 数组。
 
 摘录：
@@ -420,8 +420,7 @@ Each is a JSON object:
 - "situation": what the situation was, as in the excerpt; it may name the subject
 - "action": what was done
 - "result": how it turned out, only what the excerpt shows
-- "lesson": the lesson without the subject, written "When …, …"
-- "when": 3–5 short phrases, 2–6 words each, that a person in this situation would say; no nouns from the subject
+- "lesson": the lesson without the subject, written "When …, …", with no nouns from the subject
 Do not write keys, tokens, passwords, names or private details. Output only the JSON array.
 
 Excerpt:
@@ -433,8 +432,8 @@ LEARN_HELP = ("Record one lesson from this session as an experience card, so it 
               "another subject in the same situation. Only when the session hit a problem, tried something, and saw how "
               "it turned out; not for plain discussion or a step carried out. Fields: situation (what happened, may "
               "name the subject), action (what was done), result (how it turned out), lesson (the lesson without the "
-              "subject, \"When …, …\" / 「……时，……」), when (3–5 short phrases a person in this situation would say, "
-              "no nouns from the subject), title (optional, the lesson in one line). Skip it if the experience digest "
+              "subject, \"When …, …\" / 「……时，……」, no nouns from the subject), title (optional, the lesson in one "
+              "line). Skip it if the experience digest "
               "already has the same lesson. Write in the language of the session; no keys, names or private details.")
 
 
@@ -490,9 +489,8 @@ def valid(item: dict, excerpt: str | None) -> dict | None:
         w = str(w).strip()
         if _short(w) and not (set(ri.tokens(w)) & subject) and w not in phrases:
             phrases.append(w)
-    # 处境由宿主模型自己判断（第 15 套），不再要求短语里有词表里的词
-    if len(phrases) < 2:
-        return None
+    # `when` 短语不再要求（第 15 套起处境由宿主模型判断，摘要只列通用说法；第 17 套的两处题材泄漏都在这里）。
+    # 给了就留下不带题材名的，留给人看
     card["when"] = phrases[:6]
     return card
 
@@ -510,12 +508,13 @@ def file_name(title: str) -> str:
 def page_text(card: dict, source: str, day: str, writer: str = "krouter-capture") -> str:
     when = "; ".join(card["when"])
     zh = bool(ri.CJK_RE.search(card["lesson"] + card["title"]))
+    fm_when = f"when: {when}\n" if when else ""
     title = f"经验｜{card['title']}" if zh else f"Lesson: {card['title']}"
     head = ("---\n"
             f"title: \"{title}\"\n"
             f"type: {TYPE}\n"
             "status: provisional\n"
-            f"when: {when}\n"
+            f"{fm_when}"
             f"source_ref: \"{source}\"\n"
             f"date: {day}\n"
             f"source: {writer}\n"
@@ -523,11 +522,11 @@ def page_text(card: dict, source: str, day: str, writer: str = "krouter-capture"
             f"# {title}\n\n")
     if zh:
         return head + (f"- 处境：{card['situation']}\n- 做法：{card['action']}\n- 结果：{card['result']}\n"
-                       f"- 通用说法：{card['lesson']}\n- 适用于：{'；'.join(card['when'])}\n"
-                       f"- 出处：{source}（从会话里抽出，没人核对过；不对就改或删）\n")
+                       f"- 通用说法：{card['lesson']}\n" + (f"- 适用于：{'；'.join(card['when'])}\n" if when else "")
+                       + f"- 出处：{source}（从会话里抽出，没人核对过；不对就改或删）\n")
     return head + (f"- Situation: {card['situation']}\n- Action: {card['action']}\n- Result: {card['result']}\n"
-                   f"- Lesson: {card['lesson']}\n- When: {'; '.join(card['when'])}\n"
-                   f"- Source: {source} (taken from a session, not checked by anyone; fix or delete it if wrong)\n")
+                   f"- Lesson: {card['lesson']}\n" + (f"- When: {'; '.join(card['when'])}\n" if when else "")
+                   + f"- Source: {source} (taken from a session, not checked by anyone; fix or delete it if wrong)\n")
 
 
 def write_card(vault: Path, card: dict, source: str, day: str, writer: str = "krouter-capture") -> Path | None:
@@ -547,8 +546,7 @@ def learn(vault: Path, item: dict, source: str, writer: str = "krouter-learn") -
     """A card the host agent wrote itself (no model lane, no key). (path, "") when written, (None, why) when not."""
     card = valid(item, None)
     if not card:
-        return None, ("not written: fill situation, action, result, lesson and 2–6 short `when` phrases without the "
-                      "subject's names; no key-shaped text")
+        return None, "not written: fill situation, action, result and lesson; no key-shaped text"
     path = write_card(vault, card, source, date.today().isoformat(), writer)
     return (path, "") if path else (None, "not written: a card with the same lesson is already there")
 
