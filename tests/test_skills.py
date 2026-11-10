@@ -108,7 +108,7 @@ def test_no_draft_without_evidence_or_a_second_card_and_no_call_for_nothing(vaul
     ({**C02_DRAFT, "cards": ["C99", "C02"]}, "unknown card"),
     ({**C02_DRAFT, "steps": ["等 12 分钟以上就缓存", "把结果存起来", "输入没变就复用"]}, None),
     ({**C02_DRAFT, "steps": ["等 45 分钟以上就缓存", "把结果存起来", "输入没变就复用"]}, "numbers not in the cards"),
-    ({**C02_DRAFT, "steps": ["一步"]}, "steps"),
+    ({**C02_DRAFT, "steps": []}, "steps"),
     ({**C02_DRAFT, "steps": ["喝口水", "出去走走"]}, "share no words"),
     ({**C02_DRAFT, "name": ""}, "name"),
 ])

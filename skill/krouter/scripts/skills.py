@@ -213,9 +213,9 @@ PROMPT = """下面是一个人攒下的经验卡（每张是别的任务里学�
 - name 和 use_when 从卡的「通用说法」概括，不从「处境」里取词：不出现题材、工具、行当、东西的名字，专门的词换成一般的说法
   （「合并数据」→「把几份东西合到一起」，「恢复训练」→「停了一阵再接着做一件费力的事」，「转机」→「两段安排之间」）。
   自测：这句话原样讲给修 bug 的人、写报告的人、做饭的人都说得通吗？只适合这一类事，就再往上概括一层
-- "steps"：2–6 步，每步一句话，能照着做；只写这些卡的做法、结果和通用说法里有的，不加卡里没有的步骤、工具或数字；
-  也用一般的说法，让换了题材的人照样能做
-不写密钥、人名和私人信息。只输出 JSON 数组。
+- "steps"：1–6 步，每步一句话，能照着做；每一步都要在这些卡的做法、结果或通用说法里找得到，不加卡里没有的步骤、检查、
+  工具或数字，卡里只有一步就只写一步，不要为了凑步数补；也用一般的说法，让换了题材的人照样能做
+用中文写（卡片的语言）。不写密钥、人名和私人信息。只输出 JSON 数组。
 
 被反复证实的卡（可以单独起草）：{singles}
 
@@ -245,9 +245,10 @@ Each skill is a JSON object:
   each specific term replaced by a general word ("merging data" → "putting several pieces together", "a flight
   connection" → "the gap between two parts of a plan"). Test it: would it make sense word for word to someone fixing a
   bug, writing a report and cooking? If it only fits this kind of thing, say it one level higher
-- "steps": 2–6 steps, one sentence each, that can be followed; only what these cards' actions, results and lessons
-  say, no step, tool or number the cards do not have; in general words too, so someone on another subject can follow them
-No keys, names or private details. Output only the JSON array.
+- "steps": 1–6 steps, one sentence each, that can be followed; each step must be found in these cards' actions,
+  results or lessons: no step, check, tool or number the cards do not have, and if the cards give one step, write one
+  step, do not pad; in general words too, so someone on another subject can follow them
+Write in English, the cards' language. No keys, names or private details. Output only the JSON array.
 
 Cards borne out repeatedly (may be drafted alone): {singles}
 
@@ -327,8 +328,8 @@ def check(item, by_id: dict[str, dict], singles: set[str], covered: set[str]) ->
     zh = bool(ri.CJK_RE.search(name + when))
     if not name or len(name) > (30 if zh else 80) or not when or len(when) > (120 if zh else 260):
         return None, "name or use_when missing or too long"
-    if not 2 <= len(steps) <= 7 or any(len(s) > (160 if zh else 320) for s in steps):
-        return None, "steps: 2 to 7, one sentence each"
+    if not 1 <= len(steps) <= 7 or any(len(s) > (160 if zh else 320) for s in steps):
+        return None, "steps: 1 to 7, one sentence each"
     texts = [name, when] + steps
     if any(answer_cards.secret_like(t) for t in texts):
         return None, "key-shaped text"
