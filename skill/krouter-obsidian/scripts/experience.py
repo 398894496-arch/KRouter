@@ -15,11 +15,20 @@ lesson, which a person can read, fix or delete:
     ---
     - 处境：… - 做法：… - 结果：… - 通用说法：… - 适用于：… - 出处：…
 
-**Writing.** `extract()` runs where a session is distilled (`import_sessions.py`, session end or nightly): one more
-model call through `llm.py` asks for at most two cards from the same excerpt, and only for a problem the session
-solved with a result it shows. A card is kept when its fields are filled, nothing in it looks like a key, its
-situation and action share words with the excerpt, and no card with the same lesson is on file. With no model lane
-(`llm.NoModel`) it does nothing and says nothing.
+**Writing.** Two ways, neither needs a key. The agent that ran the session writes the card itself: `krouter_learn`
+over MCP, or `experience.py learn` (JSON on stdin) for a host without MCP; `learn()` checks it and writes it. And,
+with `KROUTER_EXPERIENCE=1`, `extract()` runs where a session is distilled (`import_sessions.py`): one more call through
+`llm.py` (a key, or the host's own CLI on the user's login) asks for at most two cards. A card is kept when its fields
+are filled, nothing in it looks like a key, its situation and action share words with the excerpt (model-lane cards
+only), its `when` phrases do not name the subject, and no card with the same lesson is on file. With no model lane
+(`llm.NoModel`) the model step does nothing and says nothing.
+
+**Use records.** When sessions are imported (every turn, no model call), an answer that cites a card id in brackets
+(〔C08〕, [C08]) records `offered`; the next question records `adopted` only when it says the lesson was followed or
+worked (ADOPT) and does not turn it down (REJECT), and either the answer cited that card alone or the question names
+it; anything unclear stays `offered`. Records go to USES (one JSON line each, never written twice). The digest lists
+adopted cards first (most recent adoption first), then the rest by times offered and date; a card offered
+IGNORED_AFTER times and never adopted sinks to the bottom.
 
 **Suggesting.** Nothing is matched. At session start the hook (`session_hook.py start`) gives the host model the whole
 digest (`digest()`): every card as one subject-free line "situation → what to do〔id〕", at most DIGEST_MAX_LINES (most
@@ -29,8 +38,10 @@ host model, which reads the task anyway, judges the situation; one situation in 
 retriever cannot (set 13). Cards never appear among recalled facts. `suggest()` (the lexical matcher of set 13) is
 kept only to reproduce that set; nothing calls it.
 
-**Switch.** `KROUTER_EXPERIENCE=1` turns on both writing and the digest; anything else (the default) leaves them off.
-Measured: set 15 in `bench/memory_honesty/HELDOUT.md`, numbers and limits in `docs/EXPERIENCE.md`.
+**Switch.** `KROUTER_EXPERIENCE=1` turns on the digest, the use records, `krouter_learn` and the model-lane
+extraction; `KROUTER_EXPERIENCE=0` turns everything off. DEFAULT_ON (False) would make the digest, the records and
+`krouter_learn` the default when the vault has cards; it stays off until the card-writing check passes (set 17 did not).
+Measured: sets 13, 15, 16, 17 in `bench/memory_honesty/HELDOUT.md`; numbers and limits in `docs/EXPERIENCE.md`.
 """
 
 from __future__ import annotations

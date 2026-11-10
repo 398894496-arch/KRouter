@@ -22,8 +22,23 @@ notice, then the details.
   Haiku 5.5 11 of 14 tasks with a new subject, and neither spoke on any of the 14 that should get nothing**; with 40
   distractor cards added (development), 14 and 13 of 14, still none. The first version matched by shared words
   (set 13) and found 0 of 14: one situation in other words shares no words. Still off by default pending the
-  maintainer's call; the digest's cap has nothing to rank by yet (nothing marks a card as adopted). `docs/EXPERIENCE.md`,
-  `bench/transfer/`.
+  maintainer's call. `docs/EXPERIENCE.md`, `bench/transfer/`.
+- **Experience cards, round three: in English, written by the agent itself, ranked by use; still off by default.**
+  The digest is English on an English vault; on set 16 (English, cases by Sonnet 5.5) held-out Sonnet 5.5 offered the
+  right lesson on 14 of 14 and Haiku 5.5 on 13 of 14, and neither spoke on any of the 14 that should get nothing. The
+  agent that ran a session can write the card itself, with no key: `krouter_learn` over MCP or `experience.py learn`.
+  Session imports record when a card was offered (its id in an answer) and, conservatively, when it was adopted (the
+  next question says it was followed or worked); the digest lists adopted cards first and sinks cards offered three
+  times and never taken. Set 17 checked twelve synthetic sessions: a card for every one with a lesson, none for
+  duplicates or empty ones, but subject-free 86% and faithful 71% against a 90% bar, so the "on when the vault has
+  cards" default (`experience.DEFAULT_ON`) stays off.
+- **Model steps can borrow the agent you already use, with a cap you can see.** With no key, the nightly steps run
+  through the agent's own CLI on your login (`claude --print`, `codex exec`, …), at most 30 calls a day
+  (`KROUTER_HOST_CLI_MAX`), each one a line in `90 系统文件/自动化/订阅调用记录.md` (metadata only); this spends your
+  subscription, and `KROUTER_HOST_CLI=0` turns it off. KRouter never reads or reuses an app's login or keychain. A key
+  you set still goes first. MCP sampling is not used (deprecated; Claude Code does not support it); the server records
+  whether a client declares it. The nightly report lists what is off when there is no lane at all. The one real run on
+  the author's machine failed on a lapsed CLI login. `docs/HOST-LANE.md`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

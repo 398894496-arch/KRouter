@@ -162,6 +162,20 @@ def run_step(step: str, vault: Path, extra: list[str], dry: bool) -> dict:
             **({"tokens": sum(tok)} if tok else {})}
 
 
+def channel_lines(vault: Path) -> list[str]:
+    """Where model calls go, today's subscription use, and what is off when there is no lane."""
+    try:
+        rep = llm.channel_report(vault)
+    except Exception:  # noqa: BLE001
+        return []
+    out = [f"借用已登录的 agent 命令行（订阅额度）：{rep['host_cli']}，今天 {rep['host_cli_calls_today']} / "
+           f"{rep['host_cli_max']} 次，每次见 `{llm.HOST_LOG_PAGE}`。", ""]
+    if rep.get("off_without_model"):
+        out += ["没有可用的模型通道（没有 API key，也没找到已登录的 agent 命令行），这些功能没开："
+                + "、".join(rep["off_without_model"]) + "。召回、纠错捕获、经验摘要、agent 自己写卡和笔记照常。", ""]
+    return out
+
+
 def write_report(vault: Path, results: list[dict], state: str, lane_name: str, at: str) -> None:
     rows = []
     for r in results:
@@ -172,6 +186,7 @@ def write_report(vault: Path, results: list[dict], state: str, lane_name: str, a
         "# 夜间维护", "",
         "机器生成，每晚覆盖。只记元数据（步骤、结果、调用次数、发出的字数），不记内容。", "",
         f"结果：**{state}**（通道：{lane_name}）", "",
+        *channel_lines(vault),
         "| 步骤 | 结果 | 模型调用 / 发出 | 秒 | 原因 |", "|---|---|---|---|---|", *rows, "",
         "发出的内容：规则页 / 主题页全文（问答卡）、主题证据（主题档案）、路由器没答好的查询原文（夜间学习）；"
         "开了会话导入并选了提炼时，还有昨天会话的脱敏摘录。"

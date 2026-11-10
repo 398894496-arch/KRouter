@@ -122,6 +122,7 @@ NOTE_MAX = 500
 KINDS = {"decision": "决定", "correction": "纠正", "note": "备注"}
 WRITE = True               # stdio：本机的 agent 可以记一笔；HTTP 团队服务器默认只读（--allow-write 才开）
 CLIENT = ""                # initialize 里客户端报的名字，记在每条笔记后面
+CLIENT_SAMPLING = False    # 客户端在 initialize 里声明了 sampling 没有（只记，不用）
 
 
 LABEL = ""                 # --label: which vault this server answers from, stamped on every receipt
@@ -455,6 +456,8 @@ def call(name: str, args: dict) -> dict:
             text, err = route(rname, query)
     elif name == "krouter_status":
         text, err = route("status", "")
+        text += ("\nclient_sampling: " + ("declared" if CLIENT_SAMPLING else "not declared")
+                 + " (KRouter does not use MCP sampling; with no key it borrows the agent's own CLI, see llm.py)")
     else:
         return {"content": [{"type": "text", "text": f"unknown tool {name}"}], "isError": True}
     return {"content": [{"type": "text", "text": text}], "isError": err}
@@ -469,6 +472,10 @@ def handle(msg: dict) -> dict | None:
         global CLIENT
         info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
         CLIENT = " ".join(str(info.get("name") or "").split())[:60]
+        caps = params.get("capabilities") if isinstance(params.get("capabilities"), dict) else {}
+        # MCP sampling（服务端请客户端的模型来答）：只记客户端声明了没有，不用它（规范已弃用，Claude Code 不支持）
+        global CLIENT_SAMPLING
+        CLIENT_SAMPLING = "sampling" in caps
         asked = params.get("protocolVersion")
         result = {"protocolVersion": asked if asked in PROTOCOLS else PROTOCOLS[0],
                   "capabilities": {"tools": {"listChanged": False}},

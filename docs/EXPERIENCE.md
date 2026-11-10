@@ -7,19 +7,25 @@ of the opposite" is worth offering. Code: `skill/krouter-obsidian/scripts/experi
 registrations and logs: [`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md), sets 13 and 15.
 
 **In one line:** handed a digest of every card at session start, Sonnet 5.5 offered the right lesson on 14 of 14
-held-out tasks with a new subject and Haiku 5.5 on 11 of 14, and neither said anything on any of the 14 tasks that
-should get nothing. Matching by shared words, the first try, found 0 of 14.
+held-out tasks with a new subject in Chinese and 14 of 14 in English, Haiku 5.5 on 11 and 13 of 14, and neither said
+anything on any of the 28 held-out tasks that should get nothing. Matching by shared words, the first try, found 0 of
+14. Cards the host agent writes itself need no key; on a small check they did not yet reach their bar.
 
-**Status: off by default** (`KROUTER_EXPERIENCE=1` turns it on). It passed its registered line; whether to turn the
-digest on by default is the maintainer's call (recommendation at the end).
+**Status: off by default** (`KROUTER_EXPERIENCE=1` turns it on, `=0` off). The digest passed in both languages; the
+check of host-written cards (set 17) did not pass, so the "on when the vault has cards" default is not switched on
+(`experience.DEFAULT_ON`). What is missing is at the end.
 
 ## What it does when on
 
 | Step | Where | What |
 |---|---|---|
-| Write | `import_sessions.py`, where a session is distilled (session end or nightly) | One more model call through `llm.py` on the same redacted excerpt asks for at most two cards: situation, what was done, what came of it, the lesson without the subject, 3–5 "when" phrases, the source page. A card is kept only if every field is filled, nothing looks like a key, its situation and action share words with the excerpt, its phrases do not name the subject, and no card with the same lesson exists. No model lane: nothing happens. Written cards go into the run's commit and the change ledger (`经验卡：…`), so `--undo` takes them back. |
+| Write, in session (no key) | `krouter_learn` (MCP) or `experience.py learn` | The agent that ran the session writes the card; the same checks, a ledger entry, one commit. The MCP server's instructions ask for it when a session solved a problem worth reusing. |
+| Write, model lane | `import_sessions.py`, where a session is distilled (session end or nightly) | One more model call through `llm.py` on the same redacted excerpt asks for at most two cards: situation, what was done, what came of it, the lesson without the subject, 3–5 "when" phrases, the source page. A card is kept only if every field is filled, nothing looks like a key, its situation and action share words with the excerpt, its phrases do not name the subject, and no card with the same lesson exists. No model lane: nothing happens. Written cards go into the run's commit and the change ledger (`经验卡：…`), so `--undo` takes them back. |
 | Store | `02 经验与方法/经验卡/*.md` | Plain Markdown, `type: experience-card`, `status: provisional`. Read, fix or delete them like any page; `status: retired` drops one; `adopted_at: YYYY-MM-DD` moves it up the digest. |
 | Offer | `session_hook.py start` (Claude Code, Codex `SessionStart`; Cursor `sessionStart`) | The digest: one line per card, "situation → what to do〔id〕", subject-free, at most 30, then how to use it: offer at most two, as "别的任务里的经验，可以试试：……〔id〕", only when this task's situation is the same (not just a shared word or subject), otherwise say nothing. The host model judges; nothing is matched. Needs no import consent (it only reads the vault). |
+| Remember use | `import_sessions.py` (every turn, no model) | An answer citing a card id in brackets is recorded as `offered`; the next question as `adopted` only if it says the lesson was followed or worked and does not turn it down, and the answer cited only that card or the question names it. Anything unclear stays `offered`. `90 系统文件/自动化/经验卡使用记录.jsonl`. |
+| Rank | `experience.digest` | Adopted cards first (latest adoption first), then by times offered and date; a card offered 3 times and never adopted sinks to the bottom. A hand-set `adopted_at` counts as an adoption. |
+| Language | `experience.digest` | English header, lines ("When …, … [id]") and usage line when most cards are English; cards may be written `- Situation:` / `- Lesson:` … |
 | Keep apart | `recall_index.py`, `route_knowledge.py` | Cards never appear among recalled facts or in the literal search. |
 
 **Size.** 14 cards: 842 characters, about 690 tokens. 30 lines (the cap): about 1 000 characters, about 780 tokens. 54
@@ -43,9 +49,15 @@ are counted mechanically (`bench/transfer/host.py`).
 | **Haiku 5.5** | **held-out (run once)** | 14 | **11 / 14** | **0 / 14** | **0** |
 | Sonnet 5.5 | development, scale check | 54 (40 distractors) | 14 / 14 | 0 / 14 | 0 |
 | Haiku 5.5 | development, scale check | 54 (40 distractors) | 13 / 14 | 0 / 14 | 0 |
+| Haiku 5.5 | English (set 16), development | 14 | 14 / 14 | 0 / 14 | 0 |
+| Sonnet 5.5 | English (set 16), development | 14 | 14 / 14 | 0 / 14 | 0 |
+| **Haiku 5.5** | **English (set 16), held-out** | 14 | **13 / 14** | **0 / 14** | **0** |
+| **Sonnet 5.5** | **English (set 16), held-out** | 14 | **14 / 14** | **0 / 14** | **0** |
 | *Set 13, lexical matcher* | *held-out* | — | *0 / 14* | *2 / 14* | *2* |
 
-The usage wording was written once and never revised: the development row is its first run. Pass line, registered
+Set 16's English cases were written by Sonnet 5.5, also one of the hosts, from the English lessons alone; the
+cards are a translation. English digest: 2 522 characters, about 846 tokens by the estimate. In both languages the
+usage wording was written once and never revised: the development row is its first run. Pass line, registered
 before any host ran: recalled ≥ 8 / 14, at most 1 quiet case, at most 1 wrong card, for each host.
 
 **Limits.** 14 cards and 28 held-out cases: one wrong reply moves a row by 7 points. Each agent answered 14 cases in one
@@ -62,13 +74,37 @@ cases disturbed. The host model reads the task anyway and understands it; with a
 it can simply be given all of them. `experience.suggest()` keeps the lexical matcher to reproduce set 13; nothing
 calls it.
 
+## Cards the host writes itself (set 17)
+
+Twelve synthetic sessions (7 with a lesson, 3 whose lesson is already a card, 2 with none; Chinese and English), each
+given to the host with the digest and `krouter_learn`'s own description; every proposed card went through
+`experience.learn()` as the tool would. Scored mechanically against gold terms written before the run.
+
+| | Haiku 5.5 | Sonnet 5.5 | Both | Bar |
+|---|---|---|---|---|
+| Lesson sessions with a card | 7 / 7 | 7 / 7 | 14 / 14 | ≥ 10 |
+| Cards subject-free | 6 / 7 | 6 / 7 | 12 / 14, 86% | ≥ 90% |
+| Cards faithful (gold terms in action and result) | 6 / 7 | 4 / 7 | 10 / 14, 71% | ≥ 90% |
+| Duplicates written | 0 / 3 | 0 / 3 | 0 / 6 | ≤ 1 |
+| Cards on sessions with no lesson | 0 / 2 | 0 / 2 | 0 / 4 | ≤ 1 |
+
+**Not passed.** Read afterwards (not part of the score): the four "unfaithful" cards say what the session says in
+other words than the gold terms ("明显减少" for 少了, "唯一标识" for 请求 id); the two subject leaks are real, one
+`when` phrase each ("新人总来问", "no reply to my email"), while both cards' lessons, the only field the digest shows,
+are subject-free. Both hosts skipped every duplicate themselves; the code's lexical same-lesson check caught none.
+
 ## Not done, and the recommendation
 
-- **The cap's order has nothing to go on yet.** Nothing writes `adopted_at` (there is no signal yet that a suggestion
-  was taken), so past 30 cards the digest keeps the newest by `date`, and ties fall to file-name order. In the scale
-  check's vault the cap would have kept 30 distractors and none of the real cards; the check listed all 54, as
-  registered. Before the cap matters, something has to mark adoption (or the cap has to rise).
-- **Extraction quality is unmeasured**: the write path is tested with a stub model only.
-- **Recommendation:** turn the digest on by default when the vault has cards (no cards, nothing printed, so a vault
-  without them sees no change), keep the 30-line cap, and keep extraction opt-in (`KROUTER_EXPERIENCE=1`), since it
-  adds a model call per distilled session-day and its output has not been measured.
+- **Default on is not switched.** It waits for a card-writing check that passes. Two changes would likely get there and
+  need a new registered set to show it: stop asking for `when` phrases (nothing uses them since set 13; both leaks were
+  there), and score faithfulness by a judge reading the session instead of fixed terms.
+- **Whether a host calls `krouter_learn` on its own** at the end of a real session, unprompted, is not measured; set 17
+  asked it directly.
+- **The no-key model lane** (the agent's own CLI on the user's subscription) is built with a daily cap, a visible record
+  and a switch, but its one real run failed on a lapsed login: [`HOST-LANE.md`](HOST-LANE.md).
+- **The cap's order now has use records to go on** (offered, adopted), but only once sessions are imported (import
+  consent); with no records, ties still fall to date and file name, which is how the set 15 scale vault would have
+  dropped every real card.
+- **Recommendation:** once a card-writing check passes, set `DEFAULT_ON`: the digest, the use records and
+  `krouter_learn` on whenever the vault has cards (no cards, nothing printed), the 30-line cap kept, and the model-lane
+  extraction still opt-in, since it spends a call per distilled session-day.
