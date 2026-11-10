@@ -21,6 +21,12 @@ notice, then the details.
   but KRouter is in neither its settings file nor its extensions. The extension (`scripts/build_mcpb.py`, MCPB
   manifest 0.3, Python server, the memory folder as a `directory` setting) is a release asset; `release_pack.sh` and
   the release smoke check its structure and start it from the unpacked bundle for a real MCP round trip.
+  Tested inside the app (Claude Desktop 4.23118.1, macOS, 2026-11-10) with a test build pinned to a sample memory
+  folder: one press of Install, no restart, about 7 seconds of online checking with nothing on screen, then 3 tools
+  connected; in an ordinary chat one question was answered with its page (`02 Methods/Automation/Seal the day from the
+  log file.md`) and one refused (`recall: none`). The README says to press Install once and wait (a second press
+  removed it). The test build named the full Python path, as the installer's build does; the release file's plain
+  `python3` takes another launch path in the app and is not yet tested there.
 - **The default install no longer imports past sessions.** It makes the memory folder, connects the apps it finds
   (each settings file it changes is copied to `*.krouter-bak` first, and every file it created or changed is listed
   at the end) and records sessions from then on. Its last line gives the one command that imports the last 7 days;
