@@ -39,40 +39,36 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 
 **Answer accuracy, the number other projects publish.** On LongMemEval (ICLR 2025; 500 questions, each over about 50
 chat sessions), a model given only the pages KRouter cites answered **400 of 500 right (80.0%, 95% interval
-76.4–83.4)**: 371 of 470 answerable, and 29 of 30 unanswerable ones recognised as such. Weakest: questions that add
-up several sessions, 69 of 121, because three pages often miss one. Reader and judge are Claude Sonnet 5.5 with the
-benchmark's own prompts; most published numbers use GPT-4o, so they cannot be set side by side. What can be compared
-is the same reader given something else:
+76.4–83.4)**. Reader and judge are Claude Sonnet 5.5 with the benchmark's own prompts; most published numbers use
+GPT-4o, so they cannot be set side by side. What can be compared is the same reader given something else:
 
 | The reader is given | Right, of 500 | Of the 470 answerable |
 |---|---|---|
 | nothing | 30 (6.0%) | 0 |
 | plain keyword search (BM25), its top three sessions | 405 (81.0%, 77.4–84.4) | 376 |
-| the pages KRouter cites | 400 (80.0%, 76.4–83.4) | 371 |
+| the pages KRouter cites, three at most | 400 (80.0%, 76.4–83.4) | 371 |
+| the benchmark's own answer sessions: perfect retrieval | 492 (98.4%, 97.2–99.4) | 462 |
 
-The reader knows none of the answers by itself, so the 80% comes from what was retrieved. Plain keyword search gets
-it just as far: KRouter minus BM25 is −1.0 points (paired interval −2.8 to +0.8), no difference shown. **On this
-benchmark KRouter's lookup is level with BM25, not ahead**
-([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run),
-[set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run);
-every reply and verdict in [`bench/longmemeval/results/`](bench/longmemeval/results/)).
+Three things follow. The reader knows none of the answers by itself, so the 80% comes from what was retrieved.
+**KRouter's lookup is level with plain keyword search, not ahead**: −1.0 points (paired interval −2.8 to +0.8). And
+**the 18 points still missing are lost in retrieval, not by the reader** (+18.4 with perfect retrieval, 15.0 to
+21.8), mostly on questions that add up several sessions (69 → 117 of 121) or reason about dates (97 → 125 of 127),
+where three pages miss a session ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run), [set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run); every reply and verdict in
+[`bench/longmemeval/results/`](bench/longmemeval/results/)).
 
-**Finding the page**, on other people's benchmarks, scored from their authors' own labels with no model judge:
-- **LongMemEval**: an answer session is among the cited pages for 439 of 470 answerable questions; for 70 of 72
-  questions whose fact changed later, the newest one is cited.
-- **LoCoMo** (ACL 2024; 1,986 questions over 10 long conversations): the first page cited holds the evidence for 991
-  of 1,540 answerable questions, and one of the top three does for 1,204.
+**Finding the page**, scored from the benchmark authors' own labels with no model judge. LongMemEval: an answer
+session is among the cited pages for 439 of 470 answerable questions (BM25: 447), and for 70 of 72 questions whose
+fact changed later the newest one is cited. LoCoMo (ACL 2024; 1,986 questions over 10 long conversations): the first
+page cited holds the evidence for 991 of 1,540 answerable questions (BM25: 968).
 
-Plain BM25 finds about as many pages (447 / 470, 968 / 1,540).
-
-**Where it is weak:** a question about a near neighbour of something the memory does mention still gets an answer. It
-refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo trick questions.
+**Where it is weak:** a question about a near neighbour of something the memory does mention still gets an answer.
+It refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo trick questions.
 
 **On our own 200 held-out questions** (English and Chinese, never tuned on, written by Claude Opus in separate
 sessions): KRouter cites a wrong page 26% of the time; claude-mem 64%, basic-memory 78%. Of 80 questions the memory
-cannot answer, it refuses 47; the other two refuse none. Of 60 questions about a decision that was later changed, it
-gets 50 right; they get 34 and 16. Part of that gap is by construction: plain full-text search given KRouter's two
-rules (leave replaced pages out, refuse a weak match) is level with it.
+cannot answer, it refuses 47; the other two refuse none. Of 60 about a decision that was later changed, it gets 50
+right; they get 34 and 16. Part of that gap is by construction: plain full-text search given KRouter's two rules
+(leave replaced pages out, refuse a weak match) is level with it.
 
 **So what KRouter adds is not a better ranker.** It is those two rules on by default, a receipt with each answer (the
 page it came from, why that page, how sure), and a memory you can open and edit.
@@ -84,7 +80,7 @@ page it came from, why that page, how sure), and a memory you can open and edit.
 curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
 ```
 
-Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` (Claude Code 2.1.275 or later; from a shell, `claude plugin install krouter --marketplace 398894496-arch/KRouter` needs 2.1.292). Third-party marketplaces do not auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable auto-update.
+Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` ([versions, updating](docs/DETAILS.md#the-claude-code-plugin)).
 
 Rather look first? Nothing below changes your machine until the last line:
 
@@ -96,42 +92,40 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # install against your
 ```
 
 Python 3 is the only requirement, and the installer asks nothing. It makes a memory folder (or uses yours with
-`--vault`, overwriting nothing), connects every app on [the list below](#works-with) that it finds on the machine,
-adds the Claude Code plugin from the same checksummed release, and imports the last 7 days of agent sessions as
-pages: locally, redacted, with no model call, each page listed in the change ledger and undoable. From then on it
-remembers by itself, turn by turn, in Claude Code, Codex and Cursor (it adds their session hooks), and nothing leaves
-the machine. `--no-import` installs lookup only; `--ask` asks first, and is
-how you turn on distilling with your model and the nightly job, the two steps that send text out.
+`--vault`, overwriting nothing), connects every app on [the list below](#works-with) that it finds, and imports the
+last 7 days of agent sessions as pages: locally, redacted, with no model call, each one listed in the change ledger
+and undoable. From then on it remembers by itself, turn by turn, in Claude Code, Codex and Cursor, and nothing leaves
+the machine. `--no-import` installs lookup only; `--ask` asks first, and is how you turn on the two steps that send
+text out: distilling with your model, and the nightly job.
 
 ## Works with
 
-One install wires every app it finds. It writes each app's own MCP settings in the format that app documents, keeps
-everything else in the file and a copy of it, never touches a file it cannot parse or a `krouter` entry it did not
-write, and `uninstall.sh` takes out only its own entries.
+One install wires every app it finds, writing each app's own MCP settings in the format that app documents. It keeps
+the rest of the file and a copy of it, never touches a file it cannot parse or a `krouter` entry it did not write,
+and `uninstall.sh` takes out only its own entries.
 
 | App | How it connects | Status |
 |---|---|---|
 | Claude Code | plugin (session hooks) and MCP, both added by the installer | tested |
-| Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`; Codex runs no hook you have not trusted) | MCP tested; hooks tested in codex-cli 0.155 |
+| Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`) | MCP tested; hooks tested in codex-cli 0.155 |
 | Cursor | rule and skill, MCP (`~/.cursor/mcp.json`), and session hooks (`~/.cursor/hooks.json`) | rule and skill tested; MCP settings and hooks checked by tests against Cursor's documented format, not yet inside Cursor |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
-| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file when the app is installed; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
-| Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever in the Python package; the others load the MCP server through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | all tested against the server, each in its own environment and in CI; LangChain, Pydantic AI and the Vercel AI SDK through their whole agent loop with their own stand-in models |
-| Any other app that runs a local MCP server: Devin Desktop (Windsurf), opencode, Continue, Roo Code, Cline in VS Code, … | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
-| A team: shared memories for several people | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
+| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
+| Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever; the others through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | all tested against the server, in CI; three of them through their whole agent loop |
+| Any other app that runs a local MCP server (Windsurf, opencode, Continue, Roo Code, …) | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
+| A team | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
 | Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |
-| Your own code | a Python package and a `krouter` command; a JavaScript / TypeScript client with no dependencies (below) | tested |
+| Your own code | a Python package and `krouter` command; a dependency-free JavaScript / TypeScript client (below) | tested |
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
     "args": ["/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"] } } }
 ```
 
-Use the full path to your home folder (on Windows, `C:\\Users\\you\\.agents\\…` and often `python` instead of
-`python3`). After the one-line install the server finds your memory by itself. It is standard-library Python over
-stdio with three tools: `krouter_ask` and `krouter_status` read; `krouter_note` lets your AI write one line down (a
-decision, a correction, a fact), which lands on that day's notes page as a clue, never on a rule page, and is listed
-in the change ledger as one git commit you can revert. A plain MCP client gets through `initialize`, `tools/list`, a cited answer and `recall: none`.
+Use the full path to your home folder (on Windows, `C:\\Users\\you\\.agents\\…` and often `python`). The server is
+standard-library Python over stdio with three tools: `krouter_ask` and `krouter_status` read; `krouter_note` lets
+your AI write one line down (a decision, a correction, a fact). A note lands on that day's notes page as a clue,
+never on a rule page, as one git commit you can revert.
 
 ### From your own code
 
@@ -182,9 +176,7 @@ Measured with [`bench/scale/serve_load.py`](bench/scale/serve_load.py) on synthe
 | 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
 | 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
 
-Up to and including 1.3.0 the server started one process per lookup and re-checked every file each time; on the same
-machine that gave 210 ms and 15 answers/s at 10,000 pages, 980 ms and 3 answers/s at 50,000. Rerun: `python3 bench/scale/gen.py 10000 /tmp/v10000`,
-then `python3 bench/scale/serve_load.py /tmp/v10000`. Setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
+Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
 
 ## Five minutes later
 
@@ -195,21 +187,18 @@ then `python3 bench/scale/serve_load.py /tmp/v10000`. Setup, tokens and TLS: [`d
 ## It keeps up on its own
 
 Nothing needs maintaining, and nothing waits for a yes except the two steps that send text to a model:
-- **Every night** (the job asks first) yesterday's sessions are imported and distilled, and the memory is tidied.
-- **After every turn**, in Claude Code, Codex and Cursor, the session so far is written to its page the moment the
-  agent finishes answering (locally, no model call, under a second in the background), so another window's agent
-  can already find it. When the session ends it is distilled, if you said yes to that.
-- **When you correct your AI**, in the same three, a line that reads like a correction ("from now on…", "改成…") is
-  written down the moment you send it, locally and without a model call; the next distill settles it. A new session
-  starts with this repository's recorded decisions, corrections first, each with its page.
-- **During the day**, an optional timer catches today's sessions at two set times
-  (`extras/host-daily-evolution/intraday_capture.py`, a macOS launchd example included).
-- **Nothing waits for your approval, and nothing is hidden.** Every run writes what it added and what it replaced to
-  the [change ledger](#words-used-here). When the memory folder is a git repository (`git init` it once), each run
-  is also one commit, and `import_sessions.py --undo <run>` takes it back.
+- **After every turn**, in Claude Code, Codex and Cursor, the session so far is written to its page when the agent
+  finishes answering (locally, no model call, under a second), so another window's agent can already find it.
+- **When you correct your AI**, a line that reads like a correction ("from now on…", "改成…") is written down the
+  moment you send it. A new session starts with this repository's recorded decisions, corrections first, each with
+  its page.
+- **Every night** (the job asks first) yesterday's sessions are distilled and the memory is tidied; an optional timer
+  also catches up during the day.
+- **Nothing is hidden.** Every run writes what it added and replaced to the [change ledger](#words-used-here); in a
+  git repository each run is one commit, and `import_sessions.py --undo <run>` takes it back.
 - **Keep a session out** by putting `#nocapture` (or `#不记`) in any question of it.
 
-**What it did on the maintainer's own machine**, 2026-10-30 → 11-09, every number from its own change ledger
+**On the maintainer's own machine**, 2026-10-30 → 11-09, every number from its own change ledger
 ([method and tables](docs/AUTO_CAPTURE.md#5-back-test-on-the-maintainers-machine-2026-10-30--11-09)):
 
 <picture>
@@ -217,17 +206,11 @@ Nothing needs maintaining, and nothing waits for a yes except the two steps that
   <img alt="Lines written to memory per day, 2026-10-30 to 11-09: 714 in all, 407 of them a change of mind" src="docs/img/capture-days-light.svg" width="760">
 </picture>
 
-- **30 runs wrote 714 lines**, 407 of them a change of mind ("was A → now B"), each naming the session it came from.
-  None had to be undone.
-- **Of 8 corrections the maintainer also wrote down by hand, 5 were in the memory by the next run**; the distill
-  missed 2, and 1 was about the agent's own tool use, which import does not see. From correction to memory took a
-  median 15 hours (0.5 to 17.7), because the Mac slept through daytime runs. Since then a correction typed in Claude
-  Code is written down in your own words the moment you send it, even when the distill misses it.
-- **On the public decision-capture bench** (14 written sessions with 14 labelled decisions, 3 of them changes of mind,
-  and 4 sessions where nothing was decided; scored by rule; Claude lane, 2026-11-09): all 14 found, all 3 changes, no
-  false line, nothing written for the 4 empty sessions. A small set: it shows the distill does not invent decisions,
-  not that it never misses one. Rerun: `python3 bench/decision_capture/run.py --replay
-  bench/decision_capture/results/2026-11-09-claude.jsonl`, or `--cli <your CLI>` to distill afresh.
+30 runs wrote 714 lines, 407 of them a change of mind ("was A → now B"), each naming its session; none had to be
+undone. Of 8 corrections the maintainer also wrote down by hand, 5 were in the memory by the next run: the distill
+missed 2, and 1 was about the agent's own tool use, which import does not see. On the public decision-capture bench
+(14 labelled decisions across 18 sessions, 4 of them with nothing decided; scored by rule) it found all 14 and wrote
+no false line. A small set: it shows the distill does not invent decisions, not that it never misses one.
 
 ## Is it for you?
 
@@ -254,56 +237,54 @@ demo vault, real output):
 | Every answer | Carries its source page and a receipt | Usually unsourced |
 | Who shares it | Every AI app on the machine reads the same folder (MCP, skill, rules) | Usually one tool |
 
-**Coming from [claude-mem](https://github.com/thedotmack/claude-mem)?** Keep it. The installer finds its memory and offers to import it (run end to end against a live claude-mem 13.35.0
-install): session summaries become pages, and each project's decisions become one page you confirm. Your model can
-then sort those decisions into the ones still in force and the ones a later decision replaced, which claude-mem itself
-does not do. The Claude Code plugin also records each session when it ends and starts the next one with this
-repository's recent decisions, corrections first, each naming its page; repositories are told apart by path, never by
-folder name. Nothing is imported until you say yes.
+**Coming from [claude-mem](https://github.com/thedotmack/claude-mem)?** Keep it. The installer finds its memory and
+offers to import it (run end to end against claude-mem 13.35.0): session summaries become pages, each project's
+decisions become one page, and your model can sort those into the ones still in force and the ones a later decision
+replaced. Nothing is imported until you say yes ([details](docs/DETAILS.md#importing-what-you-already-have)).
 
 ## What leaves your machine
 
-Queries never do: lookup is a local SQLite full-text index, about 110 ms. Session import is local. Text goes to a model only for the steps you said yes to: distilling sessions and nightly upkeep. It goes to the CLI or API key you already use, and `--dry-run` shows the size first. Keys and pages marked secret are never sent or quoted. For the nightly writer, the API-key lane runs nothing on
-your machine; CLI lanes differ in what they can read, and the install says which one you are choosing. Details:
-[`SECURITY.md`](SECURITY.md).
+Queries never do: lookup is a local SQLite full-text index, about 110 ms. Session import is local. Text goes to a
+model only for the two steps you said yes to (distilling sessions, nightly upkeep), to the CLI or API key you already
+use, and `--dry-run` shows the size first. Keys and pages marked secret are never sent or quoted. What each model
+lane can read: [`SECURITY.md`](SECURITY.md).
 
 **Backups.** `backup.py init --dir <a folder that syncs elsewhere>` turns on a nightly encrypted archive of the whole
-vault, history included, opened again each night before it counts. Point it at iCloud Drive, OneDrive, Dropbox, a
-Netdisk sync folder or a USB disk (or two of them); KRouter talks to no cloud. Why this and not syncing or pushing the
-vault: [`DETAILS.md` → Backing up your vault](docs/DETAILS.md#backing-up-your-vault).
+vault, history included; KRouter itself talks to no cloud ([details](docs/DETAILS.md#backing-up-your-vault)).
 
 ## Words used here
 
 | Word | What it means here |
 |---|---|
-| memory, vault | The folder of Markdown pages. "Vault" is Obsidian's word for such a folder; here the two mean the same thing |
-| page | One Markdown file in it. A *rule page* states a standing decision or preference and is answered from first; a day's *notes page* is only a clue |
-| receipt | The few lines that come with each answer: the page it came from, why that page, how sure |
-| `recall: none` | The reply when nothing in the memory matches well enough. Your AI is told to say it does not know |
-| floor | The minimum match score. Below it KRouter refuses instead of citing the nearest page |
-| superseded | Replaced by a later correction. The old page or line is kept and marked, and left out of answers |
-| distill | A model writes "what was decided, what changed" at the top of a session's page. One of the two steps that send text out, and it asks first |
-| change ledger | The page that lists what every run added and replaced, `90 系统文件/自动化/记忆变更记录.md` ("system files / automation / memory change log"). The default folders have Chinese names; a `krouter-zones.psv` at the vault root maps them to yours |
+| memory, vault | The folder of Markdown pages ("vault" is Obsidian's word for it) |
+| page | One Markdown file. A *rule page* states a standing decision and is answered from first; a day's *notes page* is only a clue |
+| receipt | The lines that come with each answer: the page it came from, why that page, how sure |
+| `recall: none` | The reply when nothing matches well enough; your AI is told to say it does not know |
+| floor | The minimum match score, below which KRouter refuses instead of citing the nearest page |
+| superseded | Replaced by a later correction: kept, marked, and left out of answers |
+| distill | A model writes "what was decided, what changed" at the top of a session's page. It sends text out, so it asks first |
+| change ledger | The page in the memory that lists what every run added and replaced. Default folder names are Chinese; a `krouter-zones.psv` at the vault root maps them to yours |
 | bank | One memory on a team server, with its own address, index and token |
-| answer card | A short question-and-answer pair precomputed from a rule page |
-| session hook | A small command an app (Claude Code, Codex, Cursor) runs when a session starts or a turn ends. This is how turns get recorded |
-| MCP | Model Context Protocol, the standard way AI apps load outside tools. KRouter is one such tool server |
-| BM25 | The standard keyword-search ranking formula, used here as the plain baseline |
+| session hook | A command an app runs when a session starts or a turn ends; this is how turns get recorded |
+| MCP | Model Context Protocol, the standard way AI apps load outside tools |
+| BM25 | The standard keyword-search ranking, used here as the plain baseline |
 | held-out | Questions never used to tune anything |
 
 ## Honest numbers
 
+Every number on this page, with its set, version, baseline and the result that did not go our way, is one table in
+[`docs/NUMBERS.md`](docs/NUMBERS.md); the sets were registered in
+[`HELDOUT.md`](bench/memory_honesty/HELDOUT.md) before their runs. What the sections above leave out:
+
 | Measured | Result |
 |---|---|
-| LongMemEval S, someone else's questions and labels ([set 7](bench/memory_honesty/HELDOUT.md#set-7-longmemeval-someone-elses-questions-and-labels-registered-2026-10-18-before-any-download-or-run); KRouter 1.1.1; scored mechanically from the authors' labels, registered before the run) | An answer session among the cited pages for 439 / 470 answerable questions; the newest fact cited for 70 / 72 knowledge updates (stale only: 1); 12 of 470 answerable questions refused; **3 of 30 unanswerable refused**. Plain BM25 with no floor, top three pages: 447 / 470 and 69 / 72, level |
-| LongMemEval S answer accuracy ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run); KRouter 1.3.0's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own prompts; registered before the run; a seen set) | **400 / 500 right, 80.0% [76.4, 83.4]**; answerable 371 / 470, 78.9%; unanswerable recognised 29 / 30. By type: single-session 61 / 64 (user) and 55 / 56 (assistant), knowledge update 69 / 72, temporal 97 / 127, preference 20 / 30, multi-session 69 / 121. A second judge agreed on 100 of 100 re-judged verdicts. Not the same reader as the GPT-4o numbers most projects publish |
-| The same reader given something else ([set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run); reader, judge and prompts as set 11; registered before the run) | Given nothing: 30 / 500, and 0 of the 470 answerable. Given plain BM25's top three sessions: **405 / 500, 81.0% [77.4, 84.4]**, to KRouter's 400. Paired, KRouter minus BM25: −1.0 points [−2.8, +0.8]; only KRouter right on 8 questions, only BM25 on 13: **no difference shown**. For 262 of the 500 both gave the reader the same sessions. The fourth registered row (the benchmark's own answer sessions: perfect retrieval) was stopped at 183 of 500 to limit cost and is not reported |
-| LoCoMo, someone else's conversations and labels ([set 10](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels); KRouter at `main`, 2026-10-30; English only) | Evidence session cited first for 991 / 1,540 answerable questions, among the top three for 1,204; **37 of 446 adversarial questions refused**. Plain BM25: 968 first, 1,257 in the top three |
-| Refuses instead of guessing (public benches, CI) | Off-topic questions refused 12/12 (English) and 6/6 (Chinese) |
-| Wrong citations on a vault nobody tuned on ([third bench](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13), 200 held-out questions, English and Chinese, with daily-log distractors; 95% intervals) | At its default: KRouter 26% [19, 33] wrong, 47 / 80 neighbour questions refused, 102 / 120 answerable right; plain full-text search 58% [52, 65]. **Against a careful baseline it is level, not ahead:** plain search with the same two rules (leave replaced pages out, refuse below a floor: a minimum match score) at the same coverage cites 42 wrong pages to KRouter's 36 and gets 96 right to 102, but neither difference is significant (paired intervals: wrong rate [-10.2, +1.3] points, right [-2, +14]). At their defaults on the same questions: claude-mem 13.39 64% wrong [58, 71], basic-memory 0.23 78% [72, 84]; neither refuses any of the 80 neighbour questions; of 60 about a changed decision they get 34 and 16 right, KRouter 50 |
-| Scale ([`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09); synthetic vaults, Apple M2 laptop) | The team server over HTTP: the [table above](#running-it-for-a-team); 16 callers right after 200 pages changed: no errors, 0.14 s median. One lookup in its own process: 0.13 s at 10,000 pages, 0.35 s at 50,000 |
-| Exact match vs embeddings on a supersede / neighbor set (CI) | Exact match refuses where TF-IDF, MiniLM and BGE-M3 cite a neighbor. Local embeddings as an opt-in tier: measured, not shipped ([`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)) |
-| Real traffic, the author's own questions | 208 past questions judged blind by Grok (2026-10-16): KRouter 0.36, BM25 with the two rules 0.25 of 2, paired interval [−0.02, +0.24]: **no difference shown**. The judge found a page that answered the question before it was asked for only about 5% of them, so this scoring rewards refusing; the run is reported, not used as evidence ([set 5](bench/memory_honesty/HELDOUT.md)). The blind test on fresh questions waits for 50 of them; 30 were logged by 2026-11-09. The older 0.62 → 1.47 gain is a development set ([VERIFY.md](docs/VERIFY.md)) |
+| Answer accuracy by question type ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)) | single-session 61 / 64 (user) and 55 / 56 (assistant), knowledge update 69 / 72, temporal 97 / 127, preference 20 / 30, multi-session 69 / 121. A second judge agreed on 100 of 100 re-judged verdicts |
+| Where the 93 questions lost to perfect retrieval went ([set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)) | KRouter had cited some but not all of the answer sessions for 58, none for 32, all for 3; 24 need more than three sessions |
+| Off-topic questions (public benches, CI) | refused 12 / 12 (English) and 6 / 6 (Chinese) |
+| Against a careful baseline ([200 held-out questions](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)) | plain search given the same two rules cites 42 wrong pages to KRouter's 36 and gets 96 right to 102; neither difference is significant |
+| One lookup in its own process ([scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)) | 0.13 s at 10,000 pages, 0.35 s at 50,000 |
+| Exact match vs embeddings (CI) | exact match refuses where TF-IDF, MiniLM and BGE-M3 cite a neighbour; local embeddings are measured, not shipped ([`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)) |
+| The author's own 208 past questions, judged blind | KRouter 0.36, BM25 with the two rules 0.25 of 2, paired interval [−0.02, +0.24]: no difference shown |
 
 ### Check it yourself
 
@@ -330,7 +311,8 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 
 ## More
 
-- [How it works, every option](docs/DETAILS.md): install flags, the nightly writer, exact match and ranked recall, answer cards (short question-and-answer pairs precomputed from each rule page), the four agent mounts
+- [How it works, every option](docs/DETAILS.md): install flags, the nightly writer, exact match and ranked recall, the four agent mounts
+- [`docs/NUMBERS.md`](docs/NUMBERS.md): every number with its method
 - [`docs/TEAM.md`](docs/TEAM.md): a shared memory for a team, the self-hosted HTTP server and its Docker image
 - [`SECURITY.md`](SECURITY.md): what each model lane can see and do
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md): facts for an agent deciding whether KRouter fits its user

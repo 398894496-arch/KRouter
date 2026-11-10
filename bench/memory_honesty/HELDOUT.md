@@ -472,25 +472,32 @@ rows 2 and 3 are expected to be close; that is the question this set puts a numb
 question) is not run: 500 such prompts through subagents is beyond what this run can spend. No other memory project
 is run here either; their published numbers use their own readers and are not put in the same table.
 
-**Result (2026-11-09).** Three of the four rows; the fourth was stopped (see *Deviations*).
+**Result (2026-11-09).** All four rows; the fourth was paused for cost and finished the same day (see *Deviations*).
 
 | The reader is given | All 500 | 470 answerable | 30 `_abs` |
 |---|---|---|---|
 | Nothing | 30, 6.0% [4.0, 8.2] | 0 | 30 |
 | Plain BM25, top three sessions | 405, 81.0% [77.4, 84.4] | 376, 80.0% [76.4, 83.6] | 29 |
 | KRouter (set 11) | 400, 80.0% [76.4, 83.4] | 371, 78.9% [75.1, 82.6] | 29 |
+| Answer sessions (perfect retrieval) | 492, 98.4% [97.2, 99.4] | 462, 98.3% [97.0, 99.4] | 30 |
 
 | By type (right / of) | knowledge-update | multi-session | single-session-assistant | single-session-preference | single-session-user | temporal-reasoning |
 |---|---|---|---|---|---|---|
 | Nothing | 0 / 72 | 0 / 121 | 0 / 56 | 0 / 30 | 0 / 64 | 0 / 127 |
 | Plain BM25 | 68 / 72 | 69 / 121 | 56 / 56 | 21 / 30 | 62 / 64 | 100 / 127 |
 | KRouter | 69 / 72 | 69 / 121 | 55 / 56 | 20 / 30 | 61 / 64 | 97 / 127 |
+| Answer sessions | 71 / 72 | 117 / 121 | 55 / 56 | 30 / 30 | 64 / 64 | 125 / 127 |
 | KRouter − BM25, points [95%] | +1.4 [0.0, 4.2] | 0.0 [−5.0, 4.1] | −1.8 [−5.4, 0.0] | −3.3 [−13.3, 6.7] | −1.6 [−7.8, 3.1] | −2.4 [−6.3, 0.8] |
+| Answer sessions − KRouter, points [95%] | +2.8 [−2.8, 8.3] | +39.7 [31.4, 48.8] | 0.0 [0.0, 0.0] | +33.3 [16.7, 50.0] | +4.7 [0.0, 10.9] | +22.0 [15.0, 29.1] |
 
 *Paired, KRouter minus BM25:* −1.0 points [−2.8, +0.8] over the 500 (−1.1 [−3.0, +0.9] over the 470 answerable);
 only KRouter right on 8 questions, only BM25 on 13. **No difference shown, and the point estimate is on BM25's side.**
 For 262 of the 500 questions the two gave the reader the same sessions, so those replies and verdicts are set 11's
 (`from_set_11`); the *nothing* row copies 23 (the questions KRouter refused).
+
+*Paired, answer sessions minus KRouter:* +18.4 points [15.0, 21.8] over the 500 (+19.4 [15.7, 23.0] over the 470
+answerable); only the answer-sessions row right on 93 questions, only KRouter on 1. Answer sessions minus BM25:
++17.4 [14.0, 20.8]. For 17 questions KRouter had cited exactly the answer sessions, so those are set 11's replies.
 
 *What it says.* The reader knows none of the answers by itself (0 of 470), so set 11's 80% comes from the retrieved
 pages, not from the model's own knowledge. But plain BM25 with no floor and no supersede rule gets the same reader
@@ -499,16 +506,28 @@ either: given BM25's three sessions for an unanswerable question, the reader its
 (29 of 30), as often as when KRouter has a chance to refuse first. LongMemEval's raw sessions carry no `superseded`
 marks, so this set says nothing about corrections (sets 1–3 and 9 are about those).
 
-*Agents.* *Nothing*: 10 reader agents, 6 judge agents. *BM25*: 54 reader agents, 10 judge agents. All reported
-`claude-sonnet-5-5`, the model set 11's agents reported. Results: `bench/longmemeval/results/2026-11-09-sonnet-qa.none.jsonl`
-and `…-sonnet-qa.bm25.jsonl`; `qa.py compare` reproduces the tables from them.
+*Where the other 18 points are.* Given the answer sessions, the same reader gets 492 of 500, so the reader is not
+what limits set 11: retrieval is. Of the 93 questions it then gets right and KRouter's row gets wrong (48
+multi-session, 28 temporal), KRouter had cited every answer session for 3, some but not all for 58 and none for 32;
+24 of them need more than three sessions, which three cited pages cannot hold (33 of the 500 questions do). BM25's
+top three lose the same way (89 questions: 3, 61 and 25). Counted after the run from the results files, not
+registered. The limit is how few pages are handed over and whether all of a question's sessions are among them.
 
-*Deviations from the registration.* (1) **The *answer sessions* row was stopped for cost** after 26 of 75 reader
-batches: 166 questions answered and 17 copied from set 11, of 500, none judged. They are the first batches in file
-order, not a random sample, so no number from that row is reported, and neither is "answer sessions minus KRouter".
-What this reader scores with perfect retrieval is therefore still unknown. (2) The *nothing* row was judged in six
-batches of up to 80 instead of 25 (the prompts unchanged), to use fewer agents. (3) One *nothing* judge agent wrote
-its verdict file with a short script and said so; it read only its input file.
+*Agents.* *Nothing*: 10 reader agents, 6 judge agents. *BM25*: 54 reader agents, 10 judge agents. *Answer sessions*: 75 reader agents (26 before the pause, 49 after), 7 judge
+agents. All reported
+`claude-sonnet-5-5`, the model set 11's agents reported. Results: `bench/longmemeval/results/2026-11-09-sonnet-qa.none.jsonl`,
+`…-sonnet-qa.bm25.jsonl` and `…-sonnet-qa.oracle.jsonl`; `qa.py compare` reproduces the tables from them.
+
+*Deviations from the registration.* (1) **The *answer sessions* row was paused for cost** after 26 of 75 reader
+batches (166 questions answered, none judged) and an earlier version of this page said the row was not reported. It
+was resumed the same day at the maintainer's request: the other 49 batches went to the same reader with the same
+instructions, and nothing was judged or scored before all 500 replies existed, so no result was seen in between.
+(2) The *nothing* and *answer sessions* rows were judged in batches of up to 80 instead of 25 (the prompts
+unchanged), to use fewer agents. (3) One *nothing* judge agent wrote its verdict file with a short script, and one
+*answer sessions* judge agent ran a shell command that did nothing; both said so, and each read only its input file.
+(4) The *answer sessions* verdicts were not judged a second time. Eight multi-session and temporal ones drawn at
+random (7 yes, 1 no) were read against the benchmark's answers afterwards and all eight stood: a spot check, not a
+second judge.
 
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 

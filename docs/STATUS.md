@@ -10,7 +10,8 @@
 >   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
 >   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
 >   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
->   BM25, not ahead.
+>   BM25, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the reader gets 492 (98.4%), so
+>   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader.
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.

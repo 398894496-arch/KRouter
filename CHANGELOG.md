@@ -15,12 +15,16 @@ notice, then the details.
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
   sessions: 405 (81.0% [77.4, 84.4]). KRouter's cited pages: 400 (80.0% [76.4, 83.4]). Paired, KRouter minus BM25:
-  −1.0 points [−2.8, +0.8], no difference shown. The fourth registered row (the benchmark's answer sessions) was
-  stopped at 183 of 500 to limit cost and is not reported. `bench/longmemeval/qa.py` gains `baseline`, `collect` and
-  `compare`; results in `bench/longmemeval/results/2026-11-09-sonnet-qa.{none,bm25}.jsonl`.
-- **README:** the same-reader table above, a "Words used here" glossary (receipt, floor, superseded, distill, change
-  ledger, bank, …), repeated sentences removed, and the pre-resident server figures no longer called "1.3.0's
-  server". `README.zh.md` matches.
+  −1.0 points [−2.8, +0.8], no difference shown. The benchmark's own answer sessions (perfect
+  retrieval): 492 (98.4% [97.2, 99.4]), +18.4 points over KRouter [15.0, 21.8], so the missing 18 points are lost in
+  retrieval, not by the reader: mostly multi-session (69 → 117 of 121) and temporal (97 → 125 of 127) questions,
+  where three pages miss a session. (That row was paused for cost after 26 of 75 reader batches and finished the same
+  day; nothing was scored before all 500 replies existed.) `bench/longmemeval/qa.py` gains `baseline`, `collect` and
+  `compare`; results in `bench/longmemeval/results/2026-11-09-sonnet-qa.{none,bm25,oracle}.jsonl`.
+- **README, a fifth shorter** (4,611 → about 3,700 words): the same-reader table above, a "Words used here" glossary
+  (receipt, floor, superseded, distill, change ledger, bank, …), and the full numbers table moved, unchanged apart
+  from the new row, to `docs/NUMBERS.md` (`docs/NUMBERS.zh.md`); the README keeps only what its other sections do not
+  already say. Plugin version notes moved to `docs/DETAILS.md`. `README.zh.md` matches.
 - **The team server is 15–25 times faster and holds up under load.** At 10,000 pages a lookup over HTTP takes 13 ms
   instead of 210 ms and the server answers 301 questions a second with 32 callers instead of 15; at 50,000 pages,
   54 ms and 75/s instead of 980 ms and 3/s (`bench/scale/serve_load.py`, new; the table is in the README's new

@@ -13,7 +13,8 @@
 >   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
 >   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
 >   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
->   BM25, not ahead.
+>   BM25, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the reader gets 492 (98.4%), so
+>   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader.
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
@@ -151,8 +152,11 @@ every reply and verdict is in `bench/longmemeval/results/`. **The same reader gi
 registered before the run): given nothing it answers 0 of the 470 answerable questions, so the 80% comes from the
 retrieved pages; given plain BM25's top three sessions it answers 405 of 500 (81.0% [77.4, 84.4]). Paired, KRouter
 minus BM25 is −1.0 points [−2.8, +0.8]: no difference shown, so on this benchmark KRouter's lookup is level with
-keyword search, not ahead. A fourth row (the benchmark's own answer sessions, perfect retrieval) was stopped at 183
-of 500 to limit cost and is not reported.
+keyword search, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the same reader answers 492
+of 500 (98.4% [97.2, 99.4]): +18.4 points over KRouter [15.0, 21.8], most of it on multi-session (69 → 117 of 121)
+and temporal (97 → 125 of 127) questions. So the reader is not the limit; retrieval is. Of the 93 questions lost,
+KRouter had cited some but not all of the answer sessions for 58 and none for 32, and 24 need more than the three
+pages it hands over. If your user's questions add up many sessions, expect that gap.
 
 The third memory honesty bench: 200 held-out questions (English and Chinese, 80 of them about something the vault
 does not hold) on a 110-page vault with 20 daily logs as distractors, written by an outside reviewer (Claude Opus in a

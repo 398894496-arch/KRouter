@@ -28,21 +28,18 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 ## 用数字说话
 
-**答案准确率，也就是别家公布的那个数。** 在 LongMemEval（ICLR 2025；500 道题，每道题配约 50 段聊天）上，模型只看 KRouter 引用的页面作答，**500 道答对 400 道（80.0%，95% 区间 76.4–83.4）**：470 道可答题答对 371 道，30 道无答案题认出了 29 道。最弱的是要把好几段聊天加起来的题，121 道答对 69 道，因为只取三页，常常漏掉一段。作答和评判都用 Claude Sonnet 5.5，提示词是这个基准自带的原版；别家公布的数字大多用 GPT-4o，没法直接放在一起比。能比的是：同一个作答模型，换一样东西给它看。
+**答案准确率，也就是别家公布的那个数。** 在 LongMemEval（ICLR 2025；500 道题，每道题配约 50 段聊天）上，模型只看 KRouter 引用的页面作答，**500 道答对 400 道（80.0%，95% 区间 76.4–83.4）**。作答和评判都用 Claude Sonnet 5.5，提示词是这个基准自带的原版；别家公布的数字大多用 GPT-4o，没法直接放在一起比。能比的是：同一个作答模型，换一样东西给它看。
 
 | 给作答模型看什么 | 500 道答对 | 470 道可答题答对 |
 |---|---|---|
 | 什么都不给 | 30（6.0%） | 0 |
 | 纯关键词检索（BM25）排前三的聊天 | 405（81.0%，77.4–84.4） | 376 |
-| KRouter 引用的页面 | 400（80.0%，76.4–83.4） | 371 |
+| KRouter 引用的页面，最多三页 | 400（80.0%，76.4–83.4） | 371 |
+| 基准标注的答案所在聊天，也就是检索满分 | 492（98.4%，97.2–99.4） | 462 |
 
-不给材料时，模型一道可答题都答不出，所以这 80% 靠的是查回来的内容。但纯关键词检索也能让它答到同样的水平：KRouter 减 BM25 是 −1.0 个百分点（配对区间 −2.8 到 +0.8），看不出差距。**在这个基准上，KRouter 的检索和 BM25 持平，不是领先**（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)、[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)，每道题的回答和判定都在 [`bench/longmemeval/results/`](bench/longmemeval/results/)）。
+从这张表能读出三件事。不给材料时，模型一道可答题都答不出，所以这 80% 靠的是查回来的内容。**KRouter 的检索和纯关键词检索持平，不是领先**：差 −1.0 个百分点（配对区间 −2.8 到 +0.8）。**还差的 18 个百分点丢在检索上，不在作答模型上**（检索满分时 +18.4，区间 15.0 到 21.8）：主要是要把好几段聊天加起来的题（121 道里 69 → 117 道）和要推算时间的题（127 道里 97 → 125 道），只取三页常常漏掉一段（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)、[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)，每道题的回答和判定都在 [`bench/longmemeval/results/`](bench/longmemeval/results/)）。
 
-**找没找对页**，用别人出的基准，按出题方自己的标注机械评分，不用模型当裁判：
-- **LongMemEval**：470 道能答的题里，439 道 KRouter 引用的页面里有答案所在的那段；72 道「事实后来变了」的题里，70 道引到了最新那次。
-- **LoCoMo**（ACL 2024；10 段长对话，1 986 道题）：1 540 道能答的题里，991 道第一条引用就是证据所在的那段，1 204 道在前三条里。
-
-纯 BM25 找到的页数也差不多（447/470、968/1 540）。
+**找没找对页**，按出题方自己的标注机械评分，不用模型当裁判。LongMemEval：470 道能答的题里，439 道 KRouter 引用的页面里有答案所在的那段（BM25 是 447 道）；72 道「事实后来变了」的题里，70 道引到了最新那次。LoCoMo（ACL 2024；10 段长对话，1 986 道题）：1 540 道能答的题里，991 道第一条引用就是证据所在的那段（BM25 是 968 道）。
 
 **弱点**：如果问的是记忆里某件事的「近邻」，它还是会作答。LongMemEval 里 30 道没有答案的题只拒了 3 道，LoCoMo 446 道陷阱题只拒了 37 道。
 
@@ -56,7 +53,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
 ```
 
-Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（需要 Claude Code 2.1.275 或更高；在 shell 里用 `claude plugin install krouter --marketplace 398894496-arch/KRouter` 需要 2.1.292）。第三方插件市场不会自动更新：运行 `claude plugin update krouter@krouter`，或在 `/plugin` → Marketplaces → krouter 里选 Enable auto-update。
+Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（[版本要求和更新办法](docs/DETAILS.zh.md#claude-code-插件)）。
 
 想先看看再装？下面只有最后一行会改动你的机器：
 
@@ -67,22 +64,22 @@ python3 scripts/bootstrap.py --dry-run      # 列出安装会做的每一处改�
 python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的库，先不开夜间任务
 ```
 
-唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，从同一个校验过的发布包装上 Claude Code 插件，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记：Claude Code、Codex、Cursor 每一轮结束就记下（安装时给它们接上会话钩子），没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，要开「用你的模型提炼」和夜间任务也走它，这两步会把文字发出去。
+唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记：Claude Code、Codex、Cursor 每一轮结束就记下，没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，会把文字发出去的那两步（用你的模型提炼、夜间任务）也是在这里开。
 
 ## 能接哪些应用
 
-一次安装，本机装了哪个就接哪个。每个应用都按它自己文档里的格式写进它的 MCP 设置，文件里原有的内容全部保留、另存一份备份；读不懂的文件、不是我们写的 `krouter` 条目一律不动；`uninstall.sh` 只删自己加的那一项。
+一次安装，本机装了哪个就接哪个，每个应用都按它自己文档里的格式写进它的 MCP 设置。文件里原有的内容全部保留、另存一份备份；读不懂的文件、不是我们写的 `krouter` 条目一律不动；`uninstall.sh` 只删自己加的那一项。
 
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
 | Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
-| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次，Codex 不跑没信任过的钩子） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
+| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
 | Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
-| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：装了这个应用，安装脚本就写它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
-| 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | Python 包里带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端加载这个服务：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | 都已对着服务实测，各装在自己的环境里，CI 也跑；LangChain、Pydantic AI、Vercel AI SDK 用各自自带的假模型把完整 agent 流程跑通 |
-| 其他能跑本地 MCP 服务的应用：Devin Desktop（原 Windsurf）、opencode、Continue、Roo Code、VS Code 里的 Cline…… | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
-| 团队：好几个人共用记忆 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |
+| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
+| 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | 自带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | 都已对着服务实测，CI 也跑；其中三个连整个 agent 循环一起跑过 |
+| 其他能跑本地 MCP 服务的应用（Windsurf、opencode、Continue、Roo Code……） | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
+| 团队 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |
 | 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
 | 你自己的代码 | Python 包和 `krouter` 命令；不依赖任何包的 JavaScript / TypeScript 客户端（见下） | 已实测 |
 
@@ -91,7 +88,7 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
     "args": ["/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"] } } }
 ```
 
-路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python` 而不是 `python3`）。一行安装之后，这个服务自己就能找到你的记忆库。它只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实），写进当天的笔记页当线索，不会写进规则页，并在变更记录里记成一个可以撤销的 git 提交。用一个普通的 MCP 客户端连它，`initialize`、`tools/list`、带出处的回答、`recall: none` 都走得通。
+路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python`）。这个服务只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实）。这一行写进当天的笔记页，只当线索，不会写进规则页；它是一次单独的 git 提交，可以撤回。
 
 ### 从你自己的代码里用
 
@@ -140,7 +137,7 @@ console.log(a.page, a.how, a.refused);
 | 10,000 | 13 ms，77 次 | 267 次 | 104 ms，112 ms，301 次 | 216 MB | 3.5 秒 |
 | 50,000 | 54 ms，17 次 | 72 次 | 377 ms，651 ms，75 次 | 267 MB | 24 秒 |
 
-到 1.3.0 为止，服务每次查询都起一个进程、把所有文件检查一遍；同一台机器上那样是 1 万页 210 ms、每秒 15 次，5 万页 980 ms、每秒 3 次。自己复现：`python3 bench/scale/gen.py 10000 /tmp/v10000`，再 `python3 bench/scale/serve_load.py /tmp/v10000`。部署步骤、token 和 TLS 见 [`docs/TEAM.md`](docs/TEAM.md)。
+复现办法、部署步骤、token 和 TLS 见 [`docs/TEAM.md`](docs/TEAM.md)。
 
 ## 装完五分钟
 
@@ -151,11 +148,10 @@ console.log(a.page, a.how, a.refused);
 ## 之后它自己跟上
 
 什么都不用你维护，也不用你批；只有会把文字发给模型的那两步要先问你：
-- **每天夜里**（这个任务会先问你）导入前一天的会话、做提炼、整理记忆库。
-- **每一轮结束时**（Claude Code、Codex、Cursor 都是）：agent 一答完，这个会话到目前为止的内容就写进它那一页。只在本机做、不调模型，在后台不到一秒，别的窗口的 agent 马上就查得到。会话结束时再提炼一次（你同意过提炼的话）。
-- **你纠正 AI 的时候**（同样是这三个）：读起来像纠正的话（「以后都……」「改成……」「from now on…」）在你发出的那一刻就记下来，只在本机做、不调模型，下一次提炼时自动判定成不成立。开新会话时，先带上这个仓库记下的决定，纠正排在前面，每条都带来源页。
-- **白天**，可以再开一个定时任务，每天两个固定时间把当天的会话补进来（`extras/host-daily-evolution/intraday_capture.py`，附 macOS launchd 示例）。
-- **不用你批，但每一步都看得见。** 每一轮加了什么、取代了什么，都写进[变更记录](#这页用到的词)。记忆文件夹是 git 仓库时（运行一次 `git init` 就行），每一轮还是一个单独的提交，`import_sessions.py --undo <轮次>` 一条命令就能撤回。
+- **每一轮结束时**（Claude Code、Codex、Cursor 都是）：agent 一答完，这个会话到目前为止的内容就写进它那一页。只在本机做、不调模型，不到一秒，别的窗口的 agent 马上就查得到。
+- **你纠正 AI 的时候**：读起来像纠正的话（「以后都……」「改成……」「from now on…」）在你发出的那一刻就记下来。开新会话时，先带上这个仓库记下的决定，纠正排在前面，每条都带来源页。
+- **每天夜里**（这个任务会先问你）提炼前一天的会话、整理记忆库；白天还可以再开一个定时任务补记。
+- **每一步都看得见。** 每一轮加了什么、取代了什么，都写进[变更记录](#这页用到的词)；记忆文件夹是 git 仓库时，每一轮是一个单独的提交，`import_sessions.py --undo <轮次>` 一条命令就能撤回。
 - **某个会话不想被记**，在它的任何一个提问里写上 `#不记`（或 `#nocapture`）。
 
 **在维护者自己的机器上实际跑出来的**（2026-10-30 → 11-09，每个数字都来自它自己的变更记录；[方法和明细](docs/AUTO_CAPTURE.md#5-back-test-on-the-maintainers-machine-2026-10-30--11-09)）：
@@ -165,9 +161,7 @@ console.log(a.page, a.how, a.refused);
   <img alt="2026-10-30 到 11-09 每天写进记忆的条数：一共 714 条，其中 407 条是改了主意" src="docs/img/capture-days-light.svg" width="760">
 </picture>
 
-- **30 轮一共写进记忆 714 条**，其中 407 条是改了主意（「原来 A → 改成 B」），每条都注明来自哪个会话。没有一轮需要撤回。
-- **维护者同期亲手记下的 8 条纠错里，5 条在下一轮就进了记忆**；2 条被提炼漏掉，1 条是 agent 自己用工具时的问题，导入看不到这一层。从纠正到进记忆，中位数 15 小时（0.5 到 17.7 小时），因为白天那两轮常赶上电脑睡眠。现在在 Claude Code 里当场说的纠正，发出那一刻就用你的原话记下，提炼漏了也在。
-- **公开的决定抽取基准**（14 段合成会话，标好 14 条决定，其中 3 条是改主意，另有 4 段什么都没定；按规则打分）：14 条全部找到，3 条改主意全部找到，没有一条多写的，4 段空会话一条都没写（Claude 通道，2026-11-09；用 `python3 bench/decision_capture/run.py --replay bench/decision_capture/results/2026-11-09-claude.jsonl` 复核，或用 `--cli <你的 CLI>` 重新提炼）。题量小：它说明提炼不会凭空编出决定，不能说明从不漏，上面那 2 条漏记就是真的。
+30 轮一共写进记忆 714 条，其中 407 条是改了主意（「原来 A → 改成 B」），每条都注明来自哪个会话，没有一轮需要撤回。维护者同期亲手记下的 8 条纠错里，5 条在下一轮就进了记忆；2 条被提炼漏掉，1 条是 agent 自己用工具时的问题，导入看不到这一层。公开的决定抽取基准（18 段会话里标了 14 条决定，其中 4 段什么都没定；按规则打分）：14 条全部找到，没有一条多写的。题量小：它说明提炼不会凭空编出决定，不能说明从不漏。
 
 ## 适不适合你
 
@@ -189,47 +183,45 @@ console.log(a.page, a.how, a.refused);
 | 每条答案 | 带出处页和回执 | 通常没有出处 |
 | 谁在用 | 本机每个 AI 应用都读同一个文件夹（MCP、skill、规则） | 通常只服务一个工具 |
 
-**在用 [claude-mem](https://github.com/thedotmack/claude-mem)？** 不用卸掉。安装时会发现它的记忆库并问你要不要导入（已经在真实安装的 claude-mem 13.35.0 上完整跑通）：会话总结变成页面，每个项目的决定汇成一页，等你确认。你的模型还能把这些决定理一遍，分出哪些还有效、哪些被后来的决定取代了，这一步 claude-mem 自己不做。Claude Code 插件还会在会话结束时自动记下，开新会话时带上这个仓库最近的决定，纠错排在前面，每条都注明出处页；仓库按路径区分，不按文件夹名。你不点头，什么都不导入。
+**在用 [claude-mem](https://github.com/thedotmack/claude-mem)？** 不用卸掉。安装时会发现它的记忆库并问你要不要导入（已经在真实安装的 claude-mem 13.35.0 上完整跑通）：会话总结变成页面，每个项目的决定汇成一页，你的模型还能把这些决定分成还有效的和被后来的决定取代的。你不点头，什么都不导入（[细节](docs/DETAILS.zh.md#导入你已经有的东西)）。
 
 ## 什么会离开本机
 
-查询从不外发：查找走本地的 SQLite 全文索引，每次约 110 ms。导入会话也只在本机做。只有你点过头的步骤才会把文字发给模型，就是提炼会话和夜间整理两步，发给你本来就在用的 CLI 或 API key，用 `--dry-run` 可以先看会发多少。key 和标成机密的页从不外发，也从不引用。夜间写入用 API key 通道时，本机不跑任何写入进程；用 CLI 通道时，
-各家 CLI 能读到的范围不同，安装时会告诉你选的是哪一条。细节见 [`SECURITY.md`](SECURITY.md)。
+查询从不外发：查找走本地的 SQLite 全文索引，每次约 110 ms。导入会话也只在本机做。只有你点过头的两步（提炼会话、夜间整理）才会把文字发给模型，发给你本来就在用的 CLI 或 API key，用 `--dry-run` 可以先看会发多少。key 和标成机密的页从不外发，也从不引用。每条模型通道能读到什么，见 [`SECURITY.md`](SECURITY.md)。
 
-**备份。** 运行 `backup.py init --dir <一个会同步到别处的文件夹>`，就会每晚给整个库（连同历史）做一个加密备份包，并且当晚重新打开验证过才算数。可以指向 iCloud 云盘、OneDrive、Dropbox、网盘同步文件夹或移动硬盘，也可以同时指两个；KRouter 不连任何云。为什么这样做，而不是直接同步或推送整个库：[`DETAILS.zh.md` → 备份你的库](docs/DETAILS.zh.md#备份你的库)。
+**备份。** 运行 `backup.py init --dir <一个会同步到别处的文件夹>`，就会每晚给整个库（连同历史）做一个加密备份包；KRouter 自己不连任何云（[细节](docs/DETAILS.zh.md#备份你的库)）。
 
 ## 这页用到的词
 
 | 词 | 在这里的意思 |
 |---|---|
-| 记忆、记忆库、库 | 放 Markdown 页面的那个文件夹。「库」（vault）是 Obsidian 对这种文件夹的叫法，这里是一回事 |
-| 页 | 里面的一个 Markdown 文件。「规则页」写的是长期有效的决定或偏好，回答先从它出；当天的「笔记页」只当线索 |
+| 记忆、记忆库、库 | 放 Markdown 页面的那个文件夹（「库」是 Obsidian 对它的叫法） |
+| 页 | 一个 Markdown 文件。「规则页」写的是长期有效的决定，回答先从它出；当天的「笔记页」只当线索 |
 | 回执 | 每条答案附带的几行：出自哪一页、为什么是这页、有多大把握 |
-| `recall: none` | 记忆里没有匹配得上的内容时的回复。AI 收到它就要直说不知道 |
-| 分数下限 | 最低匹配分。低于它 KRouter 就拒答，不拿最接近的一页凑数 |
-| 已取代 | 被后来的纠正换掉了。旧页或旧的那一行还留着、打了标记，但回答时不再用 |
-| 提炼 | 让模型在一个会话的页面顶上写出「定了什么、改了什么」。会把文字发出去的两步之一，做之前先问你 |
-| 变更记录 | 记下每一轮加了什么、取代了什么的那一页，默认是 `90 系统文件/自动化/记忆变更记录.md`。默认文件夹是中文名；在库的根目录放一个 `krouter-zones.psv` 可以对应到你自己的文件夹 |
+| `recall: none` | 记忆里没有匹配得上的内容时的回复；AI 收到它就要直说不知道 |
+| 分数下限 | 最低匹配分，低于它 KRouter 就拒答，不拿最接近的一页凑数 |
+| 已取代 | 被后来的纠正换掉了：旧的还留着、打了标记，但回答时不再用 |
+| 提炼 | 让模型在一个会话的页面顶上写出「定了什么、改了什么」。它会把文字发出去，所以做之前先问你 |
+| 变更记录 | 记忆库里记下每一轮加了什么、取代了什么的那一页。默认文件夹是中文名；在库的根目录放一个 `krouter-zones.psv` 可以对应到你自己的文件夹 |
 | 一份记忆（bank） | 团队服务上的一个记忆库，有自己的地址、索引和 token |
-| 问答卡 | 从规则页预先算好的一问一答 |
-| 会话钩子 | 应用（Claude Code、Codex、Cursor）在会话开始或一轮结束时自动跑的一条小命令。每一轮就是靠它记下来的 |
-| MCP | Model Context Protocol，AI 应用加载外部工具的通用办法。KRouter 就是这样一个工具服务 |
+| 会话钩子 | 应用在会话开始或一轮结束时自动跑的一条命令；每一轮就是靠它记下来的 |
+| MCP | Model Context Protocol，AI 应用加载外部工具的通用办法 |
 | BM25 | 最常见的关键词检索排序公式，这里当作最朴素的对照 |
 | 留出题 | 从没拿来调过任何东西的题 |
 
 ## 老实的数字
 
+这一页上每个数字属于哪一套、哪个版本、和谁比、哪些结果对我们不利，都在 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md) 的一张表里；各套方案在跑之前就登记进了 [`HELDOUT.md`](bench/memory_honesty/HELDOUT.md)。上面几节没写到的：
+
 | 测了什么 | 结果 |
 |---|---|
-| LongMemEval S，别人出的题和标注（[第 7 套](bench/memory_honesty/HELDOUT.md#set-7-longmemeval-someone-elses-questions-and-labels-registered-2026-10-18-before-any-download-or-run)；KRouter 1.1.1；按出题方标注机械评分，跑之前先登记方案） | 470 道可答题里 439 道引到答案所在的会话；72 道「知识更新」题里 70 道引到最新那次（只引到旧的：1 道）；470 道可答题拒了 12 道；**30 道无答案的题只拒了 3 道**。纯 BM25 不设下限、取前三页：447/470 和 69/72，持平 |
-| LongMemEval S 答案准确率（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)；只给 KRouter 1.3.0 引用的前三页；作答和评判都是 Claude Sonnet 5.5，用基准自带的提示词；跑之前先登记方案；这套题之前看过） | **500 道答对 400 道，80.0% [76.4, 83.4]**；可答题 371/470，78.9%；无答案题认出 29/30。按题型：单段聊天 61/64（用户说的）和 55/56（助手说的），知识更新 69/72，时间推理 97/127，偏好 20/30，跨多段聊天 69/121。另一个评判实例重判 100 道，100 道一致。和多数项目公布的 GPT-4o 数字不是同一个作答模型 |
-| 同一个作答模型，换一样东西给它看（[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)；作答模型、评判和提示词都和第 11 套一样；跑之前先登记方案） | 什么都不给：30/500，470 道可答题答对 0 道。给纯 BM25 排前三的聊天：**405/500，81.0% [77.4, 84.4]**，KRouter 是 400。配对比较，KRouter 减 BM25：−1.0 个百分点 [−2.8, +0.8]；只有 KRouter 答对的 8 道，只有 BM25 答对的 13 道：**看不出差距**。500 道里有 262 道，两边给模型看的是同样的聊天。登记过的第四行（直接给基准标注的答案所在聊天，也就是检索满分的情况）为了省额度跑到 183/500 就停了，不报数字 |
-| LoCoMo，别人的对话和标注（[第 10 套](docs/DENSE-OPTIN.md#locomo-set-10-someone-elses-conversations-and-labels)；KRouter `main`，2026-10-30；只有英文） | 1 540 道可答题里 991 道第一条就引到证据会话，1 204 道在前三条里；**446 道陷阱题只拒了 37 道**。纯 BM25：第一条命中 968 道，前三条 1 257 道 |
-| 该拒答时拒答（公开测试集，CI 跑） | 离题问题英文 12/12、中文 6/6 拒答 |
-| 在一个没人调过分的库上的错误引用率（[第三套测试集](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)，200 道留出题，中英各半，带日志干扰页；方括号是 95% 区间） | 默认设置下：KRouter 引错 26% [19, 33]，80 道近邻题拒答 47 道，120 道可答题答对 102 道；纯全文检索引错 58% [52, 65]。**和认真做的基线比是持平，不是领先**：给纯全文检索加上同样的两条规则（跳过已被取代的旧页、低于分数下限就拒答），答题数相同时它引错 42 页、KRouter 36 页，答对 96 道对 102 道，但两项差距都不显著（配对区间：引错率 [-10.2, +1.3] 个百分点，答对 [-2, +14]）。同样的题、都用默认设置：claude-mem 13.39 引错 64% [58, 71]，basic-memory 0.23 引错 78% [72, 84]；80 道近邻题两者一道都没拒；60 道「决定改过」的题，它们答对 34 和 16 道，KRouter 50 道 |
-| 规模（[`BENCHMARK.md` → Scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)；合成库，Apple M2 笔记本） | 团队服务走 HTTP：见[上面那张表](#给团队用)；改完 200 页马上有 16 个人同时问：没有出错，中位数 0.14 秒。单独一个进程查一次：1 万页 0.13 秒，5 万页 0.35 秒 |
-| 精确命中和向量检索比（「已取代」和「近邻」题，CI 跑） | 精确命中会拒答；TF-IDF、MiniLM、BGE-M3 会引一个近邻。本地向量做成可选档：测过了，没有上线（[`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)） |
-| 作者自己的真实提问 | 208 道历史提问由 Grok 盲评（2026-10-16）：KRouter 0.36，加了两条规则的 BM25 0.25（满分 2），配对区间 [−0.02, +0.24]：**没有显示出差距**。裁判只在约 5% 的题里找到「提问之前就已经存在的答案页」，这种评分方式会奖励拒答，所以这次结果只报告、不当证据（[第 5 套](bench/memory_honesty/HELDOUT.md)）。新提问上的盲测要等攒够 50 条，到 2026-11-09 记下了 30 条。更早的 0.62 → 1.47 是开发集（[VERIFY.md](docs/VERIFY.md)） |
+| 答案准确率按题型分（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)） | 单段聊天 61/64（用户说的）和 55/56（助手说的），知识更新 69/72，时间推理 97/127，偏好 20/30，跨多段聊天 69/121。另一个评判实例重判 100 道，100 道一致 |
+| 输给满分检索的 93 道题丢在哪（[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)） | KRouter 引到一部分答案聊天但没引全的 58 道，一段都没引到的 32 道，全引到的 3 道；有 24 道的答案分散在三段以上 |
+| 离题问题（公开测试集，CI 跑） | 英文 12/12、中文 6/6 拒答 |
+| 和认真做的基线比（[200 道留出题](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)） | 给纯全文检索加上同样的两条规则，它引错 42 页、KRouter 36 页，答对 96 道对 102 道；两项差距都不显著 |
+| 单独一个进程查一次（[规模](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)） | 1 万页 0.13 秒，5 万页 0.35 秒 |
+| 精确命中和向量检索比（CI 跑） | 精确命中会拒答，TF-IDF、MiniLM、BGE-M3 会引一个近邻；本地向量测过了，没有上线（[`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)） |
+| 作者自己的 208 道历史提问，盲评 | KRouter 0.36，加了两条规则的 BM25 0.25（满分 2），配对区间 [−0.02, +0.24]：看不出差距 |
 
 ### 自己复现
 
@@ -253,7 +245,8 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 
 ## 更多
 
-- [工作原理和全部选项](docs/DETAILS.zh.md)：安装参数、夜间写手、精确命中和排序召回、问答卡、四种 agent 接入
+- [工作原理和全部选项](docs/DETAILS.zh.md)：安装参数、夜间写手、精确命中和排序召回、四种 agent 接入
+- [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)：每个数字和它的测法
 - [`docs/TEAM.md`](docs/TEAM.md)：团队共用一份记忆、自己部署的 HTTP 服务和它的 Docker 镜像
 - [`SECURITY.md`](SECURITY.md)：每条模型通道能看到什么、能做什么
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md)：给 agent 判断 KRouter 适不适合它的用户时参考的事实

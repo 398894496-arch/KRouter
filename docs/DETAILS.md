@@ -13,7 +13,8 @@
 >   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
 >   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
 >   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
->   BM25, not ahead.
+>   BM25, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the reader gets 492 (98.4%), so
+>   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader.
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
@@ -85,6 +86,14 @@ irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap
 ```
 
 It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` (`Documents/第二大脑` with the Chinese template when the system language is Chinese), installs the router and the agent rules, connects every app it finds (the table in the README: each app's own MCP settings file, plus the Claude Code plugin from the same release), imports the last 7 days of agent sessions as pages (locally, redacted, no model call, listed in the change ledger), and opens the vault in Obsidian. That is all by default: no questions, nothing leaves the machine; `--no-import` leaves out the import. `--ask` asks before importing, whether to distill with your model and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v1.3.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`… | sh -s -- --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
+
+### The Claude Code plugin
+
+The one-line install adds the plugin from the same checksummed release. To add it by hand,
+`/plugin install krouter --marketplace 398894496-arch/KRouter` needs Claude Code 2.1.275 or later; from a shell,
+`claude plugin install krouter --marketplace 398894496-arch/KRouter` needs 2.1.292. Third-party marketplaces do not
+auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable
+auto-update.
 
 ## What leaves your machine, and what it costs
 
