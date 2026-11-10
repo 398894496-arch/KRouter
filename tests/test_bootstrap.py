@@ -172,9 +172,11 @@ def test_powershell_scripts_are_ascii_and_never_exit_the_users_session():
     assert not [ln for ln in lines if ln.strip().startswith("exit")]
 
 
-def test_install_imports_local_sessions_by_default_and_records_the_vault(tmp_path):
-    """`--no-import` → lookup only; the default (no terminal, no flag) → this machine's sessions land in the vault,
-    with no model call, and the vault path is recorded so agents and the MCP server find it without OBSIDIAN_VAULT."""
+def test_install_records_from_now_by_default_and_imports_past_sessions_only_when_asked(tmp_path):
+    """`--no-import` → lookup only; the default (no terminal, no flag) → nothing from the past is imported, turns are
+    recorded from now on (consent recorded), and the last line says the one command that imports the last 7 days;
+    `--all` imports them (the old default), with no model call. The vault path is recorded so agents and the MCP
+    server find it without an environment variable."""
     projects = tmp_path / "projects/-work"
     projects.mkdir(parents=True)
     from datetime import datetime, timezone
@@ -190,9 +192,14 @@ def test_install_imports_local_sessions_by_default_and_records_the_vault(tmp_pat
     assert not (tmp_path / "v1/05 时间日志/会话摘录").exists()
     assert vf.read_text(encoding="utf-8").strip() == str((tmp_path / "v1").resolve())
     res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v2"), "--no-timer")
+    assert res.returncode == 0 and out["imported"] == 0, res.stdout[-1500:]
+    assert "从现在起它自己记" in res.stdout and "以前的会话没有导入" in res.stdout and "--consent" in res.stdout
+    assert not list((tmp_path / "v2/05 时间日志/会话摘录").glob("*.md"))
+    assert json.loads((tmp_path / "state/import.json").read_text(encoding="utf-8"))["consent"] is True  # 钩子从现在起记
+    res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v3"), "--no-timer", "--all")
     assert res.returncode == 0 and out["imported"] == 1 and out["distilled"] == 0, res.stdout[-1500:]
     assert "从现在起它自己记" in res.stdout and "不调任何模型" in res.stdout
-    assert len(list((tmp_path / "v2/05 时间日志/会话摘录").glob("*.md"))) == 1
+    assert len(list((tmp_path / "v3/05 时间日志/会话摘录").glob("*.md"))) == 1
     assert "现在就可以问你的 agent" in res.stdout
 
 
@@ -204,15 +211,18 @@ def test_install_offers_claude_mem_and_imports_it_on_a_yes(tmp_path):
            "KROUTER_VAULT_FILE": str(tmp_path / "vf")}
     res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v1"), "--no-timer", "--no-import")
     assert res.returncode == 0 and out["claude_mem"] == 0  # --no-import：不导
-    res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v2"), "--no-timer")  # 默认：本机导入
+    res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v2"), "--no-timer")  # 默认：不导以前的
+    assert res.returncode == 0 and out["claude_mem"] == 0, res.stdout[-1500:]
+    res, out = _boot(env, "--lang", "zh", "--vault", str(tmp_path / "v2"), "--no-timer", "--all")  # --all：导
     assert res.returncode == 0 and out["claude_mem"] == 3, res.stdout[-1500:]
     assert "从 claude-mem 导入了 3 个会话、4 条决定和改动" in res.stdout
     assert (tmp_path / "v2/02 经验与方法/从 claude-mem 导入/shop 的决定（claude-mem）.md").is_file()
 
 
 def test_default_install_asks_nothing_and_an_upgrade_keeps_what_is_on(tmp_path, monkeypatch):
-    """Without `--ask` no question is put: sessions are imported locally (no preview, no model), `--no-import` imports
-    nothing; a host who said yes before is not told it is off."""
+    """Without `--ask` no question is put: nothing from the past is imported (no preview, no model; `main` records
+    consent so turns are kept from now on), `--no-import` records nothing; a host who said yes before is not told it
+    is off."""
     sys.path.insert(0, str(REPO / "scripts"))
     import bootstrap as bs
     import import_sessions
@@ -223,7 +233,8 @@ def test_default_install_asks_nothing_and_an_upgrade_keeps_what_is_on(tmp_path, 
     args = bs.argparse.Namespace(timer=False, no_timer=False, ask=False, no_import=False, import_sessions=False,
                                  import_distill=False)
     assert bs.decide_timer(args, tmp_path, bs.MSG["en"]) == (False, True)
-    assert bs.decide_import(args, tmp_path, bs.MSG["en"], "claude") == (True, False, False)  # 本机导入，不提炼
+    assert bs.decide_import(args, tmp_path, bs.MSG["en"], "claude") == (False, False, False)  # 不导以前的
+    assert bs.offer_claude_mem(args, tmp_path, bs.MSG["en"], False) == {}
     off = bs.argparse.Namespace(**{**vars(args), "no_import": True})
     assert bs.decide_import(off, tmp_path, bs.MSG["en"], "claude") == (False, False, False)
     assert bs.offer_claude_mem(off, tmp_path, bs.MSG["en"], False) == {}

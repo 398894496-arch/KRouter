@@ -44,11 +44,8 @@ jobs:
           print("release v" + tag + ": versions, changelog and status block agree")
           CHECK
       - name: Pack and checksum
-        run: |
-          npm pack
-          cp scripts/bootstrap.sh scripts/bootstrap.ps1 .   # 一行安装从 releases/latest/download/ 取这两个，不取 main 上的
-          sha256sum dsh-krouter-*.tgz bootstrap.sh bootstrap.ps1 > SHA256SUMS
-          cat SHA256SUMS
+        # 和本地发版前跑的是同一个脚本：打包、算校验和，并检查 README 引用的每个附件都在、包里有安装要跑的东西
+        run: sh scripts/release_pack.sh .
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
@@ -60,6 +57,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" dsh-krouter-*.tgz bootstrap.sh bootstrap.ps1 SHA256SUMS --clobber
+
+  smoke:
+    # 发出去之后，照 README 两种语言里的每条安装命令去真实地址取一遍：任何一条取不到、跑不起来就失败
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: astral-sh/setup-uv@v5
+      - name: Every install command in the README works against the published release
+        run: |
+          pipx --version || python3 -m pip install --user pipx
+          python3 scripts/release_smoke.py --tag "${{ github.event.release.tag_name }}"
 
   image:
     # 团队服务器镜像：版本检查通过后才构建；冒烟测试过了才推送；镜像本身也带构建来源证明

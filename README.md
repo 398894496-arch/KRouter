@@ -97,11 +97,16 @@ asks anything. Pick one (options go after the script: `sh /tmp/krouter-install.s
 | Claude Code plugin (session hooks) | installed when `claude` is found | no |
 | Codex and Cursor session hooks | added when the app is found | no |
 | Cursor rules (`~/.cursor/rules/`) | yes | only with `--apps cursor` |
-| Imports the last 7 days of agent sessions | yes: on this machine, redacted, no model call, undoable | no |
+| Records sessions | from now on: each turn as it ends, on this machine, redacted, no model call | no |
+| Imports past sessions (the last 7 days) | no: one command at the end of the install does it, or `--all` up front | no |
 | Nightly job, distilling with your model (the steps that send text out) | no: `--ask` asks, `--timer` turns the job on | no |
 | Opens the new memory in Obsidian | only when you run it from a terminal (`--open` always, `--no-open` never); run by an agent, no | same |
 
-Every file the default install creates or changes (`--dry-run` lists them for your machine first, changing nothing):
+`--all` does everything the install can do without a model, as the default used to: it also imports the last 7 days
+of sessions and claude-mem's memory, if you have one.
+
+Every file the default install creates or changes (`--dry-run` lists them for your machine first, changing nothing;
+the install itself lists each settings file it changed, and keeps a copy of it first):
 
 | Where | What |
 |---|---|
@@ -122,7 +127,10 @@ Nothing leaves the machine during the install except the download itself. When i
 ~/.dsh-krouter/current/scripts/krouter search "what did we decide about X?"
 ```
 
-(From a clone, `./scripts/krouter`; with the Python package on your PATH, just `krouter`.)
+(From a clone, `./scripts/krouter`; with the Python package on your PATH, just `krouter`.) The memory folder is plain
+Markdown: open it in any editor, or in Obsidian if you like. Tools find it through `KROUTER_VAULT`, else
+`OBSIDIAN_VAULT` (the older name, still read; `KROUTER_VAULT` wins when both are set), else the folder the install
+recorded in `~/.config/krouter/vault`.
 
 **Without a model** (no logged-in AI coding CLI, no API key), lookup, answers with their source page, refusals,
 the local session import and noting what reads like a correction all work. Distilling (each page's "what was
@@ -232,7 +240,7 @@ Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
 ## Five minutes later
 
 1. Ask your AI: *"what did we decide about X last week?"* It answers from the memory, names the page, and says plainly when the memory has nothing on it.
-2. Open the memory folder: the imported sessions are already there, one page each, with your questions and each turn's closing answer.
+2. Open the memory folder: each session since the install is there, one page each, with your questions and each turn's closing answer (the install's last lines give the one command that brings in the last 7 days too).
 3. **"Have your model pull out what was decided?"** On a yes, the model you already use (a logged-in CLI or an API key) writes "what was decided, what changed" at the top of each recent session's page. The installer tells you how many characters that sends before it sends anything.
 
 ## It keeps up on its own

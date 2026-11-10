@@ -1,11 +1,11 @@
 # KRouter daily timer on Windows: one scheduled task, 09:10 local time, runs extras\host-daily-evolution\run.py.
 # Usage (PowerShell, as yourself - no admin needed):
-#   $env:OBSIDIAN_VAULT = "D:\Obsidian\MyVault"; .\scripts\install_windows_task.ps1
+#   $env:KROUTER_VAULT = "D:\Notes\Memory"; .\scripts\install_windows_task.ps1   (OBSIDIAN_VAULT also works)
 #   .\scripts\install_windows_task.ps1 -Uninstall
 # Output goes to %LOCALAPPDATA%\dsh-krouter\daily.log. The vault is never touched by this script.
 param(
     [switch]$Uninstall,
-    [string]$Vault = $env:OBSIDIAN_VAULT,
+    [string]$Vault = $(if ($env:KROUTER_VAULT) { $env:KROUTER_VAULT } else { $env:OBSIDIAN_VAULT }),
     [string]$Python = "",
     [string]$At = "09:10"
 )
@@ -23,7 +23,7 @@ if ($Uninstall) {
 }
 
 if (-not $Vault) {
-    Write-Output "timer not registered: set OBSIDIAN_VAULT to YOUR vault (or pass -Vault), then re-run."
+    Write-Output "timer not registered: set KROUTER_VAULT to YOUR memory folder (or pass -Vault), then re-run."
     exit 1
 }
 if (-not $Python) {

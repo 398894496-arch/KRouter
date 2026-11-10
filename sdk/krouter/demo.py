@@ -35,11 +35,11 @@ SAY = {
     "en": {"head": "KRouter demo: a throwaway memory in {v}",
            "q": "? {q}", "a": "  → {how}\n    from: {page}", "old": "    replaced, shown but not the answer: {page}",
            "no": "  → recall: none. The memory says it does not know instead of guessing.",
-           "keep": "Kept: {v} (open it in Obsidian or any editor).", "gone": "Deleted the demo memory. Next: the one-line install in the README."},
+           "keep": "Kept: {v} (a plain Markdown folder: open it in any editor, or in Obsidian).", "gone": "Deleted the demo memory. Next: the one-line install in the README."},
     "zh": {"head": "KRouter 演示：临时记忆库在 {v}", "q": "？{q}",
            "a": "  → {how}\n    出处：{page}", "old": "    已被取代，只列出来、不当答案：{page}",
            "no": "  → recall: none。记忆里没有，直说不知道，不拿差不多的凑数。",
-           "keep": "保留在：{v}（用 Obsidian 或任何编辑器打开看）。", "gone": "演示用的库已删除。下一步：README 里的一行安装。"},
+           "keep": "保留在：{v}（纯 Markdown 文件夹，用任何编辑器或 Obsidian 打开看）。", "gone": "演示用的库已删除。下一步：README 里的一行安装。"},
 }
 
 

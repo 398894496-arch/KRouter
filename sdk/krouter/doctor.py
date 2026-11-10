@@ -19,7 +19,7 @@ from . import ask, router_dir
 
 
 def _vault(explicit: str | None) -> Path | None:
-    raw = explicit or os.environ.get("OBSIDIAN_VAULT", "")
+    raw = explicit or os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", "")
     if not raw:
         vf = Path(os.environ.get("KROUTER_VAULT_FILE") or Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
                   / "krouter" / "vault")
@@ -114,12 +114,12 @@ def run(vault_arg: str | None = None) -> int:
     vault = _vault(vault_arg)
     boot = _bootstrap()
     if vault is None:
-        rows.append(("FAIL", f"vault: none recorded. Fix: {boot} (or pass --vault, or set OBSIDIAN_VAULT)"))
+        rows.append(("FAIL", f"memory folder: none recorded. Fix: {boot} (or pass --vault, or set KROUTER_VAULT)"))
     elif not vault.is_dir():
-        rows.append(("FAIL", f"vault: {vault} does not exist. Fix: {boot} --vault <your folder>"))
+        rows.append(("FAIL", f"memory folder: {vault} does not exist. Fix: {boot} --vault <your folder>"))
     else:
         layout = "English names" if zones.lang(vault) == "en" else "default names"
-        rows.append(("ok", f"vault: {vault} ({layout})"))
+        rows.append(("ok", f"memory folder: {vault} ({layout})"))
         home = zones.path(vault, "Agent第二大脑.md")
         if not home.is_file():
             rows.append(("FAIL", f"home page missing: {home}. Fix: {boot} --vault \"{vault}\" (adds only missing files)"))
@@ -129,14 +129,14 @@ def run(vault_arg: str | None = None) -> int:
             a = ask("home", vault=vault)
             took = time.time() - start
             if a.page or a.refused:
-                rows.append(("ok", f"lookup: answered in {took:.2f} s" + (f" from {a.page}" if a.page else " (said: not in the vault)")))
+                rows.append(("ok", f"lookup: answered in {took:.2f} s" + (f" from {a.page}" if a.page else " (said: not in the memory)")))
             else:
                 rows.append(("FAIL", "lookup: no receipt came back. Fix: reinstall with " + boot))
         except Exception as exc:  # noqa: BLE001 - 查询失败本身就是要报的结论
             rows.append(("FAIL", f"lookup failed: {exc}. Fix: reinstall with {boot}"))
         table = zones.path(vault, "90 系统文件/canonical_sources.psv")
         rows.append(("ok", f"alias table: {table}") if table.is_file() else
-                    ("note", f"alias table: none in the vault; the sample one is used. Fix: {boot} --vault \"{vault}\""))
+                    ("note", f"alias table: none in the memory folder; the sample one is used. Fix: {boot} --vault \"{vault}\""))
         meta = _frontmatter(zones.path(vault, "90 系统文件/自动化/日更健康.md"))
         key = meta.get("self_evolution_key", "missing")
         if key == "present":  # install.sh 探过：登录了的 CLI 或能用的 key（只装了 CLI、没登录不算）

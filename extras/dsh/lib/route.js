@@ -62,7 +62,7 @@ function pythonArgv(script, args) {
 }
 
 export function resolveVault(explicit) {
-  return explicit || process.env.OBSIDIAN_VAULT || process.env.KROUTER_VAULT || "";
+  return explicit || process.env.KROUTER_VAULT || process.env.OBSIDIAN_VAULT || "";
 }
 
 export function runRoute({ route, query = "", vault, router, timeoutMs = 20000 } = {}) {
@@ -76,7 +76,7 @@ export function runRoute({ route, query = "", vault, router, timeoutMs = 20000 }
   }
   const vaultRoot = resolveVault(vault);
   if (!vaultRoot) {
-    return { ok: false, code: 2, stdout: "", stderr: "set OBSIDIAN_VAULT or vaultPath\n" };
+    return { ok: false, code: 2, stdout: "", stderr: "set KROUTER_VAULT (or OBSIDIAN_VAULT) or vaultPath\n" };
   }
   const script = resolveRouter(router);
   if (!script) {
@@ -95,12 +95,12 @@ export function runRoute({ route, query = "", vault, router, timeoutMs = 20000 }
         encoding: "utf8",
         timeout: timeoutMs,
         cwd: dirname(script),
-        env: { ...process.env, OBSIDIAN_VAULT: vaultRoot },
+        env: { ...process.env, KROUTER_VAULT: vaultRoot, OBSIDIAN_VAULT: vaultRoot },
       })
     : spawnSync(script, args, {
         encoding: "utf8",
         timeout: timeoutMs,
-        env: { ...process.env, OBSIDIAN_VAULT: vaultRoot },
+        env: { ...process.env, KROUTER_VAULT: vaultRoot, OBSIDIAN_VAULT: vaultRoot },
       });
   return {
     ok: result.status === 0,

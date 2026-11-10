@@ -268,3 +268,46 @@ def test_a_codex_folder_left_by_a_login_probe_is_not_a_codex_install(tmp_path, m
     assert not bs.codex_used().is_dir()
     (tmp_path / ".codex/config.toml").write_text("", encoding="utf-8")
     assert bs.codex_used() == tmp_path / ".codex"
+
+
+@POSIX
+def test_krouter_vault_is_the_name_and_wins_over_obsidian_vault(tmp_path):
+    a, b = _english_vault(tmp_path / "a"), tmp_path / "b"
+    shutil.copytree(REPO / "template", b)
+    env = {**os.environ, "KROUTER_NO_QUERY_LOG": "1", "KROUTER_CACHE_DIR": str(tmp_path / "cache"), "HOME": str(tmp_path),
+           "XDG_CONFIG_HOME": str(tmp_path / "cfg"), "KROUTER_VAULT_FILE": str(tmp_path / "none")}
+    env.pop("OBSIDIAN_VAULT", None)
+    router = ["/bin/sh", str(SCRIPTS / "route_knowledge.sh"), "status"]
+    for sh_only in ("0", "1"):
+        out = subprocess.run(router, env={**env, "KROUTER_SH_ONLY": sh_only, "KROUTER_VAULT": str(a)},
+                             capture_output=True, text=True, timeout=60).stdout
+        assert f"source: {a}/Home.md" in out  # the new name alone
+        out = subprocess.run(router, env={**env, "KROUTER_SH_ONLY": sh_only, "KROUTER_VAULT": str(a), "OBSIDIAN_VAULT": str(b)},
+                             capture_output=True, text=True, timeout=60).stdout
+        assert f"source: {a}/Home.md" in out  # both set: KROUTER_VAULT wins
+        out = subprocess.run(router, env={**env, "KROUTER_SH_ONLY": sh_only, "OBSIDIAN_VAULT": str(b)},
+                             capture_output=True, text=True, timeout=60).stdout
+        assert f"source: {b}/Agent第二大脑.md" in out  # the older name alone still works
+    gone = subprocess.run(router, env={**env, "KROUTER_SH_ONLY": "1"}, capture_output=True, text=True, timeout=60)
+    assert gone.returncode == 2 and "KROUTER_VAULT" in gone.stderr
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import krouter; "
+            "print(krouter.ask('home', vault=sys.argv[2]).page)")
+    out = subprocess.run([sys.executable, "-c", code, str(REPO / "sdk"), str(b)], env={**env, "KROUTER_VAULT": str(a)},
+                         capture_output=True, text=True, timeout=60)
+    assert out.stdout.strip() == f"{b}/Agent第二大脑.md", out.stderr  # an explicit vault= beats KROUTER_VAULT
+
+
+@POSIX
+def test_default_install_lists_and_backs_up_each_settings_file_it_changes(tmp_path):
+    env = _env(tmp_path)
+    env.pop("KROUTER_NO_MCP", None)  # wire the apps found in this throwaway HOME (no claude / codex on PATH)
+    gemini = tmp_path / "home/.gemini/settings.json"
+    gemini.parent.mkdir(parents=True)
+    gemini.write_text('{"theme": "dark"}\n', encoding="utf-8")
+    res, out = _boot(env, "--lang", "en")
+    assert res.returncode == 0 and "gemini-cli" in out["mcp"], res.stdout[-1500:]
+    assert json.loads((gemini.parent / "settings.json.krouter-bak").read_text(encoding="utf-8")) == {"theme": "dark"}
+    listed = res.stdout.split("Files changed", 1)[1]
+    assert str(gemini) in listed.split("Done.", 1)[0]
+    assert "Files and folders created:" in res.stdout and "Second Brain" in res.stdout
+    assert out["imported"] == 0 and "Past sessions were not imported" in res.stdout and "--consent" in res.stdout

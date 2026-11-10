@@ -24,7 +24,8 @@
 >   答 301 次，5 万页 54 ms、每秒 75 次（合成库，`bench/scale/serve_load.py`）。Kubernetes 清单和 systemd 服务由测试检查过，
 >   还没在真集群、真主机上跑过。
 > - **安装和自动记：** 一行安装什么都不问，把本机装了的应用都接上（Claude Code 连同插件、Codex、Cursor、Claude Desktop、
->   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed、Cline CLI），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。之后
+>   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed、Cline CLI），逐条列出改过的设置文件（每个都留了备份），不导入以前的会话
+>   （`--all` 在本机导入近 7 天、不调模型；`--minimal` 只装查询、只接你点名的应用）。从这以后
 >   Claude Code、Codex、Cursor 都通过会话钩子在每一轮结束时记下（只在本机、不调模型；Codex 要先在 `/hooks` 里信任；Cursor
 >   的照它的文档检查过，还没在 Cursor 里实测）。用模型提炼和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、

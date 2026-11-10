@@ -2,6 +2,8 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+# 记忆文件夹：KROUTER_VAULT（正式名字）优先，OBSIDIAN_VAULT（旧名字）照样认
+if [ -n "${KROUTER_VAULT:-}" ]; then OBSIDIAN_VAULT=$KROUTER_VAULT; export OBSIDIAN_VAULT; unset KROUTER_VAULT; fi
 FORCE=0
 WITH_HOOKS=0
 for arg in "$@"; do
@@ -104,7 +106,7 @@ case "$wire" in
 esac
 printf '%s\n' "mounted agent runs status and must tell the host if host_action is present."
 if [ -z "${OBSIDIAN_VAULT:-}" ]; then
-  printf '%s\n' "timer not loaded: export OBSIDIAN_VAULT to YOUR vault (copy template/ there first), then re-run install.sh."
+  printf '%s\n' "timer not loaded: export KROUTER_VAULT to YOUR memory folder (copy template/ there first), then re-run install.sh."
   printf '%s\n' "do not point the timer at the clone template."
 else
   VAULT=$OBSIDIAN_VAULT
@@ -203,7 +205,7 @@ else
   fi
   python3 "$ROOT/extras/host-daily-evolution/resolve.py" --sync-health --offline >/dev/null || true
 fi
-[ "${KROUTER_BOOTSTRAP:-}" = "1" ] || printf '%s\n' "next: run ./scripts/first_run.sh against the template, then point OBSIDIAN_VAULT at your vault."
+[ "${KROUTER_BOOTSTRAP:-}" = "1" ] || printf '%s\n' "next: run ./scripts/first_run.sh against the template, then point KROUTER_VAULT at your memory folder."
 
 if [ "$WITH_HOOKS" -eq 1 ]; then
   HOOK_DST="${KROUTER_HOOK_HOME:-$HOME/.cursor/hooks/krouter-exec-gate.py}"

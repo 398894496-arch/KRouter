@@ -28,6 +28,8 @@ import shutil
 import sys
 from pathlib import Path
 
+import krouter_home  # noqa: F401,E402  导入时把 KROUTER_VAULT 接成 OBSIDIAN_VAULT（记忆文件夹的正式名字是前者）
+
 ZONES_FILE = "krouter-zones.psv"
 _CACHE: dict[str, tuple[float, list[tuple[str, str]]]] = {}
 

@@ -778,7 +778,7 @@ def main() -> int:
         print(json.dumps({"import": "revoked"}))
         return 0
     if not args.vault:
-        print("set OBSIDIAN_VAULT", file=sys.stderr)
+        print("set KROUTER_VAULT (or OBSIDIAN_VAULT) to your memory folder, or pass --vault", file=sys.stderr)
         return 2
     vault = Path(args.vault).expanduser()
     if args.undo:

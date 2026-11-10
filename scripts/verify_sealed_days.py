@@ -196,7 +196,7 @@ def measure(
 
 
 def default_vault() -> Path:
-    env = os.environ.get("OBSIDIAN_VAULT")
+    env = os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT")
     if env:
         return Path(env)
     return ROOT / "template"

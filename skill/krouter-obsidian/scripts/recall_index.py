@@ -846,7 +846,7 @@ def main() -> int:
     ap.add_argument("--stats", action="store_true")
     args = ap.parse_args()
     if not args.vault:
-        print("set OBSIDIAN_VAULT", file=sys.stderr)
+        print("set KROUTER_VAULT (or OBSIDIAN_VAULT) to your memory folder, or pass --vault", file=sys.stderr)
         return 2
     vault = Path(args.vault)
     db = cache_path(vault)

@@ -1,4 +1,8 @@
-"""Where the vault is, for a caller that was not told: `OBSIDIAN_VAULT`, else the path the installer recorded.
+"""Where the memory folder is, for a caller that was not told: `KROUTER_VAULT`, else `OBSIDIAN_VAULT` (the older name,
+still read), else the path the installer recorded. When both are set, `KROUTER_VAULT` wins.
+
+Importing this module (`zones.py` does) carries `KROUTER_VAULT` over to `OBSIDIAN_VAULT`, the name every script and
+child process reads, and drops it, so a parent that hands a child another folder in `OBSIDIAN_VAULT` is not overridden.
 
 The one-line install writes the vault path to `~/.config/krouter/vault` (one line; `KROUTER_VAULT_FILE` points
 elsewhere), so an agent, the MCP server or a plugin can route without anyone exporting a variable first.
@@ -10,6 +14,16 @@ import os
 from pathlib import Path
 
 
+def adopt_env() -> None:
+    """`KROUTER_VAULT` → `OBSIDIAN_VAULT` in this process (and so in its children)."""
+    raw = os.environ.pop("KROUTER_VAULT", "").strip()
+    if raw:
+        os.environ["OBSIDIAN_VAULT"] = raw
+
+
+adopt_env()
+
+
 def vault_file() -> Path:
     raw = os.environ.get("KROUTER_VAULT_FILE", "")
     if raw:
@@ -19,6 +33,7 @@ def vault_file() -> Path:
 
 
 def vault_path() -> str:
+    adopt_env()
     raw = os.environ.get("OBSIDIAN_VAULT", "")
     if raw:
         return raw

@@ -30,6 +30,7 @@ HOOK_DST="${KROUTER_HOOK_HOME:-$HOME/.cursor/hooks/krouter-exec-gate.py}"
 KEYS_ENV="${KROUTER_KEYS_ENV:-$HOME/.dsh-krouter-keys.env}"
 SAMPLE_MAP="$ROOT/skill/krouter-obsidian/scripts/canonical_sources.psv"
 
+if [ -n "${KROUTER_VAULT:-}" ]; then OBSIDIAN_VAULT=$KROUTER_VAULT; export OBSIDIAN_VAULT; unset KROUTER_VAULT; fi
 VAULT_FILE="${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}"
 # 没设 OBSIDIAN_VAULT：用一键安装记下的库（下面要往里存别名表、最后要说库在哪）
 if [ -z "${OBSIDIAN_VAULT:-}" ] && [ -f "$VAULT_FILE" ]; then
@@ -130,7 +131,7 @@ else
   done
 fi
 [ -e "$KEYS_ENV" ] && printf '%s\n' "kept: $KEYS_ENV (your keys; delete it yourself if you no longer need it)"
-printf '%s\n' "vault untouched: ${OBSIDIAN_VAULT:-<OBSIDIAN_VAULT not set>} (your notes; delete the folder yourself if you want it gone). Codex / Claude snippets you pasted stay where you pasted them."
+printf '%s\n' "vault untouched: ${OBSIDIAN_VAULT:-<no memory folder recorded or set>} (your notes; delete the folder yourself if you want it gone). Codex / Claude snippets you pasted stay where you pasted them."
 printf '%s\n' "each app settings file KRouter changed keeps a copy next to it (*.krouter-bak); delete those when you like."
 # 下载下来的发布包（一行安装放在 ~/.dsh-krouter/<tag>）：--purge 时最后删（脚本自己可能就在里面，所以放在最后一行）
 if [ -d "$RELEASES" ]; then

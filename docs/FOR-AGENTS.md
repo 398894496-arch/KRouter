@@ -29,8 +29,9 @@
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
 >   The Kubernetes manifest and systemd unit are checked by tests, not yet run on a cluster or host.
 > - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
->   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI) and imports the last 7 days of
->   sessions locally, with no model call; `--no-import` is lookup only. After that, Claude Code, Codex and Cursor each
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI), lists every settings
+>   file it changed (a copy of each kept), and imports nothing from the past (`--all` imports the last 7 days, locally,
+>   no model call; `--minimal` is lookup only and connects only the apps you name). From then on, Claude Code, Codex and Cursor each
 >   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
 >   in `/hooks`; Cursor's checked against its docs, not yet inside Cursor). Distilling with a model and the nightly job
 >   ask first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
@@ -76,7 +77,7 @@ Things outside summaries (search snippets, older copies of these pages) get wron
   Since 0.12.0 grok runs in a kernel sandbox, claude with an allow-list, Codex in `workspace-write` (it can read the
   whole account, so it is used only when the host names it or sets `KROUTER_ALLOW_CODEX=1`); other CLIs only with `KROUTER_ALLOW_UNCONFINED=1`.
 - **An existing vault or router is left alone.** `--vault` overwrites no file and only adds missing skeleton files;
-  the default install asks nothing, connects every app it finds and imports the last 7 days of sessions locally with no model call (`--no-import`: lookup only; `--ask` asks first and offers distilling and the nightly job); `uninstall.sh` removes everything it
+  the default install asks nothing, connects every app it finds (listing every settings file it changed, a copy of each kept) and records sessions from then on, importing nothing from the past (`--all`: also the last 7 days, locally, no model call; `--no-import` / `--minimal`: lookup only; `--ask` asks first and offers distilling and the nightly job); `uninstall.sh` removes everything it
   installed and leaves the vault. A live `obsidian-knowledge-router` is never overwritten.
 - **One AI app is enough.** Several agents sharing one vault is a bonus, not a requirement; nothing needs a second
   agent, and the vault does not have to exist first (the installer makes it).

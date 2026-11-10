@@ -110,9 +110,9 @@ TOOLS = [
 
 
 def vault_root() -> Path:
-    raw = os.environ.get("OBSIDIAN_VAULT", "").strip()
+    raw = (os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", "")).strip()
     if not raw:
-        raise SystemExit("OBSIDIAN_VAULT is not set")
+        raise SystemExit("KROUTER_VAULT (or OBSIDIAN_VAULT) is not set")
     return Path(raw).resolve()
 
 

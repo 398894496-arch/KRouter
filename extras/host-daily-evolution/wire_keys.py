@@ -60,7 +60,7 @@ def candidate_keys() -> dict[str, str]:
     for name, val in os.environ.items():
         if (is_key_name(name) or is_config_name(name)) and usable(val):
             found[name] = val.strip().strip('"').strip("'")
-    vault = os.environ.get("OBSIDIAN_VAULT", "").strip()
+    vault = (os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", "")).strip()
     if vault:
         from resolve import _lane
 

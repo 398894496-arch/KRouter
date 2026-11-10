@@ -36,9 +36,9 @@ PENDING = Path.home() / ".dsh-krouter-ask-pending.json"
 
 
 def vault_root() -> Path:
-    raw = os.environ.get("OBSIDIAN_VAULT") or ""
+    raw = os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT") or ""
     if not raw:
-        raise SystemExit("set OBSIDIAN_VAULT to the vault root")
+        raise SystemExit("set KROUTER_VAULT (or OBSIDIAN_VAULT) to your memory folder")
     return Path(raw).expanduser().resolve()
 
 
