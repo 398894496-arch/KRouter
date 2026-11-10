@@ -529,6 +529,48 @@ unchanged), to use fewer agents. (3) One *nothing* judge agent wrote its verdict
 random (7 yes, 1 no) were read against the benchmark's answers afterwards and all eight stood: a spot check, not a
 second judge.
 
+## Set 18: does following the vault's own connections bring the whole answer? (registered 2026-11-10, before the associative path was written or any held-out question was run)
+
+**Why.** Set 12 put KRouter level with plain BM25 on LongMemEval (80.0% and 81.0% with the same reader), and 98.4%
+when the reader gets the labelled answer sessions. The points lost are mostly multi-session and temporal questions,
+whose answer is spread over several sessions. Counted offline over all 500 (not a test: every question was seen in
+sets 7, 11 and 12), BM25's top 3 holds every answer session for 384 of 500, multi-session 73 of 133, temporal 91 of
+133. This set asks whether a second, associative path (spreading from the pages the question hits, along links,
+supersedes, same session or day, shared rare words, and later co-citation) brings more of the whole answer in the
+same number of pages. Retrieval only: no reader and no judge, no model is called.
+
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 470 answerable questions are split as set 13 split them
+(`lme.split_of` on branch `claude/wp2-refusal-396930`: seed 20261110, `random.Random.sample` of the sorted ids, half to
+*dev*): 235 dev (74 multi-session, 54 temporal), 235 held out (47 multi-session, 73 temporal). Set 13 counted only
+refusals of the unchanged gate on held-out ablated vaults; no ranking on the held-out half was looked at for this
+set. The 30 `_abs` questions are left out (no answer to bring). Every design choice and constant of the associative
+path is chosen on the dev half and on the development benches of this directory (`dev`, `dev2`, `dev3`).
+
+**Metric.** For k = 3, 5, 8: the number of questions whose k returned pages include *every* labelled answer session,
+overall and per question type. Systems, each giving exactly k pages, no refusal gate (the gate is unchanged by this
+set and reported separately): `bm25` (the offline count above: FTS5 BM25 over character pairs and words, superseded
+pages skipped), `krouter` (in-process `recall`, `gate=False`, at `9d73bd5`'s ranking), `krouter+assoc` (the same
+direct hits, the associative pages filling the k slots as the shipped code fills them). Paired 95% bootstrap intervals
+for `krouter+assoc` minus `bm25` (10 000 resamples over questions, seed 20261110).
+
+**Pass bar, fixed now.** On the held-out half: (1) multi-session: `krouter+assoc` above `bm25` with the paired 95%
+interval above zero at k = 3 and at k = 5, and not below `bm25` at k = 8; (2) all 235: `krouter+assoc` not below
+`bm25` at any k; (3) the memory honesty sets (`dev`, `dev2`, `dev3`, `heldout`, `heldout2`, `heldout3`, aggregates
+only): with the associative path on, no more wrong citations, no fewer refusals, no fewer correction or current hits
+than with it off. If any part fails, the associative path ships off by default and the numbers are reported as they
+are. The held-out half is run once, for the one configuration chosen on dev. LoCoMo (set 10's vaults and scoring of
+"evidence cited", top 3) is a second outside check if time allows; it decides nothing.
+
+**Separately (not part of the pass bar):** the deterministic tie-break for "the vault changed its mind" (a newer page
+on the same thing ranked first and the conflict named, with no model and no distillation), judged by its own tests
+(the audit's PostgreSQL-then-SQLite scenario among them).
+
+### Log, set 18
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. |
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
