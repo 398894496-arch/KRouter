@@ -338,3 +338,48 @@ def test_session_import_records_uses_without_a_model(env, tmp_path):  # noqa: F8
     u = experience.usage(env["vault"])
     assert u["C02"]["offered"] == 1 and u["C02"]["adopted"] == 1
     assert _run(env).get("experience_uses") is None  # 再导入一遍不重复记
+
+
+SET16_HELDOUT_SHA = "d939c2cacc24c9ece6e7c104dd99bacd30d6bf246c4f1d71a9dee4745b24ba8a"
+CARDS_EN_SHA = "b27d45a3fe439e86e99a8e9225c467eb4f57b89c27c0e693c4c25af0f59f03bc"
+SET17_SHA = "7ccda4641f7a2dd651708b68196cf0043c86bd174e405a2580bfea723c4ba2de"
+
+
+def test_sets_16_and_17_are_frozen():
+    import host
+
+    with gzip.open(BENCH / "set16_heldout.jsonl.gz", "rb") as fh:
+        assert hashlib.sha256(fh.read()).hexdigest() == SET16_HELDOUT_SHA
+    cards = b"".join(p.read_bytes() for p in sorted((BENCH / "cards_en").glob("*.md")))
+    assert hashlib.sha256(cards).hexdigest() == CARDS_EN_SHA
+    assert hashlib.sha256((BENCH / "set17_sessions.jsonl").read_bytes()).hexdigest() == SET17_SHA
+    assert len(host.load("dev", "16")) == 28
+
+
+def test_english_vault_gets_an_english_digest_at_session_start(tmp_path):
+    import host
+
+    host.SET = "16"
+    try:
+        vault = host.build_vault(tmp_path)
+    finally:
+        host.SET = "15"
+    ctx = json.loads(_start(vault, tmp_path, KROUTER_EXPERIENCE="1").stdout)["hookSpecificOutput"]["additionalContext"]
+    assert ctx.startswith("KRouter experience digest") and "[C08]" in ctx and "How to use:" in ctx and "经验" not in ctx.split("\n", 1)[1]
+
+
+def test_extraction_scorer_counts_written_subject_free_and_duplicates():
+    import extract
+
+    sessions = {s["id"]: s for s in extract.load()}
+    good = [{"situation": "写正则匹配日期，改来改去总有漏的", "action": "先列 10 条该匹配和 10 条不该匹配的例子当测试",
+             "result": "20 条全部通过", "lesson": "规则改来改去总有漏的时，先写一组正反例当测试，每改一次全跑一遍",
+             "when": ["改来改去总漏", "顾此失彼", "老是漏掉"]}]
+    r = extract.score_one(sessions["S01"], json.dumps(good, ensure_ascii=False))
+    assert r["written"] == [{"subject_free": True, "faithful": True}]
+    leaky = [{**good[0], "lesson": "正则改来改去总有漏的时，先写正反例", "title": "写正则先写例子"}]
+    assert extract.score_one(sessions["S01"], json.dumps(leaky, ensure_ascii=False))["written"][0]["subject_free"] is False
+    dup = [{"situation": "cargo build 报了 80 多个错误", "action": "只改第一个错误", "result": "剩下的七十多个都没了",
+            "lesson": "报错一大片时，后面的多半是被第一个错误连带出来的，先只解决最前面那一条", "when": ["满屏报错", "一大堆错误"]}]
+    assert extract.score_one(sessions["D01"], json.dumps(dup, ensure_ascii=False))["written"] == []
+    assert extract.score_one(sessions["N01"], "[]")["proposed"] == 0
