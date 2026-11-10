@@ -82,6 +82,33 @@ jobs:
           KROUTER_REQUIRE_FRAMEWORKS: "1"
         run: python -m pytest -q tests/test_frameworks.py -k ${{ matrix.name }}
 
+  langgraph-store:
+    # krouter.integrations.langgraph：从本仓库装 krouter[langgraph]，在支持范围的两端各跑一遍（不调模型、不要 key）
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: lowest, pin: "langgraph==1.0.0 langgraph-checkpoint==2.1.0"}
+          - {name: latest, pin: ""}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install krouter[langgraph] (${{ matrix.name }})
+        run: python -m pip install -r requirements-dev.txt ".[langgraph]" ${{ matrix.pin }}
+      - name: Store tests
+        env:
+          KROUTER_REQUIRE_LANGGRAPH: "1"
+          KROUTER_NO_QUERY_LOG: "1"
+        run: python -m pytest -q tests/test_langgraph_store.py
+      - name: The example, from the installed package
+        working-directory: ${{ runner.temp }}
+        env:
+          KROUTER_NO_QUERY_LOG: "1"
+        run: python -m krouter.integrations.langgraph_demo
+
   vercel-ai-sdk:
     runs-on: ubuntu-latest
     steps:
