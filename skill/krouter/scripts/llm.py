@@ -367,7 +367,7 @@ HOST_CLI_MAX_DEFAULT = 30
 HOST_LOG_PAGE = "90 系统文件/自动化/订阅调用记录.md"
 # 没有任何模型通道时，这些功能不开；其余（召回、纠错捕获、经验摘要、宿主自己写卡和笔记）照常
 NEEDS_MODEL = ("会话提炼（定了什么、改了什么）", "经验卡的模型抽取", "主题档案整合", "问答卡", "触发词提议",
-               "claude-mem 导入的提炼")
+               "claude-mem 导入的提炼", "技能起草")
 
 
 class HostCapReached(NoModel):

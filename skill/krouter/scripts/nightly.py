@@ -2,8 +2,11 @@
 """Nightly upkeep runner: the five steps in order, each one's outcome written where the host can see it.
 
 import_sessions → import_claude_mem → compile_subconscious → learn_mentions → reconsolidate → consolidate_topics →
-answer_cards → checkup → cocite → backup. `learn_mentions` turns pages the agent fetched when the prompt hook said
-nothing into provisional trigger words (no model). `cocite` strengthens the recall cache's co-citation edges from the day's confident lookups (no model,
+answer_cards → skills → checkup → cocite → backup. `learn_mentions` turns pages the agent fetched when the prompt hook
+said nothing into provisional trigger words (no model; after `compile_subconscious`, whose triggers it adds to).
+`skills` promotes and withdraws skill drafts on their use records (no model) and drafts new ones from experience cards
+through the host lane (skipped quietly with no lane; `skills.py`); it runs after the import, which records the day's
+uses of cards and skills. `cocite` strengthens the recall cache's co-citation edges from the day's confident lookups (no model,
 writes outside the vault).
 The last writes an encrypted, restore-checked archive of the vault into the backup folder when one is set
 (`backup.py init --dir`), and is `off` otherwise. The first one
@@ -36,9 +39,9 @@ import llm  # noqa: E402
 import notify  # noqa: E402
 import zones  # noqa: E402
 
-STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "learn_mentions", "reconsolidate", "consolidate_topics", "answer_cards", "checkup",
-         "cocite", "backup")
-MODEL_STEPS = {"import_sessions", "import_claude_mem", "reconsolidate", "consolidate_topics", "answer_cards"}
+STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "learn_mentions", "reconsolidate", "consolidate_topics",
+         "answer_cards", "skills", "checkup", "cocite", "backup")
+MODEL_STEPS = {"import_sessions", "import_claude_mem", "reconsolidate", "consolidate_topics", "answer_cards", "skills"}
 REPORT = "90 系统文件/自动化/夜间维护.md"
 HEALTH = "90 系统文件/自动化/日更健康.md"
 
@@ -46,6 +49,15 @@ HEALTH = "90 系统文件/自动化/日更健康.md"
 def classify(rc: int, out: str) -> tuple[str, str]:
     """(state, reason) from a step's exit code and output."""
     low = out.lower()
+    if rc == 0 and '"skills": ' in out:
+        # 技能（skills.py）：起草没有模型通道时安静跳过，只在报告里说；转正、撤回不用模型
+        row = skill_row(out)
+        if row.get("skills") == "off":
+            return "off", "技能没开（KROUTER_SKILLS=1 开启）"
+        drafting = str(row.get("drafting") or "")
+        if drafting == "failed":
+            return "partial", "技能起草的模型调用失败：" + str(row.get("why") or "")[:160]
+        return "ok", "起草跳过：没有模型通道" if drafting.startswith("skipped") else ""
     if rc != 0:
         return "failed", (out.strip().splitlines() or [f"rc={rc}"])[-1][:200]
     if '"import": "off"' in out:
@@ -73,6 +85,17 @@ def classify(rc: int, out: str) -> tuple[str, str]:
         bad = [ln for ln in out.splitlines() if "failed" in ln.lower()]
         return "partial", bad[0].strip()[:200]
     return "ok", ""
+
+
+def skill_row(out: str) -> dict:
+    """The skills step's JSON line from its output ({} when there is none)."""
+    for ln in reversed(out.splitlines()):
+        if ln.lstrip().startswith('{"skills"'):
+            try:
+                return json.loads(ln)
+            except ValueError:
+                return {}
+    return {}
 
 
 def lane(vault: Path) -> str:
@@ -165,10 +188,11 @@ def run_step(step: str, vault: Path, extra: list[str], dry: bool) -> dict:
                 "writes": writes, "detail": out.strip()[-600:]}
     state, reason = classify(rc, out)
     sys.stderr.write(out)
+    detail = {"skills": skill_row(out)} if step == "skills" else {}
     tok = [c.get("tokens_in", 0) + c.get("tokens_out", 0) for c in calls if "tokens_in" in c]
     return {"step": step, "state": state, "reason": reason, "seconds": round(time.time() - start),
             "model_calls": len(calls), "chars_sent": sum(c.get("chars_in", 0) for c in calls),
-            **({"tokens": sum(tok)} if tok else {})}
+            **({"tokens": sum(tok)} if tok else {}), **detail}
 
 
 def channel_lines(vault: Path) -> list[str]:
@@ -201,6 +225,19 @@ def duplicate_lines(vault: Path) -> list[str]:
     return out + [""]
 
 
+def skill_lines(results: list[dict]) -> list[str]:
+    """What the skills step drafted, promoted and withdrawn, with the counts each rests on."""
+    row = next((r.get("skills") for r in results if r.get("step") == "skills"), None)
+    if not row:
+        return []
+    try:
+        import skills
+
+        return skills.report_lines(row)
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def write_report(vault: Path, results: list[dict], state: str, lane_name: str, at: str) -> None:
     rows = []
     for r in results:
@@ -213,6 +250,7 @@ def write_report(vault: Path, results: list[dict], state: str, lane_name: str, a
         f"结果：**{state}**（通道：{lane_name}）", "",
         *channel_lines(vault),
         *duplicate_lines(vault),
+        *skill_lines(results),
         "| 步骤 | 结果 | 模型调用 / 发出 | 秒 | 原因 |", "|---|---|---|---|---|", *rows, "",
         "发出的内容：规则页 / 主题页全文（问答卡）、主题证据（主题档案）、路由器没答好的查询原文（夜间学习）；"
         "开了会话导入并选了提炼时，还有昨天会话的脱敏摘录。"

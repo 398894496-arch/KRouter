@@ -46,6 +46,16 @@ DEAD_STATUS = {"superseded", "retired", "rejected", "deprecated", "archived"}
 HOW_MAX = 80
 # 经验卡（experience.py）：别的任务里的经验，只作为「建议」另行输出，不进事实召回
 EXPERIENCE_DIR = "02 经验与方法/经验卡"
+# 技能（skills.py）：经验长成的做法，同样只在会话开始的摘要里列名字，宿主要用时取全文，不进事实召回
+SKILLS_DIR = "02 经验与方法/技能"
+
+
+def skills_rel(vault) -> str:
+    """This vault's skills folder: an English vault whose zones file predates the `Skills` row still gets `Skills`."""
+    rel = zones.real(vault, SKILLS_DIR)
+    if rel.endswith("/技能") and zones.lang(vault) == "en":
+        rel = rel[: -len("技能")] + "Skills"
+    return rel
 # 问句里的功能性双字，几乎每页都有，不参与召回
 QUERY_STOP = {
     "什么", "怎么", "怎样", "能不", "不能", "是不", "不是", "哪个", "哪些", "哪里", "应该",
@@ -448,11 +458,12 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     qname = compact(query)
     single = is_single_concept(query)
     cards_dir = zones.real(vault, EXPERIENCE_DIR) + "/"
-    own_cards = bool(scope) and (scope + "/").startswith(cards_dir)
+    skills_dir = skills_rel(vault) + "/"
+    own_cards = bool(scope) and (scope + "/").startswith((cards_dir, skills_dir))
     for rid, rel, tier, status, how, title, name, s in rows:
         if scope and not (rel == scope or rel.startswith(scope + "/")):
             continue
-        if not own_cards and rel.startswith(cards_dir):
+        if not own_cards and rel.startswith((cards_dir, skills_dir)):
             continue  # 经验卡只走建议通路（experience.py），不当事实出现在召回里
         boost = TIER_BOOST.get(tier, 1.0)
         if tier == "topic":
@@ -519,7 +530,8 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         keep = min(DIRECT_FIRST, len(ranked))
         n = max(0, limit - keep) if assoc and not partial else 0
         if n:
-            picks = associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)[:n]
+            picks = [p for p in associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)
+                     if own_cards or not p["rel"].startswith((cards_dir, skills_dir))][:n]  # 联想也不带出经验卡和技能
         taken = {p["rel"] for p in picks}
         hits = ranked[:keep] + [h for h in ranked[keep:] if h["rel"] not in taken][: limit - keep - len(picks)]
     for h in ranked:

@@ -61,6 +61,10 @@
     {
       "name": "krouter_learn",
       "description": "Record a lesson from this session as an experience card, offered later on tasks in the same situation."
+    },
+    {
+      "name": "krouter_skill",
+      "description": "Fetch the steps of a skill grown from the user's own lessons, when the task is the situation it is for."
     }
   ],
   "user_config": {

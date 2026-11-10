@@ -23,7 +23,8 @@ the CLI handles its login. (A user can put a `claude setup-token` token in the k
 **With no level available**, nothing needs a model and nothing breaks: recall, correction capture, the experience
 digest, and the agent writing its own cards and notes all work. The nightly report (`90 系统文件/自动化/夜间维护.md`)
 says which steps are off: session distilling, model-lane card extraction, topic dossiers, answer cards, trigger
-proposals, and claude-mem distilling.
+proposals, claude-mem distilling, and drafting skills ([`SKILLS.md`](SKILLS.md); promoting and withdrawing them needs
+no model).
 
 **A choice that differs from the brief.** The brief listed the levels as in session → sampling → CLI → key. KRouter
 keeps a key the user set before an auto-detected CLI, so a user who pays for an API key is not switched to their

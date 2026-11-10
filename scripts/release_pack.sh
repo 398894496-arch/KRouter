@@ -42,6 +42,7 @@ for need in package/scripts/bootstrap.py package/scripts/install.sh package/scri
             package/skill/krouter/scripts/zones_en.psv package/sdk/krouter/cli.py package/sdk/krouter/doctor.py \
             package/skill/krouter/scripts/associate.py package/skill/krouter/scripts/cocite.py \
             package/skill/krouter/scripts/experience.py package/skill/krouter/scripts/llm.py \
+            package/skill/krouter/scripts/skills.py \
             package/skill/krouter/scripts/corrections.py package/skill/krouter/scripts/capture_ledger.py \
             package/skill/krouter/scripts/recollect.py \
             package/.claude-plugin/marketplace.json package/.claude-plugin/plugin.json package/hooks/hooks.json \

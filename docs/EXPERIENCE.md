@@ -13,6 +13,9 @@ anything on any of the 28 held-out tasks that should get nothing. Matching by sh
 
 **Status: on by default when the vault has cards** (since set 23, 2026-11-10): the digest at session start, the use records and `krouter_learn`. `KROUTER_EXPERIENCE=0` turns it all off; the model-lane extraction at distill time stays opt-in (`KROUTER_EXPERIENCE=1`), since it spends a call per session-day. With no cards, nothing is printed.
 
+A lesson borne out again and again, or several cards on the same kind of situation, grow into a skill (a procedure
+with steps): [`SKILLS.md`](SKILLS.md).
+
 ## What it does when on
 
 | Step | Where | What |

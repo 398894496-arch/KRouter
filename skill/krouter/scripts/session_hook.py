@@ -346,10 +346,18 @@ def experience_text(vault: Path) -> str:
     try:
         import experience
 
-        return experience.digest(vault) if experience.digest_on() else ""
+        text = experience.digest(vault) if experience.digest_on() else ""
     except Exception as exc:  # noqa: BLE001  经验摘要出错不影响决定的注入
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
-        return ""
+        text = ""
+    try:
+        import skills  # 技能只列名字和什么时候用；全文由宿主用 krouter_skill 取（skills.py）
+
+        more = skills.digest(vault)
+    except Exception as exc:  # noqa: BLE001
+        print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
+        more = ""
+    return "\n\n".join(t for t in (text, more) if t)
 
 
 START_MAX = 9400  # Claude Code 单条 additionalContext 上限 10,000 字，超出就只给预览：整段留在这之下
