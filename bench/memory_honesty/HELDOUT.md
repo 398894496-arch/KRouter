@@ -574,6 +574,52 @@ on the same thing ranked first and the conflict named, with no model and no dist
 | 2026-11-10 | **Held-out half, run once at `6dedefd`.** Multi-session (47) at k = 3 / 5 / 8: bm25 24 / 31 / 35, krouter 28 / 32 / 36, krouter+assoc **29 / 40 / 42**; paired, krouter+assoc minus bm25: k = 3 [0, +10], k = 5 [+4, +15], k = 8 [+3, +12]. Temporal (73): 51 / 54 / 59, 50 / 53 / 59, 50 / 58 / 63. All 235: 184 / 198 / 208, 187 / 198 / 209, **190 / 210 / 218** (k = 3 [−1, +13]). Memory honesty, six sets: no change. **Bar (1) fails at k = 3**: the interval's lower end is 0, not above it (most of the four-question lead over BM25 at k = 3 is the direct path's: krouter alone is 28); (2) and (3) pass. So the associative path ships **off by default** (`KROUTER_ASSOC=1` turns it on). |
 | 2026-11-10 | After the held-out run, the conflict tie-break (not part of this bar) was narrowed: a newer page whose change line does not name the question's subject is no longer flagged (the dev half had 57 such "possible" flags in 235 questions, long chats being full of "instead of" and "replace"; 13 after). The held-out fire counts had been seen once before this change (they were counted next to dev's), not the coverage counts. The held-out half was then run a second time with the final code to report the shipped configuration: **every count identical** to the run above. |
 | 2026-11-10 | LoCoMo, a second outside check that decides nothing (set 10's conversion, categories 1–4 with evidence, 1 536 questions, all sessions of a conversation in one vault): all at k = 3 / 5 / 8: bm25 1 079 / 1 181 / 1 269, krouter 1 104 / 1 204 / 1 273, krouter+assoc 1 078 / 1 183 / 1 271; category 1 (282, the multi-evidence category): 47 / 73 / 105, 51 / 78 / 110, 50 / 78 / 106. On LoCoMo's short sessions the associative path takes slots from direct hits that were right: **no gain, a small loss against krouter**. |
+| 2026-11-10 | **The maintainer's decision after these numbers** (relayed by the planning session): the associative path goes in built in, no switch, as five pages, the first three always direct hits and the associated pages in places four and five (earlier only when there are fewer than three direct hits), a place they do not need going to the next direct hit. This is the k = 5 configuration measured above, decided by the maintainer, not by bar (1), which stays failed at k = 3. One fix with it: when one associated page was found, the fifth place could repeat it as a direct hit; now it goes to the next direct hit not already listed. Rerun of both halves and LoCoMo with that code: held-out k = 5 **unchanged** (multi-session 40, temporal 58, all 210; krouter's five direct hits 32 / 53 / 198; bm25 31 / 54 / 198); dev k = 5 unchanged (63 / 46 / 213). k = 3 is now krouter's three direct hits (no associated place), and k = 8 three direct + five associated (held-out 42 / 61 / 215). LoCoMo at five pages: 1 185 (bm25 1 181, five direct hits 1 204, the earlier three pages 1 104); at three pages now equal to krouter (1 104). Memory honesty, six sets, at five pages: unchanged. |
+
+## Set 22: the same reader, five pages each — keyword search against KRouter with its associative path (registered 2026-11-10, before any reader or judge call)
+
+**Why.** Set 12 found KRouter's three pages level with plain BM25's three (400 and 405 of 500), and the README says so.
+KRouter now hands over five pages, the last two from the associative path, and set 18 counted, without a reader, that
+this brings every answer session for more multi-session and temporal questions. This set asks whether that turns
+into answers, against keyword search given the same number of pages.
+
+**Data, reader, judge.** As set 12, unchanged: the same 500 questions, the reader template and judge prompts in
+`bench/longmemeval/qa.py`, Claude Sonnet 5.5 as Claude Code subagents with the same instructions, reader batches of up
+to 12 prompts or 200 000 characters, judge batches of 25. Every agent's reported model is logged; a row is compared
+with sets 11 and 12 only if its agents report `claude-sonnet-5-5`.
+
+**Rows.** (1) *Plain BM25, top five sessions*: `qa.py baseline --kind bm25 --top 5` (set 12's Okapi BM25, unchanged
+apart from five instead of three). (2) *KRouter, five pages*: `lme.py run --system krouter --pages 5` at the commit
+that carries this registration: `route_knowledge.py search`, as an agent calls it, the receipt's pages in order (direct
+hits, then `associated:`); a refusal gives the reader nothing.
+
+**Not run again.** A prompt identical, character for character, to one sets 11 or 12 ran is copied with its reply and
+verdict, not produced again; a prompt identical between the two rows of this set is run once and used for both. The
+results files mark each such question and the counts are reported.
+
+**Known before the run.** The whole set is seen (sets 7, 11, 12), and so is set 18's retrieval count on both halves
+(dev tuned, held-out run; FTS5 BM25 there, not this set's Okapi BM25). The configuration is set 18's five-page rule as
+shipped; nothing in ranking, refusal or the page rule changes between this registration and the run. Expected from set
+18: more answer sessions handed over on multi-session and temporal questions; whether the reader turns that into
+answers, and whether two more pages of distractors cost elsewhere, is the question.
+
+**Reported,** whatever it shows: each row over the 500, the 470 answerable, the 30 `_abs` and per type, with 95%
+bootstrap intervals; paired, KRouter minus BM25 (10 000 resamples, seed 20261110), with how many questions only one
+of the two got right; and each row next to set 12's three-page rows (same reader). **What may be said after it:** if
+the paired interval over the 500 is above zero, that KRouter is ahead of keyword search at the same five pages, with
+the numbers; if it holds zero, that they are level at five pages too; if it is below zero, that.
+
+**Estimated cost, counted from the prompts before any call** (KRouter's pages taken in-process, so the run's own
+count may differ by a few): BM25 row 500 prompts, 33.0 M characters, 205 reader batches; KRouter row 466 prompts after
+34 are copied from sets 11 and 12, 420 after 46 identical to the BM25 row are shared, 27.3 M characters, 168 reader
+batches; about 37 judge batches. In all **about 410 subagent runs and 60 M characters (about 15 M tokens) of reader
+input**. Not started until the maintainer says so.
+
+### Log, set 22
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. Not run (waiting for the maintainer, for cost). |
 
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 

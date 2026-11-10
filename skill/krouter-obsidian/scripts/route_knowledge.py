@@ -218,8 +218,10 @@ def how_for(vault: Path, case_id: str, anchor: str) -> tuple[str, bool]:
 
 
 
-def log_query(route: str, query: str, status: str, top: str = "", confidence: str = "") -> None:
-    """One JSONL line per routed query, outside the vault. Feeds nightly trigger learning. Never fails the route."""
+def log_query(route: str, query: str, status: str, top: str = "", confidence: str = "",
+              pages: list[str] | None = None) -> None:
+    """One JSONL line per routed query, outside the vault. Feeds nightly trigger learning and, with `pages` (the
+    direct hits shown, never the associated ones), the nightly co-citation step. Never fails the route."""
     if not query or os.environ.get("KROUTER_NO_QUERY_LOG") == "1":
         return
     try:
@@ -229,6 +231,8 @@ def log_query(route: str, query: str, status: str, top: str = "", confidence: st
         base.mkdir(parents=True, exist_ok=True)
         row = {"ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "route": route, "q": redact(query),
                "status": status, "top": top, "confidence": confidence}
+        if pages:
+            row["pages"] = pages
         with (base / "queries.jsonl").open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
     except OSError:
@@ -394,25 +398,25 @@ def print_recall(res: dict, vault: Path, lines: int) -> None:
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
     res = None
     try:
-        import associate
         from recall_index import recall
 
         rel = "" if scope == vault else scope.relative_to(vault).as_posix()
-        res = recall(vault, query, rel, limit=3, assoc=associate.enabled())
+        res = recall(vault, query, rel)
     except Exception:  # 召回缓存不可用时退回字面检索
         res = None
     widened = False
     if (res is None or not res["hits"] or res.get("confidence") == "none") and scope != vault:
         # 路由范围（单个偏好/纠错页、01 项目）里没有答案：扩到全库，规则页优先，并如实标出
         try:
-            wide = recall(vault, query, "", limit=3, assoc=associate.enabled())
+            wide = recall(vault, query, "")
             if wide["hits"] and wide.get("confidence") != "none":
                 res, widened = wide, True
         except Exception:
             pass
     if res and res["hits"] and res.get("confidence") != "none":
         emit_receipt(scope, "ranked-recall-complete", route, query, vault, map_path)
-        log_query(route, query, "ranked-recall-complete" + ("+widened" if widened else ""), res["hits"][0]["rel"], res.get("confidence", ""))
+        log_query(route, query, "ranked-recall-complete" + ("+widened" if widened else ""), res["hits"][0]["rel"],
+                  res.get("confidence", ""), [h["rel"] for h in res["hits"][:3]])
         emit_suggestions(query, vault, map_path)
         print(f"route: {route}")
         print(f"scope: {scope}")

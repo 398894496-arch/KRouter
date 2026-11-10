@@ -11,17 +11,18 @@ in the same rebuildable cache as the full-text index (`recall_index.connect`), s
 - `day`: two pages dated the same day (`date:` frontmatter, or a file name that starts with the date);
 - `words`: two pages that share words that are rare in the vault (each page keeps its `KEY_TERMS` most frequent
   content words; a word in many pages spreads thinly, one in a third of the vault or more not at all);
-- `cocite`: pages that were cited together before (`reinforce`), read from a state file outside the vault. Nothing
-  calls `reinforce` yet; the nightly job can, once it is wired.
+- `cocite`: pages that were cited together before, read from a state file outside the vault. The nightly step
+  `cocite.py` adds to it from the query log: the direct hits a confident lookup returned together (never the
+  associated pages, so the path does not feed itself).
 
 Spreading is one hop with decay: each of the first `SEEDS` direct hits passes on its share (its score over the top
 score) along its edges; a page reached by several seeds or edges adds them up, then is weighted up by how well it
 matches the question by itself (`QUERY_BOOST`). Hubs (index and overview pages, pages with `HUB_DEGREE` or more links)
 are never offered, and what they pass on is split over all their links. Replaced pages are never offered.
 
-Chosen on set 18's development half of LongMemEval (HELDOUT.md) and the memory-honesty development benches. Off by
-default (`KROUTER_ASSOC=1` turns it on): on the held-out half it brings every answer session for more multi-session
-questions than BM25 at 5 and 8 pages, but at 3 pages the gain is not shown, and on LoCoMo it does not help.
+Chosen on set 18's development half of LongMemEval (HELDOUT.md) and the memory-honesty development benches. Built in,
+no switch: a lookup gives 5 pages, the first 3 always direct hits, the associated pages after them
+(`recall_index.recall`). Set 18 measured it as 3 direct + 2 associated against BM25's top 5.
 
 The conflict tie-break (`conflicts`) is on by default (`KROUTER_CONFLICT=0` turns it off).
 """
@@ -389,27 +390,6 @@ def spread(con: sqlite3.Connection, direct: list[dict], shown: set[str], scope: 
         out.append({"rel": rel, "tier": tier, "status": status, "how": how, "score": round(score, 4), "via": steps})
     out.sort(key=lambda x: (-x["score"], x["rel"]))
     return out
-
-
-def slots(limit: int) -> int:
-    """How many of `limit` pages go to the associative path: 1 of 3, 2 of 5, 3 of 8."""
-    return max(0, (limit + 1) // 3)
-
-
-def enabled(value: bool | None = None) -> bool:
-    if value is not None:
-        return value
-    raw = (os.environ.get("KROUTER_ASSOC") or "").strip().lower()
-    if raw in {"0", "off", "no", "false"}:
-        return False
-    if raw in {"1", "on", "yes", "true"}:
-        return True
-    return DEFAULT_ON
-
-
-# 第 18 组（HELDOUT.md）的过关线没全过：留出半上 k=3 时多会话题比 BM25 多 5 道，但配对区间下限是 0；
-# LoCoMo 上还略亏。所以默认关，`KROUTER_ASSOC=1` 打开
-DEFAULT_ON = False
 
 
 def conflict_enabled() -> bool:

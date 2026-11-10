@@ -121,7 +121,7 @@ def split_of(rows: list[dict]) -> dict[str, str]:
     return {r["id"]: "abs" if r["abs"] else ("dev" if r["id"] in dev else "heldout") for r in rows}
 
 
-def run(system: str, limit: int, repo: Path, sample: int = 0) -> None:
+def run(system: str, limit: int, repo: Path, sample: int = 0, pages: int = 3) -> None:
     rows = load_questions()[: limit or None]
     if sample:
         rows = sample_of(rows, sample)
@@ -141,7 +141,8 @@ def run(system: str, limit: int, repo: Path, sample: int = 0) -> None:
     elif system == "krouter":
         cache = STATE / "cache"
         for it in rows:
-            ans = run_real.route_answers(repo, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"])[0]
+            ans = run_real.route_answers(repo, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"],
+                                         pages=pages)[0]
             out.append({"id": it["id"], "cited": ans["cited"], "refused": ans["refused"], "repo": str(repo)})
             shutil.rmtree(cache / it["id"], ignore_errors=True)
     else:
@@ -237,6 +238,7 @@ def main() -> int:
     r = sub.add_parser("run")
     r.add_argument("--system", choices=["krouter", "bm25-floor", "krouter-inproc", *sorted(DENSE_SYSTEMS)], required=True)
     r.add_argument("--sample", type=int, default=0, help="a seed-drawn sample of this many answerable questions")
+    r.add_argument("--pages", type=int, default=3, help="krouter: how many cited pages to keep (set 22: 5)")
     r.add_argument("--limit", type=int, default=0)
     r.add_argument("--repo", default=str(REPO), help="the KRouter checkout to run (e.g. a worktree at the release tag)")
     sub.add_parser("score")
@@ -246,7 +248,7 @@ def main() -> int:
     if args.cmd == "convert":
         convert(Path(args.data))
     elif args.cmd == "run":
-        run(args.system, args.limit, Path(args.repo), args.sample)
+        run(args.system, args.limit, Path(args.repo), args.sample, args.pages)
     else:
         score()
     return 0

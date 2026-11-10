@@ -154,7 +154,8 @@ def baseline(args) -> None:
     data = load_data(Path(args.data))
     rows = []
     for qid, it in data.items():
-        cited = {"none": [], "bm25": bm25_top(it), "oracle": list(dict.fromkeys(it["answer_session_ids"]))}[args.kind]
+        cited = {"none": [], "bm25": bm25_top(it, args.top),
+                 "oracle": list(dict.fromkeys(it["answer_session_ids"]))}[args.kind]
         rows.append({"id": qid, "cited": cited, "refused": not cited, "system": args.kind})
     Path(args.out).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     hit = sum(1 for r in rows if "_abs" not in r["id"] and set(r["cited"]) & set(data[r["id"]]["answer_session_ids"]))
@@ -308,6 +309,7 @@ def main() -> int:
     p.add_argument("--reuse", default="", help="set 11's results JSONL: a prompt it already ran is copied, not re-run")
     b = sub.add_parser("baseline")
     b.add_argument("--kind", choices=["none", "bm25", "oracle"], required=True)
+    b.add_argument("--top", type=int, default=TOP, help="bm25: how many sessions (set 12: 3; set 22: 5)")
     b.add_argument("--data", required=True)
     b.add_argument("--out", required=True)
     j = sub.add_parser("judge-prepare")

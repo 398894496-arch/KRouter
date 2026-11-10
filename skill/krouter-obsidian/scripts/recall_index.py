@@ -387,12 +387,18 @@ def forget_refresh() -> None:
     _REFRESHED.clear()
 
 
-def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_first: bool = True,
-           gate: bool = True, assoc: bool = False, conflict: bool | None = None) -> dict:
-    """Ranked pages for `query`. `hits` are the direct hits (the question's own words). With `assoc`, up to
-    `associate.slots(limit)` of the `limit` pages are associated pages instead (`assoc`, each with the edges it came
-    along), when there are any. `conflict` (on unless `KROUTER_CONFLICT=0`): when two of the top pages say the same
-    thing at different dates and the newer one says it was changed, the newer one goes first (`conflict`)."""
+PAGES = 5         # 一次查询交给 agent 的页数：前 3 页是直接命中，后 2 页留给联想（没有就给后面的直接命中）
+DIRECT_FIRST = 3
+
+
+def recall(vault: Path, query: str, scope: str = "", limit: int = PAGES, refresh_first: bool = True,
+           gate: bool = True, assoc: bool = True, conflict: bool | None = None) -> dict:
+    """Ranked pages for `query`, at most `limit` of them. `hits` are the direct hits (the question's own words); the
+    first `DIRECT_FIRST` places are always theirs. The places after those go to associated pages (`assoc`, each with
+    the edges it came along), and to further direct hits when there are not enough; with fewer direct hits than
+    `DIRECT_FIRST`, associated pages may fill those places too. A refusal stays a refusal. `assoc=False` gives the
+    direct ranking alone (the nightly tools use it). `conflict` (on unless `KROUTER_CONFLICT=0`): when two of the top
+    pages say the same thing at different dates and the newer one says it was changed, the newer one goes first."""
     con = connect(cache_path(vault))
     try:
         return _recall(con, vault, query, scope, limit, refresh_first, gate, assoc,
@@ -497,10 +503,14 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
             found = associate.conflicts(sys.modules[__name__], con, vault, ranked, qtok)
             if found:
                 associate.apply_conflict(ranked, found)
-        n = associate.slots(limit) if assoc and not partial else 0
+        # 前 DIRECT_FIRST 个位置永远是直接命中；联想只填后面的位置（直接命中不够时可以往前补），
+        # 用不完的位置再给后面的直接命中。拒答时（conf == none）不走这里：联想不会把"库里没有"变成"有"
+        keep = min(DIRECT_FIRST, len(ranked))
+        n = max(0, limit - keep) if assoc and not partial else 0
         if n:
-            picks = associate.spread(con, ranked, {h["rel"] for h in ranked[: limit - n]}, scope)[:n]
-        hits = ranked[: limit - len(picks)]
+            picks = associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)[:n]
+        taken = {p["rel"] for p in picks}
+        hits = ranked[:keep] + [h for h in ranked[keep:] if h["rel"] not in taken][: limit - keep - len(picks)]
     for h in ranked:
         h.pop("rid", None)
     if hits and conf != "none" and not partial:
@@ -514,8 +524,9 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     return out
 
 
-def page_list(res: dict, k: int) -> list[str]:
-    """The pages a reader is given, in order: the direct hits, then the associated pages, at most `k`."""
+def page_list(res: dict, k: int = PAGES) -> list[str]:
+    """The pages a reader is given, in the receipt's order: the direct hits (the first `DIRECT_FIRST` of them always
+    there, then any the associative path left room for), then the associated pages; at most `k`."""
     return ([h["rel"] for h in res.get("hits", [])] + [a["rel"] for a in res.get("assoc", [])])[:k]
 
 
@@ -908,7 +919,7 @@ def main() -> int:
     ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--query", default="")
     ap.add_argument("--scope", default="", help="vault-relative dir or file to restrict to")
-    ap.add_argument("--limit", type=int, default=5)
+    ap.add_argument("--limit", type=int, default=PAGES)
     ap.add_argument("--lines", type=int, default=1, help="best matching lines to show per hit")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--rebuild", action="store_true")
@@ -928,7 +939,7 @@ def main() -> int:
         built = (con.execute("SELECT v FROM meta WHERE k='built_at'").fetchone() or [""])[0]
         print(json.dumps({"cache": str(db), "built_at": built, "tiers": tiers, **st}, ensure_ascii=False))
         return 0
-    res = recall(vault, args.query, args.scope, args.limit, assoc=associate.enabled())
+    res = recall(vault, args.query, args.scope, args.limit)
     if args.json:
         print(json.dumps(res, ensure_ascii=False))
         return 0

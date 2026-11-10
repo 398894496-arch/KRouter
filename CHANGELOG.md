@@ -22,22 +22,29 @@ notice, then the details.
   fires as "sure" for 42 of 470 and reorders 21; the newest answer session is first for 44 instead of 39 of the 72
   knowledge-update questions, and an answer session is first for 420 of 470 either way (counted without the
   refusal gate; not a registered set). Memory honesty, six sets: unchanged. On by default; `KROUTER_CONFLICT=0` turns it off.
-- **An associative recall path, measured and off by default.** The recall cache now keeps an edge table: links,
-  `supersedes:`, same imported session, same day, shared rare words, and co-citation read from a state file
-  (`associate.reinforce`, for the nightly job; not wired yet). With `KROUTER_ASSOC=1`, one of every three pages (1 of
-  3, 2 of 5, 3 of 8) goes to pages reached from the first three direct hits along those edges, hub pages (index,
-  overview, 12+ links) and replaced pages never offered, and only when an edge is explicit or the pages share at least
-  six rare words. The receipt lists them apart, under `associated:`, each with the edge it came along (`via:`). Set
-  18 (`bench/memory_honesty/HELDOUT.md`, registered before the path was written; LongMemEval split in half, tuned on
-  one half, the other run once), "every answer session among the k pages", multi-session questions at k = 3 / 5 / 8:
-  BM25 24 / 31 / 35 of 47, KRouter 28 / 32 / 36, with the path **29 / 40 / 42**; all 235: 184 / 198 / 208, 187 / 198 /
-  209, **190 / 210 / 218**. The bar fixed beforehand asked for a gain over BM25 shown at both 3 and 5 pages; at 3 the
-  interval is [0, +10], so the path is **not on by default**. On LoCoMo it does not help (1 104 → 1 078 at three pages,
-  against KRouter without it). Memory honesty, six sets: unchanged with it on. The edge table costs a 10,000-page
-  build 6.0 s instead of 3.6 s and 38 MB of cache instead of 29, a lookup 83 ms instead of 69 (50,000 pages: 32 s
-  instead of 25, 193 MB instead of 150; measured with other jobs running). Offline count, no model:
-  `bench/longmemeval/assoc.py` (`--half dev|heldout`, `--locomo`).
-
+- **A lookup now gives five pages: three that match the question, then up to two the vault connects to them.** The
+  recall cache keeps an edge table (links, `supersedes:`, same imported session, same day, shared rare words, and
+  co-citation), and recall spreads from the first three direct hits along it. The first three places are always direct
+  hits; associated pages take places four and five (with fewer than three direct hits they may move up), and a place
+  they do not need goes to the next direct hit. Hub pages (index, overview, 12+ links) and replaced pages are never
+  offered; a page joined only by shared words needs at least six of them. A refusal stays a refusal: with no direct hit
+  nothing is associated. The receipt lists them apart, under `associated:`, each with the edge it came along (`via:`).
+  Built in, no switch. Set 18 (`bench/memory_honesty/HELDOUT.md`, registered before the path was written; LongMemEval
+  split in half, tuned on one half, the other run), "every answer session among the pages", held-out half at five
+  pages: multi-session **40 of 47** (BM25's top five 31, KRouter's five direct hits 32; paired against BM25 [+4,
+  +15]), temporal 58 of 73 (54, 53), all **210 of 235** (198, 198; [+3, +21]). Against the three pages KRouter gave
+  before: 28, 50 and 187. LoCoMo, a check that decided nothing: 1 185 of 1 536 at five pages, BM25 1 181, five direct
+  hits 1 204, the old three pages 1 104; on its short sessions the associated pages cost places four and five that a
+  direct hit had right. Memory honesty, six sets: unchanged. Cost: the receipt is about a fifth longer (median 1 692 →
+  1 952 characters, 2.6 → 3.8 pages listed on the bench questions), a CLI lookup 71 → 77 ms, in-process 12.5 → 17.7
+  ms at 10,000 pages; building the cache for 10,000 pages 3.6 s → 6.0 s, 29 → 38 MB (50,000 pages: 25 → 32 s, 150
+  → 193 MB, measured with other jobs running). `recall(..., assoc=False)` gives the direct ranking alone (the nightly
+  checkup and reconsolidation use it). Offline count, no model: `bench/longmemeval/assoc.py`.
+- **Pages a confident lookup returned together get a stronger edge, overnight.** The router's query log now records
+  the direct hits each lookup returned (`pages`; never the associated ones, so the path cannot feed itself), and a
+  new nightly step, `cocite` (after `checkup`, no model, writes only a file in the state directory), adds one to the
+  co-citation weight of every pair a `high` or `medium` lookup returned, reading each log line once. The weight
+  saturates at five.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

@@ -115,10 +115,10 @@ def krouter_answers(rows: list[dict], vault_src: Path | None = None) -> list[dic
 
         out = []
         for it in rows:
-            # 和 agent 拿到的一样：联想通路按产品默认（`KROUTER_ASSOC`），冲突兜底按产品默认（`KROUTER_CONFLICT`）
-            res = ri.recall(vault, it["q"], limit=3, assoc=ri.associate.enabled())
+            # 和 agent 拿到的一样：交 ri.PAGES 页（前 3 页直接命中，后面是联想），冲突兜底按产品默认（`KROUTER_CONFLICT`）
+            res = ri.recall(vault, it["q"])
             refused = res["confidence"] == "none" or not res["hits"]
-            out.append({"id": it["id"], "refused": refused, "cited": [] if refused else ri.page_list(res, 3),
+            out.append({"id": it["id"], "refused": refused, "cited": [] if refused else ri.page_list(res, ri.PAGES),
                         "score": None if refused else float(res["hits"][0]["score"])})
     for k, v in saved.items():
         if v is None:

@@ -24,7 +24,6 @@ def ri(tmp_path, monkeypatch):
     monkeypatch.setenv("KROUTER_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setenv("KROUTER_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setenv("KROUTER_NO_QUERY_LOG", "1")
-    monkeypatch.delenv("KROUTER_ASSOC", raising=False)
     monkeypatch.delenv("KROUTER_CONFLICT", raising=False)
     import recall_index
 
@@ -81,32 +80,53 @@ def test_edges_are_in_the_rebuildable_cache(ri, tmp_path):
     assert ("01 项目/Billing/Invoice retries.md", "01 项目/Billing/Dunning emails.md", "link") in links
     con.close()
     ri.cache_path(v).unlink()  # the cache can go at any time; the next lookup rebuilds the edges
-    res = ri.recall(v, "how many times do failed invoice charges retry", limit=3, assoc=True)
-    assert res["assoc"][0]["rel"] == "01 项目/Billing/Dunning emails.md"
+    res = ri.recall(v, "how many times do failed invoice charges retry")
+    assert "01 项目/Billing/Dunning emails.md" in [a["rel"] for a in res["assoc"]]
 
 
 def test_associated_pages_are_separate_say_their_edge_and_fit_the_page_budget(ri, tmp_path):
     v = _vault(tmp_path)
     q = "how many times do failed invoice charges retry"
-    off = ri.recall(v, q, limit=3)
-    assert "assoc" not in off and off["hits"][0]["rel"] == "01 项目/Billing/Invoice retries.md"
-    on = ri.recall(v, q, limit=3, assoc=True)
-    assert on["hits"][0]["rel"] == off["hits"][0]["rel"]  # the direct path is untouched
-    assert len(ri.page_list(on, 3)) <= 3 and len(on["assoc"]) <= ri.associate.slots(3)
-    a = on["assoc"][0]
-    assert a["rel"] == "01 项目/Billing/Dunning emails.md"  # it shares no word with the question
+    direct = ri.recall(v, q, assoc=False)
+    assert "assoc" not in direct and direct["hits"][0]["rel"] == "01 项目/Billing/Invoice retries.md"
+    on = ri.recall(v, q)  # built in: no switch
+    keep = min(ri.DIRECT_FIRST, len(direct["hits"]))
+    assert [h["rel"] for h in on["hits"][:keep]] == [h["rel"] for h in direct["hits"][:keep]]
+    pages = ri.page_list(on, ri.PAGES)
+    assert ri.PAGES == 5 and len(pages) <= 5 and len(set(pages)) == len(pages)
+    a = next(x for x in on["assoc"] if x["rel"] == "01 项目/Billing/Dunning emails.md")  # shares no word with the q
     assert {"kind": "link", "from": "01 项目/Billing/Invoice retries.md"} in a["via"]
-    shown = {h["rel"] for h in on["hits"]} | {x["rel"] for x in on["assoc"]}
-    assert "01 项目/Billing/Index.md" not in shown  # a hub page (14+ links, "index") is never offered
-    assert "01 项目/Billing/Retry policy (old).md" not in shown  # nor a replaced page
+    offered = {x["rel"] for x in on["assoc"]}
+    assert "01 项目/Billing/Index.md" not in offered  # a hub page (14+ links, "index") is never offered
+    assert "01 项目/Billing/Retry policy (old).md" not in offered  # nor a replaced page
 
 
-def test_associative_path_off_by_default_and_env_switch(ri, monkeypatch):
-    assert ri.associate.enabled() is ri.associate.DEFAULT_ON
-    monkeypatch.setenv("KROUTER_ASSOC", "1")
-    assert ri.associate.enabled() is True
-    monkeypatch.setenv("KROUTER_ASSOC", "0")
-    assert ri.associate.enabled() is False
+def test_first_three_places_are_always_direct_hits(ri, tmp_path):
+    """Five pages all match the question; one strongly linked page does not. The link never pushes a direct hit out
+    of the first three places; the one place it does not need goes to the next direct hit."""
+    v = tmp_path / "vault"
+    _filler(v)
+    for i in range(5):
+        _write(v, f"a/Backup {i}.md", f"---\ntitle: Backup {i}\n---\nThe nightly database backup step {i} "
+               f"runs at {i} am and keeps backups for {i + 7} days. [[Restore drill]]\n")
+    _write(v, "a/Restore drill.md", "---\ntitle: Restore drill\n---\nOnce a quarter we restore one snapshot "
+           "into staging and time it.\n")
+    q = "when does the nightly database backup run and how long are backups kept"
+    direct = [h["rel"] for h in ri.recall(v, q, assoc=False)["hits"]]
+    res = ri.recall(v, q)
+    assert [h["rel"] for h in res["hits"][:3]] == direct[:3]
+    assert [x["rel"] for x in res["assoc"]] == ["a/Restore drill.md"]
+    assert [h["rel"] for h in res["hits"]] == direct[:4]  # the place the path did not need goes to the next direct hit
+    assert ri.page_list(res, 5) == direct[:4] + ["a/Restore drill.md"]
+
+
+def test_fewer_direct_hits_let_associated_pages_move_up_and_a_refusal_stays_a_refusal(ri, tmp_path):
+    v = _vault(tmp_path)
+    res = ri.recall(v, "dunning reminder templates live in which repo")
+    assert len(res["hits"]) < ri.DIRECT_FIRST and res.get("assoc")
+    assert len(ri.page_list(res, 5)) <= 5
+    none = ri.recall(v, "what is the kubernetes autoscaler cooldown")
+    assert none["confidence"] == "none" and "assoc" not in none
 
 
 def test_co_citation_strengthens_an_edge_from_a_state_file(ri, tmp_path):
@@ -116,18 +136,60 @@ def test_co_citation_strengthens_an_edge_from_a_state_file(ri, tmp_path):
     _write(v, "a/Pager rota.md", "---\ntitle: Pager rota\n---\nThe on-call engineer changes every Monday.\n")
     _write(v, "a/Other.md", "---\ntitle: Other\n---\nCoffee order for the offsite.\n")
     q = "when do deploys go out"
-    assert "assoc" not in ri.recall(v, q, limit=3, assoc=True)
+    assert "a/Pager rota.md" not in ri.page_list(ri.recall(v, q), 5)
     assert ri.associate.reinforce(v, ["a/Deploy window.md", "a/Pager rota.md"], 5.0) == 1
-    res = ri.recall(v, q, limit=3, assoc=True)
-    assert [x["rel"] for x in res["assoc"]] == ["a/Pager rota.md"]
-    assert res["assoc"][0]["via"][0]["kind"] == "cocite"
+    res = ri.recall(v, q)
+    assert "a/Pager rota.md" in [x["rel"] for x in res["assoc"]]
+    assert next(x for x in res["assoc"] if x["rel"] == "a/Pager rota.md")["via"][0]["kind"] == "cocite"
     assert ri.associate.cocite_file(v).parent == tmp_path / "state"  # outside the vault and the cache
+
+
+def test_nightly_cocite_step_learns_from_confident_lookups_only(ri, tmp_path):
+    """The router logs the direct hits it returned; the nightly step turns confident ones into co-citation edges,
+    reads each log line once, and never counts associated pages."""
+    v = tmp_path / "vault"
+    _filler(v)
+    _write(v, "a/Deploy window.md", "---\ntitle: Deploy window\n---\nDeploys go out on Tuesday mornings only.\n")
+    _write(v, "a/Pager rota.md", "---\ntitle: Pager rota\n---\nThe on-call engineer changes every Monday.\n")
+    state = tmp_path / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    row = {"route": "search", "status": "ranked-recall-complete", "confidence": "high",
+           "pages": ["a/Deploy window.md", "a/Pager rota.md"]}
+    log = state / "queries.jsonl"
+    log.write_text("\n".join(json.dumps(r) for r in [
+        row, row, row, row, row,
+        {**row, "confidence": "low"},  # not confident: ignored
+        {**row, "pages": ["a/Deploy window.md", "a/Gone.md"]},  # a page no longer there: no pair
+        {**row, "status": "bounded-literal-search-complete"},
+    ]) + "\n", encoding="utf-8")
+    env = {**os.environ, "KROUTER_STATE_DIR": str(state), "KROUTER_NO_QUERY_LOG": "1"}
+    run = lambda *a: json.loads(subprocess.run([sys.executable, str(SCRIPTS / "cocite.py"), "--vault", str(v), *a],
+                                               env=env, capture_output=True, text=True, timeout=60).stdout)
+    assert run("--dry-run") == {"cocite": "dry-run", "lookups": 8, "groups": 5, "pairs": 5,
+                                "writes": [str(ri.associate.cocite_file(v))]}
+    assert not ri.associate.cocite_file(v).exists()
+    assert run() == {"cocite": "done", "lookups": 8, "groups": 5, "pairs": 5}
+    assert run() == {"cocite": "done", "lookups": 0, "groups": 0, "pairs": 0}  # each line once
+    res = ri.recall(v, "when do deploys go out")
+    assert any(s["kind"] == "cocite" for x in res.get("assoc", []) for s in x["via"])
+
+
+def test_router_logs_direct_hits_for_the_nightly_step(tmp_path):
+    v = _vault(tmp_path)
+    env = {**os.environ, "OBSIDIAN_VAULT": str(v), "KROUTER_CACHE_DIR": str(tmp_path / "c"),
+           "KROUTER_STATE_DIR": str(tmp_path / "s")}
+    env.pop("KROUTER_NO_QUERY_LOG", None)
+    subprocess.run([sys.executable, str(ROUTE), "search", "how many times do failed invoice charges retry"],
+                   env=env, capture_output=True, text=True, timeout=60)
+    row = json.loads((tmp_path / "s/queries.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+    assert row["pages"][0] == "01 项目/Billing/Invoice retries.md"
+    assert "01 项目/Billing/Dunning emails.md" not in row["pages"]  # associated pages are not logged
 
 
 def test_route_prints_associated_block_after_hits(tmp_path):
     v = _vault(tmp_path)
     env = {**os.environ, "OBSIDIAN_VAULT": str(v), "KROUTER_CACHE_DIR": str(tmp_path / "c"),
-           "KROUTER_STATE_DIR": str(tmp_path / "s"), "KROUTER_NO_QUERY_LOG": "1", "KROUTER_ASSOC": "1"}
+           "KROUTER_STATE_DIR": str(tmp_path / "s"), "KROUTER_NO_QUERY_LOG": "1"}
     out = subprocess.run([sys.executable, str(ROUTE), "search", "how many times do failed invoice charges retry"],
                          env=env, capture_output=True, text=True, timeout=60).stdout
     recall_block, _, assoc_block = out.partition("\nassociated: ")
