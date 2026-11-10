@@ -995,3 +995,103 @@ Also reported: how many duplicates were linked to the right card with `same_as`.
 | 2026-11-10 | Registered (`8ea41c3`). |
 | 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
 | 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |
+
+## Set 32: mention it and it comes to mind — does the prompt hook bring the right page, and only then? (registered 2026-11-10, before any case was split or run)
+
+**Why.** Until 2.0 the lock and the trigger words ran only when the agent chose to call `krouter_ask`: whether the
+vault "came to mind" depended on the agent. `session_hook.py prompt` now looks every message up (`recollect.py`: no
+model call) and hands the agent at most two pages, marked as memory. This set asks whether it brings the right page
+when a message mentions something the vault knows, brings the newer page when the rule changed, and stays silent
+otherwise. Silence matters most: this runs on every message.
+
+**Vault.** `bench/memory_honesty/vault3` (frozen, 110 pages, English and Chinese, 18 old/new page pairs), copied to a
+temporary folder at run time with `bench/subconscious/overlay/` laid into `90 系统文件/`: an alias table of 63 rows
+(some rows still point at a page that was later superseded, as a table nobody updated would; three topics have a row
+for both pages) and two trigger sidecars (20 generated lines, 7 learned questions). The overlay was written before any
+case existed, by the session that writes the matcher.
+
+**Cases.** 120, written by Sonnet 5.5 in a fresh Claude Code subagent that read one input file (every Handbook and
+团队手册 page with its status and text, and the alias names of the pages that have them) and nothing else: not the
+trigger sidecars, not the anchors, not any code. Told to write the way people write to a coding assistant mid-work
+and neither to use nor to avoid the names. Per language (zh, en): 24 *recall* (a message that mentions something one
+active page covers; the expected page), 24 *quiet* (6 each: unrelated; a name meant in another sense; a name or key
+word as an everyday word in a longer sentence; a name only inside pasted code, a log, a diff or command output, at
+least half unfenced), 12 *changed* (a topic with an old and a new page; the new page expected, the old one recorded).
+Not edited. Split at seed 20261132, stratified by language, kind and subkind, half to each side:
+`bench/subconscious/dev.jsonl` (60) is where the matcher, the paste filter and the routes may be tuned;
+`bench/subconscious/heldout.jsonl.gz` (60) is sealed and run once. The writer's raw file stays out of the repository.
+
+**System.** `recollect.recollect()` as the hook calls it, with the routes chosen on development. Choice rule, fixed
+now: maximise recalled (recall + changed cases bringing the expected page) − 3 × (quiet cases bringing anything +
+wrong pages brought on recall and changed cases), ties to fewer routes. Full-text recall (`recall`, `high` confidence
+only) may enter the default only if on development it adds no quiet delivery and no wrong page.
+
+**Scored mechanically** (`bench/subconscious/run.py`): *brought* = the pages handed over (at most two). Recall case:
+right if the expected page is brought; any other page brought is a wrong page. Changed case: right if the new page is
+brought; the old page brought as a page is a wrong page *and* an old-page delivery (naming the old page in the
+"an earlier page said otherwise" note is expected, not a delivery). Quiet case: any page brought counts against it.
+
+**Pass line (fixed now), held-out, both languages together:** quiet cases bringing anything ≤ 1 / 24; wrong pages on
+recall and changed cases ≤ 1; old-page deliveries 0; changed cases bringing the new page ≥ 6 / 12; recall cases
+bringing the right page ≥ 12 / 24, and ≥ 5 / 12 in each language. All five must hold for the hook to be on by
+default (together with set 33's line below); otherwise it ships off (`KROUTER_RECALL_PROMPT=1` to try it) and the
+numbers are reported as they are.
+
+**Known limits, said with any number.** One writer model; the writer saw the alias names (it was told neither to use
+nor to avoid them, so recall depends on how often people say a page's name); the matcher's author wrote the alias
+table and triggers, knowing the pages; vault3 is small; the cases are single messages, not conversations.
+
+### Log, set 32
+
+| Date | Event |
+|---|---|
+
+## Set 33: does the host use what the hook brought, and ignore what does not fit? (registered 2026-11-10, before any host was run)
+
+**Why.** Set 32 measures what the hook hands over. This set measures what the host model does with it: whether it
+uses a page that was brought and says where it came from, and whether a page that does not fit the message pulls it
+off course.
+
+**Cases.** From set 32's held-out file, after its single run: up to 16 recall and changed cases (8 per language, the
+first in file order) on which the hook brought the expected page. Each message is given to the host three ways, as
+the prompt hook would give it: (A) with the hook's own memory note; (B) with the memory note the hook gave a
+different case of the same language (the next one in the list, wrapping), so a page that does not fit; (C) with no
+note. The wording of the note is the one shipped in `recollect.render` at registration; it is not revised on this set.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, run as sets 12 and 15 ran theirs: a Claude Code subagent on the named model
+answers a batch of prompts, each as the only one, writing only the start of the reply (at most five sentences, no
+tools). No API key and no stored login are used.
+
+**Scored mechanically.** Each case lists one or two key terms of the expected page's rule (a number, a product name),
+taken from the page before any host run. (A) *used* = the reply contains a key term; *cited* = it names the page
+(its path or file name). (B) *pulled* = the reply contains a key term or the name of the page that was brought but
+does not fit. (C) the same key-term check, reported to show what the host knows without the note.
+
+**Pass line (fixed now), per host:** (A) used ≥ 12 / 16 and cited ≥ 8 / 16; (B) pulled ≤ 2 / 16. Both hosts must
+pass for the hook to be on by default (with set 32). When nothing is brought the hook prints nothing, so the host's
+input is byte for byte what it was before 2.0; that is checked by the hook tests, not by a host run.
+
+### Log, set 33
+
+| Date | Event |
+|---|---|
+
+## Set 34: does it reach the app, and is it fast enough to run on every message? (registered 2026-11-10, before any timing run)
+
+**Delivery.** For each app, whether the memory note the hook prints reaches the model: Claude Code
+(`UserPromptSubmit`, `hookSpecificOutput.additionalContext`), Codex (`UserPromptSubmit`, the same JSON, which Codex's
+hooks documentation says is added as developer context) and Cursor (`beforeSubmitPrompt`, whose documented output is
+only `continue` / `user_message`: no context can be added). Checked with the real Codex CLI in a throwaway
+`CODEX_HOME`; where the login does not carry over, against a local mock of the Responses API, and the report says so.
+
+**Speed.** The whole hook process (`python3 session_hook.py prompt`, from start to exit, as the app runs it) on a
+message that matches and one that does not, 200 runs each, on vault3 with the overlay and on a 10,000-page vault
+(`bench/scale/gen.py 10000`, with an alias table of 2,000 rows and 10,000 trigger lines added). Cold = the first run
+after the page cache of the vault folder is not warmed by a previous run (a fresh copy of the vault); warm = the rest.
+Reported: p50 and p95. **Line (fixed now):** warm p95 ≤ 250 ms on both vaults; if not, the lookup moves to a cached
+index or a resident process before the default is decided.
+
+### Log, set 34
+
+| Date | Event |
+|---|---|

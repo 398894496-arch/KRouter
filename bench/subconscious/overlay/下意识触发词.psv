@@ -1,0 +1,21 @@
+# Generated trigger words (recall only, never a lock). Set 32-34 bench overlay, written before any case.
+团队手册/出差标准.md|酒店报销;出差住宿
+团队手册/测试环境.md|测试数据被清;数据重置
+团队手册/办公网络.md|连不上内网;内网访问
+团队手册/证书续签.md|证书过期;HTTPS 证书
+团队手册/消息队列.md|异步任务;消息堆积
+团队手册/数据看板.md|业务报表
+团队手册/权限申请.md|开权限;申请权限
+团队手册/节假日安排.md|国庆前发布;春节值班
+团队手册/图片资源.md|图片太大;图片压缩
+团队手册/开源许可证.md|开源协议
+Handbook/Support hours.md|support chat hours;phone line
+Handbook/Status page.md|incident update;customer-facing incident
+Handbook/On-site days.md|work from the office;remote days
+Handbook/Customer refunds.md|refund approval;money back
+Handbook/GPU usage.md|idle notebooks;GPU-hours
+Handbook/Browser support.md|Internet Explorer;Safari support
+Handbook/Transactional email.md|password reset email;order receipts
+Handbook/Price changes.md|raise prices;price increase
+Handbook/Cloud infrastructure changes.md|drift check
+Handbook/Product search.md|search index;Elasticsearch
