@@ -45,6 +45,8 @@ for need in package/scripts/bootstrap.py package/scripts/install.sh package/scri
             package/skill/krouter/scripts/skills.py \
             package/skill/krouter/scripts/corrections.py package/skill/krouter/scripts/capture_ledger.py \
             package/skill/krouter/scripts/recollect.py \
+            package/sdk/krouter/why.py package/sdk/krouter/view.py package/sdk/krouter/viewdata.py package/sdk/krouter/sample.py \
+            package/sdk/krouter/view_ui/index.html package/sdk/krouter/view_ui/app.js package/sdk/krouter/view_ui/app.css \
             package/.claude-plugin/marketplace.json package/.claude-plugin/plugin.json package/hooks/hooks.json \
             package/scripts/build_mcpb.py package/extras/claude-desktop/manifest.json \
             package/template/Agent第二大脑.md package/template-zh/Agent第二大脑.md; do

@@ -154,6 +154,77 @@ machine. What makes it reliable, and why each choice:
 - **Test it once yourself.** `backup.py verify --latest` opens the newest archive in a temporary folder and changes
   nothing; do a real `restore` into a new folder once, and open it in Obsidian.
 
+## See what it remembers: `krouter why` and `krouter view`
+
+Both only read. Neither writes a page, a log line or a setting; the only thing either touches is the recall cache
+(`~/.cache/krouter/`, rebuildable, outside your memory folder), which `ask` refreshes the same way. They need the memory
+folder like every other command: `--vault`, `KROUTER_VAULT`, or the folder the install recorded.
+
+### `krouter why "<a sentence>"`
+
+Explains how a lookup came out, in seven short sections. It asks the same code `krouter ask` asks, then says:
+
+1. **The alias lock.** The alias that matched and how (the question is the alias, contains it, or is most of it), the
+   page the alias table gives and its one-line answer; or why there was no lock: nothing close, a tie between two pages
+   (a lock never guesses), or an alias that matches whose page is replaced or gone. A lock answers at once, so when it
+   did, the ranked search is shown "for reference" and did not decide anything.
+2. **The words.** The words recall ranks with, and which of them no page contains.
+3. **The pages, in order.** For each: the question's words it holds and where (title, aliases or triggers, text), and
+   the score as *text relevance × tier weight* (× the boost for a topic page the question names, or for a question that
+   is the page's name). It prints that product only when it reproduces recall's own number. A replaced page is listed
+   with who replaced it and is never the answer; a page that replaced another says so.
+4. **Why this confidence.** `high` needs the top page at least 1.5× the second and a rule or topic page; `medium` is a
+   clear lead without that; `low` is two pages close together, only one matching word, or nothing but clipped web
+   pages. `none` lists the checks that refused: the question names something no page mentions, its central word never
+   appears, most of its real words are outside the memory, the best page matched no real word, or the score is under
+   the bar. These are recomputed from recall's own helpers, and a test keeps them in step with `recall`.
+5. **Pages that came along a connection.** Each with its edges and the page each came from: a link, a replace, the
+   same session, cited together before, or shared rare words (which words).
+6. **Old and new.** When two top pages say the same thing at different dates and the newer one says it changed: which
+   replaced which, and that the newer is listed first.
+7. **Experience cards.** Cards are not matched to a question (the agent gets the whole digest at session start and
+   judges the situation), so this says how many there are and names the ones whose situation shares words with the
+   question, or that were taken from one of the pages shown.
+
+Output is in the memory's language (English for a memory whose `krouter-zones.psv` says `@lang|en`, else Chinese);
+`--lang en|zh` overrides it, `--json` prints the structure instead. A `why` is not logged: the nightly job learns
+from your real questions and must not learn from these.
+
+### `krouter view`
+
+```bash
+krouter view                  # prints http://127.0.0.1:<free port>/ and waits; Ctrl-C stops it
+krouter view --port 8765      # a fixed port (still 127.0.0.1)
+krouter view --open           # also open it in your default browser; nothing opens without this
+krouter view --demo [--lang zh]   # a throwaway sample memory (made up, deleted on exit) instead of yours
+```
+
+| Tab | What it shows |
+|---|---|
+| Memory | every page, paged 40 at a time, filter by tier and status, sort by path or by last change, search by path, title or words; a page shows its text (secret pages show their path only, keys are masked as everywhere else), what replaced it or it replaced, and what it connects to |
+| Connections | the pages around one page, each edge with its kind, direction and strength: the number recall's associative path would add from that page, before its hub split and the question's weight. Same-day pages are listed but do not count in ranking |
+| Experience | the cards in the order the session-start digest gives them, with times offered, adopted and met again, and the recent use records; skill drafts and skills are listed if the memory has pages with `type: skill…` frontmatter, and the block is simply empty when it has none |
+| Last night | the latest nightly report (each step: ran, skipped, off, with the reason), the steps that are not switched on and why, earlier nights from the folder's git history, what each run added and replaced (from the change ledger), corrections made to hold, learned triggers |
+| Try a sentence | the explanation `krouter why` prints, for the sentence you type |
+
+What it guarantees, each checked by `tests/test_view.py` without a browser:
+
+- It listens on `127.0.0.1` only; there is no option for another address, and it answers a request only when the `Host`
+  header is that address, so a web page on another site cannot read it through your browser.
+- GET and HEAD only. Every other method gets `405`; the server has no endpoint that writes.
+- Nothing is loaded from outside: no script, font, style or image from another address, no request to any other, and a
+  `Content-Security-Policy` that allows none (no inline script or style either). The page is three hand-written files
+  in `sdk/krouter/view_ui/`; the server is Python's standard library. No new dependency.
+- A list is always one screen of it: 40 rows a request (200 at most), however large the memory.
+
+Measured on one M2 laptop with a synthetic memory of 10,000 pages (`krouter.sample.build_big`): the first start
+indexes it in 6–7 s, a later start in 0.06 s; from loading the page to the first 40 rows on screen 0.05–0.3 s (three loads in a
+browser pane: 52, 109 and 311 ms; 79 ms on the 35-page sample); one `why` about 0.1 s. Pages edited while it runs show up within about 20 s.
+
+What it does not do: edit, delete or move a page, send anything anywhere, or call a model. The nightly report and the
+change ledger are written in Chinese by the job; with the page in English the fixed phrases are put into English and
+page names, quoted sentences and commands stay as they are.
+
 ## Evidence at a glance
 
 | What | Result | Read it as |

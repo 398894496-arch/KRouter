@@ -18,7 +18,7 @@ Nothing yet.
 What you will notice so far (more lands before it is released): a lesson from one task is offered on another in the same situation; a lookup gives five
 pages, two of them ones the vault connects to the answer; a change of mind holds with no key; the default install
 is lighter, says what it changed and is English end to end on an English machine; the memory is a plain folder,
-Obsidian optional; Codex, Cursor and Claude Desktop were tested inside the apps. 2.0 because the receipt and the
+Obsidian optional; `krouter why` explains how a lookup came out and `krouter view` shows what the memory holds on a read-only page of its own; Codex, Cursor and Claude Desktop were tested inside the apps. 2.0 because the receipt and the
 install path change (below).
 
 ### Mention it and it comes to mind (on by default)
@@ -275,6 +275,30 @@ install path change (below).
   Obsidian is one optional way to open it.
 - **Messages, the README and the MCP server say "memory folder"**: a plain Markdown folder; Obsidian is one optional
   way to open it, and nothing needs it installed.
+
+### See what it remembers
+
+- **`krouter why "<a sentence>"` explains a lookup in words.** Which alias or words matched, why each page sits where it
+  does (the words it holds and where, text relevance × tier weight), why the confidence is that one, which pages came
+  along a connection and from which page by which kind of edge, which page replaced which, the experience cards that
+  go with the question, and, when the memory does not know, which word it could not find and which check refused. In
+  the memory's language (`--lang`, `--json`). It writes nothing and logs nothing: a `why` is not a question the
+  nightly job should learn from. The refusal reasons are recomputed from recall's own helpers; a test keeps them in
+  step with `recall`, and when a refusal cannot be reproduced the output says so instead of guessing.
+- **`krouter view` opens a read-only page about the memory, on this machine only.** It prints
+  `http://127.0.0.1:<free port>/` and opens nothing unless you add `--open` (`--demo` shows a made-up sample memory).
+  Pages with search (paged, so a memory of tens of thousands of pages costs one screen a request), one page with what
+  replaced it and what it connects to, the connections around a page with why each exists and how strong, the
+  experience cards with times offered, adopted and met again, what the last nights did (report, ledger, git history of
+  the report), and a box that shows what `why` shows. English and Chinese, light and dark, phone width. Python's
+  standard library and three hand-written files in `sdk/krouter/view_ui/`; no new dependency. It binds 127.0.0.1 only,
+  answers GET and HEAD only (every other method is 405, there is no endpoint that writes), refuses a request whose
+  `Host` is not its own address, and sends a Content-Security-Policy that allows nothing from outside; none of its
+  responses names an external address. `tests/test_why.py` and `tests/test_view.py` check these over HTTP without a
+  browser. On a synthetic memory of 10,000 pages (M2): first index 6–7 s, later starts 0.06 s, the first screen
+  of rows 0.05–0.3 s after the page loads, one explanation about 0.1 s ([how to read it](docs/DETAILS.md#see-what-it-remembers-krouter-why-and-krouter-view)).
+- `krouter.sample` builds the sample memory (and, for timing, a synthetic memory of any size) the page, its tests and
+  the README screenshot use.
 
 ### Tested inside the apps
 
