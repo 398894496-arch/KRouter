@@ -21,17 +21,16 @@ solved with a result it shows. A card is kept when its fields are filled, nothin
 situation and action share words with the excerpt, and no card with the same lesson is on file. With no model lane
 (`llm.NoModel`) it does nothing and says nothing.
 
-**Suggesting.** `suggest()` matches the current task's words against each card's `when` phrases and the condition
-of its lesson ("…时"), lexically: the recall index's tokenizer (CJK bigrams, latin words), counting only bigrams in
-the bundled word list, so `道有` or `点平` across a word boundary never count. A card is suggested when one phrase is
-covered enough; at most two, each with its source, worded as a lesson from another task. Nothing else in the card
-(the situation, the subject) takes part, so a question about the card's own subject in another situation stays quiet.
-No embeddings and no model call. The router prints them under `experience_suggestions:`, after the recalled facts,
-and the prompt hook adds them to the agent's context (Claude Code, Codex). Cards never appear among the facts.
+**Suggesting.** Nothing is matched. At session start the hook (`session_hook.py start`) gives the host model the whole
+digest (`digest()`): every card as one subject-free line "situation → what to do〔id〕", at most DIGEST_MAX_LINES (most
+recently adopted first, then confirmed, then newest), and one line on how to use it: offer at most two, worded as
+lessons from another task with their id, only when the task's situation is the same, and say nothing otherwise. The
+host model, which reads the task anyway, judges the situation; one situation in other words shares no words, so a
+retriever cannot (set 13). Cards never appear among recalled facts. `suggest()` (the lexical matcher of set 13) is
+kept only to reproduce that set; nothing calls it.
 
-**Switch.** `KROUTER_EXPERIENCE=1` turns both on; anything else (the default) leaves them off. Experimental: on the
-registered held-out set (`bench/memory_honesty/HELDOUT.md`, set 13) it did not reach its pass line; see
-`docs/EXPERIENCE.md` for the numbers.
+**Switch.** `KROUTER_EXPERIENCE=1` turns on both writing and the digest; anything else (the default) leaves them off.
+Measured: set 15 in `bench/memory_honesty/HELDOUT.md`, numbers and limits in `docs/EXPERIENCE.md`.
 """
 
 from __future__ import annotations

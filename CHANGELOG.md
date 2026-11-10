@@ -11,18 +11,19 @@ notice, then the details.
 
 ## Unreleased
 
-- **Experience cards, experimental and off by default: measured, and the lexical version does not work.** A lesson
-  learned on one task ("the stew tasted flat; a little sugar fixed it") can now be written down as a card and offered
-  as a suggestion on a task with another subject in the same situation. With `KROUTER_EXPERIENCE=1`, distilling a
-  session also asks the model lane for at most two cards (situation, action, result, the lesson without the subject,
-  "when" phrases, source) in `02 经验与方法/经验卡/`, checked before they are written and recorded in the change
-  ledger; no model lane, nothing happens. `krouter_ask` and the prompt hook (Claude Code, Codex) then add up to two
-  matching cards under `experience_suggestions:`, after the facts and worded as lessons from other tasks; cards never
-  appear among the facts. Set 13 (`bench/memory_honesty/HELDOUT.md`, registered before the matcher was written; 14
-  hand-written cards, 56 cases): development 3 of 14 transfer cases recalled with no quiet case disturbed; **held-out,
-  run once, 0 of 14 recalled and 2 of 14 quiet cases given a suggestion**, against a pass line of 8 and at most 1. The
-  matcher is lexical and does stay quiet on a card's own subject, but two wordings of one situation rarely share a
-  word. So it stays off. Why, and what would be needed: `docs/EXPERIENCE.md`. Bench: `bench/transfer/`.
+- **Experience cards: a lesson from one task offered on another task in the same situation, measured; off by
+  default.** With `KROUTER_EXPERIENCE=1`, distilling a session also asks the model lane for at most two cards
+  (situation, action, result, the lesson without the subject, source) in `02 经验与方法/经验卡/`, checked before they
+  are written and recorded in the change ledger (no model lane, nothing happens), and the session-start hook gives the
+  host model a digest of every card (one subject-free line each, at most 30, about 780 tokens at the cap) with one line
+  on how to use it: offer at most two, as lessons from another task with their id, only when the situation is the
+  same. Cards never appear among recalled facts. Set 15 (`bench/memory_honesty/HELDOUT.md`, registered before any
+  host ran; 56 cases written by Fable 5.2 from the lessons alone): on held-out, **Sonnet 5.5 recalled 14 of 14 and
+  Haiku 5.5 11 of 14 tasks with a new subject, and neither spoke on any of the 14 that should get nothing**; with 40
+  distractor cards added (development), 14 and 13 of 14, still none. The first version matched by shared words
+  (set 13) and found 0 of 14: one situation in other words shares no words. Still off by default pending the
+  maintainer's call; the digest's cap has nothing to rank by yet (nothing marks a card as adopted). `docs/EXPERIENCE.md`,
+  `bench/transfer/`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
