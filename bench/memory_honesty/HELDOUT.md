@@ -570,6 +570,7 @@ on the same thing ranked first and the conflict named, with no model and no dist
 | Date | Event |
 |---|---|
 | 2026-11-10 | Registered. |
+| 2026-11-10 | Dev half, said as it happened. A prototype over dumped dev rankings tried seeds 1–5, 40–400 key words per page, query boost 0–10, a same-day weight 0 or 0.5 and three slot splits; same-day edges lowered the count (about ten sessions share a day here), so their weight is 0. Shipped code, first run: k = 3 fell (41 → 39 multi-session) because the third direct hit, given up for the associative slot, could not come back as an associated page; fixed. A quiet gate for pages joined only by shared words (at least 6 shared rare words and an associative score of at least 0.2) was chosen on the memory-honesty dev benches (pages offered on 56 of 61 answered dev questions before, 7 after), and changed no dev count by more than one. Final configuration (`associate.py`): 3 seeds, 64 key words, query boost 3, words in more than 30% of pages ignored, slots (k + 1) // 3. Dev half, multi-session at k = 3 / 5 / 8: bm25 42 / 47 / 56, krouter 41 / 49 / 57, krouter+assoc **48 / 63 / 67**; all 235: 181 / 193 / 208, 182 / 195 / 209, **192 / 213 / 224**. Memory honesty, six sets: identical with the path on and off, and identical to `9d73bd5`. The held-out half is run next, once. |
 
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 

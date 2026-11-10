@@ -369,16 +369,18 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
 
 
 def print_recall(res: dict, vault: Path, lines: int) -> None:
-    from recall_index import PARTIAL_NOTE, best_lines
+    from recall_index import PARTIAL_NOTE, best_lines, print_extras
 
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
     if res.get("partial"):
         print(PARTIAL_NOTE)
+    print_extras(res, "conflict")
     print("recall:")
     for h in res["hits"]:
         flag = f" status={h['status']}" if h["status"] else ""
+        flag += f" conflict={h['conflict']}" if h.get("conflict") else ""
         print(f"- {h['rel']} tier={h['tier']}{flag} score={h['score']}")
         if h.get("answer"):
             print(f"  answer (generated): {redact(h['answer'])}")
@@ -386,22 +388,24 @@ def print_recall(res: dict, vault: Path, lines: int) -> None:
             print(f"  how: {h['how']}")
         for ln, text in best_lines(vault / h["rel"], res["query_tokens"], lines):
             print(f"  L{ln}: {text}")
+    print_extras(res, "assoc")
 
 
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
     res = None
     try:
+        import associate
         from recall_index import recall
 
         rel = "" if scope == vault else scope.relative_to(vault).as_posix()
-        res = recall(vault, query, rel, limit=3)
+        res = recall(vault, query, rel, limit=3, assoc=associate.enabled())
     except Exception:  # 召回缓存不可用时退回字面检索
         res = None
     widened = False
     if (res is None or not res["hits"] or res.get("confidence") == "none") and scope != vault:
         # 路由范围（单个偏好/纠错页、01 项目）里没有答案：扩到全库，规则页优先，并如实标出
         try:
-            wide = recall(vault, query, "", limit=3)
+            wide = recall(vault, query, "", limit=3, assoc=associate.enabled())
             if wide["hits"] and wide.get("confidence") != "none":
                 res, widened = wide, True
         except Exception:

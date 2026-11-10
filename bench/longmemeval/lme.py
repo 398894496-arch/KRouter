@@ -42,6 +42,7 @@ REPO = HERE.parents[1]
 STATE = Path(os.environ.get("KROUTER_LME_STATE") or Path.home() / ".local/state/krouter-eval/lme")
 SESSIONS = "05 时间日志/会话摘录"  # KRouter 自己导入会话时放的位置
 SEED = 20261018
+SPLIT_SEED = 20261110  # set 13: which half of the 470 answerable questions is the development half
 RESAMPLES = 10_000
 DENSE_SYSTEMS = {"dense", "dense-floor", "agree", "rescue"}
 
@@ -110,6 +111,14 @@ def sample_of(rows: list[dict], n: int) -> list[dict]:
     """n answerable questions drawn with a fixed seed (the `_abs` ones are a development set)."""
     pool = [r for r in rows if not r["abs"]]
     return sorted(random.Random(SEED).sample(pool, n), key=lambda r: r["id"])
+
+
+def split_of(rows: list[dict]) -> dict[str, str]:
+    """Set 13: `abs` for the 30 unanswerable (a development set since set 7's amendment), and a seed-drawn half of the
+    470 answerable questions each for `dev` and `heldout`. Rules are chosen on `dev` only."""
+    ids = sorted(r["id"] for r in rows if not r["abs"])
+    dev = set(random.Random(SPLIT_SEED).sample(ids, len(ids) // 2))
+    return {r["id"]: "abs" if r["abs"] else ("dev" if r["id"] in dev else "heldout") for r in rows}
 
 
 def run(system: str, limit: int, repo: Path, sample: int = 0) -> None:

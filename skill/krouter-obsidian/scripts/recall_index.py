@@ -22,11 +22,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import zones  # noqa: E402
 import krouter_redact  # noqa: E402
+import associate  # noqa: E402
 
 redact = krouter_redact.redact
 is_secret_page = krouter_redact.is_secret_page  # 其他夜间脚本经 ri.is_secret_page 用它
 
-SCHEMA_VERSION = "recall-v14"  # v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
+SCHEMA_VERSION = "recall-v15"  # v15：边表（链接、取代、同会话、同一天、共同的词、一起被引用），给联想通路用； v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
 STRONG_W = 0.5  # 软权重 ≥ 此值才算"有效匹配词"
 MIN_STRONG_MATCH = 2
 SCORE_MIN = 8.5  # bm25×分层权重的绝对下限
@@ -240,6 +241,7 @@ def connect(db: Path) -> sqlite3.Connection:
             -- 每页 frontmatter 的原文（已脱敏、小写），只给字面检索预筛用：frontmatter 不进全文索引
             CREATE TABLE fm(rel TEXT PRIMARY KEY, text TEXT);
             """
+            + associate.DROP + associate.SCHEMA
         )
         con.execute("INSERT OR REPLACE INTO meta VALUES('schema', ?)", (SCHEMA_VERSION,))
         con.commit()
@@ -263,6 +265,10 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
     known, old_sha = indexed()
     aliases, map_sha = alias_map(vault)
     if map_sha == old_sha and known.keys() == seen.keys() and all(known[r][:2] == seen[r][:2] for r in seen):
+        if associate.cocite_changed(con, vault):  # 只有"一起被引用"的记录变了：只重读它
+            con.execute("BEGIN IMMEDIATE")
+            associate.load_cocite(con, vault)
+            con.commit()
         return {"added": 0, "changed": 0, "removed": 0, "docs": len(seen)}  # 没变：不加锁、不写
     # 有变化：先拿写锁再重读一遍。几个进程（服务的常驻查询进程、同时跑的几次查询）同时发现同一批改动时，
     # 后拿到锁的看到的是前一个已经写好的索引，不会把同一页再索引一遍、留下两条
@@ -279,6 +285,7 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
             con.execute("DELETE FROM docs WHERE rowid=?", (rid,))
             con.execute("DELETE FROM files WHERE rel=?", (rel,))
             con.execute("DELETE FROM fm WHERE rel=?", (rel,))
+            associate.forget(con, rel, rid)
             removed += 1
     for rel, (mtime, size, path) in seen.items():
         old = known.get(rel)
@@ -306,6 +313,7 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         dirs = " ".join(rel.split("/")[:-1])
         if old:
             con.execute("DELETE FROM docs WHERE rowid=?", (old[2],))
+            associate.forget(con, rel, old[2])
             changed += 1
         else:
             added += 1
@@ -324,11 +332,13 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
             ),
         )
         con.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?)", (rel, mtime, size, cur.lastrowid))
+        associate.index_page(con, sys.modules[__name__], rel, cur.lastrowid, text.replace("\r\n", "\n"), meta, body)
         head = text.replace("\r\n", "\n")
         end = head.find("\n---", 4) if head.startswith("---\n") else -1
         con.execute("INSERT OR REPLACE INTO fm VALUES(?,?)", (rel, head[:end + 4].lower() if end >= 0 else ""))
     if changed or added or removed:
         con.execute("INSERT OR REPLACE INTO meta VALUES('built_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%S"),))
+    associate.load_cocite(con, vault)
     con.commit()
     return {"added": added, "changed": changed, "removed": removed, "docs": len(seen)}
 
@@ -378,16 +388,21 @@ def forget_refresh() -> None:
 
 
 def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_first: bool = True,
-           gate: bool = True) -> dict:
+           gate: bool = True, assoc: bool = False, conflict: bool | None = None) -> dict:
+    """Ranked pages for `query`. `hits` are the direct hits (the question's own words). With `assoc`, up to
+    `associate.slots(limit)` of the `limit` pages are associated pages instead (`assoc`, each with the edges it came
+    along), when there are any. `conflict` (on unless `KROUTER_CONFLICT=0`): when two of the top pages say the same
+    thing at different dates and the newer one says it was changed, the newer one goes first (`conflict`)."""
     con = connect(cache_path(vault))
     try:
-        return _recall(con, vault, query, scope, limit, refresh_first, gate)
+        return _recall(con, vault, query, scope, limit, refresh_first, gate, assoc,
+                       associate.conflict_enabled() if conflict is None else conflict)
     finally:
         con.close()  # 常驻的查询进程里不关就攒着：连接挂在引用环上，要等垃圾回收才放，每个约 2.7 MB
 
 
 def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit: int, refresh_first: bool,
-            gate: bool) -> dict:
+            gate: bool, assoc: bool = False, conflict: bool = True) -> dict:
     stats = {}
     if refresh_first and refresh_due(vault):
         stats = refresh(vault, con)
@@ -435,6 +450,7 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         hits.append({"rid": rid, "rel": rel, "tier": tier, "status": status, "how": how,
                      "score": round(-s * boost, 3)})
     hits.sort(key=lambda h: -h["score"])
+    ranked = hits
     hits = hits[:limit]
     if not hits:
         return {"hits": [], "stats": stats, "query_tokens": qtok, "confidence": "none", "margin": 0.0}
@@ -473,12 +489,65 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         conf = "medium"
     else:
         conf = "low"
-    for h in hits:
+    found = None
+    picks: list[dict] = []
+    if conf != "none":
+        if conflict:
+            # 没有模型、还没提炼时，同一件事的新旧两页：新页在前，并说明较早的一页说法不同（拿不准只标不排）
+            found = associate.conflicts(sys.modules[__name__], con, vault, ranked, qtok)
+            if found:
+                associate.apply_conflict(ranked, found)
+        n = associate.slots(limit) if assoc and not partial else 0
+        if n:
+            picks = associate.spread(con, ranked, {h["rel"] for h in ranked[: limit - n]}, scope)[:n]
+        hits = ranked[: limit - len(picks)]
+    for h in ranked:
         h.pop("rid", None)
     if hits and conf != "none" and not partial:
         attach_answers(vault, hits, raw, df)  # 只对上一个词时不给生成的答案：那一行读起来像定论
-    return {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
-            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
+    out = {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
+           "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
+    if picks:
+        out["assoc"] = picks
+    if found:
+        out["conflict"] = found
+    return out
+
+
+def page_list(res: dict, k: int) -> list[str]:
+    """The pages a reader is given, in order: the direct hits, then the associated pages, at most `k`."""
+    return ([h["rel"] for h in res.get("hits", [])] + [a["rel"] for a in res.get("assoc", [])])[:k]
+
+
+VIA_LABEL = {"words": "shares words with", "link": "linked with", "supersedes": "replaces or is replaced by",
+             "session": "same session as", "day": "same day as", "cocite": "cited together with"}
+
+
+def via_text(steps: list[dict]) -> str:
+    parts = []
+    for v in steps:
+        words = f" ({', '.join(v['words'])})" if v.get("words") else ""
+        parts.append(f"{VIA_LABEL.get(v['kind'], v['kind'])} {v['from']}{words}")
+    return "; ".join(parts)
+
+
+ASSOC_HEAD = ("associated: pages connected to the hits above that the question did not name; read one only if the "
+              "hits leave part of the question open")
+
+
+def print_extras(res: dict, kind: str) -> None:
+    """The conflict note (before the hits) or the associated block (after them), as `recall_index` and
+    `route_knowledge` print them."""
+    if kind == "conflict" and res.get("conflict"):
+        print(associate.conflict_note(res["conflict"]))
+    if kind == "assoc" and res.get("assoc"):
+        print(ASSOC_HEAD)
+        for a in res["assoc"]:
+            flag = f" status={a['status']}" if a["status"] else ""
+            print(f"- {a['rel']} tier={a['tier']}{flag} assoc={a['score']}")
+            print(f"  via: {via_text(a['via'])}")
+            if a["how"]:
+                print(f"  how: {a['how']}")
 
 
 def strong_matches(con: sqlite3.Connection, rid: int, terms: list[str], df: dict[str, int],
@@ -859,7 +928,7 @@ def main() -> int:
         built = (con.execute("SELECT v FROM meta WHERE k='built_at'").fetchone() or [""])[0]
         print(json.dumps({"cache": str(db), "built_at": built, "tiers": tiers, **st}, ensure_ascii=False))
         return 0
-    res = recall(vault, args.query, args.scope, args.limit)
+    res = recall(vault, args.query, args.scope, args.limit, assoc=associate.enabled())
     if args.json:
         print(json.dumps(res, ensure_ascii=False))
         return 0
@@ -871,9 +940,11 @@ def main() -> int:
     if not res["hits"] or res.get("confidence") == "none":
         print("recall: none (no page covers enough of the question; do not guess)")
         return 0
+    print_extras(res, "conflict")
     print("recall:")
     for h in res["hits"]:
         flag = f" status={h['status']}" if h["status"] else ""
+        flag += f" conflict={h['conflict']}" if h.get("conflict") else ""
         print(f"- {h['rel']} tier={h['tier']}{flag} score={h['score']}")
         if h.get("answer"):
             print(f"  answer (generated): {redact(h['answer'])}")
@@ -881,6 +952,7 @@ def main() -> int:
             print(f"  how: {h['how']}")
         for ln, text in best_lines(vault / h["rel"], res["query_tokens"], args.lines):
             print(f"  L{ln}: {text}")
+    print_extras(res, "assoc")
     return 0
 
 
