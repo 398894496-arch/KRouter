@@ -254,6 +254,15 @@ def template_for(lang: str) -> Path:
     return zh if lang == "zh" and zh.is_dir() else ROOT / "template"
 
 
+def recorded_vault() -> str:
+    """The memory folder an earlier install recorded, when it is still there: a second install (an upgrade) keeps
+    using it, whatever language this terminal now says (1.x picked the folder name from the system's language)."""
+    from krouter_home import vault_path
+
+    raw = vault_path()
+    return raw if raw and Path(raw).expanduser().is_dir() else ""
+
+
 def default_vault(lang: str) -> Path:
     return Path.home() / "Documents" / ("第二大脑" if lang == "zh" else "Second Brain")
 
@@ -1225,7 +1234,7 @@ def main() -> int:
     if sys.version_info < (3, 9):
         print(t["py_old"].format(v=platform.python_version()))
         return 1
-    vault = Path(args.vault or os.environ.get("OBSIDIAN_VAULT") or default_vault(lang)).expanduser().resolve()
+    vault = Path(args.vault or os.environ.get("OBSIDIAN_VAULT") or recorded_vault() or default_vault(lang)).expanduser().resolve()
     state = vault_state(vault)
     template = template_for(lang)
     print(f"{t['plan']}: {t['vault_' + state]} → {vault}")

@@ -111,7 +111,9 @@ def _env(tmp: Path) -> dict:
                 "KROUTER_SKIP_LAUNCHD": "1", "KROUTER_SKIP_TIMER": "1", "KROUTER_NO_PROMPT": "1",
                 "KROUTER_STATE_DIR": str(tmp / "state"), "XDG_CONFIG_HOME": str(home / ".config"),
                 "APPDATA": str(home / "AppData"), "KROUTER_NO_QUERY_LOG": "1"})
-    for k in ("OBSIDIAN_VAULT", "KROUTER_SKILL_HOME", "KROUTER_CURSOR_RULE", "KROUTER_ASK_RULE", "KROUTER_LEARN_CLI"):
+    # KROUTER_VAULT_FILE 也去掉：记下的库落在这个测试自己的 HOME 里（conftest 那份是全体测试共用的）
+    for k in ("OBSIDIAN_VAULT", "KROUTER_VAULT", "KROUTER_VAULT_FILE", "KROUTER_SKILL_HOME", "KROUTER_CURSOR_RULE",
+              "KROUTER_ASK_RULE", "KROUTER_LEARN_CLI"):
         env.pop(k, None)
     return env
 
@@ -384,3 +386,18 @@ def test_the_release_extension_passes_its_structure_check_and_answers(tmp_path):
 
     bundle = build_mcpb.build(tmp_path / "KRouter.mcpb")
     assert build_mcpb.check(bundle) == []
+
+
+@POSIX
+def test_a_second_install_keeps_the_recorded_folder_whatever_the_terminal_language(tmp_path):
+    """1.x named the folder from the system's language; 2.0 reads the terminal's. Run again from an English terminal
+    after a Chinese install, the installer upgrades the recorded folder instead of making a second one."""
+    env = _env(tmp_path)
+    res, first = _boot(env, "--lang", "zh")
+    assert res.returncode == 0, res.stdout[-1500:] + res.stderr[-1500:]
+    zh = Path(first["vault"])
+    assert zh.name == "第二大脑"
+    res, again = _boot(env, "--lang", "en")
+    assert res.returncode == 0, res.stdout[-1500:] + res.stderr[-1500:]
+    assert Path(again["vault"]) == zh and again["state"] != "new"
+    assert not (tmp_path / "home/Documents/Second Brain").exists()
