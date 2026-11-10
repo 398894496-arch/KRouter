@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Nightly upkeep runner: the five steps in order, each one's outcome written where the host can see it.
 
-import_sessions → import_claude_mem → compile_subconscious → reconsolidate → consolidate_topics → answer_cards → checkup →
-cocite → backup. `cocite` strengthens the recall cache's co-citation edges from the day's confident lookups (no model,
+import_sessions → import_claude_mem → compile_subconscious → learn_mentions → reconsolidate → consolidate_topics →
+answer_cards → checkup → cocite → backup. `learn_mentions` turns pages the agent fetched when the prompt hook said
+nothing into provisional trigger words (no model). `cocite` strengthens the recall cache's co-citation edges from the day's confident lookups (no model,
 writes outside the vault).
 The last writes an encrypted, restore-checked archive of the vault into the backup folder when one is set
 (`backup.py init --dir`), and is `off` otherwise. The first one
@@ -35,7 +36,7 @@ import llm  # noqa: E402
 import notify  # noqa: E402
 import zones  # noqa: E402
 
-STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "reconsolidate", "consolidate_topics", "answer_cards", "checkup",
+STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "learn_mentions", "reconsolidate", "consolidate_topics", "answer_cards", "checkup",
          "cocite", "backup")
 MODEL_STEPS = {"import_sessions", "import_claude_mem", "reconsolidate", "consolidate_topics", "answer_cards"}
 REPORT = "90 系统文件/自动化/夜间维护.md"
@@ -125,6 +126,9 @@ def run_step(step: str, vault: Path, extra: list[str], dry: bool) -> dict:
             if step == "backup":
                 return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
                         "writes": ["an encrypted archive in the backup folder, if one is set"]}
+            if step == "learn_mentions":
+                return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
+                        "writes": ["90 系统文件/自动化/下意识触发词-待验证.psv, when the hook missed a page the agent used"]}
             if step == "cocite":
                 return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
                         "writes": ["co-citation weights in the state directory (outside the vault)"]}

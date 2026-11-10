@@ -74,6 +74,7 @@ HOW_MAX = 160
 SENTENCE_MAX = 200
 TRIGGER_GLOB = "下意识触发词*.psv"
 LEARNED_MARK = "自学习"
+PROVISIONAL_MARK = "待验证"  # learn_mentions.py 夜里从「钩子没递、宿主自己取了」学到的说法
 KEEP_DAYS = 3
 # 第二把钥匙：名字对上之后，这句话其余的词也要和库对得上（召回没拒答，或首条页对上至少这么多实词）
 GATE = os.environ.get("KROUTER_RECALL_GATE", "1") != "0"
@@ -269,10 +270,10 @@ def entries(vault: Path) -> list[tuple]:
     return out
 
 
-FIELDS = ("route", "a", "word", "rel", "anchor", "id", "learned")  # 每条短语是这样一个元组（缓存里也是）
+FIELDS = ("route", "a", "word", "rel", "anchor", "id", "learned", "provisional")  # 每条短语是这样一个元组（缓存里也是）
 
 
-ENTRIES_VERSION = 3
+ENTRIES_VERSION = 4
 
 
 def _compile(vault: Path, files: list[Path]) -> list[tuple]:
@@ -287,11 +288,12 @@ def _compile(vault: Path, files: list[Path]) -> list[tuple]:
             for alias in aliases:
                 a = norm(alias)
                 if a:
-                    out.append(("alias", a, alias, source, anchor, case_id, False))
+                    out.append(("alias", a, alias, source, anchor, case_id, False, False))
     for f in files:
         if f == mp:
             continue
         learned = LEARNED_MARK in f.name
+        provisional = PROVISIONAL_MARK in f.name
         try:
             lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
@@ -303,7 +305,7 @@ def _compile(vault: Path, files: list[Path]) -> list[tuple]:
             for w in ([words] if learned else words.split(";")):
                 a = norm(w)
                 if a and (not learned or len(a) >= 6):
-                    out.append(("trigger", a, w.strip(), rel, "", "", learned))
+                    out.append(("trigger", a, w.strip(), rel, "", "", learned, provisional))
     return out
 
 
@@ -481,7 +483,8 @@ def recollect(vault: Path, text: str, use: tuple[str, ...] | None = None, today:
     for h in hits[:PER_PROMPT]:
         pos = where[h["span"][0]] if h.get("span") else 0
         d = describe(vault, h["real"], h.get("anchor", ""), h.get("older", ""), today)
-        d.update(route=h["route"], word=h["word"], sentence=cut(redact(sentence_at(said, pos)), SENTENCE_MAX))
+        d.update(route=h["route"], word=h["word"], sentence=cut(redact(sentence_at(said, pos)), SENTENCE_MAX),
+                 provisional=bool(h.get("provisional")))
         out.append(d)
     return out
 
@@ -574,6 +577,175 @@ def keep_index_fresh(vault: Path) -> None:
         pass
 
 
+def index_on() -> bool:
+    """Whether the session-start hook hands over the standing index (`KROUTER_RECALL_INDEX`, default DEFAULT_ON)."""
+    if os.environ.get("KROUTER_INJECT") == "0":
+        return False
+    raw = (os.environ.get("KROUTER_RECALL_INDEX") or "").strip().lower()
+    if raw in ("0", "off", "false", "no"):
+        return False
+    return DEFAULT_ON if raw in ("",) else True
+
+
+# ---------- learning: what the host fetched when the hook said nothing ----------
+
+LEARN_LOG = "recall-learn.jsonl"
+TAIL_BYTES = 2_000_000
+CANON_LINE = re.compile(r"canonical_source:\s*(\S[^\n\\\"]*\.md)")
+RECALL_LINE = re.compile(r"(?:^|\\n|\n)recall:(?:\\n|\n)- ([^\n\\]+?\.md) tier=")
+
+
+def _last_file(agent: str, session: str) -> Path:
+    safe = re.sub(r"[^\w.-]", "_", f"{agent}-{session}")[:120]
+    return state_dir() / "recalled" / f"{safe}.last.json"
+
+
+def no_capture(agent: str, session: str, now: bool) -> bool:
+    """Whether this session is marked `#不记`: `now` (this message says so) sets the mark for the rest of it."""
+    if not session:
+        return now
+    f = _last_file(agent, session).with_suffix(".nocapture")
+    if now:
+        try:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.touch()
+        except OSError:
+            pass
+        return True
+    return f.exists()
+
+
+def remember_turn(agent: str, session: str, text: str, hits: list[dict], quiet: bool = False) -> None:
+    """What this message said (redacted prose, at most 300 characters; nothing under `#不记`) and what was brought for
+    it. Overwritten every message, so only the latest one is kept; the turn hook reads it when the turn ends."""
+    if not session:
+        return
+    f = _last_file(agent, session)
+    try:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps({"ts": time.time(), "sentence": "" if quiet else cut(redact(prose(text)), 300),
+                                 "pages": [{"page": h["rel"], "route": h["route"], "word": h["word"],
+                                            "provisional": bool(h.get("provisional"))} for h in hits]},
+                                ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _tail_lines(path: Path) -> list[dict]:
+    try:
+        with path.open("rb") as fh:
+            fh.seek(0, 2)
+            size = fh.tell()
+            fh.seek(max(0, size - TAIL_BYTES))
+            data = fh.read().decode("utf-8", errors="replace")
+    except OSError:
+        return []
+    out = []
+    for line in data.splitlines()[1 if size > TAIL_BYTES else 0:]:
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(d, dict):
+            out.append(d)
+    return out
+
+
+def _when(d: dict) -> float:
+    raw = str(d.get("timestamp") or "")
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return 0.0
+
+
+def _final_text(rows: list[dict]) -> str:
+    """The agent's last words in these transcript lines (Claude Code and Codex shapes)."""
+    said = ""
+    for d in rows:
+        if d.get("type") == "assistant":
+            content = (d.get("message") or {}).get("content")
+            texts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"] \
+                if isinstance(content, list) else ([content] if isinstance(content, str) else [])
+            if any(x.strip() for x in texts):
+                said = "\n".join(texts)
+        p = d.get("payload") if isinstance(d.get("payload"), dict) else {}
+        if d.get("type") == "response_item" and p.get("type") == "message" and p.get("role") == "assistant":
+            texts = [c.get("text", "") for c in p.get("content") or [] if isinstance(c, dict)]
+            if any(x.strip() for x in texts):
+                said = "\n".join(texts)
+    return said
+
+
+def fetched_pages(vault: Path, rows: list[dict]) -> list[str]:
+    """Vault pages a lookup in these transcript lines returned (a lock's `canonical_source`, recall's first page) or a
+    tool read directly, in order; logical paths."""
+    root = str(vault.resolve())
+    out: list[str] = []
+    for d in rows:
+        blob = json.dumps(d, ensure_ascii=False)
+        if "canonical_source" not in blob and " tier=" not in blob and root not in blob:
+            continue
+        found = []
+        for m in CANON_LINE.finditer(blob):
+            found.append(m.group(1))
+        for m in RECALL_LINE.finditer(blob):
+            found.append(m.group(1))
+        for m in re.finditer(re.escape(root) + r"/([^\"\\\n]+?\.md)", blob):
+            found.append(m.group(1))
+        for raw in found:
+            rel = raw[len(root) + 1:] if raw.startswith(root + "/") else raw
+            rel = zones.canon(vault, rel)
+            if (vault / zones.real(vault, rel)).is_file() and rel not in out:
+                out.append(rel)
+    return out
+
+
+def cited(text: str, rel: str) -> bool:
+    stem = Path(rel).stem
+    return rel in text or (len(stem) >= 2 and stem in text)
+
+
+def capture_turn(vault: Path, agent: str, session: str, transcript: Path) -> list[dict]:
+    """At the end of a turn: pages the agent fetched and then used (named in its answer) that the prompt hook had not
+    brought become `learn` events; a page the hook brought by a provisional trigger that the agent passed over for
+    another page it fetched and used becomes a `contradict` event. Written to LEARN_LOG for `learn_mentions.py`."""
+    f = _last_file(agent, session)
+    try:
+        last = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    rows = [d for d in _tail_lines(transcript) if _when(d) >= last.get("ts", 0) - 5 or not d.get("timestamp")]
+    if not rows:
+        return []
+    answer = _final_text(rows)
+    used = [p for p in fetched_pages(vault, rows) if cited(answer, p)]
+    given = {g["page"] for g in last.get("pages", [])}
+    events = []
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for p in used:
+        if p not in given and last.get("sentence"):
+            events.append({"ts": ts, "kind": "learn", "agent": agent, "session": session[:8],
+                           "sentence": last["sentence"], "page": p})
+    if used:
+        for g in last.get("pages", []):
+            if g.get("provisional") and g["page"] not in used and not cited(answer, g["page"]):
+                events.append({"ts": ts, "kind": "contradict", "agent": agent, "session": session[:8],
+                               "phrase": g["word"], "page": g["page"], "instead": used[0]})
+    if events:
+        try:
+            with (state_dir() / LEARN_LOG).open("a", encoding="utf-8") as fh:
+                for e in events:
+                    fh.write(json.dumps(e, ensure_ascii=False) + "\n")
+        except OSError:
+            pass
+    try:
+        f.unlink()  # 一轮只判一次
+    except OSError:
+        pass
+    return events
+
+
 # ---------- the session: no repeats, a cap ----------
 
 def state_dir() -> Path:
@@ -610,9 +782,9 @@ def keep_new(hits: list[dict], agent: str, session: str) -> list[dict]:
             f.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
             if fresh:
                 old = time.time() - KEEP_DAYS * 86400
-                for g in folder.glob("*.json"):
+                for g in folder.glob("*"):
                     try:
-                        if g.stat().st_mtime < old:
+                        if g.stat().st_mtime < old:  # 连同 .last.json / .nocapture
                             g.unlink()
                     except OSError:
                         pass

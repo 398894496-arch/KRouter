@@ -212,3 +212,95 @@ def test_latin_names_match_whole_words_only():
     assert recollect.spans(recollect.norm("port"), s, cuts) == []
     s, _where, cuts = recollect.squash("check the status page, please")
     assert recollect.spans(recollect.norm("status page"), s, cuts)
+
+
+# ---------- 2.0 second round: the standing index and learning from what the agent fetched ----------
+
+sys.path.insert(0, str(SCRIPTS))
+import compile_subconscious  # noqa: E402
+import learn_mentions  # noqa: E402
+
+
+def test_the_standing_index_lists_live_topics_with_a_how_to_fetch_line(box):
+    text = compile_subconscious.standing_index(box["vault"])
+    assert text.startswith("KRouter 下意识索引")
+    assert "测试环境" in text and "〔团队手册/测试环境.md〕" in text
+    assert "〔团队手册/代码托管.md〕" in text and "代码托管（旧）" not in text  # 旧页的那一行算在新页名下
+    assert "短信通道" not in text and "部署钥匙" not in text  # 退役的、机密的不列
+    assert "krouter_ask" in text and "route_knowledge.sh" in text and str(box["vault"]) in text  # 不假设宿主看得到工具说明
+
+
+def test_the_standing_index_keeps_to_its_budget_and_says_how_many_are_left(box):
+    text = compile_subconscious.standing_index(box["vault"], lines=2)
+    assert text.count("\n- ") == 2 and "没列出" in text
+
+
+def test_session_start_hands_over_the_index_only_when_on(box):
+    def start(env):
+        return subprocess.run([sys.executable, str(HOOK), "start"], input=json.dumps({"cwd": str(box["tmp"])}), env=env,
+                              capture_output=True, text=True, timeout=60).stdout
+    env = {k: v for k, v in box["env"].items() if k not in ("KROUTER_RECALL_PROMPT",)}
+    assert "下意识索引" in json.loads(start({**env, "KROUTER_RECALL_INDEX": "1"}))["hookSpecificOutput"]["additionalContext"]
+    assert start({**env, "KROUTER_RECALL_INDEX": "0"}) == ""
+    out = start({**env, "KROUTER_RECALL_INDEX": "1"})
+    assert len(json.loads(out)["hookSpecificOutput"]["additionalContext"]) < 9400
+
+
+def _transcript(path: Path, prompt_text: str, tool_result: str, answer: str) -> None:
+    import datetime as dt
+    ts = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=1)).isoformat()
+    rows = [
+        {"type": "user", "timestamp": ts, "message": {"role": "user", "content": prompt_text}},
+        {"type": "assistant", "timestamp": ts, "message": {"content": [
+            {"type": "tool_use", "id": "t1", "name": "mcp__krouter__krouter_ask", "input": {"query": "测试环境"}}]}},
+        {"type": "user", "timestamp": ts, "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "t1", "content": tool_result}]}},
+        {"type": "assistant", "timestamp": ts, "message": {"content": [{"type": "text", "text": answer}]}},
+    ]
+    path.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+
+
+def test_a_page_the_agent_fetched_and_used_after_the_hook_said_nothing_is_learned(box):
+    said = "演示前那台机器的数据会不会被清掉，老秦说夜里会洗一遍"
+    assert _say(box, said, sid="L1") == ""  # 钩子没认出来
+    t = box["tmp"] / "t.jsonl"
+    receipt = f"route: canonical\ncanonical_source: {box['vault']}/团队手册/测试环境.md\nhow: 每天凌晨 3 点重置"
+    _transcript(t, said, receipt, "会的：测试环境每天凌晨 3 点重置数据，要保留就先申请快照（团队手册/测试环境.md）。")
+    res = subprocess.run([sys.executable, str(HOOK), "turn"], input=json.dumps({"session_id": "L1", "transcript_path": str(t)}),
+                         env=box["env"], capture_output=True, text=True, timeout=60)
+    assert res.returncode == 0, res.stderr
+    rows = [json.loads(x) for x in (box["state"] / "recall-learn.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert rows == [{**rows[0], "kind": "learn", "page": "团队手册/测试环境.md", "sentence": said}]
+    out = learn_mentions.run(box["vault"], box["state"])
+    assert out["added"] and out["added"][0]["page"] == "团队手册/测试环境.md"
+    psv = box["vault"] / learn_mentions.OUT
+    assert "待验证" in psv.read_text(encoding="utf-8")
+    assert learn_mentions.run(box["vault"], box["state"])["events"] == 0  # 读过的不再读
+
+
+def test_nothing_is_learned_when_the_agent_did_not_use_the_page(box):
+    said = "演示前那台机器的数据会不会被清掉"
+    _say(box, said, sid="L2")
+    t = box["tmp"] / "t2.jsonl"
+    _transcript(t, said, f"canonical_source: {box['vault']}/团队手册/测试环境.md", "我不确定，问一下运维吧。")
+    subprocess.run([sys.executable, str(HOOK), "turn"], input=json.dumps({"session_id": "L2", "transcript_path": str(t)}),
+                   env=box["env"], capture_output=True, text=True, timeout=60)
+    assert not (box["state"] / "recall-learn.jsonl").exists()
+
+
+def test_a_contradicted_provisional_phrase_is_removed(box):
+    psv = box["vault"] / learn_mentions.OUT
+    psv.parent.mkdir(parents=True, exist_ok=True)
+    psv.write_text(learn_mentions.HEADER + "团队手册/测试环境.md|夜里洗库\n", encoding="utf-8")
+    (box["state"]).mkdir(parents=True, exist_ok=True)
+    (box["state"] / "recall-learn.jsonl").write_text(json.dumps(
+        {"kind": "contradict", "phrase": "夜里洗库", "page": "团队手册/测试环境.md", "instead": "团队手册/发布流程.md"},
+        ensure_ascii=False) + "\n", encoding="utf-8")
+    out = learn_mentions.run(box["vault"], box["state"])
+    assert out["removed"] and "夜里洗库" not in psv.read_text(encoding="utf-8")
+
+
+def test_learned_phrases_skip_everyday_words_and_other_pages_names(box):
+    picks = learn_mentions.pick(box["vault"], "帮我把这个函数改成异步的，顺便看下 GitLab 那边", "团队手册/测试环境.md")
+    assert all("GitLab" not in p for p in picks)  # 别的页的名字不能学给这一页
+    assert learn_mentions.pick(box["vault"], "好的谢谢，那就这样吧", "团队手册/测试环境.md") == []

@@ -346,6 +346,25 @@ def experience_text(vault: Path) -> str:
         return ""
 
 
+START_MAX = 9400  # Claude Code 单条 additionalContext 上限 10,000 字，超出就只给预览：整段留在这之下
+
+
+def index_text(vault: Path, taken: int) -> str:
+    """The standing index (`compile_subconscious.standing_index`) in what is left of the session-start budget; read-only,
+    so no import consent needed."""
+    try:
+        import compile_subconscious
+        import recollect
+
+        if not recollect.index_on():
+            return ""
+        room = min(compile_subconscious.INDEX_CHARS, START_MAX - taken - 600)
+        return compile_subconscious.standing_index(vault, chars=room) if room > 800 else ""
+    except Exception as exc:  # noqa: BLE001  索引出错不影响其余部分
+        print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
+        return ""
+
+
 def start(payload: dict, agent: str = "claude") -> int:
     mode = os.environ.get("KROUTER_INJECT", "")
     if mode == "0":
@@ -354,6 +373,8 @@ def start(payload: dict, agent: str = "claude") -> int:
     if not raw or not Path(raw).is_dir():
         return 0
     parts = [t for t in (decisions_text(payload, Path(raw), mode), experience_text(Path(raw))) if t]
+    index = index_text(Path(raw), sum(len(x) + 2 for x in parts))
+    parts += [index] if index else []
     if not parts:
         return 0
     text = "\n\n".join(parts)
@@ -400,7 +421,24 @@ def own_words(text: str) -> str:
 
 
 def turn(payload: dict, agent: str = "claude") -> int:
+    learn_from_turn(payload, agent)
     return end(payload, agent, local=True)
+
+
+def learn_from_turn(payload: dict, agent: str) -> None:
+    """With prompt recall on: what the agent fetched and used this turn that the prompt hook had not brought (or what it
+    used instead of a page a provisional trigger brought) is noted for the nightly `learn_mentions` step. Local, no
+    model call; reads only the end of the transcript."""
+    try:
+        import recollect
+
+        transcript = str(payload.get("transcript_path") or "")
+        raw = vault_path()
+        if os.environ.get("KROUTER_IN_DISTILL") or not recollect.routes() or not transcript or not raw:
+            return
+        recollect.capture_turn(Path(raw).expanduser(), agent, str(payload.get("session_id") or ""), Path(transcript))
+    except Exception as exc:  # noqa: BLE001
+        print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
 
 
 def marked_out(transcript: Path, agent: str = "claude") -> bool:
@@ -458,10 +496,15 @@ def recall_note(payload: dict, agent: str, text: str) -> None:
         sid = str(payload.get("session_id") or "")
         recollect.keep_index_fresh(Path(raw).expanduser())
         hits = recollect.keep_new(recollect.recollect(Path(raw).expanduser(), text), agent, sid)
+        transcript = str(payload.get("transcript_path") or "")
+        # 「#不记」：这句话里有，或这个会话前面说过（记成一个标记文件，免得每句话都去扫整份会话记录）
+        quiet = recollect.no_capture(agent, sid, bool(NO_CAPTURE.search(text)))
+        if hits and not quiet and transcript and marked_out(Path(transcript), agent):
+            quiet = recollect.no_capture(agent, sid, True)
+        recollect.remember_turn(agent, sid, text, hits, quiet)  # 这一轮结束时 turn 看宿主自己取了什么
         if not hits:
             return
-        transcript = str(payload.get("transcript_path") or "")
-        if NO_CAPTURE.search(text) or (transcript and marked_out(Path(transcript), agent)):
+        if quiet:
             hits = [{**h, "sentence": ""} for h in hits]  # 标了不记：照样想起，但不把你的话写进记录
         recollect.log(hits, agent, sid)
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
