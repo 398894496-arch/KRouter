@@ -1157,6 +1157,7 @@ other characters).
 
 | Date | Event |
 |---|---|
+| 2026-11-10 | Registered (`77aeb94`). Cases written (Sonnet 5.5): recall named / not named zh 7 / 17, en 6 / 18; changed named zh 1, en 3. Split: the first stratified split left odd-sized strata unbalanced (held-out 23 recall, 14 changed), so before any case was read it was redone with the odd case of each language-and-kind alternating between the sides: 60 / 60, each side 12 recall, 12 quiet and 6 changed per language. Held-out sealed, SHA-256 of the text `945ac5f6…f94a6b1`. |
 
 ## Set 36: does it get better with use — learning a mention from what the host fetched (registered 2026-11-10, before any case existed)
 
