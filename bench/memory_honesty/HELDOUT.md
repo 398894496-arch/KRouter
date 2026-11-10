@@ -766,3 +766,18 @@ is still not measured.
 |---|---|
 | 2026-11-09 | Registered (`4fbb174`). |
 | 2026-11-09 | **Run once.** Cards: Haiku 5.5 8, Sonnet 5.5 8; judges: Sonnet 5.5 for Haiku's, Haiku 5.5 for Sonnet's (agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); judged faithful 14 / 16 = 87.5% (bar ≥ 90%); judged subject-free 14 / 16 = 87.5% (bar ≥ 90%); duplicates written 0 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on each of the two counts. Haiku's cards: faithful 6 / 8, subject-free 8 / 8 (mechanical 7 / 8). Sonnet's: faithful 8 / 8, subject-free 6 / 8 (mechanical 8 / 8). The four judged failures: a result claiming two restructures where the session shows one; an action stating a step the session only suggested; two lessons keeping a subject term ("大件东西 / 运得进", "执行计划"). Set 19 is now development: the card instructions are revised on it, and a new set of held-out sessions is registered before the revised wording is checked on them. |
+| 2026-11-09 | **Development iterations on set 19** (in-sample; each round: both hosts propose cards, the other host judges). Round 2: a host-named `subject` list, and the code refuses a lesson or title that uses one of its own subject words (`experience.names_subject`), returning the reason; action only for steps actually carried out; result only as the session shows. Hosts listed ordinary words as subject and 3 Sonnet calls were refused; since the MCP tool returns its reason to the agent, the bench now lets a refused call be rewritten once with that reason (`extract.py retry`). Faithful 13 / 16, subject-free 15 / 16. Round 3: one sentence each; a corrected figure or cause, the corrected one; reread before calling. Sonnet 9 / 9 and 9 / 9, but Haiku wrote cards on 2 no-lesson sessions. Round 4: record only when something did not work, a way out was tried and its outcome seen; drafting, polishing, formatting, comparing options do not count; when in doubt, do not. Faithful 15 / 15, subject-free 13 / 15 (one session, judged by both hosts as tied to its subject), duplicates 1 / 8. Round 5: a self-test, "would the lesson make sense word for word to someone fixing a bug, writing a report and cooking; if not, one level higher". **Both hosts: lesson sessions with a card 14 / 16, faithful 14 / 14, subject-free 14 / 14, duplicates 0 / 8, no-lesson 0 / 8: the bar met in-sample.** Wording frozen here, before set 20. |
+
+## Set 20: set 19's check on new held-out sessions, with the wording revised on set 19 (registered 2026-11-09, before any host was run on it)
+
+**Sessions.** 16, written by Sonnet 5.5 in a fresh subagent with set 19's instructions, plus "the assistant sometimes
+suggests things the person does not end up doing"; same kinds and counts (8 lesson: 5 Chinese, 3 English; 4 duplicate;
+4 none). Written while the wording was being revised, without seeing it; not read by the code's author (counts only).
+`bench/transfer/set20_sessions.jsonl`, SHA-256 `56ad0b0c…8aabb780`.
+
+**Run, judging and bar:** as set 19 (`extract.py --set 20`), with the frozen wording of set 19's round 5, and one
+retry of a refused call with the tool's reason (`extract.py retry`), as an agent using the MCP tool would get. Bar,
+both hosts together: lesson sessions with a card ≥ 12 / 16; judged faithful ≥ 90% and judged subject-free ≥ 90% of cards
+on lesson sessions; duplicates ≤ 1 / 8; no-lesson ≤ 1 / 8. Run once. If it passes, `experience.DEFAULT_ON` is set.
+
+**Known limits:** as set 19 (Sonnet wrote the sessions, is a host and judges Haiku's cards).
