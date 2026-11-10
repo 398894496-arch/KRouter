@@ -111,9 +111,9 @@ that encrypts the folder. For that you need a copy somewhere else, and one you h
 `backup.py` makes that copy; it is off until you give it a folder.
 
 ```bash
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py init --dir "<a folder that syncs elsewhere>"
+python3 ~/.agents/skills/krouter/scripts/backup.py init --dir "<a folder that syncs elsewhere>"
 # copy KROUTER_BACKUP_PASSPHRASE from ~/.dsh-krouter-keys.env into your password manager, then:
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
+python3 ~/.agents/skills/krouter/scripts/backup.py saved
 ```
 
 From then on the nightly job writes one archive a night and opens it again before counting it as good; `status` (and
@@ -304,7 +304,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 ./scripts/install.sh            # later: ./scripts/install.sh --upgrade · undo: ./scripts/uninstall.sh
 ```
 
-The alias table is yours and lives **in the vault** (`90 系统文件/canonical_sources.psv`), so it syncs with the vault and survives upgrades; install seeds it with ten sample nouns once and never touches it again. To start your own nouns, `python3 ~/.agents/skills/krouter-obsidian/scripts/propose_aliases.py` drafts rows from your vault into `90 系统文件/自动化/别名候选.md` — tick the ones you want, then run it with `--apply`. Nothing reaches the table unticked. Pin a release tag rather than tracking `main`.
+The alias table is yours and lives **in the vault** (`90 系统文件/canonical_sources.psv`), so it syncs with the vault and survives upgrades; install seeds it with ten sample nouns once and never touches it again. To start your own nouns, `python3 ~/.agents/skills/krouter/scripts/propose_aliases.py` drafts rows from your vault into `90 系统文件/自动化/别名候选.md` — tick the ones you want, then run it with `--apply`. Nothing reaches the table unticked. Pin a release tag rather than tracking `main`.
 
 **API key first:** keys live in `~/.dsh-krouter-keys.env` (chmod 600), never in the vault. Pasting one on [`90 系统文件/自动化/自进化钥匙.md`](../template/90%20系统文件/自动化/自进化钥匙.md) still works — the next run moves it into that file and leaves a note on the page — because anything in the vault is readable by a CLI writer and synced wherever the vault syncs. The writer locks that provider’s flagship before it distills + promotes.
 
@@ -318,7 +318,7 @@ The alias table is yours and lives **in the vault** (`90 系统文件/canonical_
 - Set `OBSIDIAN_VAULT` **before** `install.sh`, or the timer will not load
 - `dsh plugin add` is a mount, not this writer. `lamp: unused` means you turned the timer off
 
-Installs `~/.agents/skills/krouter-obsidian`, `~/.cursor/rules/krouter-obsidian.mdc`, and `~/.cursor/rules/ask-product.mdc`. The Cursor rule runs `status` first and **must tell the host** if `host_action` is present. If `~/.agents/skills/krouter-obsidian` already exists, install exits 1 without `--upgrade` (`--force` is the same); either replaces the code and keeps the alias table, its ledgers and links. `uninstall.sh` removes the timer, the Cursor rules, the hook and the skill, saves an alias table that is not in the vault yet, and leaves the vault alone (`--dry-run` first; `--purge` also clears the rebuildable cache and query log). Does not overwrite a live `obsidian-knowledge-router`. The timer pins this clone’s `krouter-obsidian` router. The ask matcher is L3: at most one provisional page per utterance; `record` never writes `active`; `promote` does after adopt + this task accepted. Triggers are yours, on the page or `ask-triggers.json`. Codex / Claude still paste [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md).
+Installs `~/.agents/skills/krouter`, `~/.cursor/rules/krouter.mdc`, and `~/.cursor/rules/ask-product.mdc`. The Cursor rule runs `status` first and **must tell the host** if `host_action` is present. If `~/.agents/skills/krouter` already exists, install exits 1 without `--upgrade` (`--force` is the same); either replaces the code and keeps the alias table, its ledgers and links. `uninstall.sh` removes the timer, the Cursor rules, the hook and the skill, saves an alias table that is not in the vault yet, and leaves the vault alone (`--dry-run` first; `--purge` also clears the rebuildable cache and query log). Does not overwrite a live `obsidian-knowledge-router`. The timer pins this clone’s `skill/krouter` router. The ask matcher is L3: at most one provisional page per utterance; `record` never writes `active`; `promote` does after adopt + this task accepted. Triggers are yours, on the page or `ask-triggers.json`. Codex / Claude still paste [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md).
 
 Subscription lane if a CLI is already logged in: grok in the kernel sandbox profile `krouter` (vault and router only), claude with `--permission-mode dontAsk` and an allow-list (the vault and the router), Codex `exec --sandbox workspace-write`. See [`SECURITY.md`](../SECURITY.md).
 
@@ -334,7 +334,7 @@ Sharing is the vault — the alias table lives in it — not a second protocol. 
 
 | Mount | What ships |
 |---|---|
-| Cursor | `extras/cursor/krouter-obsidian.mdc` via `install.sh` |
+| Cursor | `extras/cursor/krouter.mdc` via `install.sh` |
 | Codex | `extras/codex/AGENTS.snippet.md` |
 | Claude Code | `extras/claude-code/CLAUDE.snippet.md` |
 | DeepSeek Harness | DSH socket. Clone: `dsh plugin add /path/to/this/repo`. Catalog: `dsh plugin --profile web add github:398894496-arch/KRouter`. Read-only tools: status, preference, **correction**, memory (vault route, not chat memory), project, search, suggest. Uninstall does not delete notes. |

@@ -14,7 +14,7 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent
 ROOT = DIR.parents[1]
-BUNDLED_ROUTER = ROOT / "skill/krouter-obsidian/scripts/route_knowledge.sh"
+BUNDLED_ROUTER = ROOT / "skill/krouter/scripts/route_knowledge.sh"
 
 
 def main() -> int:

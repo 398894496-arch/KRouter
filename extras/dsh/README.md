@@ -2,7 +2,7 @@
 
 This directory is the **DeepSeek Harness socket** of KRouter, not a second product.
 
-The product is the repo root: router (`skill/krouter-obsidian`) + writer (`extras/host-daily-evolution`) + this socket. One vault. `dsh plugin add` does not start the timer.
+The product is the repo root: router (`skill/krouter`) + writer (`extras/host-daily-evolution`) + this socket. One vault. `dsh plugin add` does not start the timer.
 
 Uninstalling the socket does not delete notes.
 

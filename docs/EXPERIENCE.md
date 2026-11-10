@@ -3,7 +3,7 @@
 Recall answers "what was decided about X". This page is about something else: a lesson learned on one task coming back
 on another task whose subject is different but whose situation is the same. Example: the stew tasted flat and a
 spoonful of sugar fixed it; later the poster's colours look dull, and "when something is flat as a whole, add a little
-of the opposite" is worth offering. Code: `skill/krouter-obsidian/scripts/experience.py`. Measured 2026-11-09;
+of the opposite" is worth offering. Code: `skill/krouter/scripts/experience.py`. Measured 2026-11-09;
 registrations and logs: [`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md), sets 13 and 15.
 
 **In one line:** handed a digest of every card at session start, Sonnet 5.5 offered the right lesson on 14 of 14

@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-ROUTER = REPO / "skill/krouter-obsidian/scripts/route_knowledge.py"
+ROUTER = REPO / "skill/krouter/scripts/route_knowledge.py"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gen import EN, ZH  # noqa: E402
 

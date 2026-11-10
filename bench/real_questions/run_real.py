@@ -45,7 +45,7 @@ def route_answers(repo: Path, rows: list[dict], vault: Path, cache: Path, route:
     `associated:` pages), the first `pages` of them."""
     env = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_CACHE_DIR": str(cache), "KROUTER_NO_QUERY_LOG": "1"}
     env.pop("KROUTER_MAP", None)  # 用快照库里自己的别名表
-    script = repo / "skill/krouter-obsidian/scripts/route_knowledge.py"
+    script = repo / "skill/krouter/scripts/route_knowledge.py"
     out = []
     for it in rows:
         text = subprocess.run(["python3", str(script), route, it["q"]], env=env, capture_output=True, text=True,
@@ -70,7 +70,7 @@ def pool_of(bench, system: str, rows: list[dict], vault: Path, cache: Path, repo
         return {qid: [p for p, _ in hits[:5]] for qid, hits in scored}
     import sys
 
-    sys.path.insert(0, str(repo / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(repo / "skill/krouter/scripts"))
     os.environ["KROUTER_CACHE_DIR"] = str(cache)
     import recall_index as ri
 
@@ -109,7 +109,7 @@ def main() -> int:
         if args.prebuild_dense:  # 不先建好向量，第一次查询会退回纯字面，测不出向量的效果
             env = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_CACHE_DIR": str(tmp / "cache"),
                    "KROUTER_NO_QUERY_LOG": "1"}
-            res = subprocess.run(["python3", str(Path(args.repo) / "skill/krouter-obsidian/scripts/dense.py"), "--build",
+            res = subprocess.run(["python3", str(Path(args.repo) / "skill/krouter/scripts/dense.py"), "--build",
                                   "--vault", str(vault)], env=env, capture_output=True, text=True, timeout=7200)
             print(json.dumps({"dense_build": (res.stdout.strip().splitlines() or [""])[-1][:200],
                               "rc": res.returncode}))

@@ -7,4 +7,4 @@ case "${1:-}" in
   doctor|demo|ask|note|mcp|--version|-h|--help)
     PYTHONPATH="$ROOT/sdk${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m krouter.cli "$@" ;;
 esac
-exec "$ROOT/skill/krouter-obsidian/scripts/route_knowledge.sh" "$@"
+exec "$ROOT/skill/krouter/scripts/route_knowledge.sh" "$@"

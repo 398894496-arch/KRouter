@@ -77,9 +77,9 @@ krouter 里选 Enable auto-update。
 库的 git 历史（如果有）能撤回一次改坏，但扛不住硬盘坏了、电脑丢了，或者勒索软件把整个文件夹加密。要防这些，得有一份放在别处的副本，而且是真的恢复过的副本。`backup.py` 就做这件事；不给它指定文件夹，它就不运行。
 
 ```bash
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py init --dir "<一个会同步到别处的文件夹>"
+python3 ~/.agents/skills/krouter/scripts/backup.py init --dir "<一个会同步到别处的文件夹>"
 # 把 ~/.dsh-krouter-keys.env 里的 KROUTER_BACKUP_PASSPHRASE 复制进密码管理器，然后：
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
+python3 ~/.agents/skills/krouter/scripts/backup.py saved
 ```
 
 之后夜间任务每晚写一个备份包，并且先把它重新打开验一遍，验过了才算数。连续三天没有一次恢复成功，或者密码还只存在这台电脑上，`status` 都会说出来，你的 agent 也就会告诉你。为什么这样设计：
@@ -230,7 +230,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 ./scripts/install.sh            # 以后升级：./scripts/install.sh --upgrade · 卸载：./scripts/uninstall.sh
 ```
 
-别名表是你的，放在**库里**（`90 系统文件/canonical_sources.psv`），跟着库同步，升级不会动它；安装只在第一次放进十个样例名词，之后再也不碰。开始写自己的名词时，`python3 ~/.agents/skills/krouter-obsidian/scripts/propose_aliases.py` 会从你的库里起草候选，写到 `90 系统文件/自动化/别名候选.md`——勾上要的行，再加 `--apply` 运行。没勾的一行都不会进表。建议固定在某个发布 tag，不要直接跟 `main`。
+别名表是你的，放在**库里**（`90 系统文件/canonical_sources.psv`），跟着库同步，升级不会动它；安装只在第一次放进十个样例名词，之后再也不碰。开始写自己的名词时，`python3 ~/.agents/skills/krouter/scripts/propose_aliases.py` 会从你的库里起草候选，写到 `90 系统文件/自动化/别名候选.md`——勾上要的行，再加 `--apply` 运行。没勾的一行都不会进表。建议固定在某个发布 tag，不要直接跟 `main`。
 
 **先 API key：** key 只存在 `~/.dsh-krouter-keys.env`（权限 600），永不留在库里。贴在 [`90 系统文件/自动化/自进化钥匙.md`](../template-zh/90%20系统文件/自动化/自进化钥匙.md) 也行——下一次运行会把它挪进那个文件，页面上留一句说明——因为库里的东西 CLI 写入器读得到，库同步到哪儿它就跟到哪儿。写入器锁定该家旗舰模型，蒸馏并写准经验。
 
@@ -244,7 +244,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 - **先**把 `OBSIDIAN_VAULT` 指到那座库再跑 `install.sh`，否则不挂定时器
 - `dsh plugin add` 是挂载，不是这个写入器。`lamp: unused` 是你把定时器关了
 
-装到 `~/.agents/skills/krouter-obsidian`、`~/.cursor/rules/krouter-obsidian.mdc`、`~/.cursor/rules/ask-product.mdc`。Cursor 规则先跑 `status`，收据里有 `host_action` **必须告诉宿主**。若 `~/.agents/skills/krouter-obsidian` 已在，不带 `--upgrade`（与 `--force` 相同）会 exit 1；两者都只换代码，别名表、台账和软链原样保留。`uninstall.sh` 删掉定时器、Cursor 规则、hook 和 skill，别名表还没进库的先救进库，库本身不动（先用 `--dry-run` 看；`--purge` 另外清掉可重建的缓存和查询日志）。不会覆盖正在用的 `obsidian-knowledge-router`。定时器钉死本仓库的 `krouter-obsidian`。问的匹配器是 L3：一句最多一条准经验；`record` 不写 `active`；采纳且该次验收后 `promote` 才升正式。触发词是你自己的，写在准经验页或 `ask-triggers.json`。Codex / Claude 仍要贴 [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md)。
+装到 `~/.agents/skills/krouter`、`~/.cursor/rules/krouter.mdc`、`~/.cursor/rules/ask-product.mdc`。Cursor 规则先跑 `status`，收据里有 `host_action` **必须告诉宿主**。若 `~/.agents/skills/krouter` 已在，不带 `--upgrade`（与 `--force` 相同）会 exit 1；两者都只换代码，别名表、台账和软链原样保留。`uninstall.sh` 删掉定时器、Cursor 规则、hook 和 skill，别名表还没进库的先救进库，库本身不动（先用 `--dry-run` 看；`--purge` 另外清掉可重建的缓存和查询日志）。不会覆盖正在用的 `obsidian-knowledge-router`。定时器钉死本仓库的 `skill/krouter`。问的匹配器是 L3：一句最多一条准经验；`record` 不写 `active`；采纳且该次验收后 `promote` 才升正式。触发词是你自己的，写在准经验页或 `ask-triggers.json`。Codex / Claude 仍要贴 [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md)。
 
 本机已登录 CLI 时的订阅通道：grok 在内核沙箱 `krouter` 里运行（只碰知识库和路由器），claude 用 `--permission-mode dontAsk` 加白名单（知识库和路由器），Codex `exec --sandbox workspace-write`。见 [`SECURITY.md`](../SECURITY.md)。
 
@@ -260,7 +260,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 
 | 挂载 | 仓库里有什么 |
 |---|---|
-| Cursor | `install.sh` → `extras/cursor/krouter-obsidian.mdc` |
+| Cursor | `install.sh` → `extras/cursor/krouter.mdc` |
 | Codex | `extras/codex/AGENTS.snippet.md` |
 | Claude Code | `extras/claude-code/CLAUDE.snippet.md` |
 | DeepSeek Harness | DSH 插座。克隆后：`dsh plugin add /path/to/this/repo`。目录：`dsh plugin --profile web add github:398894496-arch/KRouter`。只读工具，含 **correction**；`memory` 是库内路由，不是聊天记忆。卸插件不删库 |

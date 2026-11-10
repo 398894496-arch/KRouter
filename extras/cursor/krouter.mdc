@@ -6,8 +6,8 @@ alwaysApply: true
 When a question depends on durable preferences, corrections, project history, reusable methods, or vault state:
 
 1. Set `OBSIDIAN_VAULT` to the vault root.
-2. Follow `~/.agents/skills/krouter-obsidian/SKILL.md`.
-3. Run `~/.agents/skills/krouter-obsidian/scripts/route_knowledge.sh` for the needed route (Windows: `python3 route_knowledge.py`). Use `status` only when you need system state.
+2. Follow `~/.agents/skills/krouter/SKILL.md`.
+3. Run `~/.agents/skills/krouter/scripts/route_knowledge.sh` for the needed route (Windows: `python3 route_knowledge.py`). Use `status` only when you need system state.
 4. If the receipt has `host_action:`, tell the host that line (paste `*_API_KEY` on the vault key page, or log in grok / official Codex / claude). Do not print secrets.
 5. Do not read `下意识.md`. If `canonical_match: true`, answer from `how` when it closes the question; cite `canonical_source`. Open the page only if how does not close it. If `correction_first: yes`, run `correction` first. Do not dump the vault.
 6. If the receipt has `host_prompt:`, ask the host that sentence and stop. Do not pick a winner among suggestions. On a miss with `suggestions:` and `conflict: no`, retry one suggested alias once.

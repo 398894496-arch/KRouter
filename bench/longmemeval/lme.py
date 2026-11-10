@@ -152,7 +152,7 @@ def ablate(repo: Path) -> None:
     """KRouter's own gate (in-process `recall`) on the ablated vaults; counts the refusals per half."""
     import tempfile
 
-    sys.path.insert(0, str(repo / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(repo / "skill/krouter/scripts"))
     rows = make_ablated(load_questions())
     out = []
     with tempfile.TemporaryDirectory(prefix="krouter-ablate-") as tmp:

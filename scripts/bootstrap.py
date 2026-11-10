@@ -259,7 +259,7 @@ def default_vault(lang: str) -> Path:
 
 
 DEFAULT_MARKS = ("Agent第二大脑.md", "90 系统文件", "05 时间日志", "02 经验与方法", "01 项目")
-sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(ROOT / "skill/krouter/scripts"))
 import zones  # noqa: E402
 
 
@@ -287,7 +287,7 @@ def lay_down(template: Path, vault: Path, dry: bool, lang: str = "zh") -> list[s
     """Copy template files that are missing in the vault, under the vault's names (`layout_for`). Never overwrites."""
     table = layout_for(vault, lang)
     if table is not None:
-        sample = ROOT / "skill/krouter-obsidian/scripts/canonical_sources.psv"
+        sample = ROOT / "skill/krouter/scripts/canonical_sources.psv"
         return zones.lay_out(template, vault, dry, table, sample if template == ROOT / "template" else None)
     added = []
     for src in sorted(template.rglob("*")):
@@ -305,18 +305,48 @@ def lay_down(template: Path, vault: Path, dry: bool, lang: str = "zh") -> list[s
 
 
 def skill_home() -> Path:
-    return Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+    return Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter")
+
+
+LEGACY_SKILL = ".agents/skills/krouter-obsidian"  # 2.0 以前的安装目录；升级后留成指向新目录的软链
+
+
+def legacy_skill_home() -> Path | None:
+    """The pre-2.0 install directory, when it is still a real directory (not yet upgraded). None with a custom path."""
+    if os.environ.get("KROUTER_SKILL_HOME"):
+        return None
+    old = Path.home() / LEGACY_SKILL
+    return old if old.is_dir() and not old.is_symlink() else None
+
+
+def legacy_timer() -> bool:
+    """A nightly job installed before 2.0 still runs the router from the old `skill/krouter-obsidian` folder."""
+    home = Path.home()
+    texts = []
+    for f in (home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist",
+              home / ".config/systemd/user/dsh-krouter-daily.service"):
+        try:
+            texts.append(f.read_text(encoding="utf-8", errors="replace"))
+        except OSError:
+            pass
+    if WINDOWS:
+        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution", "/XML"], capture_output=True, text=True)
+        texts.append(res.stdout or "")
+    return any("krouter-obsidian" in t for t in texts)
 
 
 def install_posix(vault: Path, dry: bool) -> int:
     skill = skill_home()
-    argv = ["/bin/sh", str(ROOT / "scripts/install.sh")] + (["--upgrade"] if skill.exists() else [])
+    upgrade = skill.exists() or legacy_skill_home() is not None
+    argv = ["/bin/sh", str(ROOT / "scripts/install.sh")] + (["--upgrade"] if upgrade else [])
     if dry:
         home = Path.home()
         print("  " + " ".join(argv))
         print(f"    {'replace' if skill.exists() else 'create'}: {skill}/ (the router; your alias table is kept)")
+        if legacy_skill_home() is not None:
+            print(f"    move: {legacy_skill_home()}/ → {skill}/, the old path left as a link to it")
         if os.environ.get("KROUTER_NO_CURSOR_RULES") != "1":
-            for f in (os.environ.get("KROUTER_CURSOR_RULE") or home / ".cursor/rules/krouter-obsidian.mdc",
+            for f in (os.environ.get("KROUTER_CURSOR_RULE") or home / ".cursor/rules/krouter.mdc",
                       os.environ.get("KROUTER_ASK_RULE") or home / ".cursor/rules/ask-product.mdc"):
                 print(f"    write: {f}")
         vf = os.environ.get("KROUTER_VAULT_FILE") or Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config") / "krouter/vault"
@@ -329,31 +359,43 @@ def install_posix(vault: Path, dry: bool) -> int:
 def install_windows(vault: Path, dry: bool, timer: bool) -> int:
     """install.sh, for Windows: skill (keeping the alias table), agent rules, alias table into the vault, timer."""
     home = Path.home()
-    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or home / ".agents/skills/krouter-obsidian")
-    rules = Path(os.environ.get("KROUTER_CURSOR_RULE") or home / ".cursor/rules/krouter-obsidian.mdc")
+    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or home / ".agents/skills/krouter")
+    rules = Path(os.environ.get("KROUTER_CURSOR_RULE") or home / ".cursor/rules/krouter.mdc")
     ask = Path(os.environ.get("KROUTER_ASK_RULE") or home / ".cursor/rules/ask-product.mdc")
     if dry:
         print(f"  copy skill → {skill}\n  rules → {rules.parent}\n  timer: {'scheduled task' if timer else 'skipped'}")
         return 0
     kept = {}
+    legacy = legacy_skill_home()
+    keep_from = skill if (skill / "scripts").is_dir() or legacy is None else legacy
     for name in KEEP:
-        p = skill / "scripts" / name
+        p = keep_from / "scripts" / name
         if p.is_file():
             kept[name] = p.read_bytes()
     if skill.exists():
         shutil.rmtree(skill)
-    shutil.copytree(ROOT / "skill/krouter-obsidian", skill)
+    shutil.copytree(ROOT / "skill/krouter", skill)
     for name, data in kept.items():
         (skill / "scripts" / name).write_bytes(data)
+    if legacy is not None:  # 2.0 以前的目录：删掉，原处留一个链接（Windows 建链接要权限，不行就用目录联接）
+        shutil.rmtree(legacy)
+        try:
+            os.symlink(skill, legacy, target_is_directory=True)
+        except OSError:
+            subprocess.run(["cmd", "/c", "mklink", "/J", str(legacy), str(skill)], capture_output=True)
+        print(f"moved: {legacy} → {skill}")
+    old_rule = None if os.environ.get("KROUTER_CURSOR_RULE") else home / ".cursor/rules/krouter-obsidian.mdc"
     if os.environ.get("KROUTER_NO_CURSOR_RULES") != "1":
         rules.parent.mkdir(parents=True, exist_ok=True)
         ask.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(ROOT / "extras/cursor/krouter-obsidian.mdc", rules)
+        shutil.copy2(ROOT / "extras/cursor/krouter.mdc", rules)
         shutil.copy2(ROOT / "extras/cursor/ask-product.mdc", ask)
+        if old_rule is not None and old_rule.is_file() and "route_knowledge" in old_rule.read_text(encoding="utf-8", errors="replace"):
+            old_rule.unlink()
     table = zones.path(vault, "90 系统文件/canonical_sources.psv")
     if not table.exists() and table.parent.is_dir():
         old = kept.get("canonical_sources.psv")
-        sample = (ROOT / "skill/krouter-obsidian/scripts/canonical_sources.psv").read_bytes()
+        sample = (ROOT / "skill/krouter/scripts/canonical_sources.psv").read_bytes()
         table.write_bytes(old if old and old != sample else sample)
     env = {**os.environ, "OBSIDIAN_VAULT": str(vault)}
     subprocess.run([sys.executable, str(ROOT / "extras/host-daily-evolution/resolve.py"), "--sync-health", "--offline"],
@@ -417,13 +459,13 @@ def nightly_preview(vault: Path) -> tuple[str, str, int, int]:
     except (ValueError, IndexError):
         pass
     pages = tokens = 0
-    dry = subprocess.run([sys.executable, str(ROOT / "skill/krouter-obsidian/scripts/nightly.py"), "--vault", str(vault),
+    dry = subprocess.run([sys.executable, str(ROOT / "skill/krouter/scripts/nightly.py"), "--vault", str(vault),
                           "--dry-run"], env=env, capture_output=True, text=True, timeout=600)
     try:
         tokens = int(json.loads(dry.stdout).get("est_tokens_total") or 0)
     except ValueError:
         pass
-    cards = subprocess.run([sys.executable, str(ROOT / "skill/krouter-obsidian/scripts/answer_cards.py"), "--vault", str(vault),
+    cards = subprocess.run([sys.executable, str(ROOT / "skill/krouter/scripts/answer_cards.py"), "--vault", str(vault),
                             "--dry-run"], env=env, capture_output=True, text=True, timeout=600)
     try:
         pages = len(json.loads(cards.stdout.strip().splitlines()[-1]).get("would_send_pages") or [])
@@ -444,7 +486,7 @@ def decide_timer(args: argparse.Namespace, vault: Path, t: dict) -> tuple[bool, 
     perm = t.get(f"perm_{kind}", t["perm_other"]) if kind else ""
     sub = ""
     if kind not in ("", "key"):
-        sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+        sys.path.insert(0, str(ROOT / "skill/krouter/scripts"))
         import llm
 
         sub = t["sub_note"].format(cli=cli, n=llm.host_cli_max())  # 借订阅：先说清额度、上限、怎么关
@@ -455,7 +497,7 @@ def decide_timer(args: argparse.Namespace, vault: Path, t: dict) -> tuple[bool, 
     return answer.strip().lower() in {"y", "yes", "是", "好", "开"}, True
 
 
-IMPORT = ROOT / "skill/krouter-obsidian/scripts/import_sessions.py"
+IMPORT = ROOT / "skill/krouter/scripts/import_sessions.py"
 
 
 def capture_consented() -> bool:
@@ -537,7 +579,7 @@ def decide_import(args: argparse.Namespace, vault: Path, t: dict, lane_kind: str
     return True, bool(answer and answer.strip().lower() in {"y", "yes", "是", "好"}), False
 
 
-CLAUDE_MEM = ROOT / "skill/krouter-obsidian/scripts/import_claude_mem.py"
+CLAUDE_MEM = ROOT / "skill/krouter/scripts/import_claude_mem.py"
 
 
 def run_claude_mem(vault: Path, *extra: str) -> dict:
@@ -875,7 +917,7 @@ def register_hooks(t: dict, dry: bool, apps: set[str] | None = None) -> list[str
     Never touches a file it cannot parse; keeps a copy of a file it changes; re-running replaces only its own entries."""
     if os.environ.get("KROUTER_NO_HOOKS") == "1":
         return []
-    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter")
     py = sys.executable if WINDOWS else (shutil.which("python3") or sys.executable)
     script = str(skill / "scripts" / "session_hook.py")
     done = []
@@ -1006,7 +1048,7 @@ def register_mcp(t: dict, dry: bool, apps: set[str] | None = None, plugin: bool 
     """Register the MCP server with the agent CLIs that are installed (user scope). Re-running is harmless."""
     if os.environ.get("KROUTER_NO_MCP") == "1":
         return []
-    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter")
     # python3 on PATH outlives a versioned interpreter path (a Homebrew upgrade moves python@3.x)
     py = sys.executable if WINDOWS else (shutil.which("python3") or sys.executable)
     server = [py, str(skill / "scripts" / "mcp_server.py")]
@@ -1192,7 +1234,7 @@ def main() -> int:
         shown = added if args.dry_run else added[:12]  # 预演把每个文件都列出来
         print(f"  {t['added']}: {len(added)}" + "".join(f"\n    {a}" for a in shown) + ("\n    …" if len(added) > len(shown) else ""))
     had_skill = skill_home().exists()
-    rule_files = [Path(os.environ.get("KROUTER_CURSOR_RULE") or Path.home() / ".cursor/rules/krouter-obsidian.mdc"),
+    rule_files = [Path(os.environ.get("KROUTER_CURSOR_RULE") or Path.home() / ".cursor/rules/krouter.mdc"),
                   Path(os.environ.get("KROUTER_ASK_RULE") or Path.home() / ".cursor/rules/ask-product.mdc")]
     had_rules = [f.exists() for f in rule_files]
     os.environ["KROUTER_NO_TIMER"] = "1"  # 先只装只读部分：库、路由、规则；夜间任务等宿主点头再装
@@ -1212,7 +1254,7 @@ def main() -> int:
                                         else "only if run from a terminal and Obsidian is installed" if state == "new"
                                         else "no (existing vault)"))
         return 0
-    sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(ROOT / "skill/krouter/scripts"))
     from krouter_home import remember
 
     vf = remember(vault)  # agent、MCP、插件不用先 export 变量也找得到这个记忆文件夹
@@ -1225,6 +1267,9 @@ def main() -> int:
     mcp = register_mcp(t, False, apps, not args.minimal)
     os.environ.pop("KROUTER_NO_TIMER", None)
     timer, asked = decide_timer(args, vault, t)
+    if not timer and not args.no_timer and legacy_timer():
+        timer = True  # 2.0 以前装过的夜间任务：宿主当时同意过，只把它重新登记到新路径
+        print("nightly job: installed before 2.0 at the old router path; registered again at the new one")
     if timer:
         rc = install_windows(vault, False, True) if WINDOWS else install_posix(vault, False)
         if rc != 0:
@@ -1282,7 +1327,7 @@ def main() -> int:
         print(t["lookup_only"].format(cmd=cmd))
     if "claude" in mcp and "claude-plugin" not in mcp and not args.minimal:
         print(t["plugin_hint"])
-    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter")
     router = skill / "scripts" / ("route_knowledge.py" if WINDOWS else "route_knowledge.sh")
     if CREATED:
         print(t["created"] + "".join(f"\n  {p}" for p in CREATED))

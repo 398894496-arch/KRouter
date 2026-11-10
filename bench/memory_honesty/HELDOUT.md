@@ -723,7 +723,7 @@ the close. Results are reported whatever they show; cases read after the run are
 **Why.** Every set above asks whether KRouter finds the page that answers a question. This one asks something else:
 whether a lesson learned on one task ("the stew tasted flat; a spoonful of sugar fixed it") comes back as a
 *suggestion* on a task with a different subject in the same situation ("the poster's colours look dull"), and stays
-quiet otherwise. Code: `skill/krouter-obsidian/scripts/experience.py`; bench: `bench/transfer/`.
+quiet otherwise. Code: `skill/krouter/scripts/experience.py`; bench: `bench/transfer/`.
 
 **Cards.** 14 experience cards written by hand in `bench/transfer/cards/` (situation, what was done, what came of it,
 the lesson without the subject, the "when" triggers, a source line). Chinese only. Each comes from one subject (nginx,

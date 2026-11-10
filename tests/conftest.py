@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(ROOT / "skill/krouter/scripts"))
 sys.path.insert(0, str(ROOT / "extras/host-daily-evolution"))
 
 # 测试绝不能写宿主真实的查询日志 / 学习游标 / 召回缓存：查询日志是夜间学习的输入，

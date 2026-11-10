@@ -95,7 +95,7 @@ the same keychain login and spends its single-use refresh token.
 
 ## What the install changes outside the vault
 
-- `~/.agents/skills/krouter-obsidian/` (the router), Cursor rules under `~/.cursor/rules/`.
+- `~/.agents/skills/krouter/` (the router), Cursor rules under `~/.cursor/rules/`.
 - `~/.config/krouter/vault`: one line, the vault path, so agents and the MCP server find it.
 - An MCP server named `krouter` registered with `claude` (user scope) and `codex` when they are installed:
   read-only, it runs the router and nothing else (`KROUTER_NO_MCP=1` skips it; `claude mcp remove krouter` and

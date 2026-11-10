@@ -110,7 +110,7 @@ Landings:
 - Derived notes with `source_ref`, `verified_at`, and scope
 
 1. **Derived notes keep source, time, scope, trust, and limits.**
-2. **Two lanes, same job.** API key first: lock the provider's flagship model and run distill + two-step promotion. No key: spawn a logged-in Claudian-class CLI (`grok`, official Codex, `claude`, …) with vault cwd — **subscription unattended**, not Grok-only. Since 0.12.0 no lane skips permission prompts: grok runs in a kernel-enforced sandbox profile (`strict` + the router); Claude runs with tools allow-listed (`dontAsk`: read / edit inside the vault, run the router); Codex runs `exec --sandbox workspace-write` (writes only the vault, reads the whole account; used only when named or with `KROUTER_ALLOW_CODEX=1`); any other CLI is used only with `KROUTER_ALLOW_UNCONFINED=1`. See [`SECURITY.md`](../SECURITY.md). The timer pins this repo's `krouter-obsidian`, never a live `obsidian-knowledge-router`. Do not use a PATH-level `agent`. Chat/IDE login is not a spawnable harness. Mounted agents run `status` and tell the host if `host_action` is present. An in-vault chat plugin is not the writer. On failure, leave a to-summarize note. Do not switch shells and rewrite.
+2. **Two lanes, same job.** API key first: lock the provider's flagship model and run distill + two-step promotion. No key: spawn a logged-in Claudian-class CLI (`grok`, official Codex, `claude`, …) with vault cwd — **subscription unattended**, not Grok-only. Since 0.12.0 no lane skips permission prompts: grok runs in a kernel-enforced sandbox profile (`strict` + the router); Claude runs with tools allow-listed (`dontAsk`: read / edit inside the vault, run the router); Codex runs `exec --sandbox workspace-write` (writes only the vault, reads the whole account; used only when named or with `KROUTER_ALLOW_CODEX=1`); any other CLI is used only with `KROUTER_ALLOW_UNCONFINED=1`. See [`SECURITY.md`](../SECURITY.md). The timer pins this repo's `skill/krouter`, never a live `obsidian-knowledge-router`. Do not use a PATH-level `agent`. Chat/IDE login is not a spawnable harness. Mounted agents run `status` and tell the host if `host_action` is present. An in-vault chat plugin is not the writer. On failure, leave a to-summarize note. Do not switch shells and rewrite.
 3. **One product: KRouter.** The writer lives in `extras/host-daily-evolution/`. `extras/dsh` is the DSH socket on the same `OBSIDIAN_VAULT`. Not two repositories, not a side plugin. Uninstalling the DSH socket does not delete notes and does not stop the timer.
 4. Distillation may propose candidates. **It must not write formal `02`.**
 
@@ -151,7 +151,7 @@ provisional  --next similar task-->  matcher asks whether to adopt
                                     └ rejected or not accepted → stay provisional, or rejected
 ```
 
-The matcher is `skill/krouter-obsidian/scripts/ask_product.py`. At most one page. `record` does not write `active`; `promote` does, after adopt + this task accepted. This clone ships the matcher, not an author’s trigger list.
+The matcher is `skill/krouter/scripts/ask_product.py`. At most one page. `record` does not write `active`; `promote` does, after adopt + this task accepted. This clone ships the matcher, not an author’s trigger list.
 
 Corrections follow the same ladder: quasi-correction → ask → adopt and accept → correction ledger `active`. The current user instruction and the latest `supersedes` beat old logs.
 

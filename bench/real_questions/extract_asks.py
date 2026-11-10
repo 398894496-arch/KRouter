@@ -37,7 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parents[1] / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(HERE.parents[1] / "skill/krouter/scripts"))
 import import_sessions as imp  # noqa: E402
 from krouter_redact import redact  # noqa: E402
 

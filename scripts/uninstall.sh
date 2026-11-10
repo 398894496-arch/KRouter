@@ -23,12 +23,17 @@ for arg in "$@"; do
 done
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-SKILL_DST="${KROUTER_SKILL_HOME:-$HOME/.agents/skills/krouter-obsidian}"
-RULE_DST="${KROUTER_CURSOR_RULE:-$HOME/.cursor/rules/krouter-obsidian.mdc}"
+SKILL_DST="${KROUTER_SKILL_HOME:-$HOME/.agents/skills/krouter}"
+RULE_DST="${KROUTER_CURSOR_RULE:-$HOME/.cursor/rules/krouter.mdc}"
 ASK_RULE_DST="${KROUTER_ASK_RULE:-$HOME/.cursor/rules/ask-product.mdc}"
 HOOK_DST="${KROUTER_HOOK_HOME:-$HOME/.cursor/hooks/krouter-exec-gate.py}"
+# 2.0 以前的路径：升级后是指向新目录的软链；没升级过就是原来的目录。两处都清。
+LEGACY_DST=""
+LEGACY_RULE=""
+[ -n "${KROUTER_SKILL_HOME:-}" ] || LEGACY_DST="$HOME/.agents/skills/krouter-obsidian"
+[ -n "${KROUTER_CURSOR_RULE:-}" ] || LEGACY_RULE="$HOME/.cursor/rules/krouter-obsidian.mdc"
 KEYS_ENV="${KROUTER_KEYS_ENV:-$HOME/.dsh-krouter-keys.env}"
-SAMPLE_MAP="$ROOT/skill/krouter-obsidian/scripts/canonical_sources.psv"
+SAMPLE_MAP="$ROOT/skill/krouter/scripts/canonical_sources.psv"
 
 if [ -n "${KROUTER_VAULT:-}" ]; then OBSIDIAN_VAULT=$KROUTER_VAULT; export OBSIDIAN_VAULT; unset KROUTER_VAULT; fi
 VAULT_FILE="${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}"
@@ -72,9 +77,12 @@ fi
 
 # 2. alias table: save it into the vault if that is the only copy
 MAP="$SKILL_DST/scripts/canonical_sources.psv"
+if [ ! -e "$MAP" ] && [ -n "$LEGACY_DST" ] && [ -d "$LEGACY_DST" ] && [ ! -L "$LEGACY_DST" ]; then
+  MAP="$LEGACY_DST/scripts/canonical_sources.psv"   # 还没升级过的旧安装
+fi
 if [ -f "$MAP" ] && [ ! -L "$MAP" ] && ! cmp -s "$MAP" "$SAMPLE_MAP"; then
   VAULT_MAP=""
-  [ -z "${OBSIDIAN_VAULT:-}" ] || VAULT_MAP=$(python3 "$ROOT/skill/krouter-obsidian/scripts/zones.py" real "$OBSIDIAN_VAULT" "90 系统文件/canonical_sources.psv")
+  [ -z "${OBSIDIAN_VAULT:-}" ] || VAULT_MAP=$(python3 "$ROOT/skill/krouter/scripts/zones.py" real "$OBSIDIAN_VAULT" "90 系统文件/canonical_sources.psv")
   if [ -n "$VAULT_MAP" ] && [ -d "$(dirname "$VAULT_MAP")" ] && [ ! -e "$VAULT_MAP" ]; then
     run cp "$MAP" "$VAULT_MAP"
     printf '%s\n' "alias table saved into the vault: $VAULT_MAP"
@@ -89,11 +97,18 @@ fi
 for f in "$RULE_DST" "$ASK_RULE_DST" "$HOOK_DST"; do
   if [ -e "$f" ]; then run rm -f "$f"; printf '%s\n' "removed: $f"; fi
 done
+if [ -n "$LEGACY_RULE" ] && [ -f "$LEGACY_RULE" ] && grep -q 'route_knowledge' "$LEGACY_RULE"; then
+  run rm -f "$LEGACY_RULE"; printf '%s\n' "removed: $LEGACY_RULE"
+fi
 [ -e "$HOOK_DST" ] || [ ! -f "$HOME/.cursor/hooks.json" ] || ! grep -q krouter-exec-gate "$HOME/.cursor/hooks.json" \
   || printf '%s\n' "HOST ACTION: remove the krouter-exec-gate entry from ~/.cursor/hooks.json"
 if [ -e "$SKILL_DST" ] || [ -L "$SKILL_DST" ]; then
   run rm -rf "$SKILL_DST"
   printf '%s\n' "removed: $SKILL_DST"
+fi
+if [ -n "$LEGACY_DST" ] && { [ -L "$LEGACY_DST" ] || [ -f "$LEGACY_DST/scripts/route_knowledge.py" ]; }; then
+  run rm -rf "$LEGACY_DST"   # 软链只删链接本身；没升级过的旧目录整个删
+  printf '%s\n' "removed: $LEGACY_DST"
 fi
 
 # 3b. MCP registrations and the recorded vault path (only ours: the server must be KRouter's mcp_server.py)

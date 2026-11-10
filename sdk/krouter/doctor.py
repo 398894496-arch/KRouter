@@ -80,6 +80,34 @@ def _apps() -> list[str]:
     return found
 
 
+LEGACY = "krouter-obsidian"  # 2.0 以前的目录名：~/.agents/skills/krouter-obsidian，仓库里的 skill/krouter-obsidian
+
+
+def _legacy_configs() -> list[str]:
+    """Settings files that still start KRouter from the pre-2.0 path."""
+    home = Path.home()
+    if sys.platform == "darwin":
+        desktop = home / "Library/Application Support/Claude/claude_desktop_config.json"
+    elif os.name == "nt":
+        desktop = Path(os.environ.get("APPDATA", "")) / "Claude/claude_desktop_config.json"
+    else:
+        desktop = Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config") / "Claude/claude_desktop_config.json"
+    codex = Path(os.environ.get("CODEX_HOME") or home / ".codex")
+    files = [home / ".claude.json", codex / "config.toml", codex / "hooks.json", home / ".cursor/mcp.json",
+             home / ".cursor/hooks.json", home / ".gemini/settings.json", desktop,
+             home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist",
+             home / ".config/systemd/user/dsh-krouter-daily.service"]
+    out = []
+    for f in files:
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if f"skills/{LEGACY}/" in text or f"skills\\{LEGACY}\\" in text or f"skill/{LEGACY}/" in text:
+            out.append(str(f).replace(str(home), "~", 1))
+    return out
+
+
 def _nightly_installed() -> bool:
     home = Path.home()
     if (home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist").is_file():
@@ -190,6 +218,15 @@ def run(vault_arg: str | None = None) -> int:
     desk = _desktop_note(boot)
     if desk:
         rows.append(desk)
+    old = _legacy_configs()
+    if old:
+        link = Path.home() / ".agents/skills" / LEGACY
+        works = link.is_symlink() and link.exists()
+        rows.append(("note" if works else "FAIL",
+                     "old path: " + ", ".join(old) + f": KRouter still starts from ~/.agents/skills/{LEGACY} (renamed to "
+                     "~/.agents/skills/krouter in 2.0" + ("; the old path is a link to it, so it works for now" if works
+                                                          else ", and nothing is there any more") +
+                     f"). Fix: {boot} (registers MCP, hooks and the nightly job at the new path)"))
     apps = _apps()
     rows.append(("ok", "connected: " + ", ".join(apps)) if apps else
                 ("note", f"connected: no app found. Fix: {boot} --apps claude,codex,cursor (or the MCP block in the README)"))

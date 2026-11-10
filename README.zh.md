@@ -73,7 +73,7 @@ curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bo
 |---|---|
 | `~/Documents/第二大脑/`（或你用 `--vault` 指定的文件夹） | 记忆本身，纯 Markdown。已有的文件夹一个文件都不覆盖，只补缺的 |
 | `~/.dsh-krouter/<版本>/`、`~/.dsh-krouter/current` | 下载下来的发布包（从 clone 里装就用 clone 本身） |
-| `~/.agents/skills/krouter-obsidian/` | 路由器 |
+| `~/.agents/skills/krouter/` | 路由器 |
 | `~/.config/krouter/vault` | 记着记忆在哪，给钩子和 MCP 服务用 |
 | `~/.claude.json`（`claude mcp add`）、`~/.claude/settings.json`（插件和它的市场） | Claude Code |
 | `~/.codex/config.toml`（`codex mcp add`）、`~/.codex/hooks.json` | Codex |
@@ -136,7 +136,7 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
-    "args": ["/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"] } } }
+    "args": ["/Users/you/.agents/skills/krouter/scripts/mcp_server.py"] } } }
 ```
 
 路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python`）。这个服务只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实）。这一行写进当天的笔记页，只当线索，不会写进规则页；它是一次单独的 git 提交，可以撤回。

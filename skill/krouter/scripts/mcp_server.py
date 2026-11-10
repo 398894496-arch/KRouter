@@ -8,7 +8,7 @@ Tools
 - `krouter_status()`: whether the vault and the nightly job are healthy, and what the host must do if not.
 
 The vault is `--vault`, else `KROUTER_VAULT` (or the older name `OBSIDIAN_VAULT`), else the path the one-line install recorded (`~/.config/krouter/vault`).
-Register it, e.g. for Claude Code: `claude mcp add krouter -- python3 ~/.agents/skills/krouter-obsidian/scripts/mcp_server.py`.
+Register it, e.g. for Claude Code: `claude mcp add krouter -- python3 ~/.agents/skills/krouter/scripts/mcp_server.py`.
 
 Over HTTP (a team server, or an app that only takes a remote MCP server), Streamable HTTP with JSON responses:
 

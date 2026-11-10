@@ -38,11 +38,11 @@ done
 # 发布包里要有一行安装真正会跑的东西
 LIST=$(python3 -c 'import sys, tarfile; print("\n".join(tarfile.open(sys.argv[1]).getnames()))' "dsh-krouter-$VER.tgz")  # bsdtar 会转义中文名
 for need in package/scripts/bootstrap.py package/scripts/install.sh package/scripts/uninstall.sh package/scripts/krouter \
-            package/skill/krouter-obsidian/scripts/route_knowledge.sh package/skill/krouter-obsidian/scripts/mcp_server.py \
-            package/skill/krouter-obsidian/scripts/zones_en.psv package/sdk/krouter/cli.py package/sdk/krouter/doctor.py \
-            package/skill/krouter-obsidian/scripts/associate.py package/skill/krouter-obsidian/scripts/cocite.py \
-            package/skill/krouter-obsidian/scripts/experience.py package/skill/krouter-obsidian/scripts/llm.py \
-            package/skill/krouter-obsidian/scripts/corrections.py package/skill/krouter-obsidian/scripts/capture_ledger.py \
+            package/skill/krouter/scripts/route_knowledge.sh package/skill/krouter/scripts/mcp_server.py \
+            package/skill/krouter/scripts/zones_en.psv package/sdk/krouter/cli.py package/sdk/krouter/doctor.py \
+            package/skill/krouter/scripts/associate.py package/skill/krouter/scripts/cocite.py \
+            package/skill/krouter/scripts/experience.py package/skill/krouter/scripts/llm.py \
+            package/skill/krouter/scripts/corrections.py package/skill/krouter/scripts/capture_ledger.py \
             package/.claude-plugin/marketplace.json package/.claude-plugin/plugin.json package/hooks/hooks.json \
             package/scripts/build_mcpb.py package/extras/claude-desktop/manifest.json \
             package/template/Agent第二大脑.md package/template-zh/Agent第二大脑.md; do

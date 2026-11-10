@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.source="https://github.com/398894496-arch/KRouter
 # Standard library only: no packages to install. (Without ripgrep the router's literal search uses Python.)
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin krouter
 
-COPY --chown=root:root skill/krouter-obsidian /app/skill/krouter-obsidian
+COPY --chown=root:root skill/krouter /app/skill/krouter
 
 USER krouter
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -23,6 +23,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s \
   CMD python -c "import sys,urllib.request; sys.exit(urllib.request.urlopen('http://127.0.0.1:8787/healthz', timeout=4).status != 200)"
-ENTRYPOINT ["python", "/app/skill/krouter-obsidian/scripts/mcp_server.py", "--http", "0.0.0.0:8787", \
+ENTRYPOINT ["python", "/app/skill/krouter/scripts/mcp_server.py", "--http", "0.0.0.0:8787", \
             "--vault", "/vault", "--token-file", "/run/secrets/krouter_token"]
 CMD ["--label", "team"]

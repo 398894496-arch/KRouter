@@ -17,7 +17,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: "`cat ~/.agents/skills/krouter-obsidian/SKILL.md | head -3`, the release tag, or `git rev-parse --short HEAD`"
+      description: "`cat ~/.agents/skills/krouter/SKILL.md | head -3`, the release tag, or `git rev-parse --short HEAD`"
   - type: dropdown
     id: os
     attributes:

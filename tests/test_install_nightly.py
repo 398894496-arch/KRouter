@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 SAMPLE = SCRIPTS / "canonical_sources.psv"
 MY_ROW = "Q99|我的名词;my noun|02 经验与方法/经验与方法.md|Methods\n"
 
@@ -24,8 +24,8 @@ def _env(tmp: Path, vault: Path | None) -> dict:
         "HOME": str(tmp / "home"),
         "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
         "LANG": "en_US.UTF-8",
-        "KROUTER_SKILL_HOME": str(tmp / "home/.agents/skills/krouter-obsidian"),
-        "KROUTER_CURSOR_RULE": str(tmp / "home/.cursor/rules/krouter-obsidian.mdc"),
+        "KROUTER_SKILL_HOME": str(tmp / "home/.agents/skills/krouter"),
+        "KROUTER_CURSOR_RULE": str(tmp / "home/.cursor/rules/krouter.mdc"),
         "KROUTER_ASK_RULE": str(tmp / "home/.cursor/rules/ask-product.mdc"),
         "KROUTER_KEYS_ENV": str(tmp / "home/keys.env"),
         "KROUTER_SKIP_LAUNCHD": "1",
@@ -46,7 +46,7 @@ def _sh(script: str, env: dict, *args: str) -> subprocess.CompletedProcess:
 def test_upgrade_keeps_the_table_and_moves_it_into_the_vault(tmp_path):
     vault = tmp_path / "vault"
     shutil.copytree(REPO / "template", vault)
-    skill = tmp_path / "home/.agents/skills/krouter-obsidian"
+    skill = tmp_path / "home/.agents/skills/krouter"
     # an old install whose table the host edited, before tables lived in the vault
     first = _sh("install.sh", _env(tmp_path, None))
     assert first.returncode == 0, first.stderr

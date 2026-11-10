@@ -14,7 +14,7 @@ from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill/krouter/scripts"))
 import zones  # noqa: E402  区名按库自己的（krouter-zones.psv）
 
 env = os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT")

@@ -111,7 +111,7 @@ the install itself lists each settings file it changed, and keeps a copy of it f
 |---|---|
 | `~/Documents/Second Brain/` (or your folder, `--vault`) | the memory: plain Markdown. An existing folder keeps every file; only missing ones are added |
 | `~/.dsh-krouter/<version>/`, `~/.dsh-krouter/current` | the downloaded release (installing from a clone uses the clone) |
-| `~/.agents/skills/krouter-obsidian/` | the router |
+| `~/.agents/skills/krouter/` | the router |
 | `~/.config/krouter/vault` | where the memory is, for hooks and the MCP server |
 | `~/.claude.json` (`claude mcp add`), `~/.claude/settings.json` (plugin and its marketplace) | Claude Code |
 | `~/.codex/config.toml` (`codex mcp add`), `~/.codex/hooks.json` | Codex |
@@ -193,7 +193,7 @@ and `uninstall.sh` takes out only its own entries.
 
 ```json
 { "mcpServers": { "krouter": { "command": "python3",
-    "args": ["/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"] } } }
+    "args": ["/Users/you/.agents/skills/krouter/scripts/mcp_server.py"] } } }
 ```
 
 Use the full path to your home folder (on Windows, `C:\\Users\\you\\.agents\\…` and often `python`). The server is

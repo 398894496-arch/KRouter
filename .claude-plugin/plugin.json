@@ -12,7 +12,7 @@
   "mcpServers": {
     "krouter": {
       "command": "python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/skill/krouter-obsidian/scripts/mcp_server.py"]
+      "args": ["${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/mcp_server.py"]
     }
   }
 }

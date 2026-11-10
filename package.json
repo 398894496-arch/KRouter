@@ -12,7 +12,7 @@
     "extras/dsh/cordis.patch.yml",
     "extras/dsh/README.md",
     "extras/host-daily-evolution",
-    "skill/krouter-obsidian",
+    "skill/krouter",
     "scripts",
     "template",
     "template-zh",

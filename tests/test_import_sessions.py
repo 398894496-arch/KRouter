@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 IMPORT = SCRIPTS / "import_sessions.py"
 FOLDER = "05 时间日志/会话摘录"
 KEY = "sk-" + "Abc123XyZ" * 4

@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 BOOT = REPO / "scripts/bootstrap.py"
 sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(REPO / "scripts"))
@@ -149,7 +149,7 @@ def test_minimal_install_only_looks_up(tmp_path):
     home = tmp_path / "home"
     assert out["mcp"] == [] and out["hooks"] == [] and out["imported"] == 0 and out["timer"] is False
     assert not (home / ".cursor").exists()  # no Cursor rules unless Cursor is named
-    assert (home / ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh").is_file()
+    assert (home / ".agents/skills/krouter/scripts/route_knowledge.sh").is_file()
     assert "Minimal install" in res.stdout and "keeps up by itself" not in res.stdout
 
 
@@ -159,7 +159,7 @@ def test_dry_run_lists_every_file_and_setting_and_changes_nothing(tmp_path):
     vault = tmp_path / "v"
     res, _ = _boot(env, "--lang", "en", "--vault", str(vault), "--dry-run")
     assert res.returncode == 0 and not vault.exists() and not (tmp_path / "home/.agents").exists()
-    for want in ("Home.md", "krouter-zones.psv", ".agents/skills/krouter-obsidian", ".cursor/rules/krouter-obsidian.mdc",
+    for want in ("Home.md", "krouter-zones.psv", ".agents/skills/krouter", ".cursor/rules/krouter.mdc",
                  "where the vault is", "Daily health.md", "session import:", "nightly job:", "open in Obsidian:"):
         assert want in res.stdout, want
 

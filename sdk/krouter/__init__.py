@@ -29,7 +29,7 @@ def router_dir() -> Path:
 
         return Path(list(krouter_router.__path__)[0]).resolve()  # 没有 __init__.py 的命名空间包，只有 __path__
     except ImportError:
-        here = Path(__file__).resolve().parents[2] / "skill" / "krouter-obsidian" / "scripts"
+        here = Path(__file__).resolve().parents[2] / "skill" / "krouter" / "scripts"
         if (here / "route_knowledge.py").exists():
             return here
         raise RuntimeError("KRouter's router scripts were not found; reinstall the package") from None

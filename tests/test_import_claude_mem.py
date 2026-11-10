@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 IMPORT = SCRIPTS / "import_claude_mem.py"
 KEY = "sk-" + "Zyx987AbC" * 4
 DAY = 86_400_000

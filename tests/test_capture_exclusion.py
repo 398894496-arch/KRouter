@@ -99,7 +99,7 @@ def test_nightly_reads_a_done_import_as_ok_not_skipped():
 
 def test_exclude_root_matches_by_path_parts_not_by_prefix():
     from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill/krouter/scripts"))
     from import_sessions import _within
     assert _within("/work/clients/acme", "/work/clients") and _within("/work/clients", "/work/clients")
     assert not _within("/work/clients-old/acme", "/work/clients")  # a longer name is another folder

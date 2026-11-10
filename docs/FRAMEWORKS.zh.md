@@ -5,10 +5,10 @@
 下面每个框架都能加载 KRouter 的 MCP 服务，所以一个服务就让它们共用同一份记忆：答案所在的页、一句话答案；库里没有时回 `recall: none`。先把服务的路径记一次：
 
 ```python
-KROUTER = "/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"   # 一行安装之后就在这里
+KROUTER = "/Users/you/.agents/skills/krouter/scripts/mcp_server.py"   # 一行安装之后就在这里
 ```
 
-Windows 上是 `C:\\Users\\you\\.agents\\skills\\krouter-obsidian\\scripts\\mcp_server.py`，命令常常是 `python` 而不是 `python3`。连团队服务的话，用框架自带的 Streamable HTTP 客户端，地址是 `https://<主机>/mcp/<记忆名>`，带上 `Authorization: Bearer <token>` 请求头（见 [`TEAM.md`](TEAM.md)）。
+Windows 上是 `C:\\Users\\you\\.agents\\skills\\krouter\\scripts\\mcp_server.py`，命令常常是 `python` 而不是 `python3`。连团队服务的话，用框架自带的 Streamable HTTP 客户端，地址是 `https://<主机>/mcp/<记忆名>`，带上 `Authorization: Bearer <token>` 请求头（见 [`TEAM.md`](TEAM.md)）。
 
 | | 怎么接 | 状态 |
 |---|---|---|

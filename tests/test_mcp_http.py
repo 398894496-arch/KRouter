@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SERVER = REPO / "skill/krouter-obsidian/scripts/mcp_server.py"
+SERVER = REPO / "skill/krouter/scripts/mcp_server.py"
 TOKEN = "t0ken-for-tests-only-0123456789"
 
 

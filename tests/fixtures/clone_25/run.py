@@ -13,7 +13,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(ROOT / "skill/krouter/scripts"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from canonical_lookup import load_rows, lookup  # noqa: E402

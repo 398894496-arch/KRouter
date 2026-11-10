@@ -30,7 +30,7 @@ packages = ["krouter", "krouter.integrations", "krouter_router", "krouter_templa
 [tool.setuptools.package-dir]
 krouter = "sdk/krouter"
 "krouter.integrations" = "sdk/krouter/integrations"
-krouter_router = "skill/krouter-obsidian/scripts"
+krouter_router = "skill/krouter/scripts"
 krouter_template = "template"
 krouter_template_zh = "template-zh"
 

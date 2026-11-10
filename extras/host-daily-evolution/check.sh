@@ -5,7 +5,7 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 VAULT="${KROUTER_VAULT:-${OBSIDIAN_VAULT:-$ROOT/template}}"
-ZONES="$ROOT/skill/krouter-obsidian/scripts/zones.py"
+ZONES="$ROOT/skill/krouter/scripts/zones.py"
 HEALTH=$(python3 "$ZONES" real "$VAULT" "90 系统文件/自动化/日更健康.md")
 
 if [ ! -f "$HEALTH" ]; then

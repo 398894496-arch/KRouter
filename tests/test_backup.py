@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skill/krouter-obsidian/scripts/backup.py"
+SCRIPT = ROOT / "skill/krouter/scripts/backup.py"
 pytestmark = pytest.mark.skipif(shutil.which("openssl") is None or shutil.which("git") is None,
                                 reason="needs openssl and git")
 

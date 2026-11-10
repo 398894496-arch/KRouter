@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 FAKE = "sk-FAKEFAKEFAKE1234567890abcdef"
 KEY_PAGE = "90 系统文件/自动化/自进化钥匙.md"
 OTHER = "90 系统文件/Agent记忆/DeepSeek 凭据.md"  # secret by its name: never sent, never quoted

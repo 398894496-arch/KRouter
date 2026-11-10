@@ -21,7 +21,7 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || true)
-if [ -n "$HERE" ] && [ -f "$HERE/bootstrap.py" ] && [ -d "$HERE/../skill/krouter-obsidian" ]; then
+if [ -n "$HERE" ] && [ -f "$HERE/bootstrap.py" ] && [ -d "$HERE/../skill/krouter" ]; then
   exec python3 "$HERE/bootstrap.py" "$@"
 fi
 

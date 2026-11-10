@@ -45,7 +45,7 @@
 This is an **Agent knowledge OS**, not a search plugin.
 
 - **Self-evolution** is the product (seal → distill → two-step promotion). Timer: the one-line install **asks before installing it** (no terminal, no timer); the manual `install.sh` from a clone installs it (`KROUTER_NO_TIMER=1` skips). **API key first:** lock that provider's flagship model and run distill + promotion. **No key:** the user's own Claudian-class CLI subscription (`grok` / official Codex / `claude` / …) does the same work. `lamp: unused` = you turned the timer off.
-- **Promotion is two-step:** five gates pass → write `provisional` the **same day**, no ask. Next similar task → **ask** (matcher in `skill/krouter-obsidian/scripts/ask_product.py`; at most one). Host adopts → `record`. This task accepted → `promote` writes `active`. Do not write `active` on `record`.
+- **Promotion is two-step:** five gates pass → write `provisional` the **same day**, no ask. Next similar task → **ask** (matcher in `skill/krouter/scripts/ask_product.py`; at most one). Host adopts → `record`. This task accepted → `promote` writes `active`. Do not write `active` on `record`.
 - **Correction-first:** current instruction and latest `supersedes` beat old logs.
 - **Retrieval refuses rather than guesses:** ranked lexical recall over every page (words and Chinese character pairs, rule pages first), with an optional alias lock in front for fixed short nouns; a dual SHA-256 receipt; `recall: none` when nothing covers the question. No vector store by default. Citing a neighbour page as the answer is a protocol violation.
 

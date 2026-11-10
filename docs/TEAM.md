@@ -33,7 +33,7 @@ On any machine the team can reach (a small VM is plenty; see the numbers below):
 ```bash
 git clone git@github.com:your-org/team-vault.git /srv/team-vault
 openssl rand -hex 24 > /etc/krouter/token && chmod 600 /etc/krouter/token
-python3 skill/krouter-obsidian/scripts/mcp_server.py --http 0.0.0.0:8787 \
+python3 skill/krouter/scripts/mcp_server.py --http 0.0.0.0:8787 \
   --vault /srv/team-vault --label team --token-file /etc/krouter/token
 ```
 
@@ -75,7 +75,7 @@ To change the token, write a new one to the file and restart the server.
 customer, each at its own URL and, if you like, with its own token.
 
 ```bash
-python3 skill/krouter-obsidian/scripts/mcp_server.py --http 0.0.0.0:8787 \
+python3 skill/krouter/scripts/mcp_server.py --http 0.0.0.0:8787 \
   --bank team=/srv/team-vault --bank-token team=/etc/krouter/team.token \
   --bank ops=/srv/ops-vault   --bank-token ops=/etc/krouter/ops.token
 # → https://krouter.your-team.example/mcp/team and …/mcp/ops

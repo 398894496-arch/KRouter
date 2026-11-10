@@ -14,7 +14,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 import bootstrap  # noqa: E402
 
-SERVER = ["/usr/bin/python3", "/home/u/.agents/skills/krouter-obsidian/scripts/mcp_server.py"]
+SERVER = ["/usr/bin/python3", "/home/u/.agents/skills/krouter/scripts/mcp_server.py"]
 APPS = {a["id"]: a for a in bootstrap.MCP_APPS}
 # 各家官方文档里的写法（2026-11-09 核对）
 EXPECT = {

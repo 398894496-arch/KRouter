@@ -1,5 +1,5 @@
 ---
-name: krouter-obsidian
+name: krouter
 description: KRouter Obsidian — route knowledge-dependent tasks to the smallest current evidence set in an Obsidian vault using deterministic local search. Use when a request depends on durable user preferences, prior corrections or superseded claims, long-term project history or results, reusable methods or evidence, or the current vault and automation state. Return evidence in-process; do not spawn a retrieval model or add embeddings.
 ---
 
@@ -7,7 +7,7 @@ description: KRouter Obsidian — route knowledge-dependent tasks to the smalles
 
 Set `OBSIDIAN_VAULT` to the vault root. Run retrieval in the current process. Do not spawn a retrieval agent. Do not add vector storage.
 
-Router script (after install): `$HOME/.agents/skills/krouter-obsidian/scripts/route_knowledge.sh`. On Windows use `python3 route_knowledge.py` (same routes).
+Router script (after install): `$HOME/.agents/skills/krouter/scripts/route_knowledge.sh`. On Windows use `python3 route_knowledge.py` (same routes).
 
 ## Workflow
 
@@ -26,7 +26,7 @@ Router script (after install): `$HOME/.agents/skills/krouter-obsidian/scripts/ro
 
 At the start of a user utterance that is **starting work**, run:
 
-`python3 $HOME/.agents/skills/krouter-obsidian/scripts/ask_product.py ask --query "<user text>"`
+`python3 $HOME/.agents/skills/krouter/scripts/ask_product.py ask --query "<user text>"`
 
 If `trigger.ask` is set, ask `prompt` and wait. At most one. After adopt / reject / defer, run `record --file NAME.md --decision …`. `record` does not write `active`. If adopt, do the work; on success run `promote --file NAME.md`. Only `promote` sets `status: active`. Miss / ambiguous / already-asked: continue. Triggers live on the provisional page (`triggers: a; b`) or the vault sidecar; this clone does not ship someone else’s table.
 
@@ -36,7 +36,7 @@ A page named or marked as secret (凭据 / 密钥 / 钥匙 / credential / secret
 
 ## Aliases
 
-The alias table is the host's: `90 系统文件/canonical_sources.psv` in the vault (`canonical_map:` on every receipt says which table is in force). To help a host start one, run `python3 $HOME/.agents/skills/krouter-obsidian/scripts/propose_aliases.py` and point them at `90 系统文件/自动化/别名候选.md`; they tick rows, then `--apply` appends only those. Never tick rows for them.
+The alias table is the host's: `90 系统文件/canonical_sources.psv` in the vault (`canonical_map:` on every receipt says which table is in force). To help a host start one, run `python3 $HOME/.agents/skills/krouter/scripts/propose_aliases.py` and point them at `90 系统文件/自动化/别名候选.md`; they tick rows, then `--apply` appends only those. Never tick rows for them.
 
 ## Boundaries
 

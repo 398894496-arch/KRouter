@@ -9,12 +9,16 @@
 //
 //   const team = KRouter.remote("https://krouter.example/mcp/team", { token: process.env.KROUTER_TOKEN });
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 
 const PROTOCOL = "2025-06-18";
-const DEFAULT_SERVER = join(homedir(), ".agents", "skills", "krouter-obsidian", "scripts", "mcp_server.py");
+// 2.0 起装在 ~/.agents/skills/krouter；还没升级的旧安装在 krouter-obsidian
+const INSTALLED = join(homedir(), ".agents", "skills", "krouter", "scripts", "mcp_server.py");
+const LEGACY = join(homedir(), ".agents", "skills", "krouter-obsidian", "scripts", "mcp_server.py");
+const DEFAULT_SERVER = !existsSync(INSTALLED) && existsSync(LEGACY) ? LEGACY : INSTALLED;
 
 /** One receipt, read the same way as the Python SDK's `Answer`. */
 export class Answer {

@@ -42,7 +42,7 @@ notice, then the details.
   should: `releases/latest/download/bootstrap.sh` is a 404 and `main` has no `pyproject.toml` yet.
 - **An English install is English all the way through, and the install says what it changes.** A new English vault
   gets English folder and file names (`Home.md`, `02 Methods/`, `90 System/Automation/Daily health.md`, …) from
-  `skill/krouter-obsidian/scripts/zones_en.psv`, recorded in the vault's `krouter-zones.psv`; `krouter demo`, `status`,
+  `skill/krouter/scripts/zones_en.psv`, recorded in the vault's `krouter-zones.psv`; `krouter demo`, `status`,
   receipts' `how` lines, `first_run.sh` and the correction-candidates page (`YYYY-MM-DD｜Correction candidates.md`)
   follow it. Vaults with the default (Chinese) names keep working unchanged; nothing is migrated. The language is
   `--lang`, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's (an English terminal on a Mac set to Chinese

@@ -97,7 +97,7 @@ def router_dir(arg: str) -> Path:
     env = os.environ.get("KROUTER_ROUTER")
     if env:
         return Path(env).expanduser()
-    return Path.home() / ".agents/skills/krouter-obsidian/scripts"
+    return Path.home() / ".agents/skills/krouter/scripts"
 
 
 def main() -> int:
@@ -105,7 +105,7 @@ def main() -> int:
     ap.add_argument("--slots", default=os.environ.get("KROUTER_INTRADAY_SLOTS", SLOTS), help=f"default {SLOTS}")
     ap.add_argument("--tz", default=os.environ.get("KROUTER_INTRADAY_TZ", TZ), help=f"default {TZ}")
     ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
-    ap.add_argument("--router", default="", help="the krouter-obsidian scripts folder (default: the installed skill)")
+    ap.add_argument("--router", default="", help="the krouter scripts folder (default: the installed skill)")
     ap.add_argument("--dry-run", action="store_true", help="say whether a slot is due and what the import would send")
     ap.add_argument("--force", action="store_true", help="run now even when no slot is due")
     args = ap.parse_args()

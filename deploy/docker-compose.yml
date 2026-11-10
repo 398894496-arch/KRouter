@@ -6,7 +6,7 @@ services:
     image: ghcr.io/398894496-arch/krouter:v1.3.0
     restart: unless-stopped
     ports: ["8787:8787"]
-    entrypoint: ["python", "/app/skill/krouter-obsidian/scripts/mcp_server.py", "--http", "0.0.0.0:8787"]
+    entrypoint: ["python", "/app/skill/krouter/scripts/mcp_server.py", "--http", "0.0.0.0:8787"]
     command: ["--bank", "team=/vault/team", "--bank-token", "team=/run/secrets/team_token",
               "--bank", "ops=/vault/ops", "--bank-token", "ops=/run/secrets/ops_token"]
     volumes: ["./vaults:/vault:ro"]

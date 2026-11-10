@@ -28,7 +28,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SERVER = REPO / "skill/krouter-obsidian/scripts/mcp_server.py"
+SERVER = REPO / "skill/krouter/scripts/mcp_server.py"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gen import EN, ZH  # noqa: E402
 

@@ -9,7 +9,7 @@ import { createInterface } from "node:readline";
 import { KRouter, Answer } from "../index.js";
 
 const REPO = resolve(import.meta.dirname, "..", "..", "..");
-const SERVER = join(REPO, "skill", "krouter-obsidian", "scripts", "mcp_server.py");
+const SERVER = join(REPO, "skill", "krouter", "scripts", "mcp_server.py");
 const PY = process.env.PYTHON || (process.platform === "win32" ? "python" : "python3");
 const TOKEN = "js-test-token-0123456789abcdef";
 let dir, vault, http, url;

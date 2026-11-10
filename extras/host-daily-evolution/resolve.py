@@ -58,8 +58,8 @@ def _load_lane():
     import importlib.util
 
     here = Path(__file__).resolve().parent
-    for scripts in (here.parents[1] / "skill/krouter-obsidian/scripts",
-                    Path.home() / ".agents/skills/krouter-obsidian/scripts"):
+    for scripts in (here.parents[1] / "skill/krouter/scripts",
+                    Path.home() / ".agents/skills/krouter/scripts"):
         path = scripts / "llm.py"
         if path.is_file():
             spec = importlib.util.spec_from_file_location("krouter_llm", path)
@@ -68,7 +68,7 @@ def _load_lane():
             if str(scripts) not in sys.path:
                 sys.path.append(str(scripts))
             return mod
-    raise SystemExit("KRouter: skill/krouter-obsidian/scripts/llm.py not found")
+    raise SystemExit("KRouter: skill/krouter/scripts/llm.py not found")
 
 
 _lane = _load_lane()
@@ -255,7 +255,7 @@ def repo_root() -> Path:
 
 
 def bundled_router() -> Path:
-    return repo_root() / "skill/krouter-obsidian/scripts/route_knowledge.sh"
+    return repo_root() / "skill/krouter/scripts/route_knowledge.sh"
 
 
 def is_foreign_live_router(path: Path) -> bool:
@@ -269,7 +269,8 @@ def timer_router() -> Path:
     if pinned:
         candidates.append(Path(pinned))
     candidates.append(bundled_router())
-    candidates.append(Path.home() / ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh")
+    candidates.append(Path.home() / ".agents/skills/krouter/scripts/route_knowledge.sh")
+    candidates.append(Path.home() / ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh")  # 2.0 以前的安装
     for path in candidates:
         if is_foreign_live_router(path):
             continue

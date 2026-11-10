@@ -12,7 +12,7 @@ import { createMCPClient } from "@ai-sdk/mcp";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const REPO = resolve(import.meta.dirname, "..", "..", "..");
-const KROUTER = join(REPO, "skill", "krouter-obsidian", "scripts", "mcp_server.py");
+const KROUTER = join(REPO, "skill", "krouter", "scripts", "mcp_server.py");
 const PY = process.env.PYTHON || (process.platform === "win32" ? "python" : "python3");
 let env;
 

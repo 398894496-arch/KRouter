@@ -47,7 +47,7 @@ def test_new_chinese_vault_then_upgrade_keeps_the_table(tmp_path):
     assert (vault / "02 经验与方法/自动化/按日志文件判断封账.md").is_file()  # the Chinese template
     table = vault / "90 系统文件/canonical_sources.psv"
     assert "按日志文件判断封账" in table.read_text(encoding="utf-8")  # its own sample table, not the English one
-    assert (tmp_path / "home/.agents/skills/krouter-obsidian/scripts/route_knowledge.sh").is_file()
+    assert (tmp_path / "home/.agents/skills/krouter/scripts/route_knowledge.sh").is_file()
     assert "装好了" in res.stdout and "还没有可用的模型" in res.stdout  # plain-language next step, no model yet
     table.write_text(table.read_text(encoding="utf-8") + "Q99|我的名词|01 项目/项目.md|x\n", encoding="utf-8")
     res2, out2 = _boot(env, "--lang", "zh")

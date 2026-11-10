@@ -109,7 +109,7 @@ def main() -> int:
     os.environ["KROUTER_NO_QUERY_LOG"] = "1"
     os.environ.pop("KROUTER_MAP", None)
     repo = Path(args.repo)
-    sys.path.insert(0, str(repo / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(repo / "skill/krouter/scripts"))
     if args.locomo:
         rows = locomo_rows()[: args.limit or None]
         args.half = "locomo"

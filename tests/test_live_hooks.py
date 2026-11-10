@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 HOOK = SCRIPTS / "session_hook.py"
 IMPORT = SCRIPTS / "import_sessions.py"
 sys.path.insert(0, str(REPO / "scripts"))

@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SERVER = (REPO / "skill/krouter-obsidian/scripts/mcp_server.py").read_text(encoding="utf-8")
+SERVER = (REPO / "skill/krouter/scripts/mcp_server.py").read_text(encoding="utf-8")
 FLAGS = set(re.findall(r'add_argument\("(--[a-z-]+)"', SERVER))
 
 

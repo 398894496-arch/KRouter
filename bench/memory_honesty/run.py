@@ -102,7 +102,7 @@ def aggregate(result: dict) -> dict:
 
 
 def krouter_answers(rows: list[dict], vault_src: Path | None = None) -> list[dict]:
-    sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
     saved = {k: os.environ.get(k) for k in ("KROUTER_NO_QUERY_LOG", "KROUTER_CACHE_DIR", "KROUTER_MAP")}
     # Windows 上召回缓存的 SQLite 连接在进程里一直开着，临时目录删不掉也不算失败
     with tempfile.TemporaryDirectory(prefix="krouter-bench-", ignore_cleanup_errors=True) as tmp:

@@ -18,7 +18,7 @@ from mcp import ClientSession, StdioServerParameters  # noqa: E402
 from mcp.client.stdio import stdio_client  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
-SERVER = REPO / "skill/krouter-obsidian/scripts/mcp_server.py"
+SERVER = REPO / "skill/krouter/scripts/mcp_server.py"
 TOKEN = "sdk-test-token-0123456789abcdef"
 
 

@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 sys.path.insert(0, str(SCRIPTS))
 import mcp_server  # noqa: E402
 import recall_index  # noqa: E402

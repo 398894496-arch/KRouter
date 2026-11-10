@@ -10,7 +10,7 @@ process.env.KROUTER_NO_QUERY_LOG = "1";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "../..");
 const VAULT = join(ROOT, "template");
-const ROUTER = join(ROOT, "skill/krouter-obsidian/scripts/route_knowledge.sh");
+const ROUTER = join(ROOT, "skill/krouter/scripts/route_knowledge.sh");
 
 let failed = 0;
 function check(name, cond, detail = "") {

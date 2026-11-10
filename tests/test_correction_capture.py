@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-HOOK = REPO / "skill/krouter-obsidian/scripts/session_hook.py"
+HOOK = REPO / "skill/krouter/scripts/session_hook.py"
 KEY = "sk-" + "Abc123XyZ" * 4
 
 

@@ -7,10 +7,10 @@ answers, its one-line answer, and `recall: none` when the vault does not know. S
 once:
 
 ```python
-KROUTER = "/Users/you/.agents/skills/krouter-obsidian/scripts/mcp_server.py"   # after the one-line install
+KROUTER = "/Users/you/.agents/skills/krouter/scripts/mcp_server.py"   # after the one-line install
 ```
 
-On Windows it is `C:\\Users\\you\\.agents\\skills\\krouter-obsidian\\scripts\\mcp_server.py`, often with `python`
+On Windows it is `C:\\Users\\you\\.agents\\skills\\krouter\\scripts\\mcp_server.py`, often with `python`
 instead of `python3`. For a team server, use the framework's Streamable HTTP client with
 `https://<host>/mcp/<memory>` and an `Authorization: Bearer <token>` header ([`TEAM.md`](TEAM.md)).
 

@@ -27,25 +27,28 @@ function isForeignLiveRouter(path) {
 export function resolveRouter(explicit) {
   const bundled = resolve(
     HERE,
-    "../../../skill/krouter-obsidian/scripts/route_knowledge.sh",
+    "../../../skill/krouter/scripts/route_knowledge.sh",
   );
   const bundledPy = resolve(
     HERE,
-    "../../../skill/krouter-obsidian/scripts/route_knowledge.py",
+    "../../../skill/krouter/scripts/route_knowledge.py",
   );
   const installed = join(
     homedir(),
-    ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh",
+    ".agents/skills/krouter/scripts/route_knowledge.sh",
   );
   const installedPy = join(
     homedir(),
-    ".agents/skills/krouter-obsidian/scripts/route_knowledge.py",
+    ".agents/skills/krouter/scripts/route_knowledge.py",
   );
+  // 2.0 以前的安装目录（升级后是指向新目录的链接）
+  const legacy = join(homedir(), ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh");
+  const legacyPy = join(homedir(), ".agents/skills/krouter-obsidian/scripts/route_knowledge.py");
   const preferPy = platform() === "win32";
   const candidates = (
     preferPy
-      ? [explicit, process.env.KROUTER_ROUTER, bundledPy, installedPy, bundled, installed]
-      : [explicit, process.env.KROUTER_ROUTER, bundled, installed, bundledPy, installedPy]
+      ? [explicit, process.env.KROUTER_ROUTER, bundledPy, installedPy, bundled, installed, legacyPy, legacy]
+      : [explicit, process.env.KROUTER_ROUTER, bundled, installed, bundledPy, installedPy, legacy, legacyPy]
   ).filter(Boolean);
   for (const path of candidates) {
     if (isForeignLiveRouter(path)) continue;

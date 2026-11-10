@@ -54,7 +54,7 @@ export const Config = z.object({
     .string()
     .default("")
     .description(
-      "Absolute path to route_knowledge.sh. Empty uses KROUTER_ROUTER, then ~/.agents/skills/krouter-obsidian.",
+      "Absolute path to route_knowledge.sh. Empty uses KROUTER_ROUTER, then ~/.agents/skills/krouter.",
     ),
 });
 

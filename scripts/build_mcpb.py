@@ -32,7 +32,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "extras/claude-desktop/manifest.json"
 LAUNCHER = ROOT / "extras/claude-desktop/krouter_desktop.py"
-SCRIPTS = ROOT / "skill/krouter-obsidian/scripts"
+SCRIPTS = ROOT / "skill/krouter/scripts"
 REQUIRED = ("manifest_version", "name", "version", "description", "author", "server")
 USER_TYPES = {"string", "number", "boolean", "directory", "file"}
 SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")

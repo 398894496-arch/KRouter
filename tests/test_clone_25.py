@@ -40,7 +40,7 @@ def test_clone_25_paraphrase_misses_and_noun_hits():
 def test_shipped_template_map_still_mechanically_clean():
     """Product sample map (ten nouns) must stay unique-hit on template/."""
     mech = verify(
-        ROOT / "skill/krouter-obsidian/scripts/canonical_sources.psv",
+        ROOT / "skill/krouter/scripts/canonical_sources.psv",
         ROOT / "template",
     )
     assert mech["ok"], mech["failures"]

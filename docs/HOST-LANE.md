@@ -2,7 +2,7 @@
 
 Some KRouter steps need a model: distilling sessions, writing experience cards from them, topic dossiers, answer
 cards, trigger proposals. The aim is that none of them needs a key of their own: the agent the user already works in
-(Claude Code, Codex, Cursor, …) comes with a model. Code: `skill/krouter-obsidian/scripts/llm.py` (`plan`,
+(Claude Code, Codex, Cursor, …) comes with a model. Code: `skill/krouter/scripts/llm.py` (`plan`,
 `complete`, `channel_report`), `mcp_server.py` (`krouter_learn`, `krouter_note`), `experience.py learn`. Checked on
 2026-11-09.
 

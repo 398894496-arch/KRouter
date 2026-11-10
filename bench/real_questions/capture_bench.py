@@ -28,7 +28,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(HERE.parents[1] / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(HERE.parents[1] / "skill/krouter/scripts"))
 import classify_asks as ca  # noqa: E402
 import import_sessions as imp  # noqa: E402
 

@@ -13,12 +13,12 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-HOOK = REPO / "skill/krouter-obsidian/scripts/session_hook.py"
+HOOK = REPO / "skill/krouter/scripts/session_hook.py"
 DIGEST = "## 定了什么、改了什么（模型提炼，待你确认）"
 
 
 def _root(path: Path) -> str:
-    sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
     from krouter_home import project_root
 
     return project_root(str(path))

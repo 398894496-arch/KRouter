@@ -8,7 +8,7 @@ alwaysApply: true
 When the user starts work (not a short follow-up like "what does that mean"):
 
 1. Set `OBSIDIAN_VAULT` to the vault root.
-2. Run `python3 ~/.agents/skills/krouter-obsidian/scripts/ask_product.py ask --query "<user text>"` (or the copy inside this clone’s `skill/krouter-obsidian/scripts/`).
+2. Run `python3 ~/.agents/skills/krouter/scripts/ask_product.py ask --query "<user text>"` (or the copy inside this clone’s `skill/krouter/scripts/`).
 3. If `trigger.ask` is set: ask `prompt`, **stop**, wait for adopt / reject / defer. At most one. Do not start the task.
 4. After they answer, run `ask_product.py record --file <Name.md> --decision adopt|reject|defer`. `record` does not write `active`.
 5. If **adopt**: do the work. When it succeeds, run `ask_product.py promote --file <Name.md>`. Only `promote` sets `status: active`. On failure, mid-task reject, or a non-adopt decision: do not promote.

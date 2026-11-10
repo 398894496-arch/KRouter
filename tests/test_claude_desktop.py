@@ -14,7 +14,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 import bootstrap  # noqa: E402
 
-SERVER = ["/usr/bin/python3", "/home/u/.agents/skills/krouter-obsidian/scripts/mcp_server.py"]
+SERVER = ["/usr/bin/python3", "/home/u/.agents/skills/krouter/scripts/mcp_server.py"]
 
 
 @pytest.fixture()

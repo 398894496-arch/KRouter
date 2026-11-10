@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lme  # noqa: E402
 
-SCRIPTS = lme.REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = lme.REPO / "skill/krouter/scripts"
 FEATURES = ("top", "margin", "strong", "cov1", "nterms", "nabsent", "miss_mass", "gap_rel")
 HIGH_IS_ABSENT = {"nabsent", "miss_mass"}  # for these a rule fires when the value is >=; for the rest when <=
 BUDGETS = (0, 2, 5)  # answerable-dev answers lost (235 of them: 2 is 0.85 points)

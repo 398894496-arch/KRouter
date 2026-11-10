@@ -33,7 +33,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
 import experience  # noqa: E402
 
 BATCH = 14

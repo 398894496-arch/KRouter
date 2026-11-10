@@ -4,7 +4,7 @@ set -eu
 export KROUTER_NO_QUERY_LOG=1
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-SCRIPTS="$ROOT/skill/krouter-obsidian/scripts"
+SCRIPTS="$ROOT/skill/krouter/scripts"
 ROUTER="$SCRIPTS/route_knowledge.sh"
 
 if ! command -v python3 >/dev/null 2>&1; then
@@ -95,7 +95,7 @@ printf '%s\n' "$suggest" | grep -q "canonical_match: true" && {
 printf '%s\n' "ok suggest homz -> Q01 hint"
 
 printf '%s\n' "== ask matcher =="
-ask_out=$(OBSIDIAN_VAULT="$OBSIDIAN_VAULT" python3 "$ROOT/skill/krouter-obsidian/scripts/ask_product.py" coverage) || {
+ask_out=$(OBSIDIAN_VAULT="$OBSIDIAN_VAULT" python3 "$ROOT/skill/krouter/scripts/ask_product.py" coverage) || {
   printf '%s\n' "FAIL ask coverage" >&2
   printf '%s\n' "$ask_out" >&2
   fail=1

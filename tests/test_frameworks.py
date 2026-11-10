@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SERVER = str(REPO / "skill/krouter-obsidian/scripts/mcp_server.py")
+SERVER = str(REPO / "skill/krouter/scripts/mcp_server.py")
 KNOWN = "what port does the local api listen on"
 UNKNOWN = "which espresso grinder setting do we use"
 

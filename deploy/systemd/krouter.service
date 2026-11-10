@@ -21,7 +21,7 @@ Group=krouter
 Environment=KROUTER_CACHE_DIR=/var/cache/krouter
 Environment=KROUTER_STATE_DIR=/var/lib/krouter
 Environment=KROUTER_NO_QUERY_LOG=1
-ExecStart=/usr/bin/python3 /opt/krouter/skill/krouter-obsidian/scripts/mcp_server.py --http 0.0.0.0:8787 \
+ExecStart=/usr/bin/python3 /opt/krouter/skill/krouter/scripts/mcp_server.py --http 0.0.0.0:8787 \
     --bank team=/srv/krouter/team --bank-token team=/etc/krouter/team.token --workers 4 --refresh-every 2
 Restart=on-failure
 RestartSec=2
