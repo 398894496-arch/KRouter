@@ -74,7 +74,7 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 |---|---|---|
 | Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
 | Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已通过命令行 agent（`codex exec`，codex-cli 0.155.0-alpha.9.2，2026-11-09）实测：能发现工具、有答案的问题带出处答对、库里没有的问题拒答；钩子在同一版本实测（提示词里的纠正被记下，每轮结束和会话结束的导入都跑了）。Codex 桌面应用：未测 |
-| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；通过 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09）实测到：项目级 MCP 条目被发现、批准后列出三个工具；提问、拒答和钩子未测（没有可用账号）；桌面应用：未测 |
+| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；通过 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09，`-p --force`）实测：项目级 MCP 条目被发现、列出工具、有答案的问题带出处答对、库里没有的问题拒答；每轮结束和会话结束的钩子写出了会话页，但命令行没有运行 `beforeSubmitPrompt`，所以输入的纠正句没被记下（手工喂 Cursor 格式的载荷，钩子本身能记）；桌面应用：未测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | Claude Desktop 4.23118.1 | MCP：安装脚本写好 `claude_desktop_config.json`；重启一次应用 | 条目写好后，用这条条目里的命令在应用外把服务起起来，列出了它的三个工具（2026-11-09）；还没在应用里问过：Claude Desktop 只在启动时读设置 |
 | VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |

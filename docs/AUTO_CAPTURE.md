@@ -164,9 +164,12 @@ a developer message, "以后一律用 pnpm" became a `codex:` candidate, and `St
 `codex exec` sessions are headless, so the import writes no page for them (by design); the rollout that run wrote
 was read back correctly as an interactive session. Without the bypass the untrusted hooks did not run. The same version was also run on 2026-11-09 against a real model (ChatGPT login, a throwaway `CODEX_HOME`): the
 prompt "以后一律用 pnpm" became a candidate on the day's 纠正候选 page, and `Stop` and `SessionEnd` each ran the import
-(0 sessions, as above). The Codex desktop app was not used. **Not checked
-inside Cursor**: no Cursor agent CLI on the test machine; the hook formats follow Cursor's hooks documentation and are
-covered by `tests/test_live_hooks.py`, which also runs the installed command line through a shell.
+(0 sessions, as above). The Codex desktop app was not used. **Checked in the Cursor agent CLI** (2026.11.05-86047df, 2026-11-09, `cursor-agent -p --force`, project-level
+`.cursor/mcp.json` and `.cursor/hooks.json`): the turn-end and session-end hooks wrote a `cursor` session page for each
+run; `beforeSubmitPrompt` did not run, so "以后一律用 pnpm" was not noted there (fed to `session_hook.py prompt --agent
+cursor` by hand with Cursor's payload it is). **Not checked inside the Cursor desktop app**; the hook formats follow
+Cursor's hooks documentation and are covered by `tests/test_live_hooks.py`, which also runs the installed command line
+through a shell.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 

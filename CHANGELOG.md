@@ -16,7 +16,9 @@ notice, then the details.
   answered with its page, one it does not answer was refused; the hooks noted a typed correction and ran the turn-end and
   session-end imports. Claude Desktop 4.23118.1: the config entry was written and its command started the server and listed
   the three tools outside the app; asking inside the app needs a restart of it, so that step is still open. Cursor: the agent CLI 2026.11.05-86047df found the project-level
-  MCP entry and listed its three tools; asking, refusing and the hooks were not tested (no usable account); the desktop app
+  MCP entry, answered with its page and refused the question the vault cannot answer (`-p --force`; `--mode ask` rejects
+  MCP calls in print mode); its turn-end and session-end hooks wrote the session pages, but it did not run
+  `beforeSubmitPrompt`, so no correction was noted; the desktop app
   (3.25.6) is not tested, our test tooling cannot type into it. The README's
   Works-with table says exactly this. Also found: a Codex `hooks.json` with top-level event names is skipped whole
   (already documented); `krouter_ask` takes `query`, not `question`.
