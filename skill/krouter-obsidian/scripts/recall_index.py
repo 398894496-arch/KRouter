@@ -252,6 +252,7 @@ def connect(db: Path) -> sqlite3.Connection:
 
 
 def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
+    secret_how = "(secret page: path only, never quoted)" if zones.lang(vault) == "en" else "（机密页：只给路径，不引用原文）"
     seen: dict[str, tuple[int, int, Path]] = {}
     for full, rel in walk_md(vault):
         try:
@@ -311,7 +312,7 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         live_cards = [c["q"] for c in mine if grounded(c, text, terms)]
         trig = " ".join([meta.get("triggers") or meta.get("aliases") or ""] + aliases.get(rel, []) + live_cards)
         secret = is_secret_page(zones.canon(vault, rel), meta)
-        how = "（机密页：只给路径，不引用原文）" if secret else (meta.get("how") or first_rule_line(body))
+        how = secret_how if secret else (meta.get("how") or first_rule_line(body))
         dirs = " ".join(rel.split("/")[:-1])
         if old:
             con.execute("DELETE FROM docs WHERE rowid=?", (old[2],))

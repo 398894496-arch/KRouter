@@ -221,7 +221,7 @@ def write_report(vault: Path, results: list[dict], state: str, lane_name: str, a
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
+    ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--cli", default="", help="pick a CLI explicitly for the model steps")
     ap.add_argument("--model", default="")
     ap.add_argument("--steps", default=",".join(STEPS))

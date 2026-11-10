@@ -134,7 +134,8 @@ def test_english_install_writes_no_chinese_path_or_line_and_the_lamp_tells_the_t
     assert not [f for f in made if CJK.search(f)]
     printed = "\n".join(ln for ln in res.stdout.splitlines() if not ln.startswith("{"))
     assert not CJK.search(printed), [ln for ln in printed.splitlines() if CJK.search(ln)]
-    assert "Without a model" in printed and "old answer is not replaced" in printed  # the consequence, not just the gap
+    # what still holds a change of mind with no model, and what does not, not just the gap
+    assert "Without a model" in printed and "krouter_correct" in printed and "leave the older page first" in printed
     assert "scripts/krouter doctor" in printed and "uninstall.sh" in printed
     health = (vault / "90 System/Automation/Daily health.md").read_text(encoding="utf-8")
     assert "lamp: unused" in health  # no nightly job was installed, so it is not shown as running

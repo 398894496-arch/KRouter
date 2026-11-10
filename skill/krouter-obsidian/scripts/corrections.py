@@ -199,7 +199,9 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
     if new_path.exists():
         new_path = new_path.with_name(new_path.stem + f"-{now.strftime('%H%M%S')}.md")
         rel_new = zones.canon(vault, str(new_path.relative_to(vault)).replace("\\", "/"))
-    link_new, link_old = f"[[{rel_new.removesuffix('.md')}]]", f"[[{rel_old.removesuffix('.md')}]]" if rel_old else ""
+    # 链接和回报用这个库自己的路径（英文库是 05 Journal/Sessions/…），不用默认布局的逻辑路径
+    real_new, real_old = zones.real(vault, rel_new), zones.real(vault, rel_old) if rel_old else ""
+    link_new, link_old = f"[[{real_new.removesuffix('.md')}]]", f"[[{real_old.removesuffix('.md')}]]" if real_old else ""
     hm = now.strftime("%H:%M")
     if zh:
         body = (f"# 纠正：{new}\n\n" + (f"- 原来：{old}\n" if old else "") + f"- 现在：{new}\n"
@@ -212,7 +214,7 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
                 + f"- Source: made to hold in session by the agent ({source or 'unknown'}), not waiting for the nightly "
                 + (f"distill; supersedes {link_old}" if link_old else "distill; no old page named")
                 + ". Undo it with the command in the change ledger.\n")
-    fm = {"title": f"\"{'纠正' if zh else 'Correction'}：{new[:40]}\"", "type": "correction", "status": "active",
+    fm = {"title": f"\"{'纠正：' if zh else 'Correction: '}{new[:40]}\"", "type": "correction", "status": "active",
           "date": day, "source": "krouter-correct"}
     if link_old:
         fm["supersedes"] = f"\"{link_old}\""
@@ -251,7 +253,7 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
         hits = [r for r in settle(today, [new]) if r["ok"]]
         settled = [{**r, "link": link_new} for r in hits]
         touched += mark(settled)
-    return {"written": rel_new, "superseded": rel_old, "mode": mode, "touched": touched, "settled": len(settled)}
+    return {"written": real_new, "superseded": real_old, "mode": mode, "touched": touched, "settled": len(settled)}
 
 
 def main() -> int:

@@ -46,8 +46,9 @@ MSG = {
         "vault_ours": "已是 KRouter 记忆文件夹（升级）", "added": "补上的文件", "skill": "路由器", "timer": "每日定时任务",
         "model_ok": "模型通道", "model_none": "还没有可用的模型：登录一个 AI 编程工具（Claude Code 运行 `claude`、Codex、grok 等任选其一），"
         "或把 API key 写进 {keys}（一行，如 DEEPSEEK_API_KEY=sk-…）。夜间任务开着的话，之后每晚自动整理，不用再做任何事。\n"
-        "没有模型时：查询、带出处的回答、库里没有就直说、本地导入会话、记下纠正候选都照常；不工作的是提炼（每页开头的「定了什么、改了什么」）、"
-        "夜间整理和纠正候选的判定。后果：你改了主意，旧答案不会被自动替换，查询时旧页可能仍排第一，要等接上模型、提炼过之后才换。",
+        "没有模型时：查询、带出处的回答、库里没有就直说、本地导入会话、记下纠正候选都照常；改了主意时，新旧两页冲突会把新页排前面并标出来，"
+        "你纠正 agent 时它会当轮调 krouter_correct 把旧页标成已取代。不工作的是提炼（每页开头的「定了什么、改了什么」）、夜间整理和纠正候选的判定，"
+        "所以换了别的说法、agent 也没当轮落实的改动，旧页仍可能排第一，要等接上模型、提炼过之后才换。",
         "done": "装好了。记忆文件夹在：{vault}\nagent 查询走：{router}",
         "obsidian": "已在 Obsidian 里打开这个记忆文件夹（用任何编辑器打开也一样）。", "obsidian_none": "它就是一个纯 Markdown 文件夹：用任何编辑器打开都行；想用 Obsidian（https://obsidian.md），选「打开本地仓库」→ {vault}",
         "py_old": "需要 Python 3.9 或更新版本，当前是 {v}。",
@@ -118,10 +119,12 @@ MSG = {
         "model_ok": "Model lane", "model_none": "No model yet: log in to one AI coding CLI (`claude`, Codex, grok, …), "
         "or put an API key in {keys} (one line, e.g. DEEPSEEK_API_KEY=sk-…). With the nightly job on, it then runs every night on its own.\n"
         "Without a model: lookup, answers with their source page, \"not in the memory\" instead of a guess, the local "
-        "session import and noting correction candidates all work. What does not run: distilling (each page's \"what was "
-        "decided, what changed\"), the nightly upkeep, and settling correction candidates. The consequence: when you "
-        "change your mind, the old answer is not replaced on its own; the older page can still rank first until a model "
-        "is connected and the session is distilled.",
+        "session import and noting correction candidates all work. A change of mind: when an older and a newer page "
+        "disagree, the newer one is listed first and flagged, and when you correct your agent it calls krouter_correct "
+        "in the same turn, which marks the old page superseded. What does not run: distilling (each page's \"what was "
+        "decided, what changed\"), the nightly upkeep, and settling correction candidates, so a change worded another "
+        "way that the agent did not record can leave the older page first until a model is connected and the session "
+        "is distilled.",
         "done": "Done. Your memory folder: {vault}\nAgents query: {router}",
         "obsidian": "Opened the memory folder in Obsidian (any editor works too).", "obsidian_none": "It is a plain Markdown folder: open it in any editor, or in Obsidian (https://obsidian.md) with “Open folder as vault” → {vault}",
         "py_old": "Python 3.9 or newer is required; this is {v}.",

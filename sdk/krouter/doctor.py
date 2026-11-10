@@ -173,10 +173,11 @@ def run(vault_arg: str | None = None) -> int:
             rows.append(("ok", "model: connected (distilling and the nightly upkeep can run)"))
         else:
             keys = os.environ.get("KROUTER_KEYS_ENV") or str(Path.home() / ".dsh-krouter-keys.env")
-            rows.append(("note", "model: none. Lookup, sources, refusals and the local import work; distilling, the "
-                                 "nightly upkeep and settling correction candidates do not, so a changed decision does "
-                                 "not replace the old answer on its own. Fix: log in to claude / codex / grok once, or "
-                                 f"put an API key in {keys}"))
+            rows.append(("note", "model: none. Lookup, sources, refusals and the local import work, and a change of "
+                                 "mind still wins when the newer page says so (listed first, flagged) or the agent "
+                                 "records it with krouter_correct; distilling, the nightly upkeep and settling correction "
+                                 "candidates do not run, so a change worded another way can leave the old answer first. "
+                                 f"Fix: log in to claude / codex / grok once, or put an API key in {keys}"))
         installed = _nightly_installed()
         lamp = meta.get("lamp", "")
         if installed:

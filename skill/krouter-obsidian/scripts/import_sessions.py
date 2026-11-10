@@ -971,7 +971,7 @@ def main() -> int:
            "distilled": calls, "distill_incremental": incremental, "distill_failed": failed, "chars": sent, "overlap": overlap,
            "covered_by_daily_log": covered, "skipped_covered": skipped_covered, "fork_duplicates": forks_dropped,
            "kept_out": sum(1 for v in dropped.values() if v == "kept out"), "removed_kept_out": len(removed),
-           "writes": written if len(written) <= 20 else written[:20] + [f"… {len(written) - 20} more"],
+           "writes": [zones.real(vault, w) for w in written[:20]] + ([f"… {len(written) - 20} more"] if len(written) > 20 else []),
            "kept_foreign": kept,
            **({"experience_cards": exp_cards, "experience_failed": exp_failed} if experience.enabled() else {}),
            **({"experience_uses": exp_uses} if exp_uses else {})}

@@ -18,8 +18,9 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
 
-No key is needed to start: lookup, sources and refusals run with no model. Without one, a change of mind is
-not distilled, so the old answer is not replaced on its own ([what works without a model](#install)).
+No key is needed to start: lookup, sources and refusals run with no model, and a change of mind still wins: the
+newer page is listed first and flagged, and your agent can make a correction hold in the same turn
+([what works without a model](#install)).
 
 **See it for yourself in a few seconds, with nothing installed and no key:** the same story on a throwaway memory,
 deleted afterwards.
@@ -131,11 +132,25 @@ Markdown: open it in any editor, or in Obsidian if you like. Tools find it throu
 `OBSIDIAN_VAULT` (the older name, still read; `KROUTER_VAULT` wins when both are set), else the folder the install
 recorded in `~/.config/krouter/vault`.
 
-**Without a model** (no logged-in AI coding CLI, no API key), lookup, answers with their source page, refusals,
-the local session import and noting what reads like a correction all work. Distilling (each page's "what was
-decided, what changed"), the nightly upkeep and settling those corrections do not. The consequence: when you
-change your mind, the old answer is not replaced on its own, and the older page can still rank first until a model
-is connected and the session is distilled. The installer and `krouter doctor` both say which state you are in.
+**Without an API key**, lookup, answers with their source page, refusals, the local session import and noting what
+reads like a correction all work, and a change of mind is handled three ways:
+
+1. **The newer page first.** When two imported pages answer the question about as well and the newer one says it
+   changed the subject (`switched … to`, `instead of`, `改成`, …), the newer page is listed first and the receipt
+   says `recall_conflict: an earlier page says otherwise`. No model; it does not catch a change worded any other way.
+2. **The agent, in the same turn.** When you correct it, it calls `krouter_correct`: the old page is marked
+   superseded and the next lookup gives the new answer. This needs the agent to make the call (the MCP instructions
+   ask it to).
+3. **The nightly job, on an agent you are logged in to.** With the nightly job on and no key, distilling and settling
+   correction candidates borrow an AI coding CLI's subscription (`claude --print`, …; Codex only with
+   `KROUTER_ALLOW_CODEX=1`), at most 30 calls a day, each listed in the vault; `KROUTER_HOST_CLI=0` turns it off.
+   Run for real once, with Codex: it distilled the sessions and the old page was marked superseded.
+
+With no key and no logged-in CLI, distilling (each page's "what was decided, what changed"), the rest of the nightly
+upkeep and settling correction candidates do not run, so a change the first two miss can leave the older page first.
+Checked with no key in a throwaway home (2026-11-10): PostgreSQL on Monday, SQLite on Wednesday, imported, never
+distilled: SQLite's page first with the conflict line; after `krouter_correct`, the old page superseded and the
+correction first. The installer and `krouter doctor` both say which state you are in.
 
 Rather look first? Nothing below changes your machine until the last line:
 
