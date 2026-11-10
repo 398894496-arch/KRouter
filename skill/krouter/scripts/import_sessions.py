@@ -579,20 +579,32 @@ def render(e: dict, digest: str = "", covers: int | None = None) -> str:
     out = meta + ["---", "", f"# {title}", ""]
     if digest:
         out += [DIGEST_HEAD, "", digest.strip(), ""]
-    out += [f"## 摘录（{e['day'].isoformat()} · {e['project'] or '?'} · {e['agent']} · {len(turns)} 轮）", "",
-            "只留你的提问和每轮最后的回答，已脱敏。上面的提炼由模型自动写入，每一轮改了什么记在「记忆变更记录」里，不对可以一条命令撤销。", ""]
+    en = PAGE_LANG == "en"  # 英文库写英文标签；解析两种都认（TURN_MARK、excerpt_of），中文库照旧
+    if en:
+        out += [f"## Excerpt ({e['day'].isoformat()} · {e['project'] or '?'} · {e['agent']} · {len(turns)} turns)", "",
+                "Only your questions and each turn's closing answer, redacted. The digest above is written by a model; "
+                "every run's changes are in the memory change ledger, and one command takes a run back.", ""]
+    else:
+        out += [f"## 摘录（{e['day'].isoformat()} · {e['project'] or '?'} · {e['agent']} · {len(turns)} 轮）", "",
+                "只留你的提问和每轮最后的回答，已脱敏。上面的提炼由模型自动写入，每一轮改了什么记在「记忆变更记录」里，不对可以一条命令撤销。", ""]
     if e.get("covered_by"):
-        out[-1:-1] = [f"当天的日更：[[{e['covered_by'].removesuffix('.md')}]]（那页是当天总结，这页是逐轮原话）。"]
+        out[-1:-1] = [f"That day's daily note: [[{e['covered_by'].removesuffix('.md')}]] (that page sums the day up; "
+                      "this one has each turn)." if en else
+                      f"当天的日更：[[{e['covered_by'].removesuffix('.md')}]]（那页是当天总结，这页是逐轮原话）。"]
     if e.get("forked_from"):
-        out[-1:-1] = [f"这段会话的前 {e['shared_turns']} 轮和会话 `{e['forked_from'][:8]}` 共有，在那一页。"]
+        out[-1:-1] = [f"The first {e['shared_turns']} turns of this session are shared with session "
+                      f"`{e['forked_from'][:8]}` and are on its page." if en else
+                      f"这段会话的前 {e['shared_turns']} 轮和会话 `{e['forked_from'][:8]}` 共有，在那一页。"]
     size = sum(len(x) for x in out)
     for i, t in enumerate(turns):
         if size > PAGE_MAX:
-            out.append(f"- （还有 {len(turns) - i} 轮，超出一页的摘录上限，未展开）")
+            out.append(f"- ({len(turns) - i} more turns, past the page's limit, not shown)" if en
+                       else f"- （还有 {len(turns) - i} 轮，超出一页的摘录上限，未展开）")
             break
-        block = [f"- **问**（{local_hm(t['ts'])}）：" + clean(t["ask"], ASK_MAX).replace("\n", "\n  ")]
+        ask = clean(t["ask"], ASK_MAX).replace("\n", "\n  ")
+        block = [f"- **Q** ({local_hm(t['ts'])}): {ask}" if en else f"- **问**（{local_hm(t['ts'])}）：{ask}"]
         if t["answer"]:
-            block.append("  **答**：" + clean(t["answer"], ANSWER_MAX).replace("\n", "\n  "))
+            block.append(("  **A**: " if en else "  **答**：") + clean(t["answer"], ANSWER_MAX).replace("\n", "\n  "))
         out += block
         size += sum(len(b) for b in block)
     return "\n".join(out).rstrip() + "\n"
@@ -630,7 +642,14 @@ CHANGES_PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段�
 SEGMENT_CHARS = 6_000   # 长会话按轮切成这么长的段分别提炼：一次只看整段，写满 8 条就把后面的决定挤掉了
 DIGEST_LINES = 24       # 一页最多留这么多条；开新会话时只带 8 条，改主意的排在最前
 NONE_LINES = ("没有定下来的事", "没有改主意的事")
-TURN_MARK = re.compile(r"(?m)^- \*\*问\*\*（")
+TURN_MARK = re.compile(r"(?m)^- \*\*(?:问\*\*（|Q\*\* \()")  # 中文库「- **问**（」，英文库「- **Q** (」
+EXCERPT_HEAD = re.compile(r"\n## (?:摘录|Excerpt)\b")
+
+
+def excerpt_of(page: str) -> str:
+    """The excerpt part of a session page (after `## 摘录` / `## Excerpt`); the whole text when there is no heading."""
+    m = EXCERPT_HEAD.search(page)
+    return page[m.end():] if m else page
 
 
 def segments(body: str) -> list[str]:
@@ -682,7 +701,7 @@ def distill(e: dict, page: str, vault: Path, dry: bool, start: int = 0, prior: l
 
     `start` > 0 continues an earlier digest (`prior`, made from the first `start` turns): only the new turns are
     segmented, the change pass sees them with CONTEXT_TURNS before and the earlier lines, and the lines are merged."""
-    whole = page.split("\n## 摘录", 1)[-1]
+    whole = excerpt_of(page)
     body = from_turn(whole, start)[:DISTILL_MAX]
     fill = {"day": e["day"].isoformat(), "project": e["project"] or "?"}
     prompts = [DISTILL_PROMPT.format(**fill, text=seg) for seg in segments(body)]
@@ -902,7 +921,7 @@ def main() -> int:
                 # 经验卡（实验，KROUTER_EXPERIENCE=1）：同一段摘录再问一次「遇到什么、怎么做、结果如何」；没有模型就安静跳过
                 link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
                 try:
-                    excerpt = from_turn(page.split("\n## 摘录", 1)[-1], done)[:DISTILL_MAX]
+                    excerpt = from_turn(excerpt_of(page), done)[:DISTILL_MAX]
                     cards, n = experience.extract(e, excerpt, vault, link, args.dry_run)
                     sent += n
                     for card in cards:

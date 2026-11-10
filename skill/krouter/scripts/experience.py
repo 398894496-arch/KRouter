@@ -270,7 +270,13 @@ def record_uses(vault: Path, session: str, turns: list[dict]) -> int:
     cards = load_cards(vault)
     if not cards:
         return 0
-    events = uses_in(turns, {c["id"] for c in cards})
+    try:
+        import skills  # 技能（skills.py）的编号也一样记：被提出、被采纳决定草稿转不转正
+
+        extra = skills.ids(vault)
+    except Exception:  # noqa: BLE001
+        extra = set()
+    events = uses_in(turns, {c["id"] for c in cards} | extra)
     if not events:
         return 0
     path = zones.path(vault, USES)

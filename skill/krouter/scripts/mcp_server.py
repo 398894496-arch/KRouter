@@ -6,6 +6,8 @@ Tools
   matching lines, or `recall: none` when the vault does not know. Routes: search (whole vault), preference,
   correction, memory, project, suggest.
 - `krouter_status()`: whether the vault and the nightly job are healthy, and what the host must do if not.
+- `krouter_skill(id)`: the full steps of one skill grown from the user's experience cards (`skills.py`); offered only
+  when the vault has skills, and its description lists them (name, when to use it, id).
 
 The vault is `--vault`, else `KROUTER_VAULT` (or the older name `OBSIDIAN_VAULT`), else the path the one-line install recorded (`~/.config/krouter/vault`).
 Register it, e.g. for Claude Code: `claude mcp add krouter -- python3 ~/.agents/skills/krouter/scripts/mcp_server.py`.
@@ -129,6 +131,19 @@ LEARN_TOOL = {
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }
+SKILL_TOOL = {
+    "name": "krouter_skill",
+    "description": "",  # skills_description()：列出库里的技能（名字、什么时候用、编号）
+    "inputSchema": {
+        "type": "object",
+        "properties": {"id": {"type": "string", "description": "The skill's id, e.g. S1a2b."}},
+        "required": ["id"],
+    },
+    "annotations": {"readOnlyHint": True, "openWorldHint": False},
+}
+SKILL_INSTRUCTION = (" krouter_skill lists procedures grown from the user's own lessons: when the user's task is exactly "
+                     "the situation one of them is for, fetch it, follow its steps and say which skill (with its id) "
+                     "you followed; otherwise do not mention them.")
 CORRECT_TOOL = {
     "name": "krouter_correct",
     "description": "Make a correction hold now, in this turn, with no model and no nightly wait: when the user changes "
@@ -376,13 +391,59 @@ def learn_on() -> bool:
         return False
 
 
+def skill_list() -> list[dict]:
+    """The vault's skills as the digest lists them; [] when skills are off or there are none."""
+    raw = cur_vault()
+    if not raw:
+        return []
+    try:
+        import skills
+
+        return skills.listing(Path(raw).expanduser())
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def skills_description(found: list[dict]) -> str:
+    rows = "; ".join(f"{s['id']} = {s['name']} ({'draft' if s['status'] == 'draft' else 'skill'}): {s['use_when']}"
+                     for s in found)
+    return ("Fetch the full steps of one of the user's skills: procedures grown from lessons they collected on other "
+            "tasks, not facts about this project. Call it only when the user's task is exactly the situation a skill is "
+            "for; then follow its steps and say once which skill you followed, with its id. A draft is not yet "
+            f"confirmed. Skills: {rows}")
+
+
 def tools() -> list[dict]:
     out = TOOLS + ([NOTE_TOOL, CORRECT_TOOL] if WRITE else [])
     if learn_on():
         import experience
 
         out = out + [{**LEARN_TOOL, "description": experience.LEARN_HELP}]
+    found = skill_list()
+    if found:
+        out = out + [{**SKILL_TOOL, "description": skills_description(found)}]
     return out
+
+
+def skill(args: dict) -> tuple[str, bool]:
+    """The full text of one skill; a `fetched` line in the use records (stdio only: a team server stays read-only)."""
+    import skills
+
+    raw = cur_vault()
+    if not raw:
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
+    vault = Path(raw).expanduser()
+    sid = str(args.get("id") or "").strip()
+    text = skills.show(vault, sid) if sid else ""
+    if not text:
+        known = ", ".join(s["id"] for s in skills.listing(vault)) or "none"
+        return (f"no skill {sid!r}; the skills are: {known}", True)
+    if WRITE:
+        try:
+            skills.record_fetch(vault, skills.find(vault, sid)["id"], f"MCP（{CLIENT or 'unknown client'}）")
+        except OSError:
+            pass
+    return (text, False)
 
 
 def correct(args: dict) -> tuple[str, bool]:
@@ -514,6 +575,9 @@ def call(name: str, args: dict) -> dict:
     if name == "krouter_learn" and learn_on():
         text, err = learn(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
+    if name == "krouter_skill" and skill_list():
+        text, err = skill(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_ask":
         query = str(args.get("query") or "").strip()
         rname = str(args.get("route") or "search")
@@ -550,7 +614,7 @@ def handle(msg: dict) -> dict | None:
                   "capabilities": {"tools": {"listChanged": False}},
                   "serverInfo": {"name": "krouter", "title": f"KRouter ({cur_label()})" if cur_label() else "KRouter",
                                  "version": VERSION},
-                  "instructions": INSTRUCTIONS + (CORRECT_INSTRUCTION if WRITE else "") + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
+                  "instructions": INSTRUCTIONS + (CORRECT_INSTRUCTION if WRITE else "") + (LEARN_INSTRUCTION if learn_on() else "") + (SKILL_INSTRUCTION if skill_list() else "") + (f" This server answers from the '{cur_label()}' vault "
                                                   "(`vault_label:` in each receipt); say which vault an answer "
                                                   "came from." if cur_label() else "")}
     elif method == "ping":

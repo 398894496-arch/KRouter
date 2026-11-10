@@ -252,13 +252,13 @@ def classify(args) -> int:
     return 0
 
 
-TURN = re.compile(r"(?m)^- \*\*问\*\*（(\d{2}:\d{2}|--:--)）：")
+TURN = re.compile(r"(?m)^- \*\*(?:问\*\*（(\d{2}:\d{2}|--:--)）：|Q\*\* \((\d{2}:\d{2}|--:--)\): )")  # 中文库 / 英文库
 
 
 def turns_of(excerpt: str) -> list[tuple[str, str]]:
     """[(HH:MM, the turn's text: question and closing answer)] from an excerpt."""
     marks = list(TURN.finditer(excerpt))
-    return [(m.group(1), excerpt[m.start(): marks[i + 1].start() if i + 1 < len(marks) else len(excerpt)].strip())
+    return [(m.group(1) or m.group(2), excerpt[m.start(): marks[i + 1].start() if i + 1 < len(marks) else len(excerpt)].strip())
             for i, m in enumerate(marks)]
 
 

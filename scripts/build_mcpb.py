@@ -158,7 +158,8 @@ def check(bundle: Path) -> list[str]:
         except SyntaxError as exc:
             problems.append(f"{n} does not compile: {exc}")
     for need in ("server/mcp_server.py", "server/route_knowledge.py", "server/zones.py", "server/zones_en.psv",
-                 "server/associate.py", "server/experience.py", "server/corrections.py", "server/llm.py"):
+                 "server/associate.py", "server/experience.py", "server/corrections.py", "server/llm.py",
+                 "server/skills.py"):
         if need not in names:
             problems.append(f"bundle lacks {need}")
     if problems:
