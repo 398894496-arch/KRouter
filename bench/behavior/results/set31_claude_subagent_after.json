@@ -1,0 +1,237 @@
+[
+ {
+  "id": "S31-K1",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "local development ports web app and API",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:58:27Z\nrequested_route: preference\nquery: local development ports web app and API\nretrieval_status: ranked-recall-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d19b74e"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "The web app runs on port 4000 and the API on port 9090 in local development.",
+     "old": "The web app runs on port 3000 and the API on port 8080 in local development.",
+     "page": "Engineering/Local ports.md"
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜The web app runs on port.md\nsuperseded: Engineering/Local ports.md (page)\nrun: 20261110T045831\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261"
+   }
+  ],
+  "messages": [
+   "docker-compose.yml now maps web to 4000:4000 and api to 9090:9090. I recorded the new standard with krouter_correct; it marked the old page as superseded.\n"
+  ]
+ },
+ {
+  "id": "S31-K2",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "backup schedule and retention policy",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:58:22Z\nrequested_route: search\nquery: backup schedule and retention policy\nretrieval_status: bounded-literal-search-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb0cb2c32574e9a6"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "Backups run at 03:30 and are kept for 14 days (previously 02:00 and 30 days); backup.sh was updated to match."
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜Backups run at 0330 and.md\nsuperseded: (none named) (recorded)\nrun: 20261110T045828\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261110T045828"
+   }
+  ],
+  "messages": [
+   "I updated backup.sh for the new policy: 03:30, 14 days. krouter_ask found nothing in the vault about the old backup policy. I recorded the new one with krouter_correct, with no old page to supersede.\n"
+  ]
+ },
+ {
+  "id": "S31-K3",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "PR merge approval requirement module owner",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:58:25Z\nrequested_route: search\nquery: PR merge approval requirement module owner\nretrieval_status: ranked-recall-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb0cb2c32574e9a6b68"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "One approval is enough to merge; the module-owner requirement is dropped (from this week).",
+     "old": "Two approvals are required to merge, and one must be from the module owner.",
+     "page": "Engineering/Code review rule.md"
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜One approval is enough t.md\nsuperseded: Engineering/Code review rule.md (page)\nrun: 20261110T045829\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo "
+   }
+  ],
+  "messages": [
+   "I updated the PR template, and I also recorded the new rule in your vault: krouter_correct marked Engineering/Code review rule.md as superseded.\n"
+  ]
+ },
+ {
+  "id": "S31-L1",
+  "group": "learn",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_learn",
+    "server": "krouter",
+    "arguments": {
+     "situation": "make build failed with a missing separator error on a recipe line, while the Makefile looked fine when read as plain text.",
+     "action": "Printed the file with invisible characters shown, saw that the failing recipe line began with spaces while the other recipe line began with a tab, replaced the leading spaces with a tab and ran make build again.",
+     "result": "make build ran and printed its output.",
+     "subject": [
+      "Makefile",
+      "make",
+      "recipe line",
+      "tab",
+      "spaces"
+     ],
+     "lesson": "When a tool rejects something that looks fine on screen, print it with invisible characters made visible before rereading the logic.",
+     "title": "When input looks fine but is rejected, show the invisible characters first"
+    },
+    "status": "completed",
+    "result": "learned: 02 经验与方法/经验卡/Lesson - When input looks fine but is rejected, show the invisible ch.md\nrun: 20261110T045828\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261110T045828"
+   }
+  ],
+  "messages": [
+   "已修好，make build 现在能跑通。原因是第 4 行开头缩进的是 8 个空格，不是 Tab。另外，我按会话里的 KRouter 说明，把这次的教训记成了一张经验卡（krouter_learn）。\n"
+  ]
+ },
+ {
+  "id": "S31-L2",
+  "group": "learn",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "CRLF line endings shell script bad interpreter",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:58:20Z\nrequested_route: search\nquery: CRLF line endings shell script bad interpreter\nretrieval_status: bounded-literal-search-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb0cb2"
+   }
+  ],
+  "messages": [
+   "deploy.sh is fixed: CRLF line endings converted to LF. KRouter had nothing in your vault on this, so I didn't record a lesson.\n"
+  ]
+ },
+ {
+  "id": "S31-L3",
+  "group": "learn",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_learn",
+    "server": "krouter",
+    "arguments": {
+     "situation": "A Python function returned tags left over from earlier calls: the second call returned both the first and second tag instead of only the second.",
+     "action": "Found that the list was the default value of a parameter, so it was created once and shared by every call; changed the default to None and create a new list inside the function when none is passed, then ran the script again.",
+     "result": "Each call now returns only its own tag; the script printed [\"a\"] and then [\"b\"].",
+     "subject": [
+      "python",
+      "default argument",
+      "tags.py",
+      "list"
+     ],
+     "lesson": "When separate calls seem to remember things from earlier calls, look for something shared that is created once up front, and create it fresh inside each call instead.",
+     "title": "Leftovers from earlier calls mean something shared was created once; create it fresh per call"
+    },
+    "status": "completed",
+    "result": "learned: 02 经验与方法/经验卡/Lesson - Leftovers from earlier calls mean something shared was creat.md\nrun: 20261110T045828\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261110T045828"
+   }
+  ],
+  "messages": [
+   "add_tag keeps earlier tags because of its default argument; fixed with tags=None. I also recorded this as a lesson card with krouter_learn, since the session hit a bug and fixed it.\n"
+  ]
+ },
+ {
+  "id": "S31-N1",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I fixed the typo in README.md: make tset is now make test. I didn't call any KRouter tools.\n"
+  ]
+ },
+ {
+  "id": "S31-N2",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I didn't change anything, because the 02:00 schedule isn't in backup.sh; it lives in the crontab. I didn't record this as a lasting correction, since you said it was for tonight only.\n"
+  ]
+ },
+ {
+  "id": "S31-O1",
+  "group": "offer",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "renaming files lowercase extension jpg",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:58:18Z\nrequested_route: preference\nquery: renaming files lowercase extension jpg\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f1"
+   }
+  ],
+  "messages": [
+   "I renamed all 5 files in photos/ to .jpg with lowercase names. KRouter had nothing on file about your renaming preferences.\n"
+  ]
+ },
+ {
+  "id": "S31-O2",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "report.py now runs in about 0.25 s instead of 40.9 s. I moved load_schema() above the loop. I didn't call krouter_ask or krouter_learn.\nA lesson from another task that fits here: when the same slow step is redone from scratch every time, store its result and reuse it while the inputs have not changed [C02].\n"
+  ]
+ },
+ {
+  "id": "S31-Q1",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I added a --limit N option to list_users.py. I didn't call the KRouter tools.\n"
+  ]
+ },
+ {
+  "id": "S31-Q2",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "push(item, send) in sync.py makes up to 3 attempts, backing off between failures. I did not query the vault.\n"
+  ]
+ }
+]

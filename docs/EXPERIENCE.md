@@ -121,8 +121,13 @@ in a card's result does not change what is offered, but it is on the page a pers
 - **Default on since set 23.** A repeated lesson is no longer refused by comparing words: the host names the digest
   line it repeats (`same_as`) and the old card is recorded as seen again; on set 23 all 8 duplicate sessions were linked
   to the right card. The duplicate labels were confirmed by a second model before scoring; none was disputed.
-- **Whether a host calls `krouter_learn` on its own** at the end of a real session, unprompted, is not measured; set 17
-  asked it directly.
+- **Whether a host calls `krouter_learn` on its own** at the end of a real session: measured on 2026-11-10, sets 30 and 31 in
+  [`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md). It mostly does not. Codex CLI: 0 of 4 on a problem solved, 0 of 12
+  where nothing was learned; a Claude Sonnet 5.5 subagent given the same words (tools through a shell helper, not MCP): 0 of 4,
+  and 1 of 3 then 2 of 3 on development sessions. On the Codex version tested, the model sees the digest but no krouter tool
+  and none of the server's instructions, so it cannot know the tool exists; the session hook now names it
+  (`krouter_learn`, `krouter_correct`), unverified on Codex because its usage limit ran out. The digest itself is used when the
+  situation matches: 2 of 4 on each host, never when it does not (0 of 12).
 - **The no-key model lane** (the agent's own CLI on the user's subscription) is built with a daily cap, a visible record
   and a switch, but its one real run failed on a lapsed login: [`HOST-LANE.md`](HOST-LANE.md).
 - **The cap's order now has use records to go on** (offered, adopted), but only once sessions are imported (import

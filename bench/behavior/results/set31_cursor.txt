@@ -1,0 +1,4 @@
+Cursor agent CLI 2026.11.05-86047df, model auto, free account, the wording after the set-31 change, three scenarios only (quota):
+S31-K1 (correct): krouter_ask x2, krouter_correct (called; old page marked superseded)
+S31-L1 (learn): krouter_ask; no krouter_learn
+S31-Q1 (quiet): krouter_ask x2 (a lookup for a preference); no write

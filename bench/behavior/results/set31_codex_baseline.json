@@ -1,0 +1,138 @@
+[
+ {
+  "id": "S31-K1",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll update the Compose port mappings and check for any related development URL references in that file.",
+   "The external mappings are now `4000 → 3000` and `9090 → 8080`. I’m doing a lightweight syntax check; this environment’s Docker CLI does not include the Compose subcommand.",
+   "Updated [docker-compose.yml](<run>/proj/docker-compose.yml):\n\n- Web: `4000:3000`\n- API: `9090:8080`\n\nConfirmed the file is valid YAML."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-K2",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll update the backup schedule and retention policy in the script, then check the resulting configuration.",
+   "Updated [backup.sh](<run>/proj/backup.sh).\n\n- Schedule comment: 03:30\n- Retention: 14 days (`-mtime +14`)\n- Verified shell syntax with `sh -n`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-K3",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll update the repository’s PR template to reflect the new single-approval rule and remove the module-owner requirement, then check the diff.",
+   "Updated [.github/PULL_REQUEST_TEMPLATE.md](<run>/proj/.github/PULL_REQUEST_TEMPLATE.md): PRs now require one approval, with no module-owner condition."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-L1",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the Makefile’s invisible characters and run the build to reproduce the parser error, then correct only the offending formatting.",
+   "Fixed line 4 of [Makefile](<run>/proj/Makefile:4): it used eight spaces instead of the required tab for a recipe line.\n\nVerified: `make build` now prints `building`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-L2",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the script’s line endings, convert only that file to Unix LF if needed, then execute a syntax check.",
+   "Fixed [deploy.sh](<run>/proj/deploy.sh).\n\nIt had Windows CRLF endings, so the shebang was interpreted as `/bin/sh\\r` (`^M`). Converted it to Unix LF endings and verified it passes `sh -n` and runs successfully."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-L3",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the implementation and its tests, then make the smallest state-isolation fix and run the relevant test suite.",
+   "Fixed [tags.py](<run>/proj/tags.py:1).\n\nThe issue was a mutable default list: Python creates it once, then reuses it across calls. `tags=None` creates a fresh list per call while retaining support for a caller-provided list.\n\nVerified: consecutive calls now print `['a']` then `['b']`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-N1",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll locate the typo, correct only that README line, then verify the diff.",
+   "Fixed the README typo: `make tset` → `make test`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-N2",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll make this a one-night-only override in the backup script and leave the normal schedule untouched. I’m checking the script’s existing scheduling conventions first.",
+   "`backup.sh` contains no scheduler configuration—only the cron annotation—so I’m recording the temporary 01:00 migration run explicitly while preserving 02:00 as the standing schedule.",
+   "Updated [backup.sh](<run>/proj/backup.sh:2) to document tonight’s 01:00 migration run while retaining the normal 02:00 nightly cron schedule. Shell syntax checks cleanly."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-O1",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll first check the sample names for case-collision risks, then rename the matching JPEG files in `photos/` safely.",
+   "The safety preflight found the expected five target names. I’m applying the renames now; the first batch command was rejected by the sandbox because its temporary-file cleanup pattern looked destructive, so I’m using an in-memory check instead.",
+   "Renamed all 5 `.jpeg`/`.JPEG` sample files in `photos/` to lowercase `.jpg` names."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-O2",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll profile the script’s repeatable work, then cache or streamline the expensive path without changing its output.",
+   "The cost is repeated schema parsing inside the 200-row loop: it does identical work 200 times. I’m moving that invariant load outside the loop.",
+   "Updated [report.py](<run>/proj/report.py:11) to load the unchanged schema once before processing rows.\n\nVerified output remains `200 rows`; runtime fell from roughly 40 seconds to 0.27 seconds.\n\nA lesson from another task you could try: store and reuse a slow result while its inputs have not changed. [C02]"
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-Q1",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the script and its existing CLI/tests, then add the option and verify the user-facing behavior.",
+   "Added `--limit` to [list_users.py](<run>/proj/list_users.py).\n\nExamples:\n\n```sh\npython3 list_users.py --limit 2\n```\n\nprints `ann`, `bob`. `--limit 0` prints none; negative values are rejected."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-Q2",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect `sync.py` and trace the retry path so I can explain its actual behavior, including what triggers retries and when it stops.",
+   "`push(item, send)` tries to call `send(item)` up to three times.\n\n- If a call succeeds, it immediately returns that result.\n- It only retries when `send` raises `ConnectionError`.\n- Before each retry it waits with exponential backoff:\n  - after attempt 1: 1 second (`2 ** 0`)\n  - after attempt 2: 2 seconds (`2 ** 1`)\n  - after attempt 3: 4 seconds (`2 ** 2`)\n- If all three calls fail, it raises `ConnectionError(\"gave up\")`.\n\nOne subtlety: it sleeps for 4 seconds even after the final failed attempt, despite there being no fourth attempt."
+  ],
+  "vault_commits_after_fixture": 0
+ }
+]

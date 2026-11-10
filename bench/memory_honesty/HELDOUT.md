@@ -1061,3 +1061,5 @@ to 23. Better means: should up on learn and correct, should-not not up beyond 1.
 | Date | Event |
 |---|---|
 | 2026-11-10 | Registered. |
+| 2026-11-10 | Baseline on the old wording, Codex (12 of 12 valid): offer 1 / 2, should not 0 / 7; learn 0 / 3, 0 / 7; correct 0 / 3, 0 / 9. Claude subagent (Sonnet 5.5, shell-helper approximation, old wording): offer 1 / 2, 0 / 7; learn 1 / 3, 0 / 7; correct 3 / 3, 0 / 9. |
+| 2026-11-10 | The wording changed (`589dffd`): the hook's tools line and the two server instruction sentences, as registered. Claude subagent after: offer 1 / 2, 0 / 7; learn 2 / 3, 0 / 7; correct 3 / 3, 0 / 9. **Codex after: void.** The account's usage limit was reached during the run (11 of 12 sessions failed with "You've hit your usage limit" before the model saw the task; the twelfth, S31-L2, ran and called nothing). The change is **not verified on Codex**, the host it was made for; it cannot be rerun before 2026-12-09. Cursor agent CLI (free account, `auto`, after wording): S31-K1 `krouter_correct` called; S31-L1 no `krouter_learn`; S31-Q1 two lookups, no write. Set 31 is not held out and is now spent as a development set for this wording. |

@@ -82,6 +82,8 @@ curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bo
 | Claude Desktop 的 `claude_desktop_config.json` | 只在应用关着时写（用扩展包的话：点安装后应用会先联网检查几秒，界面没有反应；只点一次、等它好，再点一次可能会把它卸掉）；开着时一个字不改：给你一个 `~/.config/krouter/KRouter.mcpb` 去双击，或者退出应用后跑安装最后打印的那条 `--connect claude-desktop` 命令 |
 | `~/.cache/krouter/`、`~/.local/state/krouter/` | 搜索缓存（可重建）和导入进度 |
 
+2.0 的实测范围：macOS（安装、升级、卸载、在各应用里）；Linux 在干净的 `python:3.12-slim` 容器里（安装、从 2.0 以前的目录升级、查询、拒答、`doctor`、卸载；容器里没有定时器，`--timer` 现在会明说夜间任务**没有**装上）。**Windows 这版没有实测**：没有可连上的 Windows 机器；2026-10-11 那次检查见 [`docs/VERIFY.md`](docs/VERIFY.md)，旧目录搬家的逻辑由一个测试固定。
+
 安装过程中除了下载本身，没有任何内容离开本机。装完：
 
 ```bash
@@ -122,9 +124,9 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
-| Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
-| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | 已实测（命令行，codex-cli 0.155.0-alpha.9.2，2026-11-09）：发现 MCP 工具、有答案的问题带出处答对、库里没有的问题拒答；钩子记下了输入的纠正句，并跑了每轮结束和会话结束的导入。命令行和 IDE 扩展共用同一份配置（Codex 文档） |
-| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；其余已在 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09）实测：MCP 条目被发现、列出工具、带出处答对、拒答；每轮结束和会话结束的钩子写出了会话页。命令行和编辑器读同一份 MCP 配置（Cursor 文档）。实测到的差异：命令行的非交互模式不触发 `beforeSubmitPrompt`，所以输入的纠正句不会在那里被记下 |
+| Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测；真实会话里，一个 Claude Sonnet 5.5 子代理拿到同样的工具说明（通过 shell 脚本调用，不是 MCP 服务）：用户改决定 4 次里调用了 3 次 `krouter_correct`，解决问题 4 次里 0 次 `krouter_learn`（[`VERIFY.md`](docs/VERIFY.md#platforms-and-real-sessions-200-candidate-2026-11-10)） |
+| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | 已实测（命令行，codex-cli 0.155.0-alpha.9.2，2026-11-09）：发现 MCP 工具、有答案的问题带出处答对、库里没有的问题拒答；钩子记下了输入的纠正句，并跑了每轮结束和会话结束的导入。命令行和 IDE 扩展共用同一份配置（Codex 文档）。真实会话，20 个小任务（2026-11-10，[`VERIFY.md`](docs/VERIFY.md#platforms-and-real-sessions-200-candidate-2026-11-10)）：处境相同时它会提经验摘要里的那条（4 次里 2 次），处境不同时从不提（12 次 0 次）；但不会自己调用 `krouter_learn`、`krouter_correct`（各 4 次里 0 次），原因是这个 Codex 版本不把 krouter 的工具给模型看。会话钩子现在把两个工具点了名，这一改动没能在 Codex 上复测（它的额度用完了） |
+| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；其余已在 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09）实测：MCP 条目被发现、列出工具、带出处答对、拒答；每轮结束和会话结束的钩子写出了会话页。命令行和编辑器读同一份 MCP 配置（Cursor 文档）。实测到的差异：命令行的非交互模式不触发 `beforeSubmitPrompt`，所以输入的纠正句不会在那里被记下。agent 命令行里的三个真实任务（免费账号，`auto`，2026-11-10）：它自己查到工具，用户改决定时调用了 `krouter_correct`；修好 Makefile 之后没有调用 `krouter_learn` |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | Claude Desktop | 扩展包：双击 [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb)，点一次安装（不改设置文件、不用重启；点完应用会先联网检查几秒，这期间界面没有反应）。也可以让安装脚本写它的设置文件，但只在应用关着时写：Claude Desktop 开着的时候把设置留在内存里，退出时把整份文件写回去，开着时写进去的条目一重启就没了。安装脚本发现它在运行，就不碰那个文件，改为按你的记忆文件夹做一个扩展包 | **扩展包已在应用里实测**（Claude Desktop 4.23118.1，macOS，2026-11-10）：点一次安装、不用重启就装好，3 个工具都连上；在普通聊天里，一个问题答出结论并给出出处页，一个库里没有的问题被拒答（`recall: none`）。实测用的包写的是 Python 的完整路径（和安装脚本生成的一样）；发布附件里写的是 `python3`，应用会走另一条启动路径，还没实测。设置文件由测试检查过 |
 | VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |

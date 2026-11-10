@@ -40,9 +40,11 @@ def main() -> int:
     for f in Path(sys.argv[2]).glob("*/record.json"):
         r = json.loads(f.read_text(encoding="utf-8"))
         recs[r["id"]] = r
-    got = {i: acts(r, scenarios[i]) for i, r in recs.items() if i in scenarios}
+    failed = sorted(i for i, r in recs.items() if r.get("rc") not in (0, None))  # e.g. a usage limit: the model never saw the task
+    got = {i: acts(r, scenarios[i]) for i, r in recs.items() if i in scenarios and i not in failed}
     missing = sorted(set(scenarios) - set(got))
-    print(f"runs: {len(got)} of {len(scenarios)}" + (f"; missing {missing}" if missing else ""))
+    print(f"runs: {len(got)} of {len(scenarios)}" + (f"; missing {missing}" if missing else "")
+          + (f"; FAILED (rc != 0, not counted): {failed}" if failed else ""))
     for b in ("offer", "learn", "correct"):
         do = [i for i in got if scenarios[i]["group"] in SHOULD[b]]
         no = [i for i in got if scenarios[i]["group"] in SHOULD_NOT[b]]
