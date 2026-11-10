@@ -34,7 +34,8 @@ notice, then the details.
   209, **190 / 210 / 218**. The bar fixed beforehand asked for a gain over BM25 shown at both 3 and 5 pages; at 3 the
   interval is [0, +10], so the path is **not on by default**. On LoCoMo it does not help (1 104 → 1 078 at three pages,
   against KRouter without it). Memory honesty, six sets: unchanged with it on. The edge table costs a 10,000-page
-  build 6.0 s instead of 3.6 s and 38 MB of cache instead of 29; a lookup 83 ms instead of 69. Offline count, no model:
+  build 6.0 s instead of 3.6 s and 38 MB of cache instead of 29, a lookup 83 ms instead of 69 (50,000 pages: 32 s
+  instead of 25, 193 MB instead of 150; measured with other jobs running). Offline count, no model:
   `bench/longmemeval/assoc.py` (`--half dev|heldout`, `--locomo`).
 
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set

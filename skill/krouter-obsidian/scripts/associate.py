@@ -50,6 +50,7 @@ COCITE_SAT = 5.0      # 一起被引用这么多次，边权到顶
 MAX_VIA = 3
 MIN_WORDS = 6         # 只靠共同的词连上的页：至少共有这么多个少见词
 MIN_SCORE = 0.2       # 而且联想分至少这么高
+CANDIDATES = 64       # 过了门槛的前这么多页才去查层级、链接数（取代、枢纽要排除）
 
 WIKILINK = re.compile(r"\[\[([^\]|#^]+)(?:[#^][^\]|]*)?(?:\|[^\]]*)?\]\]")
 MDLINK = re.compile(r"\]\(<?([^)<>]+?\.md)>?(?:#[^)]*)?\)")
@@ -347,25 +348,35 @@ def spread(con: sqlite3.Connection, direct: list[dict], shown: set[str], scope: 
             add(other, "cocite", h["rel"], a * WEIGHTS["cocite"] * min(1.0, w / COCITE_SAT))
     if not act:
         return []
-    cands = [r for r in act if r not in shown and (not scope or r == scope or r.startswith(scope + "/"))]
-    if not cands:
-        return []
-    marks = ",".join("?" * len(cands))
-    info = {rel: (tier, status, how) for rel, tier, status, how in con.execute(
-        f"SELECT rel, tier, status, how FROM docs WHERE rel IN ({marks})", cands)}
-    deg = degrees(con, cands)
-    out = []
-    for rel in cands:
-        if rel not in info:
+    scored = []
+    for rel, amount in act.items():
+        if rel in shown or scope and not (rel == scope or rel.startswith(scope + "/")):
             continue
-        tier, status, how = info[rel]
-        if tier == "dead" or is_hub(rel, deg.get(rel, 0)):
-            continue
-        score = act[rel] * (1 + QUERY_BOOST * direct_norm.get(rel, 0.0))
+        score = amount * (1 + QUERY_BOOST * direct_norm.get(rel, 0.0))
         explicit = any(k != "words" for k, _s in via[rel])
         # 安静门槛：只靠"共同的词"连上的，要共有足够多的少见词、分数也够，否则不出声（小库里只共有 `tests`、
         # `changed` 这类词的页，十有八九是巧合）
         if not explicit and (len(shared[rel]) < MIN_WORDS or score < MIN_SCORE):
+            continue
+        scored.append((score, rel))
+    # 只给前几名查层级和链接数：大库里共同的词能连到上千页，逐个查 docs（rel 列不建索引）太慢
+    scored = sorted(scored, key=lambda x: (-x[0], x[1]))[:CANDIDATES]
+    if not scored:
+        return []
+    cands = [rel for _s, rel in scored]
+    rids = dict(con.execute(f"SELECT rel, rid FROM files WHERE rel IN ({','.join('?' * len(cands))})", cands))
+    info = {}
+    for rel in cands:
+        row = con.execute("SELECT tier, status, how FROM docs WHERE rowid=?", (rids.get(rel, -1),)).fetchone()
+        if row:
+            info[rel] = row
+    deg = degrees(con, cands)
+    out = []
+    for score, rel in scored:
+        if rel not in info:
+            continue
+        tier, status, how = info[rel]
+        if tier == "dead" or is_hub(rel, deg.get(rel, 0)):
             continue
         steps = []
         # 显式的边（取代、链接、同会话、一起被引用）先说：比"共同的词"更能解释为什么想起它
