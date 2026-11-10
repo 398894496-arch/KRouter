@@ -73,8 +73,8 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
 | Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
-| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已通过命令行 agent（`codex exec`，codex-cli 0.155.0-alpha.9.2，2026-11-09）实测：能发现工具、有答案的问题带出处答对、库里没有的问题拒答；钩子在同一版本实测（提示词里的纠正被记下，每轮结束和会话结束的导入都跑了）。Codex 桌面应用：未测 |
-| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；通过 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09，`-p --force`）实测：项目级 MCP 条目被发现、列出工具、有答案的问题带出处答对、库里没有的问题拒答；每轮结束和会话结束的钩子写出了会话页，但命令行没有运行 `beforeSubmitPrompt`，所以输入的纠正句没被记下（手工喂 Cursor 格式的载荷，钩子本身能记）；桌面应用：未测 |
+| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | 已实测（命令行，codex-cli 0.155.0-alpha.9.2，2026-11-09）：发现 MCP 工具、有答案的问题带出处答对、库里没有的问题拒答；钩子记下了输入的纠正句，并跑了每轮结束和会话结束的导入。命令行和 IDE 扩展共用同一份配置（Codex 文档） |
+| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；其余已在 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09）实测：MCP 条目被发现、列出工具、带出处答对、拒答；每轮结束和会话结束的钩子写出了会话页。命令行和编辑器读同一份 MCP 配置（Cursor 文档）。实测到的差异：命令行的非交互模式不触发 `beforeSubmitPrompt`，所以输入的纠正句不会在那里被记下 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | Claude Desktop 4.23118.1 | MCP：安装脚本写好 `claude_desktop_config.json`；重启一次应用 | 应用外验证通过：条目里的同一条命令能起服务、列出三个工具、带出处回答、拒答（2026-11-09）；应用内未测：应用运行时写进去的条目，会在它退出时被它写回的内存配置覆盖（用户重启三次都没加载上），所以要等应用退出后再写 |
 | VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |

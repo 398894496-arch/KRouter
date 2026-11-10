@@ -11,19 +11,19 @@ notice, then the details.
 
 ## Unreleased
 
-- **Tested inside the apps, as far as this machine allowed (2026-11-09).** Codex (command line, codex-cli
-  0.155.0-alpha.9.2, a real model, a copy of the sample vault): the MCP tools were found, a question the vault answers was
-  answered with its page, one it does not answer was refused; the hooks noted a typed correction and ran the turn-end and
-  session-end imports. Claude Desktop 4.23118.1: the config entry's command started the server, listed the three tools, answered with its
-  page and refused outside the app; inside the app it is untested: three restarts did not load the entry, because Claude
-  Desktop writes its in-memory settings back over `claude_desktop_config.json` when it quits, which drops an entry written
-  while it was running. The entry has to be written after the app has quit. Cursor: the agent CLI 2026.11.05-86047df found the project-level
-  MCP entry, answered with its page and refused the question the vault cannot answer (`-p --force`; `--mode ask` rejects
-  MCP calls in print mode); its turn-end and session-end hooks wrote the session pages, but it did not run
-  `beforeSubmitPrompt`, so no correction was noted; the desktop app
-  (3.25.6) is not tested, our test tooling cannot type into it. The README's
-  Works-with table says exactly this. Also found: a Codex `hooks.json` with top-level event names is skipped whole
-  (already documented); `krouter_ask` takes `query`, not `question`.
+- **Codex and Cursor tested through their command line agents (2026-11-09).** Codex (codex-cli 0.155.0-alpha.9.2, a real
+  model, a copy of the sample vault): the MCP tools were found, a question the vault answers was answered with its page, one
+  it does not answer was refused; the hooks noted a typed correction and ran the turn-end and session-end imports. Cursor
+  (agent CLI 2026.11.05-86047df, `-p --force`; `--mode ask` rejects MCP calls in print mode): the project-level MCP entry
+  was found, its tools listed, a question answered with its page, another refused; the turn-end and session-end hooks wrote
+  the session pages, but the CLI's non-interactive mode did not run `beforeSubmitPrompt`, so a typed correction is not
+  noted there (the hook handles Cursor's payload when fed it by hand). Both vendors document that the command line and
+  the editor read the same MCP configuration (Cursor) / configuration layers (Codex, CLI and IDE extension). Claude Desktop
+  4.23118.1: the config entry's command started the server, listed the three tools, answered with its page and refused
+  outside the app; inside the app it is untested: three restarts did not load the entry, because Claude Desktop writes its
+  in-memory settings back over `claude_desktop_config.json` when it quits, which drops an entry written while it was
+  running. The entry has to be written after the app has quit. Also found: a Codex `hooks.json` with top-level event names
+  is skipped whole (already documented); `krouter_ask` takes `query`, not `question`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
