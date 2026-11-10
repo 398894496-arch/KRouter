@@ -615,3 +615,47 @@ suggestion path ships off by default, marked experimental, with the numbers as t
 | 2026-11-09 | Registered (`e2b33e5`): cards, development cases and the sealed held-out file committed before `experience.py` existed. |
 | 2026-11-09 | **Development (in-sample).** Two lexical rules tried: a card's best single `when` phrase covered (`phrase`), and all its phrases pooled (`bag`); for `phrase`, also counting bigrams outside the word list at half weight. Thresholds swept with `run.py dev --sweep`. Choice rule, fixed before the sweep was read: highest recalled − 2 × (quiet cases with a suggestion + wrong cards on transfer cases), ties to the stricter. Chosen: `phrase`, at least 2 words of the phrase, coverage ≥ 0.6: **recalled 3 / 14, quiet cases with a suggestion 0 / 14, wrong cards 1**. The loosest setting tried recalled 6 / 14 with 2 quiet cases suggested and 4 wrong cards; `bag` at best 3 / 14 with 3 wrong cards; the half-weight variant was worse at every setting and was dropped. Reading the misses: most transfer cases share no word with the card's triggers ("差点意思" against "缺点什么", "改过" against "改了"); lexical matching cannot bridge them. The dense tier was not measured: no embedding model is on this machine and downloading one (about 250 MB) was not approved in this session. Threshold frozen; held-out next. |
 | 2026-11-09 | **Held-out, run once** (`run.py heldout`, threshold as frozen above). **Recalled 0 / 14 transfer cases. Quiet cases with a suggestion 2 / 14 (both word traps; topic traps 0 / 7, unrelated 0 / 4). Wrong cards on transfer cases 2.** Fails all three parts of the pass line (8 / 14, ≤ 1, ≤ 1). The development number (3 / 14) did not carry over at all: the three it recalled were cases whose wording happened to share two words with a trigger, and none of the held-out cases did. As registered, the suggestion path ships off by default, marked experimental (`KROUTER_EXPERIENCE=1` to try it). What it does show: a lexical matcher over subject-free triggers does stay quiet on questions about a card's own subject (0 of 14 topic traps over both splits); what it cannot do is recognise the same situation said in other words, which is the point of the feature. The held-out cases are now spent. |
+
+## Set 15: the host model judges the situation itself, from a digest of every card (registered 2026-11-09, before any host was run or the usage wording was settled)
+
+**Why.** Set 13 matched tasks to cards by shared words and recalled 0 of 14 held-out cases: one situation in other
+words shares no words. Here nothing is matched. The session-start hook gives the host model the whole experience
+digest (`experience.digest`: every card as one subject-free line "situation → what to do〔id〕", at most 30 lines,
+then one line on how to use them), and the host decides whether this task's situation is one of them. Set 13 and its
+spent held-out file stay as they are.
+
+**Cards.** Set 13's 14 cards, unchanged. For the scale check, 40 distractor cards in `bench/transfer/distractors/`
+(lessons about plants, cooking, travel, money…), written before any set 15 case was read; SHA-256 of the
+concatenated files in name order `8860fc6d…25a48`.
+
+**Cases.** 56, Chinese, written by Fable 5.2 (claude-fable-5-2) in a fresh Claude Code subagent, a different model
+from the session that wrote the cards and the code (Opus 5.5) and from both hosts. The writer saw one input file:
+the 14 lessons (`通用说法`) in shuffled order under neutral labels, each with a few words naming the card's original
+subject (needed for the topic traps). It did not see the triggers, the situation/action fields, the digest, the
+usage wording or any code, and was told to read nothing else. It wrote 28 *transfer* cases (two per lesson, subjects
+other than the original), 14 *topic traps* (the original subject, another situation), 8 *word traps* (a word from
+some lesson, another situation) and 6 *unrelated*. Not edited. Split at seed 20261115: one transfer case per card to
+each side, traps 7 / 7, word traps 4 / 4, unrelated 3 / 3. `bench/transfer/set15_dev.jsonl` (28) is where the usage
+wording may be revised; `bench/transfer/set15_heldout.jsonl.gz` (28; SHA-256 of the uncompressed text
+`88bec167…e854b5`) is sealed and run once per host. The writer's raw file (with its notes) is kept out of the repository.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, run as set 12 ran its reader: `bench/transfer/host.py prepare` writes batches of
+14 prompts (the injected digest, the user's message, and one bench line asking for only the first few sentences of
+the reply and no tools); a Claude Code subagent on the named model (`model: haiku` / `sonnet`) answers each prompt in
+a batch as if it were the only one and writes the replies back; each agent's reported model is logged. No API key
+and no stored Claude login are used. About 250 short prompts in all.
+
+**Scored mechanically** (`host.py score`): recalled = the expected card's id is cited; quiet case with a suggestion =
+any id cited where none should be; wrong cards = any other id cited on a transfer case (distractor ids included).
+Replies citing more than two ids are counted too.
+
+**Pass line (fixed now), per host, on held-out:** recalled ≥ 8 / 14, quiet cases with a suggestion ≤ 1 / 14, wrong
+cards ≤ 1. The digest passes when both hosts pass. Only then is a default-on proposal made.
+
+**Scale check (development only).** The same development cases with the 40 distractors added (54 cards, all listed);
+reported next to the 14-card development row for each host. Not a pass condition.
+
+**Known limits, said with any number.** Each agent sees up to 14 cases in one batch, so it may compare them; the bench
+line asks for short replies, which a real session does not; the writer saw each card's subject label; Chinese only;
+the digest's token count is an estimate (no tokenizer is downloaded: one token per CJK character, one per three
+other characters, an upper-end figure).
