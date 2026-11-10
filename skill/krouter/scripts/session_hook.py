@@ -33,6 +33,13 @@ file path, since some hosts show the model no tool list). The host reads it and 
 message touches one of them in other words; the prompt hook (below) brings it when you use its name. The whole
 session-start text stays under 9,400 characters (Claude Code shows only a preview above 10,000).
 
+The session-start text, in order (`start_text`): this project's decisions (at most 1,600 characters), the experience
+digest (at most 3,000: fewer card lines when longer), the skills list (at most 2,000: drafts, then the last skills
+left out), the standing index (what is left, at most 5,400; left out under 800), and one line on the write tools
+`krouter_correct` / `krouter_learn` and on `recall: none`. How to call each tool is said once: `krouter_ask` and the
+other two ways to fetch a page by the index's closing line, `krouter_skill` by the skills list; with no index, the
+tools line names `krouter_ask` too.
+
 `session_hook.py prompt` (UserPromptSubmit): when what you just typed reads like a correction ("改成 B", "以后一律",
 "锁死", "from now on", "that's wrong"), it appends what you typed, redacted and cut to 300 characters, to the day's
 `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional; the next distill of that session settles it on its own (`corrections.py`). Local pattern match
@@ -318,6 +325,18 @@ TOOLS = {
            "(also when krouter_ask finds nothing about the old one: leave old out); when this session met an error or a "
            "wrong result and you found the cause and fixed it, call krouter_learn before your final reply."),
 }
+# 会话开始已经带了下意识索引时：怎么取页、krouter_ask 怎么用，索引末尾的用法句（三种取法）已经说过，这一行不再重复
+TOOLS_WRITE = {
+    "zh": ("KRouter 的两个写入工具（MCP 服务 krouter，工具列表里没有就按名字查）：用户改了一个决定、或说「以后改成……」时，当轮就调用 "
+           "krouter_correct（库里查不到旧决定也调用，不填 old）；这次会话遇到报错或错误结果、并找到原因修好了，最终回复前调用 "
+           "krouter_learn 记一条经验。"),
+    "en": ("KRouter's two write tools (MCP server krouter; look them up by name if your tool list does not show them): "
+           "when the user changes a decision or says to do something differently from now on, call krouter_correct in "
+           "that same turn (also when a lookup finds nothing about the old one: leave old out); when this session met an "
+           "error or a wrong result and you found the cause and fixed it, call krouter_learn before your final reply."),
+}
+NONE_LINE = {"zh": "查库得到 recall: none，就是库里没有：直说，不要猜。",
+             "en": "A lookup that says recall: none means the vault does not know: say so instead of guessing."}
 
 
 def normalize(payload: dict, agent: str) -> dict:
@@ -336,7 +355,7 @@ def normalize(payload: dict, agent: str) -> dict:
     return p
 
 
-def decisions_text(payload: dict, vault: Path, mode: str) -> str:
+def decisions_text(payload: dict, vault: Path, mode: str, tail: bool = True) -> str:
     if not consented():
         return ""
     root = project_root(payload.get("cwd") or os.getcwd())
@@ -348,46 +367,84 @@ def decisions_text(payload: dict, vault: Path, mode: str) -> str:
     body = [HEAD[lang].format(name=Path(root).name, days=DAYS)]
     for line, rel, ok in lines:
         body.append(f"- {line}{MARK_UNCONFIRMED[lang] if strict and not ok else ''} 〔{rel}〕")
-    body.append(TAIL[lang])
+    if tail:
+        body.append(TAIL[lang])
     return redact("\n".join(body))[:MAX_CHARS]
 
 
-def experience_text(vault: Path) -> str:
-    """The experience digest (experience.py) unless `KROUTER_EXPERIENCE=0`; read-only, so no import consent needed."""
+# 会话开始那一段：按这个顺序给，也按这个优先级分预算。Claude Code 单条 additionalContext 超过 10,000 字只给预览，
+# 整段留在 START_MAX 之下。决定（MAX_CHARS）和工具行先留出来，经验、技能各有上限，下意识索引用剩下的（不到 800 字就不给）。
+START_MAX = 9400
+EXPERIENCE_MAX = 3000   # 30 行中文卡约 1,000 字；英文卡长一些
+SKILLS_MAX = 2000       # 15 个技能 + 5 份草稿的名字和用处
+INDEX_MIN = 800
+SEP = "\n\n"
+
+
+def experience_text(vault: Path, chars: int = EXPERIENCE_MAX) -> str:
+    """The experience digest (experience.py) unless `KROUTER_EXPERIENCE=0`, at most `chars` (fewer card lines when it
+    is longer); read-only, so no import consent needed."""
     try:
         import experience
 
-        text = experience.digest(vault) if experience.digest_on() else ""
+        if not experience.digest_on():
+            return ""
+        lines = experience.DIGEST_MAX_LINES
+        text = experience.digest(vault)
+        while len(text) > chars and lines > 1:
+            lines -= 1
+            text = experience.digest(vault, max_lines=lines)
+        return text if len(text) <= chars else ""
     except Exception as exc:  # noqa: BLE001  经验摘要出错不影响决定的注入
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
-        text = ""
-    try:
-        import skills  # 技能只列名字和什么时候用；全文由宿主用 krouter_skill 取（skills.py）
+        return ""
 
-        more = skills.digest(vault)
+
+def skills_text(vault: Path, chars: int = SKILLS_MAX) -> str:
+    """The skills list (`skills.py`: names and when to use them; the host fetches one with `krouter_skill`)."""
+    try:
+        import skills
+
+        return skills.digest(vault, chars=chars)
     except Exception as exc:  # noqa: BLE001
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
-        more = ""
-    return "\n\n".join(t for t in (text, more) if t)
+        return ""
 
 
-START_MAX = 9400  # Claude Code 单条 additionalContext 上限 10,000 字，超出就只给预览：整段留在这之下
-
-
-def index_text(vault: Path, taken: int) -> str:
-    """The standing index (`compile_subconscious.standing_index`) in what is left of the session-start budget; read-only,
-    so no import consent needed."""
+def index_text(vault: Path, room: int) -> str:
+    """The standing index (`compile_subconscious.standing_index`) in `room` characters at most; read-only, so no import
+    consent needed."""
     try:
         import compile_subconscious
         import recollect
 
         if not recollect.index_on():
             return ""
-        room = min(compile_subconscious.INDEX_CHARS, START_MAX - taken - 600)
-        return compile_subconscious.standing_index(vault, chars=room) if room > 800 else ""
+        room = min(compile_subconscious.INDEX_CHARS, room)
+        return compile_subconscious.standing_index(vault, chars=room) if room >= INDEX_MIN else ""
     except Exception as exc:  # noqa: BLE001  索引出错不影响其余部分
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
         return ""
+
+
+def start_text(payload: dict, vault: Path, mode: str = "") -> str:
+    """Everything the session starts with, in order: this project's decisions, the experience digest, the skills list,
+    the standing index, then one line on the write tools (and on `krouter_ask` when there is no index to say it).
+    "" when there is nothing to say."""
+    decisions = decisions_text(payload, vault, mode, tail=False)
+    experience_part = experience_text(vault)
+    skills_part = skills_text(vault)
+    english = (zones.lang(vault) == "en" or "How to use:" in experience_part + skills_part
+               or decisions.startswith("KRouter: decisions recorded"))
+    lang = "en" if english else "zh"
+    head = [t for t in (decisions, experience_part, skills_part) if t]
+    worst_tools = max(len(TOOLS[lang]), len(TOOLS_WRITE[lang])) + len(NONE_LINE[lang]) + 1
+    room = START_MAX - sum(len(t) + len(SEP) for t in head) - worst_tools - len(SEP)
+    index = index_text(vault, room)
+    if not head and not index:
+        return ""
+    tools = (TOOLS_WRITE if index else TOOLS)[lang] + " " + NONE_LINE[lang]
+    return SEP.join(head + ([index] if index else []) + [tools])
 
 
 def start(payload: dict, agent: str = "claude") -> int:
@@ -397,14 +454,9 @@ def start(payload: dict, agent: str = "claude") -> int:
     raw = vault_path()
     if not raw or not Path(raw).is_dir():
         return 0
-    parts = [t for t in (decisions_text(payload, Path(raw), mode), experience_text(Path(raw))) if t]
-    index = index_text(Path(raw), sum(len(x) + 2 for x in parts))
-    parts += [index] if index else []
-    if not parts:
+    text = start_text(payload, Path(raw), mode)
+    if not text:
         return 0
-    text = "\n\n".join(parts)
-    english = "How to use:" in text or text.startswith("KRouter: decisions recorded")  # folder names are Chinese on an English vault too
-    text += "\n\n" + TOOLS["en" if english else "zh"]
     if agent == "cursor":
         print(json.dumps({"additional_context": text}, ensure_ascii=False))
     else:

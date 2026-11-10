@@ -565,8 +565,9 @@ def line(s: dict, lang: str) -> str:
     return f"- {s['name']}：{when}〔{s['id']}〕" if lang == "zh" else f"- {s['name']}: {when} [{s['id']}]"
 
 
-def digest(vault: Path, used: dict | None = None) -> str:
-    """The skills part of the session-start context; "" when off or when there are none."""
+def digest(vault: Path, used: dict | None = None, chars: int = 0) -> str:
+    """The skills part of the session-start context; "" when off or when there are none. With `chars`, drafts and then
+    the lowest-ranked skills are left out until it fits (the session-start budget, `session_hook.start`)."""
     if not on():
         return ""
     skills = load(vault)
@@ -577,12 +578,20 @@ def digest(vault: Path, used: dict | None = None) -> str:
     ordered = rank(skills, used)
     active = [s for s in ordered if s["status"] == "active"][:LIST_ACTIVE]
     drafts = [s for s in ordered if s["status"] == "draft"][:LIST_DRAFTS]
-    out = [HEAD[lang].format(folder=ri.skills_rel(vault))]
-    out += [line(s, lang) for s in active]
-    if drafts:
-        out += [DRAFT_HEAD[lang]] + [line(s, lang) for s in drafts]
-    out.append(USE[lang])
-    return redact("\n".join(out))
+
+    def text() -> str:
+        out = [HEAD[lang].format(folder=ri.skills_rel(vault))]
+        out += [line(s, lang) for s in active]
+        if drafts:
+            out += [DRAFT_HEAD[lang]] + [line(s, lang) for s in drafts]
+        out.append(USE[lang])
+        return redact("\n".join(out))
+
+    got = text()
+    while chars and len(got) > chars and (drafts or active):
+        (drafts or active).pop()
+        got = text() if (drafts or active) else ""
+    return got
 
 
 def listing(vault: Path) -> list[dict]:
