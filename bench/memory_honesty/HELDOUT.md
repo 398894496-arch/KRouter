@@ -575,6 +575,7 @@ on the same thing ranked first and the conflict named, with no model and no dist
 | 2026-11-10 | After the held-out run, the conflict tie-break (not part of this bar) was narrowed: a newer page whose change line does not name the question's subject is no longer flagged (the dev half had 57 such "possible" flags in 235 questions, long chats being full of "instead of" and "replace"; 13 after). The held-out fire counts had been seen once before this change (they were counted next to dev's), not the coverage counts. The held-out half was then run a second time with the final code to report the shipped configuration: **every count identical** to the run above. |
 | 2026-11-10 | LoCoMo, a second outside check that decides nothing (set 10's conversion, categories 1–4 with evidence, 1 536 questions, all sessions of a conversation in one vault): all at k = 3 / 5 / 8: bm25 1 079 / 1 181 / 1 269, krouter 1 104 / 1 204 / 1 273, krouter+assoc 1 078 / 1 183 / 1 271; category 1 (282, the multi-evidence category): 47 / 73 / 105, 51 / 78 / 110, 50 / 78 / 106. On LoCoMo's short sessions the associative path takes slots from direct hits that were right: **no gain, a small loss against krouter**. |
 | 2026-11-10 | **The maintainer's decision after these numbers** (relayed by the planning session): the associative path goes in built in, no switch, as five pages, the first three always direct hits and the associated pages in places four and five (earlier only when there are fewer than three direct hits), a place they do not need going to the next direct hit. This is the k = 5 configuration measured above, decided by the maintainer, not by bar (1), which stays failed at k = 3. One fix with it: when one associated page was found, the fifth place could repeat it as a direct hit; now it goes to the next direct hit not already listed. Rerun of both halves and LoCoMo with that code: held-out k = 5 **unchanged** (multi-session 40, temporal 58, all 210; krouter's five direct hits 32 / 53 / 198; bm25 31 / 54 / 198); dev k = 5 unchanged (63 / 46 / 213). k = 3 is now krouter's three direct hits (no associated place), and k = 8 three direct + five associated (held-out 42 / 61 / 215). LoCoMo at five pages: 1 185 (bm25 1 181, five direct hits 1 204, the earlier three pages 1 104); at three pages now equal to krouter (1 104). Memory honesty, six sets, at five pages: unchanged. |
+| 2026-11-10 | **A guard for short sessions, tried and not added.** On LoCoMo's short sessions the associated pages took places four and five from direct hits that were right. Two rules fixed before any count, each keeping a fourth or fifth direct hit in its place (so the path gets fewer places) when its score is high: at least half the top score, or at least 0.9 of the third hit's score. Counted on development data only: the LongMemEval dev half and five of LoCoMo's ten conversations (`random.Random(20261110).sample` of the sorted conversation vaults: conv-41, 43, 44, 47, 48; 794 questions), five pages, no gate. No guard: LongMemEval 213 (multi-session 63), LoCoMo 630. Half the top score: 203 (55), 634. 0.9 of the third: 211 (61), 632. Neither is a clear gain (the first costs ten LongMemEval questions for four LoCoMo ones, the second trades two for two), so **neither is added** and the held-out halves were not run for them. The other five LoCoMo conversations stay unused for this. |
 
 ## Set 22: the same reader, five pages each — keyword search against KRouter with its associative path (registered 2026-11-10, before any reader or judge call)
 
@@ -615,11 +616,28 @@ count may differ by a few): BM25 row 500 prompts, 33.0 M characters, 205 reader 
 batches; about 37 judge batches. In all **about 410 subagent runs and 60 M characters (about 15 M tokens) of reader
 input**. Not started until the maintainer says so.
 
+**Amendment (2026-11-10, before any reader or judge call; replaces *Rows*' scope, the batch size, *Reported*'s
+claim and the cost above).** (1) **Held-out half only**: the 235 answerable questions of set 13's held-out half
+(`lme.split_of`, seed 20261110). The associative path's settings were chosen on the dev half, so a reader result on it
+would not be clean; the held-out half is the number to trust. The dev half and the 30 `_abs` questions are not run.
+(2) The two rows are unchanged (BM25's top five, KRouter's five pages at the commit that carries this amendment);
+where both rows hand over exactly the same sessions the prompt is identical and is run once for both; a prompt
+identical to one sets 11 or 12 ran is still copied. Reader batches of up to 12 prompts or **400 000** characters
+(set 12: 200 000), judge batches of 25. (3) **Bar, fixed now:** KRouter is called *ahead of keyword search at five
+pages* only if the paired 95% interval of KRouter minus BM25 over the 235 has its lower end above zero; otherwise the
+README's "level with keyword search" stays as written (with this set's numbers added). Reported per question type,
+multi-session on its own line, with paired intervals per type; the type rows decide nothing. (4) KRouter's
+configuration: unchanged by the short-session guard tried after set 18 (see set 18's log: not added). **Cost, counted
+from the prompts** (KRouter's pages through `route_knowledge.py`, as the run takes them): 235 BM25 prompts; for
+KRouter 23 shared with BM25 and 17 copied from sets 11 and 12, so 195 to run; **430 reader prompts, 28.3 M characters
+(about 7 M tokens), 78 reader batches and 18 judge batches: about 96 subagent runs.** Waiting for the maintainer.
+
 ### Log, set 22
 
 | Date | Event |
 |---|---|
 | 2026-11-10 | Registered. Not run (waiting for the maintainer, for cost). |
+| 2026-11-10 | Amended as above, before any reader or judge call: held-out half only, batches of 400 000 characters, the bar for "ahead" fixed, cost recounted (about 96 subagent runs instead of about 410). Not run. |
 
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
