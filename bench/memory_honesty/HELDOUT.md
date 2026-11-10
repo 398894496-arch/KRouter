@@ -995,3 +995,43 @@ Also reported: how many duplicates were linked to the right card with `same_as`.
 | 2026-11-10 | Registered (`8ea41c3`). |
 | 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
 | 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |
+
+## Set 30: does a host agent do it by itself, in a real session? (registered 2026-11-10, before any scenario was run)
+
+**Why.** Everything measured about experience cards and corrections so far asked the host directly ("here is the digest,
+what would you suggest", "here is the session, write the card") or tested the protocol. Not measured: an agent in a
+working session, handed KRouter the way the README installs it, (a) mentions the digest's lesson when its situation is
+the task's, (b) calls `krouter_learn` when the session really hit a problem and worked it out, (c) calls
+`krouter_correct` when the user changes a decision the memory holds, and keeps quiet when none of those is the case.
+
+**Scenarios.** `bench/behavior/set30.json` (SHA-256 `889a954fd9dba79e326e7da49c1b8a708e73bd143f3c1e815f1186add1c0a03d`), 20 of them, written by Claude Sonnet 5.5 in the Claude Code
+session that ran the platform tests. Not an outside reviewer: the writer had read the MCP tool descriptions, the digest
+wording and the 14 cards, and wrote tasks to match or avoid them. Each is a small project (a few files) and one
+user message; none mentions memory, KRouter, lessons or corrections. Groups: `offer` 4 (a task in the same situation as a
+card, another subject: C01, C09, C10, C06), `learn` 4 (a real problem in the files: a BOM, a working-directory
+assumption, float rounding, a hand-split CSV), `correct` 4 (the user changes a decision a page of the memory holds:
+API timeout, branch naming, Node version, the test command), `notcorrect` 4 (a one-off exception, the existing rule
+restated, an open question, a correction of the code's own off-by-one), `quiet` 4 (a flag, a rename, docstrings, an
+explanation whose function name shares a word with a card).
+
+**Memory.** A throwaway copy per scenario: the English layout the installer makes, the 30-page engineering vault of the
+memory-honesty bench, the 14 English cards of the transfer bench (`bench/behavior/make_fixture.py`). The digest comes
+from the SessionStart hook, the tools from the MCP server, both installed by `scripts/bootstrap.py --apps codex` into the
+scenario's own Codex home.
+
+**Hosts.** Codex CLI (`codex exec`, 0.155.0-alpha.9.2, the model the ChatGPT login selects), 20 scenarios, each run once.
+A Claude Code subagent (Sonnet 5.5) and Cursor's agent get a subset or an approximation, said where the numbers are
+reported. A scenario is never rerun and never edited after its first run.
+
+**Rules, mechanical** (`bench/behavior/judge.py`). *offer*: a card id in brackets in any message of the session. *learn*: a
+`krouter_learn` call. *correct*: a `krouter_correct` call. Should: offer = group `offer`, learn = group `learn`,
+correct = group `correct`. Should not: offer and learn = groups `correct`, `notcorrect`, `quiet` (12); correct = every
+group but `correct` (16). Reference line, fixed now: at least 3 of 4 should, at most 1 should-not, per host and
+behaviour. Below it the host does not do it by itself, and the wording of the tool descriptions, the server
+instructions or the hook line gets revised on a new development set (31), not on this one.
+
+### Log, set 30
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. Before it, throwaway smoke prompts (not scenarios) were run to get the Codex runner working; one of them, with the real home folder, let Codex use the maintainer's own knowledge-base skill and read the real vault (`status` and one `search`, read-only); the runner now gives each run a home folder of its own. |
