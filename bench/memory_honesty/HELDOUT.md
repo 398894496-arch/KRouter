@@ -1035,3 +1035,29 @@ instructions or the hook line gets revised on a new development set (31), not on
 | Date | Event |
 |---|---|
 | 2026-11-10 | Registered. Before it, throwaway smoke prompts (not scenarios) were run to get the Codex runner working; one of them, with the real home folder, let Codex use the maintainer's own knowledge-base skill and read the real vault (`status` and one `search`, read-only); the runner now gives each run a home folder of its own. |
+| 2026-11-10 | **Run once** (Codex CLI 0.155.0-alpha.9.2, model `gpt-5.6-terra`: the first two launches, without `-m` and with `gpt-5.5`, died on "model not supported with a ChatGPT account" before the model saw anything, and were thrown away whole; the two sessions of the first launch that had finished were seen as "no krouter call", no scenario was changed). Claude Code subagent host: Sonnet 5.5, one fresh subagent per scenario. **Codex:** offer should 2 / 4 (C01, C09), should not 0 / 12; learn should 0 / 4, should not 0 / 12; correct should 0 / 4, should not 0 / 16. **Claude Code subagent (approximation: the tools reached through a shell helper, not MCP):** offer 2 / 4 (C09, C10), 0 / 12; learn 0 / 4, 0 / 12; correct 3 / 4 (the fourth, Node version, wrote `krouter_note` after `krouter_ask` found no page), 0 / 16. Below the reference line on both hosts for learn, and for correct on Codex. `bench/behavior/results/set30_*`. |
+| 2026-11-10 | Cause found for Codex, from a probe run (not a scenario): the model is given the SessionStart digest, but no tool definition that mentions krouter (this Codex lists MCP tools only when asked for them) and no server instructions, so nothing in its context says `krouter_correct` or `krouter_learn` exist. The digest's usage line and the tool descriptions are the only wording the model has, and the first never names a tool. |
+
+## Set 31: development set for the wording change after set 30 (registered 2026-11-10, before any scenario was run)
+
+**Why.** Set 30 found the hosts do not call `krouter_learn` (0 / 4 on both) and Codex does not call `krouter_correct` (0 / 4).
+This is the development set to revise the wording on; set 30 is not touched again. `bench/behavior/set31.json`
+(SHA-256 `3c90b98df7a9978b88362bea9f08b6fff36328e2eb1b5ff81d07760dfff4e958`), 12 new scenarios by the same writer (so the same limits as set 30): offer 2 (C05, C02), learn 3 (a
+Makefile with spaces for a tab, CRLF line endings in a script, a mutable default argument), correct 3 (local ports,
+backup schedule, review rule: each a decision a page of the memory holds), notcorrect 2 (a typo, a one-night exception),
+quiet 2. Same memory copy, same rules, same judge as set 30.
+
+**Design.** Codex runs the whole set twice, once on the wording as it stands (baseline), once after the change; each
+scenario once per condition. The Claude Code subagent host runs it once, after the change. The change, fixed now before
+the baseline is run: (1) the SessionStart hook adds one short line naming `krouter_correct` (when the user changes a
+decision or says to do something differently from now on, in the same turn, also when the lookup finds nothing about the
+old one) and `krouter_learn` (before the final reply, when the session met an error or a wrong result and found and
+fixed the cause), printed whenever the hook prints anything; (2) the server instructions' two sentences say the same in
+the same words. The tool descriptions (`LEARN_HELP`, the correct tool's) are not touched: they were tuned over sets 17
+to 23. Better means: should up on learn and correct, should-not not up beyond 1.
+
+### Log, set 31
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. |

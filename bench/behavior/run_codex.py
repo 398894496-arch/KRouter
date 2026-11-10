@@ -23,6 +23,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+MODEL = os.environ.get("KR_CODEX_MODEL", "gpt-5.6-terra")  # without -m the choice flaked into models the ChatGPT login rejects (gpt-6-astra, gpt-5.5)
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
@@ -62,7 +63,7 @@ def run_one(sc: dict, work: Path, base: Path, timeout: int) -> dict:
                            "--apps", "codex", "--no-open", "--no-timer"],
                           env=env, capture_output=True, text=True, timeout=300)
     (d / "install.txt").write_text(inst.stdout[-3000:] + inst.stderr[-1000:], encoding="utf-8")
-    cmd = ["codex", "exec", "--json", "--skip-git-repo-check", "--ephemeral", "-s", "workspace-write",
+    cmd = ["codex", "exec", "-m", MODEL, "--json", "--skip-git-repo-check", "--ephemeral", "-s", "workspace-write",
            "--dangerously-bypass-hook-trust", "--disable", "memories", "--disable", "plugins", "-C", str(proj), sc["prompt"]]
     try:
         res = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)

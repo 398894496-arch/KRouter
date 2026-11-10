@@ -1,0 +1,344 @@
+[
+ {
+  "id": "S30-K1",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "payments API client timeout and retry count",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:41:37Z\nrequested_route: search\nquery: payments API client timeout and retry count\nretrieval_status: ranked-recall-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb0cb2c32574e9a6b6"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "Client requests to the payments API time out after 20 seconds and retry three times.",
+     "old": "Client requests to the payments API time out after 10 seconds and retry twice with backoff.",
+     "page": "Engineering/API timeout.md"
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜Client requests to the p.md\nsuperseded: Engineering/API timeout.md (page)\nrun: 20261110T044143\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261"
+   }
+  ],
+  "messages": [
+   "payments/client.py now has TIMEOUT_S = 20 and RETRIES = 3. Notes: retries means 4 attempts in total; the old notes say 10 s / 2 retries with backoff, the code never had backoff. I recorded the change in your notes: the new decision is saved as a correction page, and the page that said 10 s / 2 retries is now marked superseded. Undo with the --undo command that krouter_correct printed.\n"
+  ]
+ },
+ {
+  "id": "S30-K2",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "branch naming ticket number",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:41:39Z\nrequested_route: preference\nquery: branch naming ticket number\nretrieval_status: ranked-recall-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d19b74e9b1018c2e499"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "Branches are named <type>/<short-title>, like fix/login-redirect, with no ticket numbers in the name.",
+     "old": "Name branches after the ticket: PROJ-123-short-title."
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜Branches are named types.md\nsuperseded: (none named) (recorded)\nrun: 20261110T044145\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261110T044145"
+   }
+  ],
+  "messages": [
+   "CONTRIBUTING.md now tells people to name branches <type>/<short-title>, for example fix/login-redirect. I replaced the old PROJ-123-short-title line. I also recorded the new rule in your KRouter memory with krouter_correct, so later lookups return it instead of the old one. The vault had no page stating the old rule, so nothing was marked superseded.\n"
+  ]
+ },
+ {
+  "id": "S30-K3",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "Node version for services Dockerfile engines",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:24Z\nrequested_route: search\nquery: Node version for services Dockerfile engines\nretrieval_status: bounded-literal-search-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb0cb2c3"
+   },
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "Node 22 decision",
+     "route": "correction"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:32Z\nrequested_route: correction\nquery: Node 22 decision\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/90 System/Agent memory/Corrections and replacements.md\nsource_status: active\nsource_sha256: bd2f86236956bea928"
+   },
+   {
+    "tool": "krouter_note",
+    "server": "krouter",
+    "arguments": {
+     "text": "This sprint every service moves to Node 24: all services build and run on Node 24 from now on (Dockerfile base image and package.json engines).",
+     "kind": "decision"
+    },
+    "status": "completed",
+    "result": "noted: 05 时间日志/会话摘录/2026-11-10｜agent 记下.md\nrun: 20261110T044337\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261110T044337"
+   }
+  ],
+  "messages": [
+   "I bumped both files to Node 24 (Dockerfile node:24, package.json engines >=24). I checked KRouter first and the vault had no earlier decision about Node versions, so nothing needed superseding. I recorded your decision as a note, since it applies from now on. The project folder only holds these two files, so I couldn't touch the other services.\n"
+  ]
+ },
+ {
+  "id": "S30-K4",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "test command make test",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:29Z\nrequested_route: preference\nquery: test command make test\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d19b74e9b1018c2"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "The test command is `just test` from now on; `make test` is going away."
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜The test command is `jus.md\nsuperseded: (none named) (recorded)\nrun: 20261110T044337\nundo: python3 <repo>/skill/krouter/scripts/import_sessions.py --vault '<run> --undo 20261110T044337"
+   }
+  ],
+  "messages": [
+   "I changed README.md step 2 of the setup section from make test to just test. Step 3 still says make test-int; if that is going away too, give me the new command. I also recorded the change in your vault with krouter_correct, so later lookups say the test command is just test. The vault had nothing on this before, so there was no old page to mark superseded.\n"
+  ]
+ },
+ {
+  "id": "S30-L1",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "已修好。现在 python parse_prices.py 能正常跑，输出 3.75。原因：prices.json 开头有 3 个字节的 UTF-8 BOM（ef bb bf），parse_prices.py 用 encoding=\"utf-8\" 读文件，BOM 会留在内容开头，json.load 就报 Unexpected UTF-8 BOM。改动：把 encoding=\"utf-8\" 改成 encoding=\"utf-8-sig\"。我没动 prices.json。\n"
+  ]
+ },
+ {
+  "id": "S30-L2",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "两种运行方式现在都能通过了，改动在 tests/test_loader.py。原因：测试里写了 sys.path.insert(0, \".\")，fixture 路径也是相对路径，都依赖当前工作目录是项目根目录。改法：路径改成相对于测试文件所在位置计算。验证：四种方式都是 OK。\n"
+  ]
+ },
+ {
+  "id": "S30-L3",
+  "group": "learn",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "invoice rounding tax_base total spreadsheet",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:41:35Z\nrequested_route: search\nquery: invoice rounding tax_base total spreadsheet\nretrieval_status: bounded-literal-search-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb0cb2c32"
+   }
+  ],
+  "messages": [
+   "I fixed it. invoices.py now prints 3.98 for March. Cause: floats cannot store 2.675 exactly, Python round rounds those lines down; fix: Decimal with half-up per line. KRouter had nothing on this (recall: none), so the diagnosis comes from the code and data alone.\n"
+  ]
+ },
+ {
+  "id": "S30-L4",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "原因：summarize.py 用 line.split(\",\") 解析 CSV，不认引号。customers.csv 里有两行的名字带逗号并且用引号包住，split 把这样的行切成 3 段，脚本只在 len(parts) == 2 时取 parts[1]，就落到 \"unknown\"。修法：改用标准库的 csv 模块。我没有改文件，需要的话我来改。这次是直接读了 summarize.py 和 customers.csv 得出的结论，没有查 Obsidian vault，因为问题只涉及这两个文件。\n"
+  ]
+ },
+ {
+  "id": "S30-N1",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "我把 scripts/backfill.py 里 payments 请求的超时从 timeout=10 改成了 timeout=60，别的都没动。这只是这个一次性脚本的例外，所以我没有把它当成长期规则写进记忆。\n"
+  ]
+ },
+ {
+  "id": "S30-N2",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "production logging level for new worker, logging_setup.py",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:30Z\nrequested_route: preference\nquery: production logging level for new worker, logging_setup.py\nretrieval_status: ranked-recall-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c"
+   }
+  ],
+  "messages": [
+   "logging_setup.py now logs at INFO in production, and I tested it. The file had DEBUG on both branches of the conditional, so prod was logging at debug. Your vault confirms the INFO rule (Engineering/Logging level.md, active): production logs at INFO, and debug only goes behind a feature flag for one hour.\n"
+  ]
+ },
+ {
+  "id": "S30-N3",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "CSS modules or Tailwind styling preference",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:34Z\nrequested_route: preference\nquery: CSS modules or Tailwind styling preference\nretrieval_status: canonical-match\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d19b74e9b10"
+   }
+  ],
+  "messages": [
+   "I'd go with CSS modules. I changed nothing. src/ only has Settings.jsx and Settings.module.css; the component already uses a CSS module so staying with it adds no new dependency. Tailwind would be better if the rest of the app already uses it. I asked KRouter whether you've recorded a styling preference. It returned only an unrelated rule about not moving Clippings originals, so nothing on file points either way.\n"
+  ]
+ },
+ {
+  "id": "S30-N4",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "我已修好 total.py 里的 off-by-one。循环写成了 range(len(items) - 1)，所以漏掉最后一项。现在改成 range(len(items))。运行 python3 total.py，输出 10。\n"
+  ]
+ },
+ {
+  "id": "S30-O1",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "`python run.py` doesn't read `conf/settings.json`. It reads `conf.d/settings.json`, which still says 3.\n`app/worker.py` hardcodes the path to conf.d. conf/settings.json has retries 5, conf.d/settings.json has retries 3, the file the code loads. Restarting made no difference because the file it reads never changed. I ran python3 run.py and it prints \"will retry 3 times\". I haven't changed anything. Two ways to fix: set retries 5 in conf.d/settings.json, or change SETTINGS in app/worker.py to point at conf/. Tell me which you want.\n"
+  ]
+ },
+ {
+  "id": "S30-O2",
+  "group": "offer",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_learn",
+    "server": "krouter",
+    "arguments": {
+     "situation": "A report showed an average that was absurdly large, off by a factor of a thousand squared.",
+     "action": "Checked the units of the source column against the units printed in the output, found the conversion went the wrong direction, and fixed it.",
+     "result": "The report now prints a plausible value.",
+     "same_as": "C09"
+    },
+    "status": "completed",
+    "result": "recorded: the lesson of C09 came up again (no new card)"
+   }
+  ],
+  "messages": [
+   "I fixed weekly_report.py. It now prints `Average upload time: 1.60 seconds`.\nThe duration_ms column is in milliseconds. The script multiplied the average by 1000 when it should have divided by 1000, so the result was off by a factor of a million. The average of 1500, 2400 and 900 ms is 1,600 ms, which is 1.6 s. I also changed the output from 0 to 2 decimal places.\nA lesson from another task you could try: when a result is absurdly large or small, check the units and defaults before the logic [C09]. That was the cause here. I logged that C09 came up again.\n"
+  ]
+ },
+ {
+  "id": "S30-O3",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I fixed digest.py: orders now group by their New York date instead of the UTC date. created_at in orders.csv is stored in UTC, but the script took .date() straight from that timestamp. The change converts each timestamp with .astimezone(ZoneInfo(\"America/New_York\")) before taking the date. Before: 2026-11-03 1 and 2026-11-04 2, 3, 4. After: 2026-11-03 1, 2, 3 and 2026-11-04 4.\nA lesson from another task you could try: when dates are off by one day, check who cuts the day in which time zone [C10]. That was the cause here.\n"
+  ]
+ },
+ {
+  "id": "S30-O4",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "我已经删掉 data/ 里的 4 个文件：export_2026-06-12.csv、export_2026-07-30.csv（日期早于 2026-09-01），scratch_a.tmp、scratch_b.tmp。留下的 export_2026-09-15.csv 和 export_2026-10-20.csv 日期都在 9 月 1 日之后。这 4 个文件加起来只有 32 字节，腾出的空间几乎为零。这个目录也不是 git 仓库，删除后无法恢复。\n"
+  ]
+ },
+ {
+  "id": "S30-Q1",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "cli.py output format JSON flag",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:35Z\nrequested_route: preference\nquery: cli.py output format JSON flag\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d19b74e"
+   }
+  ],
+  "messages": [
+   "cli.py now takes a --json flag. With it, the result prints as JSON, for example {\"square\": 25}. Without it, the output is the same text as before. I ran it three ways and all behaved as expected. I asked the vault whether you have a preferred JSON shape or flag convention. It had nothing on it, so I made the key square, matching the existing text label.\n"
+  ]
+ },
+ {
+  "id": "S30-Q2",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "calc is now calculate_total in both files, and the test script runs clean. I didn't query KRouter: this was a mechanical rename and nothing in it depends on a past decision or preference.\n"
+  ]
+ },
+ {
+  "id": "S30-Q3",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "docstring style for public functions",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T12:43:36Z\nrequested_route: preference\nquery: docstring style for public functions\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d"
+   }
+  ],
+  "messages": [
+   "I added a one-line docstring to slug and clamp in utils.py. I left _private alone because it is private. The vault had no docstring-style preference (recall: none), so the wording is my own plain imperative style.\n"
+  ]
+ },
+ {
+  "id": "S30-Q4",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "check_units in validate.py checks that a record's weight unit is one of the supported ones, and returns it in a normalised form. (explanation of the five steps and caveats). I didn't query the vault, since this was a question about the code itself.\n"
+  ]
+ }
+]

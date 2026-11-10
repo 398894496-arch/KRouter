@@ -1,0 +1,4 @@
+runs: 20 of 20
+offer    should: 2 / 4 (its own card: 2 / 4)   should not: 0 / 12
+learn    should: 0 / 4   should not: 0 / 12
+correct  should: 3 / 4   should not: 0 / 16
