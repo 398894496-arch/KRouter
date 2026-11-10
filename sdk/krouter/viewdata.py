@@ -98,15 +98,30 @@ _EN = [
     (re.compile(r"^提交 (`.*?`)；撤销这一轮：(`.*?`)$"), r"commit \1; undo this run: \2"),
     (re.compile(r"^库不是 git 仓库，没有提交可撤；撤销这一轮：(`.*?`)$"), r"the memory is not a git repository, no commit to undo; \1"),
     (re.compile(r"^结果：\*\*(.*?)\*\*（通道：(.*?)）$"), r"result: \1 (lane: \2)"),
+    (re.compile(r"^(\d+) 次 / (\d+) 字 / (\d+) tokens$"), r"\1 calls / \2 chars / \3 tokens"),
+    (re.compile(r"^(\d+) 次 / (\d+) 字$"), r"\1 calls / \2 chars"),
+    (re.compile(r"^发出的内容：.*$"), "What is sent: rule and topic pages in full (answer cards), topic evidence (topic dossiers), the text of "
+     "queries the router did not answer well (nightly learning); with session import on and distilling chosen, also "
+     "yesterday's redacted session excerpts. KROUTER_NIGHTLY=0 turns it off; run.sh --dry-run shows what would be sent first."),
+    (re.compile(r"^没有可用的模型通道（.*?），这些功能没开：(.*?)。召回.*$"), r"No model lane (no API key and no logged-in agent command line): off: \1. "
+     "Recall, correction capture, the experience digest and cards and notes the agent writes itself work as usual."),
+    (re.compile(r"^借用已登录的 agent 命令行（订阅额度）：(.*?)，今天 (\d+) / (\d+) 次，每次见 (`.*?`)。$"),
+     r"Borrowing the logged-in agent command line (subscription quota): \1, \2 / \3 calls today, each one logged in \4."),
 ]
+_FEATURES = {"会话提炼（定了什么、改了什么）": "session distilling", "经验卡的模型抽取": "model extraction of experience cards",
+             "主题档案整合": "topic dossiers", "问答卡": "answer cards", "触发词提议": "trigger proposals",
+             "claude-mem 导入的提炼": "claude-mem import distilling", "夜间学习": "nightly learning", "主题档案": "topic dossiers"}
 
 
 def to_english(line: str) -> str:
     line = line.replace("<会同步到别处的文件夹>", "<a folder that syncs elsewhere>")
+    for zh, en in _FEATURES.items():
+        if line.startswith("没有可用的模型通道"):
+            line = line.replace(zh, en)
     for rx, rep in _EN:
         new, n = rx.subn(rep, line)
         if n:
-            return new
+            return new.replace("、", ", ") if new.startswith("No model lane") else new
     return line
 
 
@@ -483,6 +498,7 @@ class Store:
         def fix(rep):
             for st in rep["steps"]:
                 st["reason"] = to_english(st["reason"])
+                st["calls"] = to_english(st["calls"])
             rep["notes"] = [to_english(n) for n in rep["notes"]]
 
         if out["report"]:

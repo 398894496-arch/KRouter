@@ -261,6 +261,12 @@ def test_last_night_from_the_report_the_ledger_and_the_git_history(srv):
     en = c.json("/api/nightly?lang=en")
     assert all(not re.search(r"[一-鿿]", o["reason"]) for o in en["off"])
     assert any(ln.startswith("- Added") for r in en["runs"] for ln in r["lines"])
+    cjk = re.compile(r"[一-鿿]")
+    assert not any(cjk.search(x["reason"] + x["calls"]) for x in en["report"]["steps"])
+    assert not any(cjk.search(x) for x in en["report"]["notes"])
+    assert en["report"]["steps"][0]["calls"] == "0 calls / 0 chars"
+    zh = c.json("/api/nightly")  # without lang the job's own (Chinese) words are left as written
+    assert zh["report"]["steps"][0]["calls"] == "0 次 / 0 字"
 
 
 def test_the_constants_the_viewer_reads_by_still_match_the_writers():

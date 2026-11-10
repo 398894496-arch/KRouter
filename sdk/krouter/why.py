@@ -312,13 +312,25 @@ def _words(m, con, q: str) -> tuple[list[str], dict]:
     return raw, df
 
 
+def _real(m, con, words: list[str], fallback: bool = True) -> list[str]:
+    """The words worth showing a person: Latin words as they are; Chinese pairs only when they are words in the bundled
+    word list or phrases in a page title or alias of this memory (the index cuts every Chinese run into overlapping
+    pairs, so `们哪` is an artefact and `发版` is not). When none is left: all of them with `fallback`, else none."""
+    ri = m.ri
+    content, generic = ri.lexicon()
+    pairs = [w for w in words if ri.is_cjk_bigram(w)]
+    named = ri.phrase_terms(con, pairs) if pairs else set()
+    keep = [w for w in words if not ri.is_cjk_bigram(w) or w in content or w in generic or w in named]
+    return keep or (words if fallback else [])
+
+
 def _refusal(m, con, vault: Path, q: str, raw: list[str], df: dict, opened: dict) -> list[tuple[str, dict]]:
     """Which of recall's refusal checks said no, as (code, params). Recomputed from recall's own helpers on the ranking
     it would have given with the gate off; a test keeps this and `recall` in step."""
     ri = m.ri
     if not raw:
         return [("r_no_words", {})]
-    absent = [tok for tok in raw if df.get(tok, 0) == 0]
+    absent = _real(m, con, [tok for tok in raw if df.get(tok, 0) == 0], fallback=False)
     hits = opened.get("hits") or []
     if not hits:
         return [("r_nothing", {"absent": absent})]
@@ -340,7 +352,7 @@ def _refusal(m, con, vault: Path, q: str, raw: list[str], df: dict, opened: dict
     if unnamed:
         why.append(("r_unnamed", {"names": ", ".join("“" + n + "”" for n in unnamed)}))
     if unknown:
-        why.append(("r_unknown", {"words": ", ".join(absent[:4]) or "?"}))
+        why.append(("r_unknown", {}))
     if off_vault and not single:
         why.append(("r_off_vault", {"n": absent_words, "m": top_words}))
     if not single and strong < need and alien >= ri.ALIEN_MIN:
@@ -356,7 +368,7 @@ def _refusal(m, con, vault: Path, q: str, raw: list[str], df: dict, opened: dict
         if top < ri.SCORE_MIN * scale:
             why.append(("r_score", {"score": round(top, 1), "bar": round(ri.SCORE_MIN * scale, 1)}))
     if opened.get("clipped") and ri.absent_stems(con, raw, df):
-        why.append(("r_clipped", {"words": ", ".join(ri.absent_stems(con, raw, df)[:3])}))
+        why.append(("r_clipped", {"stems": ri.absent_stems(con, raw, df)[:3]}))
     for code, params in why:
         params.setdefault("absent", absent)
     return why or [("r_unknown_reason", {})]
@@ -426,8 +438,8 @@ def explain(vault, question: str, lang: str | None = None, refresh: bool = True,
     con = ri.connect(ri.cache_path(vault))
     try:
         raw, df = _words(m, con, q) if q else ([], {})
-        out["words"] = {"raw": raw, "used": list(res.get("query_tokens") or []),
-                        "absent": [w for w in raw if df.get(w, 0) == 0]}
+        out["words"] = {"raw": raw, "used": _real(m, con, list(res.get("query_tokens") or raw)),
+                        "absent": _real(m, con, [w for w in raw if df.get(w, 0) == 0], fallback=False)}
         qset, qname = set(raw), ri.compact(q)
         qtok = list(res.get("query_tokens") or [])
         hits = res.get("hits") or []
@@ -541,7 +553,7 @@ def blocks(e: dict) -> list[dict]:
         li(t(L, "words_none"))
     else:
         sep = ", " if L == "en" else "、"
-        li(t(L, "words_used", words=sep.join(w["used"] or w["raw"])))
+        li(t(L, "words_used", words=sep.join(w["used"])))
         if w["absent"]:
             li(t(L, "words_absent", words=sep.join(w["absent"][:10])))
 
@@ -584,9 +596,12 @@ def blocks(e: dict) -> list[dict]:
     if conf == "none":
         li(t(L, "conf_none"))
         for r in e["refusal"]:
-            params = {k: v for k, v in r.items() if k not in ("code", "absent")}
-            if r["code"] == "r_nothing":
-                params["words"] = ", ".join((r.get("absent") or e["words"]["raw"])[:8])
+            params = {k: v for k, v in r.items() if k not in ("code", "absent", "stems")}
+            sep = ", " if L == "en" else "、"
+            if r["code"] in ("r_nothing", "r_unknown"):
+                params["words"] = sep.join((r.get("absent") or e["words"]["used"])[:6])
+            if r["code"] == "r_clipped":
+                params["words"] = sep.join(r.get("stems") or [])
             li(t(L, r["code"], **params), 1)
     elif e["clipped"]:
         li(t(L, "conf_low_clipped"))
