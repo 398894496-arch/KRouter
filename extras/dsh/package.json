@@ -1,6 +1,6 @@
 {
   "name": "dsh-krouter",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "KRouter DSH socket (same product as the repo root: router + writer). Not a second project.",
   "type": "module",
   "main": "lib/index.js",

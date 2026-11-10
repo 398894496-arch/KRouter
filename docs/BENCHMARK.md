@@ -1,29 +1,37 @@
 # Memory honesty bench
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v1.3.0, 2026-11-09). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.0.0, 2026-11-10). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
 >   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
-> - **Answer accuracy** (LongMemEval S, the number other projects publish): 400 of 500 right, 80.0% [76.4, 83.4],
->   with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
+> - **Answer accuracy** (LongMemEval S, the number other projects publish; measured on 1.3.0, which gave three pages):
+>   400 of 500 right, 80.0% [76.4, 83.4], with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
 >   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
 >   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
 >   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
 >   BM25, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the reader gets 492 (98.4%), so
->   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader.
+>   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader. 2.0 gives five pages, two of them
+>   ones the vault connects to the hits: every answer session among them for 210 of 235 held-out questions (BM25's
+>   top five 198), multi-session 40 of 47 (31) ([set 18](https://github.com/398894496-arch/KRouter/blob/main/bench/memory_honesty/HELDOUT.md)).
+>   Answer accuracy at five pages is not measured yet (set 22, registered).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
->   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
+>   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
+>   "3 of 30" quoted before was 1.1.1); LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
->   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
+> - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
+>   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
+>   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
+> - **Releases:** 2.0.0 (2026-11-10): lessons carry over between tasks, five pages with the ones the vault connects, a
+>   change of mind holds with no key, a lighter install that is English end to end; the router moved to
+>   `skill/krouter` (an older install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
