@@ -121,7 +121,7 @@ def main() -> int:
         if tier.get(new) == "dead":
             continue
         title = Path(old).stem
-        rels = [h["rel"] for h in ri.recall(vault, title, limit=10, refresh_first=False, gate=False)["hits"]]
+        rels = [h["rel"] for h in ri.recall(vault, title, limit=10, refresh_first=False, gate=False, assoc=False)["hits"]]
         if new in rels and (old not in rels or rels.index(new) < rels.index(old)):
             tenure_ok += 1
         else:

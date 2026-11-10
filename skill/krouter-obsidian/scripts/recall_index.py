@@ -22,11 +22,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import zones  # noqa: E402
 import krouter_redact  # noqa: E402
+import associate  # noqa: E402
 
 redact = krouter_redact.redact
 is_secret_page = krouter_redact.is_secret_page  # 其他夜间脚本经 ri.is_secret_page 用它
 
-SCHEMA_VERSION = "recall-v14"  # v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
+SCHEMA_VERSION = "recall-v15"  # v15：边表（链接、取代、同会话、同一天、共同的词、一起被引用），给联想通路用； v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
 STRONG_W = 0.5  # 软权重 ≥ 此值才算"有效匹配词"
 MIN_STRONG_MATCH = 2
 SCORE_MIN = 8.5  # bm25×分层权重的绝对下限
@@ -240,6 +241,7 @@ def connect(db: Path) -> sqlite3.Connection:
             -- 每页 frontmatter 的原文（已脱敏、小写），只给字面检索预筛用：frontmatter 不进全文索引
             CREATE TABLE fm(rel TEXT PRIMARY KEY, text TEXT);
             """
+            + associate.DROP + associate.SCHEMA
         )
         con.execute("INSERT OR REPLACE INTO meta VALUES('schema', ?)", (SCHEMA_VERSION,))
         con.commit()
@@ -263,6 +265,10 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
     known, old_sha = indexed()
     aliases, map_sha = alias_map(vault)
     if map_sha == old_sha and known.keys() == seen.keys() and all(known[r][:2] == seen[r][:2] for r in seen):
+        if associate.cocite_changed(con, vault):  # 只有"一起被引用"的记录变了：只重读它
+            con.execute("BEGIN IMMEDIATE")
+            associate.load_cocite(con, vault)
+            con.commit()
         return {"added": 0, "changed": 0, "removed": 0, "docs": len(seen)}  # 没变：不加锁、不写
     # 有变化：先拿写锁再重读一遍。几个进程（服务的常驻查询进程、同时跑的几次查询）同时发现同一批改动时，
     # 后拿到锁的看到的是前一个已经写好的索引，不会把同一页再索引一遍、留下两条
@@ -279,6 +285,7 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
             con.execute("DELETE FROM docs WHERE rowid=?", (rid,))
             con.execute("DELETE FROM files WHERE rel=?", (rel,))
             con.execute("DELETE FROM fm WHERE rel=?", (rel,))
+            associate.forget(con, rel, rid)
             removed += 1
     for rel, (mtime, size, path) in seen.items():
         old = known.get(rel)
@@ -306,6 +313,7 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         dirs = " ".join(rel.split("/")[:-1])
         if old:
             con.execute("DELETE FROM docs WHERE rowid=?", (old[2],))
+            associate.forget(con, rel, old[2])
             changed += 1
         else:
             added += 1
@@ -324,11 +332,13 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
             ),
         )
         con.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?)", (rel, mtime, size, cur.lastrowid))
+        associate.index_page(con, sys.modules[__name__], rel, cur.lastrowid, text.replace("\r\n", "\n"), meta, body)
         head = text.replace("\r\n", "\n")
         end = head.find("\n---", 4) if head.startswith("---\n") else -1
         con.execute("INSERT OR REPLACE INTO fm VALUES(?,?)", (rel, head[:end + 4].lower() if end >= 0 else ""))
     if changed or added or removed:
         con.execute("INSERT OR REPLACE INTO meta VALUES('built_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%S"),))
+    associate.load_cocite(con, vault)
     con.commit()
     return {"added": added, "changed": changed, "removed": removed, "docs": len(seen)}
 
@@ -377,17 +387,28 @@ def forget_refresh() -> None:
     _REFRESHED.clear()
 
 
-def recall(vault: Path, query: str, scope: str = "", limit: int = 5, refresh_first: bool = True,
-           gate: bool = True) -> dict:
+PAGES = 5         # 一次查询交给 agent 的页数：前 3 页是直接命中，后 2 页留给联想（没有就给后面的直接命中）
+DIRECT_FIRST = 3
+
+
+def recall(vault: Path, query: str, scope: str = "", limit: int = PAGES, refresh_first: bool = True,
+           gate: bool = True, assoc: bool = True, conflict: bool | None = None) -> dict:
+    """Ranked pages for `query`, at most `limit` of them. `hits` are the direct hits (the question's own words); the
+    first `DIRECT_FIRST` places are always theirs. The places after those go to associated pages (`assoc`, each with
+    the edges it came along), and to further direct hits when there are not enough; with fewer direct hits than
+    `DIRECT_FIRST`, associated pages may fill those places too. A refusal stays a refusal. `assoc=False` gives the
+    direct ranking alone (the nightly tools use it). `conflict` (on unless `KROUTER_CONFLICT=0`): when two of the top
+    pages say the same thing at different dates and the newer one says it was changed, the newer one goes first."""
     con = connect(cache_path(vault))
     try:
-        return _recall(con, vault, query, scope, limit, refresh_first, gate)
+        return _recall(con, vault, query, scope, limit, refresh_first, gate, assoc,
+                       associate.conflict_enabled() if conflict is None else conflict)
     finally:
         con.close()  # 常驻的查询进程里不关就攒着：连接挂在引用环上，要等垃圾回收才放，每个约 2.7 MB
 
 
 def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit: int, refresh_first: bool,
-            gate: bool) -> dict:
+            gate: bool, assoc: bool = False, conflict: bool = True) -> dict:
     stats = {}
     if refresh_first and refresh_due(vault):
         stats = refresh(vault, con)
@@ -435,6 +456,7 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         hits.append({"rid": rid, "rel": rel, "tier": tier, "status": status, "how": how,
                      "score": round(-s * boost, 3)})
     hits.sort(key=lambda h: -h["score"])
+    ranked = hits
     hits = hits[:limit]
     if not hits:
         return {"hits": [], "stats": stats, "query_tokens": qtok, "confidence": "none", "margin": 0.0}
@@ -473,12 +495,115 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         conf = "medium"
     else:
         conf = "low"
-    for h in hits:
+    # 前几条全是网页剪藏（别人写的参考材料，不是你的笔记）：最多 low；问题里还有整库都没有的词，就是库里没有
+    clipped = conf != "none" and all_clippings(con, hits[:DIRECT_FIRST])
+    if clipped:
+        conf = "none" if gate and absent_stems(con, raw, df) else "low"
+    found = None
+    picks: list[dict] = []
+    if conf != "none":
+        if conflict:
+            # 没有模型、还没提炼时，同一件事的新旧两页：新页在前，并说明较早的一页说法不同（拿不准只标不排）
+            found = associate.conflicts(sys.modules[__name__], con, vault, ranked, qtok)
+            if found:
+                associate.apply_conflict(ranked, found)
+        # 前 DIRECT_FIRST 个位置永远是直接命中；联想只填后面的位置（直接命中不够时可以往前补），
+        # 用不完的位置再给后面的直接命中。拒答时（conf == none）不走这里：联想不会把"库里没有"变成"有"
+        keep = min(DIRECT_FIRST, len(ranked))
+        n = max(0, limit - keep) if assoc and not partial else 0
+        if n:
+            picks = associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)[:n]
+        taken = {p["rel"] for p in picks}
+        hits = ranked[:keep] + [h for h in ranked[keep:] if h["rel"] not in taken][: limit - keep - len(picks)]
+    for h in ranked:
         h.pop("rid", None)
     if hits and conf != "none" and not partial:
         attach_answers(vault, hits, raw, df)  # 只对上一个词时不给生成的答案：那一行读起来像定论
-    return {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
-            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
+    out = {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
+           "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
+    if clipped and conf != "none":
+        out["clipped"] = True
+    if picks:
+        out["assoc"] = picks
+    if found:
+        out["conflict"] = found
+    return out
+
+
+CLIP_PATH = re.compile(r"(^|/)[^/]*(剪藏|clippings?|web ?clips?)[^/]*/", re.I)
+CLIP_FM = re.compile(r"^source:\s*[\"']?https?://|^type:\s*[\"']?(web[- ]?)?clip|^tags:.*\bclippings?\b|^\s*-\s*clippings?\s*$",
+                     re.M)
+CLIP_NOTE = ("recall_note: every page found is a clipped web page (reference someone else wrote, not your own notes). "
+             "Say what it says and where it came from, not as something decided; if it does not answer the question, "
+             "say the vault does not cover it.")
+
+
+def absent_stems(con: sqlite3.Connection, raw: list[str], df: dict[str, int]) -> list[str]:
+    """Latin question words of 4+ letters that no word in the vault even starts like (`password` when the vault has
+    no `passw…`; `move` is there when the vault has `moved`): the question asks about something the vault never
+    mentions in any form."""
+    out = []
+    for t in raw:
+        if is_cjk_bigram(t) or len(t) < 4 or t.isdigit() or t in EN_FUNCTION or _known_latin(t, df):
+            continue
+        stem = t[: max(4, len(t) - 2)]
+        hit = con.execute("SELECT 1 FROM vrow WHERE term >= ? AND term < ? LIMIT 1", (stem, stem + "\uffff")).fetchone()
+        if not hit:
+            out.append(t)
+    return out
+
+
+def all_clippings(con: sqlite3.Connection, hits: list[dict]) -> bool:
+    """Whether every one of these pages is a web clipping: under a folder named for clippings (`剪藏`, `Clippings`,
+    `Web clips`), or with clipper frontmatter (a `source:` URL, a `clippings` tag, `type: clipping`)."""
+    if not hits:
+        return False
+    for h in hits:
+        if CLIP_PATH.search(h["rel"]):
+            continue
+        row = con.execute("SELECT text FROM fm WHERE rel=?", (h["rel"],)).fetchone()
+        if not (row and CLIP_FM.search(row[0] or "")):
+            return False
+    return True
+
+
+def page_list(res: dict, k: int = PAGES) -> list[str]:
+    """The pages a reader is given, in the receipt's order: the direct hits (the first `DIRECT_FIRST` of them always
+    there, then any the associative path left room for), then the associated pages; at most `k`."""
+    return ([h["rel"] for h in res.get("hits", [])] + [a["rel"] for a in res.get("assoc", [])])[:k]
+
+
+VIA_LABEL = {"words": "shares words with", "link": "linked with", "supersedes": "replaces or is replaced by",
+             "session": "same session as", "day": "same day as", "cocite": "cited together with"}
+
+
+def via_text(steps: list[dict]) -> str:
+    parts = []
+    for v in steps:
+        words = f" ({', '.join(v['words'])})" if v.get("words") else ""
+        parts.append(f"{VIA_LABEL.get(v['kind'], v['kind'])} {v['from']}{words}")
+    return "; ".join(parts)
+
+
+ASSOC_HEAD = ("associated: pages connected to the hits above that the question did not name; read one only if the "
+              "hits leave part of the question open")
+
+
+def print_extras(res: dict, kind: str) -> None:
+    """The conflict note (before the hits) or the associated block (after them), as `recall_index` and
+    `route_knowledge` print them."""
+    if kind == "conflict" and res.get("clipped"):
+        print(CLIP_NOTE)
+    if kind == "conflict" and res.get("conflict"):
+        print(associate.conflict_note(res["conflict"]))
+    if kind == "assoc" and res.get("assoc"):
+        print(ASSOC_HEAD)
+        for a in res["assoc"]:
+            flag = f" status={a['status']}" if a["status"] else ""
+            print(f"- {a['rel']} tier={a['tier']}{flag} assoc={a['score']}")
+            print(f"  via: {via_text(a['via'])}")
+            if a["how"]:
+                print(f"  how: {a['how']}")
 
 
 def strong_matches(con: sqlite3.Connection, rid: int, terms: list[str], df: dict[str, int],
@@ -839,7 +964,7 @@ def main() -> int:
     ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--query", default="")
     ap.add_argument("--scope", default="", help="vault-relative dir or file to restrict to")
-    ap.add_argument("--limit", type=int, default=5)
+    ap.add_argument("--limit", type=int, default=PAGES)
     ap.add_argument("--lines", type=int, default=1, help="best matching lines to show per hit")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--rebuild", action="store_true")
@@ -871,9 +996,11 @@ def main() -> int:
     if not res["hits"] or res.get("confidence") == "none":
         print("recall: none (no page covers enough of the question; do not guess)")
         return 0
+    print_extras(res, "conflict")
     print("recall:")
     for h in res["hits"]:
         flag = f" status={h['status']}" if h["status"] else ""
+        flag += f" conflict={h['conflict']}" if h.get("conflict") else ""
         print(f"- {h['rel']} tier={h['tier']}{flag} score={h['score']}")
         if h.get("answer"):
             print(f"  answer (generated): {redact(h['answer'])}")
@@ -881,6 +1008,7 @@ def main() -> int:
             print(f"  how: {h['how']}")
         for ln, text in best_lines(vault / h["rel"], res["query_tokens"], args.lines):
             print(f"  L{ln}: {text}")
+    print_extras(res, "assoc")
     return 0
 
 

@@ -39,8 +39,10 @@ def bench_from(repo: Path):
     return mod
 
 
-def route_answers(repo: Path, rows: list[dict], vault: Path, cache: Path, route: str = "search") -> list[dict]:
-    """KRouter's own entry point, one question at a time; cited pages read off the receipt."""
+def route_answers(repo: Path, rows: list[dict], vault: Path, cache: Path, route: str = "search",
+                  pages: int = 3) -> list[dict]:
+    """KRouter's own entry point, one question at a time; cited pages read off the receipt (direct hits, then the
+    `associated:` pages), the first `pages` of them."""
     env = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_CACHE_DIR": str(cache), "KROUTER_NO_QUERY_LOG": "1"}
     env.pop("KROUTER_MAP", None)  # 用快照库里自己的别名表
     script = repo / "skill/krouter-obsidian/scripts/route_knowledge.py"
@@ -55,7 +57,7 @@ def route_answers(repo: Path, rows: list[dict], vault: Path, cache: Path, route:
                 cited = [os.path.relpath(m.group(1).strip(), vault)]
         elif not re.search(r"(?m)^recall: none", text) and "\nrecall:\n" in text:
             block = text.split("\nrecall:\n", 1)[1]
-            cited = [m.group(1) for m in re.finditer(r"(?m)^- (.+?\.md) tier=", block)][:3]
+            cited = [m.group(1) for m in re.finditer(r"(?m)^- (.+?\.md) tier=", block)][:pages]
         mode = "canonical_match" if re.search(r"(?m)^canonical_match: true", text) else ("recall" if cited else "none")
         out.append({"id": it["id"], "cited": cited, "refused": not cited, "mode": mode})
     return out

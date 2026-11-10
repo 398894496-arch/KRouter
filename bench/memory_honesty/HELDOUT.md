@@ -529,6 +529,117 @@ unchanged), to use fewer agents. (3) One *nothing* judge agent wrote its verdict
 random (7 yes, 1 no) were read against the benchmark's answers afterwards and all eight stood: a spot check, not a
 second judge.
 
+## Set 18: does following the vault's own connections bring the whole answer? (registered 2026-11-10, before the associative path was written or any held-out question was run)
+
+**Why.** Set 12 put KRouter level with plain BM25 on LongMemEval (80.0% and 81.0% with the same reader), and 98.4%
+when the reader gets the labelled answer sessions. The points lost are mostly multi-session and temporal questions,
+whose answer is spread over several sessions. Counted offline over all 500 (not a test: every question was seen in
+sets 7, 11 and 12), BM25's top 3 holds every answer session for 384 of 500, multi-session 73 of 133, temporal 91 of
+133. This set asks whether a second, associative path (spreading from the pages the question hits, along links,
+supersedes, same session or day, shared rare words, and later co-citation) brings more of the whole answer in the
+same number of pages. Retrieval only: no reader and no judge, no model is called.
+
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 470 answerable questions are split as set 13 split them
+(`lme.split_of` on branch `claude/wp2-refusal-396930`: seed 20261110, `random.Random.sample` of the sorted ids, half to
+*dev*): 235 dev (74 multi-session, 54 temporal), 235 held out (47 multi-session, 73 temporal). Set 13 counted only
+refusals of the unchanged gate on held-out ablated vaults; no ranking on the held-out half was looked at for this
+set. The 30 `_abs` questions are left out (no answer to bring). Every design choice and constant of the associative
+path is chosen on the dev half and on the development benches of this directory (`dev`, `dev2`, `dev3`).
+
+**Metric.** For k = 3, 5, 8: the number of questions whose k returned pages include *every* labelled answer session,
+overall and per question type. Systems, each giving exactly k pages, no refusal gate (the gate is unchanged by this
+set and reported separately): `bm25` (the offline count above: FTS5 BM25 over character pairs and words, superseded
+pages skipped), `krouter` (in-process `recall`, `gate=False`, at `9d73bd5`'s ranking), `krouter+assoc` (the same
+direct hits, the associative pages filling the k slots as the shipped code fills them). Paired 95% bootstrap intervals
+for `krouter+assoc` minus `bm25` (10 000 resamples over questions, seed 20261110).
+
+**Pass bar, fixed now.** On the held-out half: (1) multi-session: `krouter+assoc` above `bm25` with the paired 95%
+interval above zero at k = 3 and at k = 5, and not below `bm25` at k = 8; (2) all 235: `krouter+assoc` not below
+`bm25` at any k; (3) the memory honesty sets (`dev`, `dev2`, `dev3`, `heldout`, `heldout2`, `heldout3`, aggregates
+only): with the associative path on, no more wrong citations, no fewer refusals, no fewer correction or current hits
+than with it off. If any part fails, the associative path ships off by default and the numbers are reported as they
+are. The held-out half is run once, for the one configuration chosen on dev. LoCoMo (set 10's vaults and scoring of
+"evidence cited", top 3) is a second outside check if time allows; it decides nothing.
+
+**Separately (not part of the pass bar):** the deterministic tie-break for "the vault changed its mind" (a newer page
+on the same thing ranked first and the conflict named, with no model and no distillation), judged by its own tests
+(the audit's PostgreSQL-then-SQLite scenario among them).
+
+### Log, set 18
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. |
+| 2026-11-10 | Dev half, said as it happened. A prototype over dumped dev rankings tried seeds 1–5, 40–400 key words per page, query boost 0–10, a same-day weight 0 or 0.5 and three slot splits; same-day edges lowered the count (about ten sessions share a day here), so their weight is 0. Shipped code, first run: k = 3 fell (41 → 39 multi-session) because the third direct hit, given up for the associative slot, could not come back as an associated page; fixed. A quiet gate for pages joined only by shared words (at least 6 shared rare words and an associative score of at least 0.2) was chosen on the memory-honesty dev benches (pages offered on 56 of 61 answered dev questions before, 7 after), and changed no dev count by more than one. Final configuration (`associate.py`): 3 seeds, 64 key words, query boost 3, words in more than 30% of pages ignored, slots (k + 1) // 3. Dev half, multi-session at k = 3 / 5 / 8: bm25 42 / 47 / 56, krouter 41 / 49 / 57, krouter+assoc **48 / 63 / 67**; all 235: 181 / 193 / 208, 182 / 195 / 209, **192 / 213 / 224**. Memory honesty, six sets: identical with the path on and off, and identical to `9d73bd5`. The held-out half is run next, once. |
+| 2026-11-10 | **Held-out half, run once at `6dedefd`.** Multi-session (47) at k = 3 / 5 / 8: bm25 24 / 31 / 35, krouter 28 / 32 / 36, krouter+assoc **29 / 40 / 42**; paired, krouter+assoc minus bm25: k = 3 [0, +10], k = 5 [+4, +15], k = 8 [+3, +12]. Temporal (73): 51 / 54 / 59, 50 / 53 / 59, 50 / 58 / 63. All 235: 184 / 198 / 208, 187 / 198 / 209, **190 / 210 / 218** (k = 3 [−1, +13]). Memory honesty, six sets: no change. **Bar (1) fails at k = 3**: the interval's lower end is 0, not above it (most of the four-question lead over BM25 at k = 3 is the direct path's: krouter alone is 28); (2) and (3) pass. So the associative path ships **off by default** (`KROUTER_ASSOC=1` turns it on). |
+| 2026-11-10 | After the held-out run, the conflict tie-break (not part of this bar) was narrowed: a newer page whose change line does not name the question's subject is no longer flagged (the dev half had 57 such "possible" flags in 235 questions, long chats being full of "instead of" and "replace"; 13 after). The held-out fire counts had been seen once before this change (they were counted next to dev's), not the coverage counts. The held-out half was then run a second time with the final code to report the shipped configuration: **every count identical** to the run above. |
+| 2026-11-10 | LoCoMo, a second outside check that decides nothing (set 10's conversion, categories 1–4 with evidence, 1 536 questions, all sessions of a conversation in one vault): all at k = 3 / 5 / 8: bm25 1 079 / 1 181 / 1 269, krouter 1 104 / 1 204 / 1 273, krouter+assoc 1 078 / 1 183 / 1 271; category 1 (282, the multi-evidence category): 47 / 73 / 105, 51 / 78 / 110, 50 / 78 / 106. On LoCoMo's short sessions the associative path takes slots from direct hits that were right: **no gain, a small loss against krouter**. |
+| 2026-11-10 | **The maintainer's decision after these numbers** (relayed by the planning session): the associative path goes in built in, no switch, as five pages, the first three always direct hits and the associated pages in places four and five (earlier only when there are fewer than three direct hits), a place they do not need going to the next direct hit. This is the k = 5 configuration measured above, decided by the maintainer, not by bar (1), which stays failed at k = 3. One fix with it: when one associated page was found, the fifth place could repeat it as a direct hit; now it goes to the next direct hit not already listed. Rerun of both halves and LoCoMo with that code: held-out k = 5 **unchanged** (multi-session 40, temporal 58, all 210; krouter's five direct hits 32 / 53 / 198; bm25 31 / 54 / 198); dev k = 5 unchanged (63 / 46 / 213). k = 3 is now krouter's three direct hits (no associated place), and k = 8 three direct + five associated (held-out 42 / 61 / 215). LoCoMo at five pages: 1 185 (bm25 1 181, five direct hits 1 204, the earlier three pages 1 104); at three pages now equal to krouter (1 104). Memory honesty, six sets, at five pages: unchanged. |
+| 2026-11-10 | **A guard for short sessions, tried and not added.** On LoCoMo's short sessions the associated pages took places four and five from direct hits that were right. Two rules fixed before any count, each keeping a fourth or fifth direct hit in its place (so the path gets fewer places) when its score is high: at least half the top score, or at least 0.9 of the third hit's score. Counted on development data only: the LongMemEval dev half and five of LoCoMo's ten conversations (`random.Random(20261110).sample` of the sorted conversation vaults: conv-41, 43, 44, 47, 48; 794 questions), five pages, no gate. No guard: LongMemEval 213 (multi-session 63), LoCoMo 630. Half the top score: 203 (55), 634. 0.9 of the third: 211 (61), 632. Neither is a clear gain (the first costs ten LongMemEval questions for four LoCoMo ones, the second trades two for two), so **neither is added** and the held-out halves were not run for them. The other five LoCoMo conversations stay unused for this. |
+
+## Set 22: the same reader, five pages each — keyword search against KRouter with its associative path (registered 2026-11-10, before any reader or judge call)
+
+**Why.** Set 12 found KRouter's three pages level with plain BM25's three (400 and 405 of 500), and the README says so.
+KRouter now hands over five pages, the last two from the associative path, and set 18 counted, without a reader, that
+this brings every answer session for more multi-session and temporal questions. This set asks whether that turns
+into answers, against keyword search given the same number of pages.
+
+**Data, reader, judge.** As set 12, unchanged: the same 500 questions, the reader template and judge prompts in
+`bench/longmemeval/qa.py`, Claude Sonnet 5.5 as Claude Code subagents with the same instructions, reader batches of up
+to 12 prompts or 200 000 characters, judge batches of 25. Every agent's reported model is logged; a row is compared
+with sets 11 and 12 only if its agents report `claude-sonnet-5-5`.
+
+**Rows.** (1) *Plain BM25, top five sessions*: `qa.py baseline --kind bm25 --top 5` (set 12's Okapi BM25, unchanged
+apart from five instead of three). (2) *KRouter, five pages*: `lme.py run --system krouter --pages 5` at the commit
+that carries this registration: `route_knowledge.py search`, as an agent calls it, the receipt's pages in order (direct
+hits, then `associated:`); a refusal gives the reader nothing.
+
+**Not run again.** A prompt identical, character for character, to one sets 11 or 12 ran is copied with its reply and
+verdict, not produced again; a prompt identical between the two rows of this set is run once and used for both. The
+results files mark each such question and the counts are reported.
+
+**Known before the run.** The whole set is seen (sets 7, 11, 12), and so is set 18's retrieval count on both halves
+(dev tuned, held-out run; FTS5 BM25 there, not this set's Okapi BM25). The configuration is set 18's five-page rule as
+shipped; nothing in ranking, refusal or the page rule changes between this registration and the run. Expected from set
+18: more answer sessions handed over on multi-session and temporal questions; whether the reader turns that into
+answers, and whether two more pages of distractors cost elsewhere, is the question.
+
+**Reported,** whatever it shows: each row over the 500, the 470 answerable, the 30 `_abs` and per type, with 95%
+bootstrap intervals; paired, KRouter minus BM25 (10 000 resamples, seed 20261110), with how many questions only one
+of the two got right; and each row next to set 12's three-page rows (same reader). **What may be said after it:** if
+the paired interval over the 500 is above zero, that KRouter is ahead of keyword search at the same five pages, with
+the numbers; if it holds zero, that they are level at five pages too; if it is below zero, that.
+
+**Estimated cost, counted from the prompts before any call** (KRouter's pages taken in-process, so the run's own
+count may differ by a few): BM25 row 500 prompts, 33.0 M characters, 205 reader batches; KRouter row 466 prompts after
+34 are copied from sets 11 and 12, 420 after 46 identical to the BM25 row are shared, 27.3 M characters, 168 reader
+batches; about 37 judge batches. In all **about 410 subagent runs and 60 M characters (about 15 M tokens) of reader
+input**. Not started until the maintainer says so.
+
+**Amendment (2026-11-10, before any reader or judge call; replaces *Rows*' scope, the batch size, *Reported*'s
+claim and the cost above).** (1) **Held-out half only**: the 235 answerable questions of set 13's held-out half
+(`lme.split_of`, seed 20261110). The associative path's settings were chosen on the dev half, so a reader result on it
+would not be clean; the held-out half is the number to trust. The dev half and the 30 `_abs` questions are not run.
+(2) The two rows are unchanged (BM25's top five, KRouter's five pages at the commit that carries this amendment);
+where both rows hand over exactly the same sessions the prompt is identical and is run once for both; a prompt
+identical to one sets 11 or 12 ran is still copied. Reader batches of up to 12 prompts or **400 000** characters
+(set 12: 200 000), judge batches of 25. (3) **Bar, fixed now:** KRouter is called *ahead of keyword search at five
+pages* only if the paired 95% interval of KRouter minus BM25 over the 235 has its lower end above zero; otherwise the
+README's "level with keyword search" stays as written (with this set's numbers added). Reported per question type,
+multi-session on its own line, with paired intervals per type; the type rows decide nothing. (4) KRouter's
+configuration: unchanged by the short-session guard tried after set 18 (see set 18's log: not added). **Cost, counted
+from the prompts** (KRouter's pages through `route_knowledge.py`, as the run takes them): 235 BM25 prompts; for
+KRouter 23 shared with BM25 and 17 copied from sets 11 and 12, so 195 to run; **430 reader prompts, 28.3 M characters
+(about 7 M tokens), 78 reader batches and 18 judge batches: about 96 subagent runs.** Waiting for the maintainer.
+
+### Log, set 22
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. Not run (waiting for the maintainer, for cost). |
+| 2026-11-10 | Amended as above, before any reader or judge call: held-out half only, batches of 400 000 characters, the bar for "ahead" fixed, cost recounted (about 96 subagent runs instead of about 410). Not run. |
+| 2026-11-10 | **Registered, not run: the maintainer decided not to spend the quota on it.** No reader or judge call was made and there is no result at the answer level for five pages. The registration (as amended) stands; it can be run as written later. |
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was

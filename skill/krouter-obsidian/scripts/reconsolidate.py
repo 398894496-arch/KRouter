@@ -136,7 +136,7 @@ def main() -> int:
     have = learned(out)
     items = []
     for row in misses:
-        res = ri.recall(vault, row["q"], limit=8, gate=False)
+        res = ri.recall(vault, row["q"], limit=8, gate=False, assoc=False)
         cands = {}
         for h in res["hits"]:
             trusted = h["tier"] != "dead" and not ri.zones.canon(vault, h["rel"]).startswith(UNTRUSTED)

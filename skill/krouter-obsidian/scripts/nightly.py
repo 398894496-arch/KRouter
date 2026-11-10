@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Nightly upkeep runner: the five steps in order, each one's outcome written where the host can see it.
 
-import_sessions → import_claude_mem → compile_subconscious → reconsolidate → consolidate_topics → answer_cards → checkup → backup.
+import_sessions → import_claude_mem → compile_subconscious → reconsolidate → consolidate_topics → answer_cards → checkup →
+cocite → backup. `cocite` strengthens the recall cache's co-citation edges from the day's confident lookups (no model,
+writes outside the vault).
 The last writes an encrypted, restore-checked archive of the vault into the backup folder when one is set
 (`backup.py init --dir`), and is `off` otherwise. The first one
 imports yesterday's agent sessions only after the host said yes (`import_sessions.py --consent`), the second
@@ -34,7 +36,7 @@ import notify  # noqa: E402
 import zones  # noqa: E402
 
 STEPS = ("import_sessions", "import_claude_mem", "compile_subconscious", "reconsolidate", "consolidate_topics", "answer_cards", "checkup",
-         "backup")
+         "cocite", "backup")
 MODEL_STEPS = {"import_sessions", "import_claude_mem", "reconsolidate", "consolidate_topics", "answer_cards"}
 REPORT = "90 系统文件/自动化/夜间维护.md"
 HEALTH = "90 系统文件/自动化/日更健康.md"
@@ -123,6 +125,9 @@ def run_step(step: str, vault: Path, extra: list[str], dry: bool) -> dict:
             if step == "backup":
                 return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
                         "writes": ["an encrypted archive in the backup folder, if one is set"]}
+            if step == "cocite":
+                return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
+                        "writes": ["co-citation weights in the state directory (outside the vault)"]}
             return {"step": step, "state": "dry-run", "sends": "nothing (no model)",
                     "writes": ["90 系统文件/自动化/下意识.md" if step == "compile_subconscious"
                                else "90 系统文件/自动化/下意识体检.md"]}

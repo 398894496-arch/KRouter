@@ -62,6 +62,58 @@ notice, then the details.
   section has the uninstall command. `first_run.sh` no longer requires ripgrep (the router already fell back to a
   built-in search). The release package now carries `sdk/krouter`, `.claude-plugin/`, `hooks/` and `plugin/`, so a
   release install gets the plugin and `krouter doctor` like a clone does.
+- **When the vault changed its mind and nothing has been distilled yet, the newer page now comes first, and the
+  receipt says an earlier page says otherwise.** No model needed. Two of the top three pages that match the question
+  about as well, share most of its words and carry dates, where the newer one has a line saying something was
+  changed (`switched … to`, `instead of`, `no longer`, `改成`, `换成`, …) that names the subject: the newer page is
+  listed first, both are marked (`conflict=newer` / `conflict=older`), and the receipt prints
+  `recall_conflict: an earlier page says otherwise. …`. When the dates cannot order them (the same day) the pages are
+  marked `possible` and the order is kept; anything less is left alone. The audit's case (Monday PostgreSQL,
+  Wednesday SQLite, imported, no key; the old page was first) is a test. On LongMemEval's answerable questions it
+  fires as "sure" for 42 of 470 and reorders 21; the newest answer session is first for 44 instead of 39 of the 72
+  knowledge-update questions, and an answer session is first for 420 of 470 either way (counted without the
+  refusal gate; not a registered set). Memory honesty, six sets: unchanged. On by default; `KROUTER_CONFLICT=0` turns it off.
+- **A lookup now gives five pages: three that match the question, then up to two the vault connects to them.** The
+  recall cache keeps an edge table (links, `supersedes:`, same imported session, same day, shared rare words, and
+  co-citation), and recall spreads from the first three direct hits along it. The first three places are always direct
+  hits; associated pages take places four and five (with fewer than three direct hits they may move up), and a place
+  they do not need goes to the next direct hit. Hub pages (index, overview, 12+ links) and replaced pages are never
+  offered; a page joined only by shared words needs at least six of them. A refusal stays a refusal: with no direct hit
+  nothing is associated. The receipt lists them apart, under `associated:`, each with the edge it came along (`via:`).
+  Built in, no switch. Set 18 (`bench/memory_honesty/HELDOUT.md`, registered before the path was written; LongMemEval
+  split in half, tuned on one half, the other run), "every answer session among the pages", held-out half at five
+  pages: multi-session **40 of 47** (BM25's top five 31, KRouter's five direct hits 32; paired against BM25 [+4,
+  +15]), temporal 58 of 73 (54, 53), all **210 of 235** (198, 198; [+3, +21]). Against the three pages KRouter gave
+  before: 28, 50 and 187. LoCoMo, a check that decided nothing: 1 185 of 1 536 at five pages, BM25 1 181, five direct
+  hits 1 204, the old three pages 1 104; on its short sessions the associated pages cost places four and five that a
+  direct hit had right. Memory honesty, six sets: unchanged. Cost: the receipt is about a fifth longer (median 1 692 →
+  1 952 characters, 2.6 → 3.8 pages listed on the bench questions), a CLI lookup 71 → 77 ms, in-process 12.5 → 17.7
+  ms at 10,000 pages; building the cache for 10,000 pages 3.6 s → 6.0 s, 29 → 38 MB (50,000 pages: 25 → 32 s, 150
+  → 193 MB, measured with other jobs running). `recall(..., assoc=False)` gives the direct ranking alone (the nightly
+  checkup and reconsolidation use it). Offline count, no model: `bench/longmemeval/assoc.py`.
+- **An English question in a mostly Chinese vault no longer comes back `medium` from English web clippings that
+  only share its common words.** Seen on a real vault (reproduced on a synthetic one, a test now): "What is the
+  production database password of the billing service?" matched three clipped articles on `production`, `billing` and
+  `service`, while `database` and `password` appear nowhere in the vault; the rule for words the vault has never seen
+  let it through because three other words matched. Now, when every one of the top three pages is a web clipping (a
+  folder named for clippings, `剪藏`, `Clippings`, `Web clips`, or clipper frontmatter: a `source:` URL, a `clippings`
+  tag, `type: clipping`), confidence is at most `low` and the receipt says the pages are someone else's writing; and if
+  the question also has a word of four or more letters that no word in the vault even starts like (`password`, but not
+  `move` when `moved` is there), it is `recall: none`. The stricter version without the clipping condition was tried
+  first, on development data: it would refuse 3 to 7 answerable LongMemEval dev questions and one dev2 correction, so
+  it was not used. No page in the memory-honesty vaults or the LongMemEval haystacks is a clipping: the rule fired on
+  none of 395 development questions, and the six memory-honesty sets are unchanged.
+- **README: "level with keyword search" replaced by what was measured since, and said at which layer.** The main
+  line is now the retrieval result at five pages (set 18's held-out half: every needed session handed over for 210 of
+  235 questions against BM25's 198, multi-session 40 of 47 against 31). The same-reader table (6.0 / 81.0 / 80.0 /
+  98.4%) measured the three-page 1.3.0 and moved to `docs/NUMBERS.md` with its version and page count; the README
+  says the five-page answer accuracy has not been rerun (set 22, registered, not run). LoCoMo's 19 fewer than five
+  direct hits is in `docs/NUMBERS.md` and the README's weak spots. `README.zh.md` matches.
+- **Pages a confident lookup returned together get a stronger edge, overnight.** The router's query log now records
+  the direct hits each lookup returned (`pages`; never the associated ones, so the path cannot feed itself), and a
+  new nightly step, `cocite` (after `checkup`, no model, writes only a file in the state directory), adds one to the
+  co-citation weight of every pair a `high` or `medium` lookup returned, reading each log line once. The weight
+  saturates at five.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
