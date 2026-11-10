@@ -566,3 +566,44 @@ the close. Results are reported whatever they show; cases read after the run are
 | 2026-10-18 | **Reading it** (exploratory, not registered, said as such): plain BM25 with no floor, top three pages, cites an answer session for 447/470 and the latest update for 69/72, level with KRouter. The registered baseline's floor was picked on dev3, a 60-page Chinese vault, and on these 50-session English haystacks it refuses 43% of answerable questions; KRouter's lead over it comes from that floor, not from ranking, as on heldout3. What does hold: KRouter's refusal gate does not cost answerable questions here (12/470), and on raw sessions with no `superseded` marks it still cites the newest fact for 70 of 72 updates. What fails: it refuses 3 of 30 unanswerable questions. LongMemEval's abstention questions ask about a near neighbour of something the haystack does mention (a pet it never named, a trip it never took), the case KRouter's gate handles worst; it is the next thing to fix, measured on a seed-drawn half of `longmemeval_m` as registered. The model-judged secondary (reader and judge) has not been run. |
 | 2026-10-18 | Set 7 amended (S `_abs` now development; final abstention numbers from heldout3 neighbours and set 9, since M repeats S's questions). Set 9 registered before any item was written. |
 | 2026-10-18 | Development use of S (seen; not a reported score): candidate `fix/named-absent` (PR #61) refuses 9 of the 30 `_abs` questions (3 before) and 14 of 470 answerable (12 before); evidence cited 437 of 470 (439). Set 9 collection page published (owner reads all cases; each writer reads and writes only their own); a probe document was written, read back at owner and at `interact` level (not visible there), and deleted. |
+
+## Set 13: same situation, different subject — does an experience card come back as a suggestion? (registered 2026-11-09, before any matcher was written)
+
+**Why.** Every set above asks whether KRouter finds the page that answers a question. This one asks something else:
+whether a lesson learned on one task ("the stew tasted flat; a spoonful of sugar fixed it") comes back as a
+*suggestion* on a task with a different subject in the same situation ("the poster's colours look dull"), and stays
+quiet otherwise. Code: `skill/krouter-obsidian/scripts/experience.py`; bench: `bench/transfer/`.
+
+**Cards.** 14 experience cards written by hand in `bench/transfer/cards/` (situation, what was done, what came of it,
+the lesson without the subject, the "when" triggers, a source line). Chinese only. Each comes from one subject (nginx,
+CI, a stew, a production database…). The cards are frozen at registration with the cases: SHA-256 of the
+concatenated card files in name order `df0cfe6a…5d6f191e`.
+
+**Cases.** 56, Chinese, written in one sitting before the matcher existed: 28 *transfer* cases (two per card, each on
+a subject different from the card's and from each other; the expected card is the one whose lesson a careful person
+would offer) and 28 that should get no suggestion: 14 *topic traps* (the card's own subject, a different situation:
+"does nginx's server_name take wildcards"), 6 *word traps* (a word from some card's triggers, a different situation:
+"the drawer is stuck"), 8 *unrelated*. Split at seed 20261109: for each card one transfer case to development and one
+to held-out; topic traps 7 / 7, word traps 3 / 3, unrelated 4 / 4. `bench/transfer/dev.jsonl` (28) is what the
+matcher is tuned on; `bench/transfer/heldout.jsonl.gz` (28, SHA-256 of the uncompressed text `3a7f625c…3361f33`) is
+run once.
+
+**Who wrote what.** The cards, all 56 cases and the matcher are written by the same Claude Code session (Opus 5.5).
+The cases were written before any matching code and are not edited after the split, but the author knew the cards'
+trigger wording when writing them: the held-out number measures generalisation from the development cases to unseen
+cases of the same author, not to other people's phrasing. This is the main limit of the set and is said with any
+number from it.
+
+**System.** The default suggestion path: lexical only (the recall index's tokenizer and word lists, the cards'
+`when` triggers and lesson line; no embeddings, no model call), up to two suggestions, a quiet threshold picked on
+development only. The optional dense tier (`docs/DENSE-OPTIN.md`) may be measured on development as a comparison; it
+is not the default and is not run on held-out unless registered here first.
+
+**Scored mechanically.** Recalled: on a transfer case, the expected card is among the suggestions. Wrong suggestion:
+any suggestion on a case that should get none, and any card other than the expected one on a transfer case. Reported
+for development and held-out: recalled / 28 transfer… per split, cases with a wrong suggestion, total wrong cards,
+and by negative kind.
+
+**Pass line (fixed now).** On held-out: recalled on at least 8 of 14 transfer cases (a majority), and at most 1 of the
+14 should-be-quiet cases gets any suggestion, and at most 1 wrong card on the transfer cases. If it fails, the
+suggestion path ships off by default, marked experimental, with the numbers as they are.
