@@ -14,8 +14,10 @@ notice, then the details.
 - **Tested inside the apps, as far as this machine allowed (2026-11-09).** Codex (command line, codex-cli
   0.155.0-alpha.9.2, a real model, a copy of the sample vault): the MCP tools were found, a question the vault answers was
   answered with its page, one it does not answer was refused; the hooks noted a typed correction and ran the turn-end and
-  session-end imports. Claude Desktop 4.23118.1: the config entry was written and its command started the server and listed
-  the three tools outside the app; asking inside the app needs a restart of it, so that step is still open. Cursor: the agent CLI 2026.11.05-86047df found the project-level
+  session-end imports. Claude Desktop 4.23118.1: the config entry's command started the server, listed the three tools, answered with its
+  page and refused outside the app; inside the app it is untested: three restarts did not load the entry, because Claude
+  Desktop writes its in-memory settings back over `claude_desktop_config.json` when it quits, which drops an entry written
+  while it was running. The entry has to be written after the app has quit. Cursor: the agent CLI 2026.11.05-86047df found the project-level
   MCP entry, answered with its page and refused the question the vault cannot answer (`-p --force`; `--mode ask` rejects
   MCP calls in print mode); its turn-end and session-end hooks wrote the session pages, but it did not run
   `beforeSubmitPrompt`, so no correction was noted; the desktop app
