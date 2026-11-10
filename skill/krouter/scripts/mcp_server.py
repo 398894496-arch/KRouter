@@ -487,7 +487,9 @@ def correct(args: dict) -> tuple[str, bool]:
     for c in res["conflicts"]:
         lines.append(f"conflict: {c['page']} by {c.get('author') or '(no author)'} at {c.get('at') or '?'} said "
                      f"\"{c.get('said') or '?'}\"; {c['why']}. Rule: the later correction holds; that page is kept, marked "
-                     + ("superseded." if not c.get("left_active") else "still active (a long page): read both."))
+                     + ("superseded." if not c.get("left_active") else
+                        "still active (a long page): read both." if not c["why"].startswith("unresolved") else
+                        "superseded, but the one in force is unknown: read the pages before answering."))
     lines.append(f"run: {rid}")
     if who:
         lines.append(f"by: {who}")

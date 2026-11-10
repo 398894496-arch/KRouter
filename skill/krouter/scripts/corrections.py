@@ -214,20 +214,32 @@ def _link_path(vault: Path, link: str) -> Path | None:
     return None
 
 
-def _head(vault: Path, page: Path | None, limit: int = 100) -> Path | None:
+CHAIN_MAX = 100_000  # 取代链最长走这么多步；只防环和坏链，不是上限（2026-11-10：原来 100 步，30 分钟压测里第 101 条纠正起就悄悄并存）
+
+
+def _head(vault: Path, page: Path | None, memo: dict | None = None) -> Path | None:
     """The page in force at the end of `page`'s `superseded_by` chain (itself when it is not superseded); None when
-    the chain ends nowhere (a link to a page that is gone) or goes round."""
-    seen = set()
-    while page is not None and len(seen) < limit:
+    the chain ends nowhere (a link to a page that is gone) or goes round. `memo` (page → head) is shared by the walks
+    of one correction, so many `⚠ 已改` notes on one line cost one walk, not one each."""
+    memo = {} if memo is None else memo
+    seen: list[Path] = []
+    head = None
+    while page is not None and len(seen) < CHAIN_MAX:
+        if page in memo:
+            head = memo[page]
+            break
         if page in seen:
-            return None
-        seen.add(page)
+            break
+        seen.append(page)
         meta = _meta(page.read_text(encoding="utf-8"))
         if meta.get("status", "").lower() != "superseded":
-            return page
+            head = page
+            break
         links = WIKI.findall(meta.get("superseded_by", ""))
         page = _link_path(vault, links[-1]) if links else None
-    return None
+    for p in seen:
+        memo[p] = head
+    return head
 
 
 def _now_line(text: str) -> str:
@@ -317,13 +329,21 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
     prior: list[tuple[Path, str]] = []
     already = False
     overrides: dict | None = None
+    unresolved: dict | None = None
+    memo: dict = {}
     if target is not None:
         meta_old = _meta(target.read_text(encoding="utf-8"))
         if meta_old.get("status", "").lower() == "superseded":
             already = True
-            head = _head(vault, target)
+            head = _head(vault, target, memo)
             if head is not None and head != target:
                 prior.append((head, "stale: the page named was already superseded"))
+            elif head is None:  # 链断了或绕回来了：照样写下，但说清楚，不让两条纠正悄悄并存
+                unresolved = {"page": _rel(vault, target), "author": meta_old.get("superseded_by_author", ""),
+                              "at": meta_old.get("superseded_at", ""), "said": "",
+                              "why": "unresolved: the page named is superseded, but its superseded_by chain is broken "
+                                     "or goes round, so the correction in force could not be found",
+                              "left_active": True}
         else:
             if meta_old.get("type") == "correction" and meta_old.get("author") and meta_old.get("author") != author:
                 overrides = {"page": _rel(vault, target), "author": meta_old.get("author", ""),
@@ -334,7 +354,7 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
             j = line_no + 1
             while j < len(lines_old) and lines_old[j].lstrip().startswith(("- ⚠ 已改", "- ⚠ changed")):
                 for link in WIKI.findall(lines_old[j]):
-                    head = _head(vault, _link_path(vault, link))
+                    head = _head(vault, _link_path(vault, link), memo)
                     if head is not None and all(head != p for p, _ in prior):
                         prior.append((head, "same line: an earlier correction of this line was in force"))
                 j += 1
@@ -348,7 +368,7 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
             + "、".join(links_prior) + "\n"
     new_path.parent.mkdir(parents=True, exist_ok=True)
     _write(new_path, _frontmatter_set("", fm).rstrip("\n") + "\n\n" + body)
-    touched, mode, conflicts = [new_path], "recorded", ([overrides] if overrides else [])
+    touched, mode, conflicts = [new_path], "recorded", [x for x in (overrides, unresolved) if x]
     stamp = {"superseded_by": f"\"{link_new}\"", "superseded_at": day,
              **({"superseded_by_author": author} if author else {})}
     for p, why in prior:

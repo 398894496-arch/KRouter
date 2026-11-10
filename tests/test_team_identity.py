@@ -240,3 +240,50 @@ def test_unique_run_ids_within_one_second(tmp_path):
         team.record(vault, {"who": "x", "run": rid})
         runs.append(rid)
     assert runs == ["20261110T090000", "20261110T090000-2", "20261110T090000-3"]
+
+
+def test_a_long_chain_of_corrections_still_converges(tmp_path):
+    # 30 分钟压测里第 101 条纠正起两条并存：取代链走到 100 步就放弃了。现在走到底，而且一次纠正只走一遍
+    vault = tmp_path / "v"
+    shutil.copytree(REPO / "template", vault)
+    (vault / "01 项目/数据库选型.md").write_text(
+        "---\ntitle: 数据库选型\nstatus: active\n---\n\n# 数据库选型\n\n- 数据库用 SQLite\n", encoding="utf-8")
+    written = []
+    t0 = time.perf_counter()
+    for i in range(160):
+        res = corrections.apply_now(vault, f"数据库改用 第{i}版", "数据库用 SQLite", "01 项目/数据库选型.md", "t",
+                                    author=f"p{i % 3}")
+        assert "error" not in res
+        if i:
+            assert [c["page"] for c in res["conflicts"]] == [written[-1]], i
+        written.append(res["written"])
+    active = [w for w in written if corrections._meta((vault / w).read_text(encoding="utf-8"))["status"] == "active"]
+    assert active == [written[-1]]
+    assert time.perf_counter() - t0 < 60
+
+
+def test_a_broken_chain_is_reported_not_silent(tmp_path):
+    vault = tmp_path / "v"
+    shutil.copytree(REPO / "template", vault)
+    (vault / "01 项目/数据库选型.md").write_text(
+        "---\ntitle: 数据库选型\nstatus: superseded\nsuperseded_by: \"[[05 时间日志/会话摘录/已经删掉的一页]]\"\n---\n\n"
+        "# 数据库选型\n\n- 数据库用 SQLite\n", encoding="utf-8")
+    res = corrections.apply_now(vault, "数据库改用 Postgres", "数据库用 SQLite", "01 项目/数据库选型.md", "t", author="a")
+    assert "error" not in res and res["conflicts"] and res["conflicts"][0]["why"].startswith("unresolved")
+
+
+def test_the_change_ledger_moves_to_an_archive_page_when_big(tmp_path, monkeypatch):
+    # 30 分钟压测里变更记录长到 1.6 MB，每次写入重建它的索引要近 1 秒，查询排在后面等
+    import capture_ledger
+
+    monkeypatch.setattr(capture_ledger, "ROTATE_AT", 3000)
+    vault = _vault(tmp_path)
+    for i in range(30):
+        ledger = capture_ledger.append(vault, f"## run {i}\n\n- 第 {i} 条 " + "一句话" * 40 + "\n")
+        capture_ledger.commit(vault, f"r{i}", [ledger], f"变更记录 run {i}", tagged=False)
+    archive = sorted((vault / capture_ledger.ARCHIVE).glob("*.md"))
+    assert len(archive) >= 3 and ledger.stat().st_size < 3000 + 400
+    text = "".join(p.read_text(encoding="utf-8") for p in [*archive, ledger])
+    assert all(f"## run {i}\n" in text for i in range(30))
+    assert "更早的记录：[[90 系统文件/自动化/记忆变更记录/" in ledger.read_text(encoding="utf-8")
+    assert _git(vault, "status", "--porcelain").strip() == ""

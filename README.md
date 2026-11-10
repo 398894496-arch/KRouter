@@ -234,11 +234,12 @@ asks it over MCP. It is self-hosted: there is no KRouter cloud.
 |---|---|
 | **Deploy** | `mcp_server.py --http` (standard-library Python, no packages), the Docker image `ghcr.io/398894496-arch/krouter`, [Compose](deploy/docker-compose.yml) (two memories and a git-pull sidecar), a [Kubernetes manifest](deploy/kubernetes/krouter.yaml), a hardened [systemd unit](deploy/systemd/krouter.service) |
 | **Isolation** | several memories ("banks") on one server, each at `/mcp/NAME` with its own index, its own label on every answer and its own token; one bank's lookups never read another's folder |
-| **Auth** | bearer tokens, one per memory; the server refuses to listen beyond this machine while any memory has none; browser Origins allow-listed; the access log keeps a hash of each question, never the text |
+| **Auth** | a token per person or agent (`--users`: only hashes kept, read or write, limited to some memories if you like), or one shared token per memory, or both; the server refuses to listen beyond this machine while any memory has none; browser Origins allow-listed; the access log keeps a hash of each question and the person's name, never the text or a token |
+| **Attribution** | every write names who made it: on the page, in the change ledger, in a journal (`krouter_changes`: who changed this, and when) and as the git author; two people correcting one thing in opposite ways: the later holds, the earlier is kept as superseded and named in the reply |
 | **Speed** | below, measured; 4 resident lookup processes per memory (`--workers`), so a lookup does not start Python |
 | **Freshness** | files re-checked at most every 2 s (`--refresh-every`); a note written through the server is found by the very next lookup; Compose and Kubernetes pull each repository every 5 minutes |
 | **Monitoring** | `GET /healthz`; Prometheus `GET /metrics`: calls by memory, tool and outcome, refusals, a latency histogram, index build time, lookup processes |
-| **Writes** | read-only by default; `--allow-write` offers `krouter_note`: one line, one git commit, listed in the change ledger |
+| **Writes** | read-only by default; `--allow-write` offers `krouter_note` and `krouter_correct`: one write at a time, one git commit each, listed in the change ledger; a `read` token is not offered them |
 | **Backup, rollback** | the memory is the git repository: back it up like code, take a change back with `git revert`; the index is a cache rebuilt from the folder |
 
 Measured with [`bench/scale/serve_load.py`](bench/scale/serve_load.py) on synthetic memories, one Apple M2 laptop
@@ -249,6 +250,14 @@ Measured with [`bench/scale/serve_load.py`](bench/scale/serve_load.py) on synthe
 | 1,000 | 5 ms, 195/s | 646/s | 42 ms, 77 ms, 742/s | 203 MB | 0.5 s |
 | 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
 | 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
+
+Ten people with their own tokens and agents reading and writing at once ([`bench/team/load.py`](bench/team/load.py);
+asks, notes, concurrent corrections of one page and contradicting corrections of one decision; the same laptop, then
+busy with other test runs): reads p50 / p95 47 / 160 ms on the template, 124 / 361 ms at 10,000 pages,
+755 / 4,033 ms at 50,000; one memory takes about 9, 5 and 2 writes a second (one at a time; the git commit is most of
+it); no errors. Every write was attributed to the right person, nothing acknowledged went missing, and each contested
+decision ended with the last correction in force. A smaller run of it is a CI test. Not tested: several machines, or a
+real team over weeks.
 
 Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
 

@@ -112,12 +112,74 @@ cluster or a systemd host by us. The multi-bank server itself is tested in `test
 |---|---|
 | Storage | Markdown files in a git repository you own; the index is a rebuildable SQLite cache |
 | Isolation | one bank per memory: own URL, own token, own index, own label on every answer |
-| Access | bearer token per bank or per server, constant-time compare; loopback only without one; origin check |
+| Access | a token per person or agent (`--users`: only hashes kept, `read` or `write`, which banks), or one shared token per bank or server; constant-time compare; loopback only without one; origin check |
+| Attribution | every write names its person on the page, in the change ledger, in a journal (`krouter_changes`) and as the git author; two corrections of one thing: the later holds, the earlier is kept and named ([§2c](#2c-one-token-per-person-who-changed-what-and-conflicting-corrections)) |
 | Monitoring | `/metrics` (Prometheus), `/healthz`, one JSON access-log line per request with a hash of the question |
 | Deployment | `python3 mcp_server.py --http`, the Docker image (non-root, read-only vault, provenance attestation), Compose, Kubernetes, systemd |
-| Scale | over HTTP, 10,000 pages: 13 ms per lookup (median), 301 answers/s with 32 callers; 50,000: 54 ms, 75/s ([§4](#4-how-big-it-can-get)) |
+| Scale | over HTTP, 10,000 pages: 13 ms per lookup (median), 301 answers/s with 32 callers; 50,000: 54 ms, 75/s ([§4](#4-how-big-it-can-get)); ten people reading and writing at once: [§5](#5-ten-people-at-once) |
 | Backups | the git remote, and `backup.py` for an encrypted nightly copy of a personal vault |
-| Not offered | a hosted service, SSO, per-user permissions inside one bank: give each group its own bank |
+| Not offered | a hosted service, SSO, per-page permissions inside one bank (a token is read or write for the whole bank: give each group its own bank), more than one server writing one vault |
+
+## 2c. One token per person, who changed what, and conflicting corrections
+
+**Personal tokens.** Give each person, or each agent, a token of their own. Only its SHA-256 goes in the users file;
+the token goes to a new file (mode 600) for you to hand over:
+
+```bash
+python3 skill/krouter/scripts/team.py add-user --users /etc/krouter/users alice --token-out alice.token
+python3 skill/krouter/scripts/team.py add-user --users /etc/krouter/users ci-bot --role read --banks team --token-out ci.token
+python3 skill/krouter/scripts/mcp_server.py --http 0.0.0.0:8787 --vault /srv/team-vault --label team \
+  --users /etc/krouter/users --allow-write
+python3 skill/krouter/scripts/team.py remove-user --users /etc/krouter/users alice   # her token stops at once
+```
+
+One line per person: `name|sha256:<hex>|write or read|* or bank names`. The server re-reads the file when it changes,
+so adding or removing someone needs no restart. A `read` token is not offered the write tools and is refused if it
+calls one; a token restricted to some banks gets 403 on the others. The shared tokens of §2 and §2b (`--token-file`,
+`--bank-token`) keep working, alone or next to a users file; their writes are recorded as made with the shared token
+(`共享令牌`), with no person. With a users file and no shared token, every request needs a personal token. The token
+itself is never written anywhere by the server: the access log has `"who": "alice"`, the journal and git have the
+name.
+
+**What each write records** (notes, corrections and lessons, with `--allow-write`):
+
+| Where | What |
+|---|---|
+| The page | a note ends `— 来自 alice（MCP，claude-code）`; a correction page has `author:` and `written_at:`; a page it replaces gets `superseded_by_author:` |
+| The change ledger | `90 系统文件/自动化/记忆变更记录.md`: the person, their app, the pages, the undo command |
+| The journal | `90 系统文件/自动化/团队变更.jsonl`, one JSON line per write: `seq` (arrival order), `at` (UTC, ms), `who`, `via` (app), `auth` (`user`, `shared-token`, `open`), `tool`, `run`, `pages`, `text` (redacted, 200 characters), `supersedes`, `conflicts` |
+| git | the commit's author is the person (`alice <alice@krouter.invalid>`; the committer stays `krouter-capture`), tagged `[krouter-run <id>]` |
+
+"Who changed this page, and when": the `krouter_changes` tool (by page, by person, or by words of the note; read-only,
+offered on a team server that has a users file or allows writes), `team.py changes --vault /srv/team-vault --page
+"01 项目/数据库选型.md"`, or `git log`.
+
+**One writer at a time.** Writes to one memory run one after another, in the order they reach the server: a lock in
+the server and a file lock in its state folder. Pages are replaced in one step, so a lookup reading a page meanwhile
+sees the old page or the new one. Two writes in the same second get different run ids (`…-2`), so undoing one never
+takes the other.
+
+**Two corrections of the same thing.** The later one to arrive holds; the earlier one is kept, marked superseded, and
+named in the later one's reply. Concretely, when a correction names a page:
+
+- that page is already superseded (someone corrected it since you looked): the new correction replaces the correction
+  now in force at the end of the page's `superseded_by` chain, so the chain reads old page → first correction →
+  second correction, and only the last is in force;
+- the old line, on a long page, already has a `⚠ 已改` note: the correction pages those notes point to are replaced,
+  and the new note goes below the earlier ones (top to bottom in arrival order);
+- the page is another person's correction still in force: it is replaced as usual, and the reply says whose it was.
+
+The reply then has a line such as `conflict: 05 时间日志/会话摘录/…｜纠正｜数据库改用 Postgres.md by alice at
+2026-11-10T09:12:03.120+08:00 said "数据库改用 Postgres"; stale: the page named was already superseded. Rule: the
+later correction holds; that page is kept, marked superseded.` The journal row carries the same, and `/metrics`
+counts `krouter_correction_conflicts_total`. Nothing is deleted: every correction stays on disk and in git, and one
+run can be undone on its own. A page in force that is long and is not a correction page is never voided whole: the
+reply says `still active (a long page): read both`. "Later" means arrival at the server, not when the person typed it;
+the rule settles which correction is in force, not which one is right.
+
+**With `--allow-write`, the server is the vault's writer.** If people also push to the vault's git remote, the
+server's `git pull --ff-only` stops once the two have diverged: push the server's commits from the same cron job
+(`git push`), or keep the server read-only and change the team vault through pull requests.
 
 ## 3. Each person
 
@@ -183,3 +245,68 @@ python3 bench/scale/gen.py 10000 /tmp/v10000
 python3 bench/scale/serve_load.py /tmp/v10000 --concurrency 1,8,32 --calls 300
 python3 bench/scale/run.py /tmp/v10000 --queries 30
 ```
+
+Re-measured on 2026-11-10, same machine but busy (load average 8 to 11 from other test runs), 32 callers, 100 calls,
+50,000 pages: the server before resident lookups (`482e6f2`) p50 10.5 s, **p95 14.8 s**, 2.8/s, which reproduces the
+1.3-era row; 2.0 with `--workers 0` (one process per lookup, every file re-checked, the narrowed literal fallback)
+p95 6.1 s; 2.0 as shipped p95 1.3 to 1.6 s, 24 to 29/s. The 8.7 s between the first two runs is mostly the old literal fallback, which read
+every file for a question the index could not answer (other changes between those versions are mixed in); the
+6.1 s → 1.5 s after it is one process per lookup with a full file walk each time. Neither is left in 2.0. The
+same busy machine is slower than the idle one of the table above (one caller: 137 ms against 54 ms), so compare rows
+taken on one day only.
+
+## 5. Ten people at once
+
+**Measured** with [`bench/team/load.py`](../bench/team/load.py) ([set 27](../bench/memory_honesty/HELDOUT.md#set-27-ten-people-with-their-own-agents-on-one-team-server-at-three-sizes-registered-2026-11-10-before-the-10000--and-50000-page-rows-were-run)):
+one server with `--allow-write` and a users file of 10 personal tokens, on a git copy of the vault; 10 clients, each
+with its own token and app name. First four bursts in which all ten do the same thing at once (ask; write a note;
+correct one shared line of a long page; correct one decision, all naming its original page, so every correction after
+the first contradicts one already in force), then a seeded mix of 40 operations each (60 % asks, 20 % notes, 10 %
+corrections of the client's own lines on the shared page, 5 % of the decision, 5 % of the shared line). Apple M2,
+8 GB, server and clients on one machine, which was busy with other test runs (load average 8 to 11). Default server
+settings (4 lookup processes).
+
+| Pages | Reads p50 / p95 / p99 | Writes p50 / p95 / p99 | Done per second (mix): all, reads, writes | Errors | Ready after |
+|---|---|---|---|---|---|
+| 136 (template) | 47 / 160 / 297 ms | 0.95 / 1.26 / 1.41 s | 21.1, 11.9, 9.2 | 0 of 440 | 0.2 s |
+| 10,136 | 124 / 361 / 1,611 ms | 1.67 / 2.46 / 4.94 s | 10.9, 6.2, 4.7 | 0 of 440 | 6.2 s |
+| 50,136 | 755 / 4,033 / 6,294 ms | 2.70 / 4.18 / 4.43 s | 5.3, 3.0, 2.3 | 0 of 440 | 43 s |
+
+Each row: 204 writes acknowledged, 90 correction replies with a `conflict:` line, 236 answers. **Every property held
+at every size:** every acknowledged write is in the journal, in order, with its own run; every note is on its page
+exactly once with its author; the page, the journal and the git author name the token's person for all 204 writes;
+no page is unreadable or half-written, nothing is left uncommitted, `git fsck` passes; for each of the 25 contested
+things (115 corrections) exactly one correction is in force, the last to arrive, the others are superseded in arrival order and each
+reply names the one it replaced; every answer names its vault and a page or says `recall: none`; no token appears in
+the server's log. After the run, a lookup on the contested decision lists the correction in force as its first
+correction page, with `how: 现在：…` (the corrections log, a rule page, comes first overall).
+
+**What the numbers mean.** Writes are one at a time per memory, so a write's time is mostly its wait behind the
+others: with ten agents writing 40 % of the time, the queue is several deep. What one write costs is about
+1 / writes-per-second: 0.11 s on the template, 0.21 s at 10,000 pages, 0.43 s at 50,000, nearly all of it the two git
+commits (about 20 ms each on a small repository, 150 ms on a 50,000-file one, on this machine). So one memory takes
+about 9, 5 and 2 writes a second. Reads run beside writes, not behind them, but share the CPU with git. Ten agents in a
+real team write a few times an hour, not twice a second; this is a stress test, not a forecast.
+
+**The CI test** (`tests/test_team_concurrency.py`) runs the same harness on the template vault with 8 mixed operations
+per client and two seeds, and asserts every property above, on Linux, macOS and Windows. **Identity and the conflict
+rule** are tested in `tests/test_team_identity.py` (hashes only, the shared token still working, read-only tokens,
+bank limits, re-reading the users file, the journal, git authors, `krouter_changes`, both conflict cases).
+
+Rerun:
+
+```bash
+python3 bench/team/load.py --ops 40                                   # the template vault
+python3 bench/scale/gen.py 10000 /tmp/v10000 && python3 bench/team/load.py --vault /tmp/v10000 --ops 40
+python3 bench/team/load.py --vault /tmp/v10000 --duration 1800 --write-share 0.2 --rss-every 30 --out run.json
+python3 bench/team/load.py --vault /tmp/v10000 --duration 43200 --write-share 0.05 --rss-every 300 --out 12h.json  # not run yet
+```
+
+The report is JSON: latency by kind, the checks with any failure's details, memory samples. Exit status 1 if any
+check fails. Tokens are generated into the work folder and never printed.
+
+**Not tested:** more than one machine (server and clients were on one laptop, over loopback); more than one server
+writing the same vault; a real team using it over weeks (nobody has run it in production that we know of); networks
+with real latency or TLS in front; agents other than the scripted clients (the clients are threads speaking MCP over
+HTTP, not Claude Code or Codex sessions); more than 10 clients at once with writes; the server's own commits meeting
+pushes from people to the same git remote.
