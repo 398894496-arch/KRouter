@@ -40,6 +40,18 @@ notice, then the details.
   ms at 10,000 pages; building the cache for 10,000 pages 3.6 s → 6.0 s, 29 → 38 MB (50,000 pages: 25 → 32 s, 150
   → 193 MB, measured with other jobs running). `recall(..., assoc=False)` gives the direct ranking alone (the nightly
   checkup and reconsolidation use it). Offline count, no model: `bench/longmemeval/assoc.py`.
+- **An English question in a mostly Chinese vault no longer comes back `medium` from English web clippings that
+  only share its common words.** Seen on a real vault (reproduced on a synthetic one, a test now): "What is the
+  production database password of the billing service?" matched three clipped articles on `production`, `billing` and
+  `service`, while `database` and `password` appear nowhere in the vault; the rule for words the vault has never seen
+  let it through because three other words matched. Now, when every one of the top three pages is a web clipping (a
+  folder named for clippings, `剪藏`, `Clippings`, `Web clips`, or clipper frontmatter: a `source:` URL, a `clippings`
+  tag, `type: clipping`), confidence is at most `low` and the receipt says the pages are someone else's writing; and if
+  the question also has a word of four or more letters that no word in the vault even starts like (`password`, but not
+  `move` when `moved` is there), it is `recall: none`. The stricter version without the clipping condition was tried
+  first, on development data: it would refuse 3 to 7 answerable LongMemEval dev questions and one dev2 correction, so
+  it was not used. No page in the memory-honesty vaults or the LongMemEval haystacks is a clipping: the rule fired on
+  none of 395 development questions, and the six memory-honesty sets are unchanged.
 - **README: "level with keyword search" replaced by what was measured since, and said at which layer.** The main
   line is now the retrieval result at five pages (set 18's held-out half: every needed session handed over for 210 of
   235 questions against BM25's 198, multi-session 40 of 47 against 31). The same-reader table (6.0 / 81.0 / 80.0 /

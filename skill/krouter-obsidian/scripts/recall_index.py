@@ -495,6 +495,10 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         conf = "medium"
     else:
         conf = "low"
+    # 前几条全是网页剪藏（别人写的参考材料，不是你的笔记）：最多 low；问题里还有整库都没有的词，就是库里没有
+    clipped = conf != "none" and all_clippings(con, hits[:DIRECT_FIRST])
+    if clipped:
+        conf = "none" if gate and absent_stems(con, raw, df) else "low"
     found = None
     picks: list[dict] = []
     if conf != "none":
@@ -517,11 +521,50 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         attach_answers(vault, hits, raw, df)  # 只对上一个词时不给生成的答案：那一行读起来像定论
     out = {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
+    if clipped and conf != "none":
+        out["clipped"] = True
     if picks:
         out["assoc"] = picks
     if found:
         out["conflict"] = found
     return out
+
+
+CLIP_PATH = re.compile(r"(^|/)[^/]*(剪藏|clippings?|web ?clips?)[^/]*/", re.I)
+CLIP_FM = re.compile(r"^source:\s*[\"']?https?://|^type:\s*[\"']?(web[- ]?)?clip|^tags:.*\bclippings?\b|^\s*-\s*clippings?\s*$",
+                     re.M)
+CLIP_NOTE = ("recall_note: every page found is a clipped web page (reference someone else wrote, not your own notes). "
+             "Say what it says and where it came from, not as something decided; if it does not answer the question, "
+             "say the vault does not cover it.")
+
+
+def absent_stems(con: sqlite3.Connection, raw: list[str], df: dict[str, int]) -> list[str]:
+    """Latin question words of 4+ letters that no word in the vault even starts like (`password` when the vault has
+    no `passw…`; `move` is there when the vault has `moved`): the question asks about something the vault never
+    mentions in any form."""
+    out = []
+    for t in raw:
+        if is_cjk_bigram(t) or len(t) < 4 or t.isdigit() or t in EN_FUNCTION or _known_latin(t, df):
+            continue
+        stem = t[: max(4, len(t) - 2)]
+        hit = con.execute("SELECT 1 FROM vrow WHERE term >= ? AND term < ? LIMIT 1", (stem, stem + "\uffff")).fetchone()
+        if not hit:
+            out.append(t)
+    return out
+
+
+def all_clippings(con: sqlite3.Connection, hits: list[dict]) -> bool:
+    """Whether every one of these pages is a web clipping: under a folder named for clippings (`剪藏`, `Clippings`,
+    `Web clips`), or with clipper frontmatter (a `source:` URL, a `clippings` tag, `type: clipping`)."""
+    if not hits:
+        return False
+    for h in hits:
+        if CLIP_PATH.search(h["rel"]):
+            continue
+        row = con.execute("SELECT text FROM fm WHERE rel=?", (h["rel"],)).fetchone()
+        if not (row and CLIP_FM.search(row[0] or "")):
+            return False
+    return True
 
 
 def page_list(res: dict, k: int = PAGES) -> list[str]:
@@ -549,6 +592,8 @@ ASSOC_HEAD = ("associated: pages connected to the hits above that the question d
 def print_extras(res: dict, kind: str) -> None:
     """The conflict note (before the hits) or the associated block (after them), as `recall_index` and
     `route_knowledge` print them."""
+    if kind == "conflict" and res.get("clipped"):
+        print(CLIP_NOTE)
     if kind == "conflict" and res.get("conflict"):
         print(associate.conflict_note(res["conflict"]))
     if kind == "assoc" and res.get("assoc"):

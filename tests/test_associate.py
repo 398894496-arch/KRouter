@@ -335,3 +335,59 @@ def test_conflict_tie_break_can_be_turned_off(ri, tmp_path, monkeypatch):
     monkeypatch.setenv("KROUTER_CONFLICT", "0")
     off = ri.recall(v, "which database does the demo app use", limit=3)
     assert "conflict" not in off and off["hits"][0]["rel"] == "05 时间日志/2026-11-02 db.md"
+
+
+# ---- an English question in a mostly Chinese vault, matched only by English web clippings ----
+
+CLIPS = {
+    "How Stripe scaled billing.md": "Stripe moved its billing service to a new production cluster in 2024. The billing "
+    "team ran canary deploys and kept the old production path for a month. Engineers said the service handled ten "
+    "times the traffic.",
+    "Pricing page teardown.md": "A teardown of SaaS pricing pages: annual billing discounts, usage-based billing, and "
+    "how production plans differ from the free tier. The service tiers are named Starter, Growth and Enterprise.",
+    "State of AI video report 2026.md": "The report surveys AI video production tools. Production budgets fell; most "
+    "studios now run a service model with monthly billing and render in the cloud.",
+}
+
+
+def _clip_vault(tmp_path: Path, folder: str = "03 资料与证据/网页剪藏", clipper_fm: bool = True) -> Path:
+    import shutil
+
+    v = tmp_path / "vault"
+    shutil.copytree(REPO / "template-zh", v)
+    for name, body in CLIPS.items():
+        fm = (f"---\ntitle: {name[:-3]}\nsource: \"https://example.com/{name[:-3].replace(' ', '-').lower()}\"\n"
+              f"created: 2026-10-01\ntags:\n  - clippings\n---\n\n") if clipper_fm else f"---\ntitle: {name[:-3]}\n---\n\n"
+        _write(v, f"{folder}/{name}", fm + body + "\n")
+    return v
+
+
+def test_english_question_matched_only_by_clippings_is_refused(tmp_path):
+    """The words the question is about (`database`, `password`) are nowhere in the vault; three clipped articles share
+    `production`, `billing`, `service` with it. That used to come back `medium`; now it is `recall: none`."""
+    v = _clip_vault(tmp_path)
+    env = {**os.environ, "OBSIDIAN_VAULT": str(v), "KROUTER_CACHE_DIR": str(tmp_path / "c"),
+           "KROUTER_STATE_DIR": str(tmp_path / "s"), "KROUTER_NO_QUERY_LOG": "1"}
+    out = subprocess.run([sys.executable, str(ROUTE), "search",
+                          "What is the production database password of the billing service?"],
+                         env=env, capture_output=True, text=True, timeout=60).stdout
+    assert "recall: none" in out and "recall_confidence: medium" not in out
+
+
+def test_a_question_about_a_clipping_is_answered_low_with_a_note(ri, tmp_path):
+    v = _clip_vault(tmp_path)
+    res = ri.recall(v, "How did Stripe move its billing service to production?")  # `moved` is there: not absent
+    assert res["confidence"] == "low" and res.get("clipped")
+    assert res["hits"][0]["rel"].endswith("How Stripe scaled billing.md")
+    # a clippings folder by name is enough, without clipper frontmatter
+    w = _clip_vault(tmp_path / "b", folder="03 资料与证据/Web clips", clipper_fm=False)
+    assert ri.recall(w, "What is the production database password of the billing service?")["confidence"] == "none"
+
+
+def test_own_notes_among_the_hits_are_not_capped(ri, tmp_path):
+    v = _clip_vault(tmp_path)
+    _write(v, "01 项目/Billing/Billing service.md", "---\ntitle: Billing service\n---\nThe billing service runs in "
+           "production on two nodes; the production deploy is on Tuesdays.\n")
+    res = ri.recall(v, "Where does the billing service run in production?")
+    assert res["confidence"] != "none" and not res.get("clipped")
+    assert "01 项目/Billing/Billing service.md" in [h["rel"] for h in res["hits"][:3]]
