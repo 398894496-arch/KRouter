@@ -260,6 +260,9 @@ def test_a_long_chain_of_corrections_still_converges(tmp_path):
     active = [w for w in written if corrections._meta((vault / w).read_text(encoding="utf-8"))["status"] == "active"]
     assert active == [written[-1]]
     assert time.perf_counter() - t0 < 60
+    # 被取代的纠正页不再带原页的标题词：160 条几乎一样的页里，生效的那条仍是第一条纠正页
+    metas = [corrections._meta((vault / w).read_text(encoding="utf-8")) for w in written]
+    assert metas[-1]["topic_terms"] == "数据库选型" and all(m["topic_terms"] == "" for m in metas[:-1])
 
 
 def test_a_broken_chain_is_reported_not_silent(tmp_path):

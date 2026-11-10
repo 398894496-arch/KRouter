@@ -289,6 +289,13 @@ install path change (below).
   All held at 136, 10,136 and 50,136 pages; reads p50 / p95 47 / 160 ms, 124 / 361 ms, 755 / 4,033 ms; about 9, 5
   and 2 writes a second (git commits are most of a write); no errors (`docs/TEAM.md` §5). `tests/test_team_concurrency.py`
   runs a smaller version on every platform in CI.
+- **Long-running fixes the 30-minute run found** (set 28's first run failed on both): a correction now follows the
+  supersede chain to its end (it stopped after 100 steps, so from the 101st correction of one decision on, each new
+  one superseded nothing and two or more stood in force), and a chain that is broken or goes round is reported in the
+  reply (`unresolved`) instead of passing silently; the change ledger moves whole to
+  `90 系统文件/自动化/记忆变更记录/<time>.md` once it passes 256 KB, with a link from the new page and in the same
+  commit, because every write re-indexed all of it (at 1.6 MB, 945 ms with the index locked, so lookups queued
+  behind writes and slowed as the server ran).
 - **A write no longer makes every lookup re-walk the vault.** After a note or correction, each resident lookup
   process re-reads just the files that write changed, instead of every file's modification time (the full re-check
   every 2 s stays, for changes from a `git pull`). Each write also starts fewer git processes (5 instead of 8 for a

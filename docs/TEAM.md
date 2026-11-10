@@ -177,6 +177,12 @@ run can be undone on its own. A page in force that is long and is not a correcti
 reply says `still active (a long page): read both`. "Later" means arrival at the server, not when the person typed it;
 the rule settles which correction is in force, not which one is right.
 
+**The change ledger stays small.** Every write adds an entry to `记忆变更记录.md`, and every write re-indexes that
+page; past 256 KB it moves whole to `90 系统文件/自动化/记忆变更记录/<time>.md` (linked from the top of the new
+page, in the same commit), so a write costs the same after a month as on the first day. The corrections log
+(`纠错与取代记录.md`, a page of yours) is appended to by each correction and is not moved: about 280 bytes a
+correction.
+
 **With `--allow-write`, the server is the vault's writer.** If people also push to the vault's git remote, the
 server's `git pull --ff-only` stops once the two have diverged: push the server's commits from the same cron job
 (`git push`), or keep the server read-only and change the team vault through pull requests.

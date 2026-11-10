@@ -1039,4 +1039,6 @@ is found. Longer runs are left as a command in `docs/TEAM.md`.
 
 | Date | Event |
 |---|---|
-| 2026-11-10 | Registered, with the template row already run during development (all properties held). |
+| 2026-11-10 | Registered (`51337a2`), with the template row already run during development (all properties held). |
+| 2026-11-10 | **Set 27, run once per size** (`51337a2`, machine busy with other test runs, load average 8 to 11): all properties held at 136, 10,136 and 50,136 pages, 0 errors in 440 calls each. Reads p50 / p95 / p99 47 / 160 / 297 ms, 124 / 361 / 1,611 ms, 755 / 4,033 / 6,294 ms; writes 0.95 / 1.26 / 1.41 s, 1.67 / 2.46 / 4.94 s, 2.70 / 4.18 / 4.43 s; 21.1, 10.9, 5.3 calls/s in the mix. |
+| 2026-11-10 | **Set 28, first run: failed.** 11,976 calls in 30 min, 0 errors, memory 262 MB at 5 min and 265 MB at the end (peak 357 MB), but `conflicts_converge` failed: the contested decision had 213 of its 312 corrections in force at the end. Cause: the supersede-chain walk stopped at 100 steps, so from the 101st correction of one decision on, each correction superseded nothing and said no conflict. Reads also slowed over the run (p50 1.03 s, p95 5.6 s, max 21 s against 124 / 361 ms in the 3-minute run): every write re-indexed the change ledger, by then 1.6 MB (945 ms with the index locked). Fixed in `7f3ed38` (the walk goes to the end and flags a broken chain; the ledger moves to an archive page past 256 KB); both have tests. Rerun below; this run's numbers stay reported as failed. |

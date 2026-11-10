@@ -242,6 +242,13 @@ def _head(vault: Path, page: Path | None, memo: dict | None = None) -> Path | No
     return head
 
 
+def _unfind(meta: dict) -> dict:
+    """A correction page that is replaced stops answering the old page's questions: its `topic_terms` (the replaced
+    page's title, given when it was written) is cleared, so hundreds of replaced corrections of one decision do not
+    crowd the one in force out of a lookup's candidates. Only correction pages; a page of yours keeps its fields."""
+    return {"topic_terms": '""'} if meta.get("type") == "correction" and meta.get("topic_terms") else {}
+
+
 def _now_line(text: str) -> str:
     for ln in text.splitlines():
         if ln.startswith(("- 现在：", "- Now: ")):
@@ -377,7 +384,7 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
         entry = {"page": _rel(vault, p), "author": pm.get("author", ""), "at": pm.get("written_at") or pm.get("date", ""),
                  "said": _now_line(ptext), "why": why}
         if _small(ptext):
-            _write(p, _frontmatter_set(ptext, {"status": "superseded", **stamp}))
+            _write(p, _frontmatter_set(ptext, {"status": "superseded", **stamp, **_unfind(pm)}))
             touched.append(p)
         else:
             entry["left_active"] = True  # 长页不整页作废：两页都还在，回执里说清
@@ -387,7 +394,7 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
     elif target is not None:
         text = target.read_text(encoding="utf-8")
         if _small(text):
-            text = _frontmatter_set(text, {"status": "superseded", **stamp})
+            text = _frontmatter_set(text, {"status": "superseded", **stamp, **_unfind(_meta(text))})
             mode = "page"
         else:
             lines = text.splitlines()
