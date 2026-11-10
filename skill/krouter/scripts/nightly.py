@@ -60,6 +60,8 @@ def classify(rc: int, out: str) -> tuple[str, str]:
         return "ok", "起草跳过：没有模型通道" if drafting.startswith("skipped") else ""
     if rc != 0:
         return "failed", (out.strip().splitlines() or [f"rc={rc}"])[-1][:200]
+    if '"learning": "off"' in out and '"events": 0,' in out:
+        return "off", "学说法没开（KROUTER_RECALL_LEARN=1 开启；第 36 套没过线，默认关）"
     if '"import": "off"' in out:
         return "off", "会话导入没开（import_sessions.py --consent 开启）"
     if '"import": "done"' in out:

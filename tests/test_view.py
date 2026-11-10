@@ -229,14 +229,18 @@ def test_experience_cards_with_how_often_they_were_offered_and_adopted(srv):
 def test_skills_are_listed_when_they_exist_and_their_absence_is_not_an_error(env, tmp_path):
     v = tmp_path / "v"
     shutil.copytree(env["en"], v, ignore=shutil.ignore_patterns(".git"))
-    (v / "02 Methods" / "Skill draft: triage.md").write_text("---\ntitle: Triage\ntype: skill-draft\nstatus: draft\n---\n\n# Triage\n",
-                                                             encoding="utf-8")
-    (v / "02 Methods" / "Skill: review.md").write_text("---\ntitle: Review\ntype: skill\nstatus: active\n---\n\n# Review\n",
-                                                       encoding="utf-8")
+    # skills.py 的存放方式：技能文件夹（英文库 02 Methods/Skills），type: krouter-skill，status active / draft
+    folder = v / "02 Methods" / "Skills"
+    folder.mkdir(parents=True, exist_ok=True)
+    for sid, name, status in (("S01", "Triage", "draft"), ("S02", "Review", "active")):
+        (folder / f"Skill - {name}.md").write_text(
+            f"---\ntitle: \"Skill - {name}\"\ntype: krouter-skill\nstatus: {status}\nskill_id: {sid}\nuse_when: \"x\"\n"
+            f"cards: C01\ndrafted: 2026-10-01\n---\n\n# Skill - {name}\n\n## Steps\n\n1. x\n\n## Sources\n\n- test\n",
+            encoding="utf-8")
     s = Store(v)
     s.refresh(force=True)
     x = s.experience()
-    assert [d["title"] for d in x["drafts"]] == ["Triage"] and [d["title"] for d in x["skills"]] == ["Review"]
+    assert [d["id"] for d in x["drafts"]] == ["S01"] and [d["id"] for d in x["skills"]] == ["S02"]
     empty = tmp_path / "empty"
     shutil.copytree(REPO / "template", empty)
     e = Store(empty)

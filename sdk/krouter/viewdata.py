@@ -48,13 +48,17 @@ def mods() -> SimpleNamespace:
         import associate
         import canonical_lookup
         import capture_ledger
+        import compile_subconscious
         import experience
         import krouter_redact
         import recall_index
+        import recollect
+        import skills
         import zones
 
         _MODS = SimpleNamespace(ri=recall_index, associate=associate, cl=canonical_lookup, ledger=capture_ledger,
-                                experience=experience, redact=krouter_redact, zones=zones)
+                                experience=experience, redact=krouter_redact, zones=zones, skills=skills,
+                                recollect=recollect, cs=compile_subconscious)
     return _MODS
 
 
@@ -402,17 +406,50 @@ class Store:
                 rows.append({"at": str(d.get("at", ""))[:19], "card": str(d.get("card", "")), "kind": d.get("kind", ""),
                              "why": self.m.redact.redact(str(d.get("why", ""))), "session": str(d.get("session", ""))[:40]})
             out["events"] = sorted(rows, key=lambda r: r["at"], reverse=True)[:30]
-        # Skills grown from cards live in another work package; read them if they exist: any page whose frontmatter has
-        # `type: skill…`, a draft while its status is not active.
-        with self.con() as con:
-            for rel, text in con.execute("SELECT fm.rel, fm.text FROM fm WHERE fm.text LIKE '%type:%skill%' LIMIT 200"):
-                if not re.search(r"(?m)^type:\s*[\"']?[a-z-]*skill", text or ""):
-                    continue
-                row = self.known(con, rel)
-                if not row:
-                    continue
-                item = self._decorate(rel, row[1], row[2], row[3], row[4])
-                (out["skills"] if row[2] in ("active", "promoted", "published") else out["drafts"]).append(item)
+        # Skills grown from cards (`skills.py`): kept out of recall, so read from their folder; the counts come from the
+        # same use records as the cards'. A skill folder that is not there, or a page that does not parse, is left out.
+        sk = self.m.skills
+        out["skills_on"] = sk.on()
+        try:
+            found = sk.load(self.vault)
+        except Exception:  # noqa: BLE001
+            found = []
+        for s in found:
+            u = used.get(s["id"], {})
+            item = {"id": s["id"], "rel": s["rel"], "title": s["name"], "use_when": s.get("use_when", ""),
+                    "status": s["status"], "drafted": str(s.get("drafted") or ""), "promoted": str(s.get("promoted") or ""),
+                    "offered": u.get("offered", 0), "adopted": u.get("adopted", 0),
+                    "last_adopted": u.get("last_adopted", ""), "path": s["rel"]}
+            (out["skills"] if s["status"] == "active" else out["drafts"]).append(item)
+        return out
+
+    # ---- what the prompt hook brought ----
+
+    def recalled(self, limit: int = 50) -> dict:
+        """The prompt hook's deliveries (`recalled.jsonl` in the state folder, written by `recollect.log`), newest first.
+        Empty, not an error, when the file is not there or a line does not parse."""
+        rc = self.m.recollect
+        out: dict = {"on": bool(rc.routes()), "index_on": rc.index_on(), "rows": [], "file": ""}
+        path = rc.state_dir() / "recalled.jsonl"
+        out["file"] = str(path)
+        if not path.is_file():
+            return out
+        rows = []
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()[-2000:]:
+            try:
+                d = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(d, dict) or not d.get("page"):
+                continue
+            rows.append({"ts": str(d.get("ts", ""))[:20], "agent": str(d.get("agent", "")),
+                         "session": str(d.get("session", ""))[:8], "route": str(d.get("route", "")),
+                         "word": self.m.redact.redact(str(d.get("word", ""))),
+                         "sentence": self.m.redact.redact(str(d.get("sentence", ""))),
+                         "page": self.m.zones.real(self.vault, str(d["page"])),
+                         "notes": [list(n) for n in d.get("notes") or [] if isinstance(n, (list, tuple))]})
+        out["rows"] = sorted(rows, key=lambda r: r["ts"], reverse=True)[:limit]
+        out["total"] = len(rows)
         return out
 
     # ---- last night ----

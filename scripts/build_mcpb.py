@@ -173,6 +173,14 @@ def check(bundle: Path) -> list[str]:
 
         vault = work / "vault"
         zones.lay_out(ROOT / "template", vault, alias_sample=SCRIPTS / "canonical_sources.psv")
+        import skills  # 一份技能：krouter_skill 只在库里有技能时出现，这样它也要对得上清单
+
+        sk = vault / zones.real(vault, skills.FOLDER)
+        sk.mkdir(parents=True, exist_ok=True)
+        (sk / "Skill - check the copy that is read.md").write_text(
+            f"---\ntitle: \"Skill - check the copy that is read\"\ntype: {skills.TYPE}\nstatus: active\nskill_id: S01\n"
+            "use_when: \"a change has no effect\"\ncards: C01\ndrafted: 2026-10-01\n---\n\n# Skill - check the copy that is read\n\n"
+            "## Steps\n\n1. Find which copy is read.\n\n## Sources\n\n- the bundle check\n", encoding="utf-8")
         env = {**os.environ, "HOME": str(work), "XDG_CONFIG_HOME": str(work / "cfg"), "KROUTER_NO_QUERY_LOG": "1",
                "KROUTER_CACHE_DIR": str(work / "cache"), "KROUTER_STATE_DIR": str(work / "state"),
                "KROUTER_VAULT_FILE": str(work / "recorded")}

@@ -257,13 +257,14 @@ def run(vault: Path, state: Path, dry: bool = False) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
+    ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     if not a.vault:
         print("set KROUTER_VAULT", file=sys.stderr)
         return 2
     res = run(Path(a.vault), recollect.state_dir(), a.dry_run)
+    res["learning"] = "on" if recollect.learn_on() else "off"  # 夜间报告据此写「没开」而不是「ok」
     print(json.dumps(res, ensure_ascii=False))
     return 0
 

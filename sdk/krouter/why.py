@@ -17,6 +17,7 @@ asked otherwise.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -36,6 +37,16 @@ TEXT = {
         "h_assoc": "5. Pages that came along a connection",
         "h_conflict": "6. Old and new",
         "h_cards": "7. Experience cards",
+        "h_mention": "8. Brought by the prompt hook, or fetched from the index",
+        "m_hook": "Said in a message, this sentence makes the prompt hook bring {rel} itself ({route}: “{word}”): the agent gets it with the message and need not fetch it.",
+        "m_hook_none": "Said in a message, this sentence makes the prompt hook bring nothing.",
+        "m_hook_off": "The prompt hook is off (KROUTER_RECALL_PROMPT=0), so nothing is brought with a message.",
+        "m_indexed": "{rel} is in the session-start index (topic “{name}”): an agent that used it without the hook bringing it fetched it itself after reading the index.",
+        "m_not_indexed": "{rel} is not in the session-start index: unless the hook brings it, an agent finds it only by asking.",
+        "m_indexed_hook": "{rel} is also in the session-start index (topic “{name}”), but for this sentence the hook brings it first.",
+        "m_index_off": "The session-start index is off (KROUTER_RECALL_INDEX=0).",
+        "m_history": "The hook brought it before: {ts}, {agent}, {route} “{word}”.",
+        "route_alias": "a name in the alias table", "route_trigger": "a trigger word", "route_recall": "recall with a wide lead",
         "v_locked": "Answered by an alias lock: the question names a page the alias table points at.",
         "v_answer": "Answered by the ranked search. Confidence: {conf}.",
         "v_partial": "Found pages, but only one word of the question matched them. Confidence: low; they may be about something else.",
@@ -134,6 +145,16 @@ TEXT = {
         "h_assoc": "五、沿联想带出来的页",
         "h_conflict": "六、新旧冲突",
         "h_cards": "七、经验卡",
+        "h_mention": "八、是钩子递的，还是宿主看了索引自己取的",
+        "m_hook": "这句话要是出现在用户的消息里，提问钩子会自己把 {rel} 递过去（{route}：「{word}」）：agent 随消息就拿到了，不用自己取。",
+        "m_hook_none": "这句话出现在用户的消息里，提问钩子什么都不会递。",
+        "m_hook_off": "提问钩子关着（KROUTER_RECALL_PROMPT=0），消息不会带上任何一页。",
+        "m_indexed": "{rel} 在会话开始的下意识索引里（主题「{name}」）：钩子没递而 agent 用上了它，就是 agent 看了索引自己取的。",
+        "m_not_indexed": "{rel} 不在会话开始的索引里：钩子不递的话，agent 只有自己去问才找得到。",
+        "m_indexed_hook": "{rel} 也在会话开始的索引里（主题「{name}」），但这句话钩子会先递过去。",
+        "m_index_off": "会话开始的索引关着（KROUTER_RECALL_INDEX=0）。",
+        "m_history": "钩子以前递过它：{ts}，{agent}，{route}「{word}」。",
+        "route_alias": "别名表里的名字", "route_trigger": "触发词", "route_recall": "领先很多的召回",
         "v_locked": "别名锁直接答了：问题点到了别名表里指向的那一页。",
         "v_answer": "排序搜索答了，置信度：{conf}。",
         "v_partial": "找到了页面，但问题里只有一个词对上，置信度 low：它们可能说的是别的事。",
@@ -470,6 +491,7 @@ def explain(vault, question: str, lang: str | None = None, refresh: bool = True,
     finally:
         con.close()
     out["cards"] = _cards(m, vault, q, [p["rel"] for p in out["pages"]])
+    out["mention"] = _mention(m, vault, q, [p["rel"] for p in out["pages"]][:1])
     out["verdict"] = ("locked" if out["lock"]["state"] == "locked" else "none" if conf == "none"
                       else "partial" if out["partial"] else "answer")
     return out
@@ -500,6 +522,40 @@ def _cards(m, vault: Path, q: str, shown: list[str]) -> dict:
 
 
 # ---------------------------------------------------------------------------------------------- the telling
+
+
+def _mention(m, vault: Path, q: str, top: list[str]) -> dict:
+    """What the prompt hook would bring for this sentence, whether the pages involved are in the session-start index,
+    and when the hook brought them before (`recalled.jsonl`). Read-only: nothing is logged."""
+    rc, cs, zones = m.recollect, m.cs, m.zones
+    out: dict = {"hook_on": bool(rc.routes()), "index_on": rc.index_on(), "hook": [], "pages": [], "history": []}
+    try:
+        hits = rc.recollect(vault, q) if q and out["hook_on"] else []
+    except Exception:  # noqa: BLE001  解释不出来就不说，不编
+        hits = []
+    out["hook"] = [{"rel": zones.real(vault, h["rel"]), "route": h.get("route", ""), "word": h.get("word", "")} for h in hits]
+    try:
+        topics = {t["rel"]: t for t in cs.index_topics(vault)} if out["index_on"] else {}
+    except Exception:  # noqa: BLE001
+        topics = {}
+    rels = list(dict.fromkeys([h["rel"] for h in out["hook"]] + list(top)))
+    for rel in rels:
+        t = topics.get(zones.canon(vault, rel))
+        out["pages"].append({"rel": rel, "indexed": bool(t), "name": (t or {}).get("name", "")})
+    path = rc.state_dir() / "recalled.jsonl"
+    if path.is_file() and rels:
+        want = {zones.canon(vault, r) for r in rels}
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()[-2000:]:
+            try:
+                d = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(d, dict) and d.get("page") in want:
+                out["history"].append({"ts": str(d.get("ts", ""))[:20], "agent": str(d.get("agent", "")),
+                                       "route": str(d.get("route", "")), "word": str(d.get("word", "")),
+                                       "rel": zones.real(vault, d["page"])})
+        out["history"] = sorted(out["history"], key=lambda r: r["ts"], reverse=True)[:5]
+    return out
 
 
 def _via(lang: str, v: dict) -> str:
@@ -656,6 +712,28 @@ def blocks(e: dict) -> list[dict]:
             li(t(L, "cards_source") + f"〔{c['id']}〕 {c['lesson']} ← {c['page']}", 1, c["rel"])
         if not cd["overlap"] and not cd["from_pages"]:
             li(t(L, "cards_nothing"), 1)
+
+    mn = e.get("mention") or {}
+    if mn:
+        h(t(L, "h_mention"))
+        if not mn["hook_on"]:
+            li(t(L, "m_hook_off"))
+        elif mn["hook"]:
+            for x in mn["hook"]:
+                li(t(L, "m_hook", rel=x["rel"], route=t(L, "route_" + x["route"]) if ("route_" + x["route"]) in TEXT[L]
+                     else x["route"], word=x["word"]), 0, x["rel"])
+        else:
+            li(t(L, "m_hook_none"))
+        if not mn["index_on"]:
+            li(t(L, "m_index_off"))
+        else:
+            brought = {x["rel"] for x in mn["hook"]}
+            for pg in mn["pages"]:
+                key = ("m_indexed_hook" if pg["rel"] in brought else "m_indexed") if pg["indexed"] else "m_not_indexed"
+                li(t(L, key, rel=pg["rel"], name=pg["name"]), 0, pg["rel"])
+        for r in mn["history"]:
+            li(t(L, "m_history", ts=r["ts"], agent=r["agent"], word=r["word"],
+                 route=t(L, "route_" + r["route"]) if ("route_" + r["route"]) in TEXT[L] else r["route"]), 1, r["rel"])
     return out
 
 

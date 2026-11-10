@@ -139,6 +139,8 @@ class Handler(BaseHTTPRequestHandler):
             return (200, g) if g else (404, {"error": "no such page in this memory"})
         if path == "/api/experience":
             return 200, store.experience()
+        if path == "/api/recalled":
+            return 200, store.recalled()
         if path == "/api/nightly":
             return 200, store.nightly(lang="en" if q.get("lang") == "en" else "")
         if path == "/api/why":
