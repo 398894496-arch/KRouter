@@ -1,7 +1,8 @@
 #!/bin/sh
 # One line for anyone on macOS / Linux:
-#   curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
-# Options pass through to bootstrap.py, e.g. `| sh -s -- --vault ~/MyVault --lang en`.
+#   curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
+# (saved to a file first: a failed download then stops with a non-zero exit; `curl … | sh` would run an empty script)
+# Options pass through to bootstrap.py, e.g. `sh /tmp/krouter-install.sh --minimal --apps claude --lang en`.
 # Fetches the latest release (a tag, never main) into ~/.dsh-krouter/<tag>, checks its SHA-256 against the release's
 # SHA256SUMS, points ~/.dsh-krouter/current at it, and runs scripts/bootstrap.py from there. Run again to upgrade;
 # `| KROUTER_TAG=v1.3.0 sh` stays on one release. From a clone, it uses the clone.
@@ -24,8 +25,15 @@ if [ -n "$HERE" ] && [ -f "$HERE/bootstrap.py" ] && [ -d "$HERE/../skill/krouter
   exec python3 "$HERE/bootstrap.py" "$@"
 fi
 
-TAG=${KROUTER_TAG:-$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
-  | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')}
+TAG=${KROUTER_TAG:-}
+if [ -z "$TAG" ]; then
+  TAG=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])' 2>/dev/null) || TAG=""
+fi
+if [ -z "$TAG" ]; then
+  printf '%s\n' "找不到最新发布版（网络或 GitHub 不通），什么都没装 / could not look up the latest release (network or GitHub); nothing installed."
+  exit 1
+fi
 DEST="$HOME_DIR/$TAG"
 if [ ! -f "$DEST/scripts/bootstrap.py" ]; then
   mkdir -p "$HOME_DIR"

@@ -14,9 +14,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-PENDING = ("待下次蒸馏判定", "待蒸馏确认")
+PENDING_EN = "pending the next distill"
+PENDING = ("待下次蒸馏判定", "待蒸馏确认", PENDING_EN)
 LINE = re.compile(r"^- （(\d{2}:\d{2})）(.*) — 项目 (.*?)，会话 `(?:claude|codex|cursor):([0-9A-Za-z?-]+)`，命中「(.*?)」，(.+)$")
-PAGE = re.compile(r"^(\d{4}-\d{2}-\d{2})｜纠正候选\.md$")
+# 英文库（zones.lang == en）里 session_hook 写的同一行
+LINE_EN = re.compile(r"^- \((\d{2}:\d{2})\) (.*) — project (.*?), session `(?:claude|codex|cursor):([0-9A-Za-z?-]+)`, "
+                     r"cue \"(.*?)\", (.+)$")
+PAGE = re.compile(r"^(\d{4}-\d{2}-\d{2})｜(?:纠正候选|Correction candidates)\.md$")
+PAGE_NAME = {"zh": "纠正候选", "en": "Correction candidates"}
 MIN_CJK = 3         # 没有共同的专有词时，至少要共有这么多个中文词组
 MIN_SHARE = 0.3     # 而且占候选词组的这么大比例
 # 纠正用语和虚词不算内容："改成"两边都有，说明不了是同一件事（2026-11 本机倒推：10 条判定 7 条挂错了行）
@@ -43,12 +48,12 @@ def pending(folder: Path) -> dict[tuple[str, str], list[dict]]:
     out: dict[tuple[str, str], list[dict]] = {}
     if not folder.is_dir():
         return out
-    for page in folder.glob("*｜纠正候选.md"):
+    for page in sorted(folder.glob("*｜*.md")):
         m = PAGE.match(page.name)
         if not m:
             continue
         for n, raw in enumerate(page.read_text(encoding="utf-8").splitlines()):
-            hit = LINE.match(raw)
+            hit = LINE.match(raw) or LINE_EN.match(raw)
             if hit and hit.group(6) in PENDING:
                 out.setdefault((m.group(1), hit.group(4)[:8]), []).append(
                     {"page": page, "n": n, "time": hit.group(1), "said": hit.group(2), "cue": hit.group(5)})
@@ -89,6 +94,15 @@ def mark(results: list[dict]) -> list[Path]:
         for r in rs:
             old = lines[r["n"]]
             for p in PENDING:
+                if old.endswith(p) and p == PENDING_EN:
+                    if r.get("kind") == "补记":
+                        verdict = f"verdict: added → {r['link']}: {r['line']}"
+                    elif r["ok"]:
+                        verdict = f"verdict: holds → {r['link']}: {r['line']}"
+                    else:
+                        verdict = "verdict: does not hold (no matching decision or change in this distill)"
+                    lines[r["n"]] = old[: -len(p)] + verdict
+                    break
                 if old.endswith(p):
                     if r.get("kind") == "补记":
                         verdict = f"判定：补记 → {r['link']}：{r['line']}"

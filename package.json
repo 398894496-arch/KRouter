@@ -19,7 +19,11 @@
     "extras/cursor",
     "extras/codex",
     "extras/claude-code",
-    "extras/hooks"
+    "extras/hooks",
+    "sdk/krouter",
+    ".claude-plugin",
+    "hooks",
+    "plugin"
   ],
   "dsh": {
     "bundle": {

@@ -4,19 +4,22 @@
 Usually started by `bootstrap.sh` (macOS / Linux) or `bootstrap.ps1` (Windows), which find Python and fetch the
 latest release; can also be run from a clone. What it does, in order:
 
-1. Pick the language (`--lang zh|en`, default: the system's) and the matching template.
+1. Pick the language: `--lang zh|en`, else `LC_ALL` / `LC_MESSAGES` / `LANG`, else the system's; and the template.
 2. Pick the vault: `--vault PATH`, else `OBSIDIAN_VAULT`, else a new folder `Documents/第二大脑` (`Second Brain`).
-   A new or empty folder gets the template. An existing vault keeps every file; only missing skeleton files are
-   added (`--vault` on a vault of your own). Nothing is ever overwritten.
+   A new or empty folder gets the template; in English its folders and files have English names (`zones_en.psv`,
+   recorded in the vault's `krouter-zones.psv`). An existing vault keeps every file and its own names; only missing
+   skeleton files are added (`--vault` on a vault of your own). Nothing is ever overwritten.
 3. Install the router skill and the agent rules, keeping an existing alias table. Re-running it is an upgrade.
 4. Check for a model: a logged-in CLI or an API key. If there is none, say in one sentence what to do.
 5. By default that is all: lookup only, no questions, nothing leaves the machine; the last lines say how to turn on
    remembering. `--ask` asks whether to import recent agent sessions (and claude-mem's memory) and whether to install
    the nightly job (launchd / systemd / cron / Windows task); `--import`, `--import-distill` and `--timer` say yes in
    advance. An upgrade where the host said yes before keeps what is on.
-6. Open the new vault in Obsidian when Obsidian is installed.
+6. Open the new vault in Obsidian when Obsidian is installed and this runs in a terminal (`--open` forces it,
+   `--no-open` never); run by an agent, with no terminal, nothing is opened.
 
-`--dry-run` prints the plan and changes nothing.
+`--minimal` installs lookup only: no session import, no nightly job, no Claude Code plugin, no hooks, no Cursor
+rules, and only the apps named with `--apps` (none by default). `--dry-run` prints every change and changes nothing.
 """
 
 from __future__ import annotations
@@ -40,7 +43,9 @@ MSG = {
         "plan": "计划", "vault_new": "新建知识库", "vault_merge": "使用已有知识库（只补缺失的骨架文件，不覆盖任何文件）",
         "vault_ours": "已是第二大脑知识库（升级）", "added": "补上的文件", "skill": "路由器", "timer": "每日定时任务",
         "model_ok": "模型通道", "model_none": "还没有可用的模型：登录一个 AI 编程工具（Claude Code 运行 `claude`、Codex、grok 等任选其一），"
-        "或把 API key 写进 {keys}（一行，如 DEEPSEEK_API_KEY=sk-…）。夜间任务开着的话，之后每晚自动整理，不用再做任何事。",
+        "或把 API key 写进 {keys}（一行，如 DEEPSEEK_API_KEY=sk-…）。夜间任务开着的话，之后每晚自动整理，不用再做任何事。\n"
+        "没有模型时：查询、带出处的回答、库里没有就直说、本地导入会话、记下纠正候选都照常；不工作的是提炼（每页开头的「定了什么、改了什么」）、"
+        "夜间整理和纠正候选的判定。后果：你改了主意，旧答案不会被自动替换，查询时旧页可能仍排第一，要等接上模型、提炼过之后才换。",
         "done": "装好了。知识库在：{vault}\nagent 查询走：{router}",
         "obsidian": "已在 Obsidian 里打开这个知识库。", "obsidian_none": "装上 Obsidian（https://obsidian.md）后，选「打开本地仓库」→ {vault}",
         "py_old": "需要 Python 3.9 或更新版本，当前是 {v}。",
@@ -77,7 +82,7 @@ MSG = {
         "cmem_distilled": "，{n} 个项目已理出现在有效的决定",
         "plugin_done": "已装上 Claude Code 插件（来自这份校验过的发布包）：会话结束时自动记下，开新会话时带上本项目的决定，你当场纠正的话也会记下。",
         "capture_on": "从现在起它自己记：{how}。只写进本机这个库，先脱敏，不调任何模型。某个会话不想记，在提问里写 #不记；"
-        "整个停掉：{revoke}；这次导入的每一页都记在 90 系统文件/自动化/记忆变更记录.md，按里面的 run 编号可以撤回。",
+        "整个停掉：{revoke}；这次导入的每一页都记在 {ledger}，按里面的 run 编号可以撤回。",
         "capture_how_plugin": "Claude Code 的每个会话结束时记下",
         "capture_how_live": "{apps} 每轮结束时当场记下",
         "hooks_done": "已把 KRouter 的钩子加进 {app}（{file}）：开会话时带上本项目的决定，每轮结束记下这一轮，你当场纠正的话也会记下。",
@@ -89,12 +94,21 @@ MSG = {
         "capture_how_nightly": "其他 agent 的会话，打开每晚任务后每晚导入前一天的（{ask}）",
         "plugin_hint": "用 Claude Code 的话，装上插件还能在会话结束时自动记下、开会话时自动带上本项目的决定："
         "/plugin install krouter --marketplace 398894496-arch/KRouter",
+        "cli": "命令行（给你和 agent）：{cli} doctor 一条命令给结论（正常，或缺什么、怎么补）；{cli} search \"问题\" 查询；"
+        "卸载：sh {uninstall}",
+        "minimal": "最小安装：只装查找。没有导入会话、没有夜间任务、没有插件和钩子；只接了你点名的应用：{apps}。",
+        "obsidian_skip": "没有在 Obsidian 里打开（不是在终端里运行）。要打开：装上 Obsidian 后选「打开本地仓库」→ {vault}",
     },
     "en": {
         "plan": "Plan", "vault_new": "New vault", "vault_merge": "Existing vault (adds only missing skeleton files; overwrites nothing)",
         "vault_ours": "Already a Second Brain vault (upgrade)", "added": "files added", "skill": "Router", "timer": "Daily timer",
         "model_ok": "Model lane", "model_none": "No model yet: log in to one AI coding CLI (`claude`, Codex, grok, …), "
-        "or put an API key in {keys} (one line, e.g. DEEPSEEK_API_KEY=sk-…). With the nightly job on, it then runs every night on its own.",
+        "or put an API key in {keys} (one line, e.g. DEEPSEEK_API_KEY=sk-…). With the nightly job on, it then runs every night on its own.\n"
+        "Without a model: lookup, answers with their source page, \"not in the vault\" instead of a guess, the local "
+        "session import and noting correction candidates all work. What does not run: distilling (each page's \"what was "
+        "decided, what changed\"), the nightly upkeep, and settling correction candidates. The consequence: when you "
+        "change your mind, the old answer is not replaced on its own; the older page can still rank first until a model "
+        "is connected and the session is distilled.",
         "done": "Done. Your vault: {vault}\nAgents query: {router}",
         "obsidian": "Opened the vault in Obsidian.", "obsidian_none": "Install Obsidian (https://obsidian.md), then “Open folder as vault” → {vault}",
         "py_old": "Python 3.9 or newer is required; this is {v}.",
@@ -135,7 +149,7 @@ MSG = {
         "plugin_done": "Installed the Claude Code plugin (from this checksummed release): each session is recorded when it ends, a new one starts with this project's decisions, and a correction you type is noted on the spot.",
         "capture_on": "From now on it keeps up by itself: {how}. Written only to this vault on this machine, redacted, no model "
         "called. To keep a session out, put #nocapture in a question; to stop it: {revoke}; every page this import wrote is "
-        "listed in 90 系统文件/自动化/记忆变更记录.md, and its run number takes it back.",
+        "listed in {ledger}, and its run number takes it back.",
         "capture_how_plugin": "each Claude Code session when it ends",
         "capture_how_live": "each turn in {apps}, as it ends",
         "hooks_done": "Added KRouter's hooks to {app} ({file}): a session starts with this project's decisions, each turn is recorded as it ends, and a correction you type is noted on the spot.",
@@ -147,15 +161,34 @@ MSG = {
         "capture_how_nightly": "other agents' sessions each night once the nightly job is on ({ask})",
         "plugin_hint": "On Claude Code, the plugin also records each session when it ends and brings this project's "
         "decisions when one starts: /plugin install krouter --marketplace 398894496-arch/KRouter",
+        "cli": "Command line (for you and your agents): {cli} doctor gives one verdict (OK, or what is missing and how to "
+        "fix it); {cli} search \"question\" looks up. Uninstall: sh {uninstall}",
+        "minimal": "Minimal install: lookup only. No session import, no nightly job, no plugin, no hooks; connected only "
+        "the apps you named: {apps}.",
+        "obsidian_skip": "Not opened in Obsidian (not run from a terminal). To open it: install Obsidian, then "
+        "“Open folder as vault” → {vault}",
     },
 }
 KEEP = ("canonical_sources.psv", "canonical_alias_ledger.jsonl")
 
 
-def system_lang() -> str:
+def env_lang() -> str:
+    """zh or en from LC_ALL / LC_MESSAGES / LANG / LANGUAGE (first one set, as the C library reads them); `C`,
+    `POSIX` and unset say nothing, so the system's language decides."""
     for var in ("LC_ALL", "LC_MESSAGES", "LANG", "LANGUAGE"):
-        if os.environ.get(var, "").lower().startswith("zh"):
-            return "zh"
+        val = os.environ.get(var, "").strip().lower()
+        if not val or val.split(".")[0] in ("c", "posix"):
+            continue
+        return "zh" if val.startswith("zh") else "en"
+    return ""
+
+
+def system_lang() -> str:
+    """The language when `--lang` is not given: the terminal's locale first, the system's only when it says nothing
+    (an English terminal on a Mac set to Chinese gets English)."""
+    lang = env_lang()
+    if lang:
+        return lang
     if platform.system() == "Darwin":
         try:
             out = subprocess.run(["defaults", "read", "-g", "AppleLanguages"], capture_output=True, text=True, timeout=5).stdout
@@ -183,6 +216,22 @@ def default_vault(lang: str) -> Path:
     return Path.home() / "Documents" / ("第二大脑" if lang == "zh" else "Second Brain")
 
 
+DEFAULT_MARKS = ("Agent第二大脑.md", "90 系统文件", "05 时间日志", "02 经验与方法", "01 项目")
+sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+import zones  # noqa: E402
+
+
+def layout_for(vault: Path, lang: str) -> Path | None:
+    """The names a vault is laid down with: its own `krouter-zones.psv`; else, for an English vault that does not
+    already use the default (Chinese) names, `zones_en.psv`; else None (the default names)."""
+    own = vault / zones.ZONES_FILE
+    if own.is_file():
+        return own
+    if lang == "en" and not any((vault / m).exists() for m in DEFAULT_MARKS):
+        return zones.EN_TABLE
+    return None
+
+
 def vault_state(vault: Path) -> str:
     if not vault.exists() or (vault.is_dir() and not any(p for p in vault.iterdir() if p.name != ".DS_Store")):
         return "new"
@@ -192,8 +241,12 @@ def vault_state(vault: Path) -> str:
     return "merge"
 
 
-def lay_down(template: Path, vault: Path, dry: bool) -> list[str]:
-    """Copy template files that are missing in the vault. Never overwrites."""
+def lay_down(template: Path, vault: Path, dry: bool, lang: str = "zh") -> list[str]:
+    """Copy template files that are missing in the vault, under the vault's names (`layout_for`). Never overwrites."""
+    table = layout_for(vault, lang)
+    if table is not None:
+        sample = ROOT / "skill/krouter-obsidian/scripts/canonical_sources.psv"
+        return zones.lay_out(template, vault, dry, table, sample if template == ROOT / "template" else None)
     added = []
     for src in sorted(template.rglob("*")):
         if not src.is_file() or src.name == ".DS_Store":
@@ -209,11 +262,24 @@ def lay_down(template: Path, vault: Path, dry: bool) -> list[str]:
     return added
 
 
+def skill_home() -> Path:
+    return Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+
+
 def install_posix(vault: Path, dry: bool) -> int:
-    skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
+    skill = skill_home()
     argv = ["/bin/sh", str(ROOT / "scripts/install.sh")] + (["--upgrade"] if skill.exists() else [])
     if dry:
+        home = Path.home()
         print("  " + " ".join(argv))
+        print(f"    {'replace' if skill.exists() else 'create'}: {skill}/ (the router; your alias table is kept)")
+        if os.environ.get("KROUTER_NO_CURSOR_RULES") != "1":
+            for f in (os.environ.get("KROUTER_CURSOR_RULE") or home / ".cursor/rules/krouter-obsidian.mdc",
+                      os.environ.get("KROUTER_ASK_RULE") or home / ".cursor/rules/ask-product.mdc"):
+                print(f"    write: {f}")
+        vf = os.environ.get("KROUTER_VAULT_FILE") or Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config") / "krouter/vault"
+        print(f"    write: {vf} (where the vault is, for hooks and the MCP server)")
+        print(f"    set: lamp, self_evolution_key, krouter_writer on {zones.path(vault, '90 系统文件/自动化/日更健康.md')}")
         return 0
     return subprocess.run(argv, env={**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_BOOTSTRAP": "1"}).returncode
 
@@ -241,8 +307,8 @@ def install_windows(vault: Path, dry: bool, timer: bool) -> int:
     ask.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(ROOT / "extras/cursor/krouter-obsidian.mdc", rules)
     shutil.copy2(ROOT / "extras/cursor/ask-product.mdc", ask)
-    table = vault / "90 系统文件" / "canonical_sources.psv"
-    if not table.exists() and (vault / "90 系统文件").is_dir():
+    table = zones.path(vault, "90 系统文件/canonical_sources.psv")
+    if not table.exists() and table.parent.is_dir():
         old = kept.get("canonical_sources.psv")
         sample = (ROOT / "skill/krouter-obsidian/scripts/canonical_sources.psv").read_bytes()
         table.write_bytes(old if old and old != sample else sample)
@@ -365,16 +431,9 @@ def remembering_already() -> bool:
             return True
     except Exception:  # noqa: BLE001 - 读不到旧状态就当没开过，只影响要不要多打印一行提示
         pass
-    if WINDOWS:
-        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution"], capture_output=True, text=True)
-        return res.returncode == 0
-    home = Path.home()
-    if (home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist").is_file():
-        return True
-    if (home / ".config/systemd/user/dsh-krouter-daily.timer").is_file():
-        return True
-    res = subprocess.run(["crontab", "-l"], capture_output=True, text=True) if shutil.which("crontab") else None
-    return bool(res and "# dsh-krouter-daily" in res.stdout)
+    return remembering_timer()
+
+
 DISTILL_AT_INSTALL = 8  # 安装时只提炼最近几个会话，免得一装就等十几分钟
 
 
@@ -450,7 +509,7 @@ def offer_claude_mem(args: argparse.Namespace, vault: Path, t: dict, distill: bo
 
 def try_question(vault: Path, lang: str) -> str:
     """A question this vault can answer now: the latest distilled session's first decision, else its title."""
-    folder = vault / "05 时间日志" / "会话摘录"
+    folder = zones.path(vault, "05 时间日志/会话摘录")
     pages = sorted(folder.glob("*.md")) if folder.is_dir() else []  # 文件名以日期开头：最后一个是最近的会话
     for page in reversed(pages):
         head = page.read_text(encoding="utf-8")[:1500]
@@ -597,10 +656,23 @@ def codex_home() -> Path:
     return Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 
+def codex_used() -> Path:
+    """~/.codex when Codex has really been used here. A folder holding only `tmp/` is what probing the Codex app's
+    login leaves behind (it happens on a machine that has never run Codex); that is not a Codex install."""
+    home = codex_home()
+    try:
+        names = {p.name for p in home.iterdir()} - {".DS_Store"} if home.is_dir() else None
+        if names is not None and names != {"tmp"}:
+            return home
+    except OSError:
+        pass
+    return home / ".not-used"
+
+
 # 每轮记下来的钩子：Codex 和 Cursor 各自的事件名 → session_hook.py 的动作。格式照各家官方文档，2026-11-09 核对；
 # Codex 那份用 codex-cli 0.155 实测过（事件必须放在顶层 "hooks" 下面，否则整份被跳过）。Claude Code 的在插件里。
 HOOK_APPS = (
-    {"id": "codex", "name": "Codex", "dir": codex_home, "file": lambda: codex_home() / "hooks.json",
+    {"id": "codex", "name": "Codex", "dir": lambda: codex_used(), "file": lambda: codex_home() / "hooks.json",
      "events": (("SessionStart", "start", 10), ("UserPromptSubmit", "prompt", 10), ("Stop", "turn", 10),
                 ("SessionEnd", "end", 3))},  # Codex 的 SessionEnd 最多等 3 秒；导入本身在后台跑
     {"id": "cursor", "name": "Cursor", "dir": lambda: app_settings("Cursor"), "file": lambda: Path.home() / ".cursor" / "hooks.json",
@@ -679,7 +751,7 @@ def codex_hooks_off() -> bool:
         return False
 
 
-def register_hooks(t: dict, dry: bool) -> list[str]:
+def register_hooks(t: dict, dry: bool, apps: set[str] | None = None) -> list[str]:
     """Add the turn-by-turn hooks to Codex and Cursor when they are installed, keeping every hook already there.
     Never touches a file it cannot parse; keeps a copy of a file it changes; re-running replaces only its own entries."""
     if os.environ.get("KROUTER_NO_HOOKS") == "1":
@@ -690,7 +762,7 @@ def register_hooks(t: dict, dry: bool) -> list[str]:
     done = []
     for app in HOOK_APPS:
         cfg = hooks_config(app)
-        if cfg is None:
+        if cfg is None or not wanted(app["id"], apps):
             continue
         if dry:
             print(f"  {app['name']}: add KRouter's hooks ({', '.join(e for e, _, _ in app['events'])}) to {cfg}")
@@ -771,7 +843,47 @@ def install_plugin(exe: str) -> bool:
         return False
 
 
-def register_mcp(t: dict, dry: bool) -> list[str]:
+def wanted(app_id: str, apps: set[str] | None) -> bool:
+    """`--apps` names the apps to connect; None (no `--apps`, not `--minimal`) means every installed one."""
+    return apps is None or app_id in apps
+
+
+def uninstall_plugin(dry: bool) -> list[str]:
+    """Disable and remove the Claude Code plugin, and the `krouter` marketplace when it points at a folder on this
+    machine (the one the installer added: a clone or ~/.dsh-krouter/<tag>). A GitHub marketplace you added is kept."""
+    exe = shutil.which("claude")
+    if not exe or os.environ.get("KROUTER_NO_PLUGIN") == "1":
+        return []
+    gone = []
+
+    def run(*a: str) -> subprocess.CompletedProcess:
+        return subprocess.run([exe, "plugin", *a], capture_output=True, text=True, timeout=120)
+
+    try:
+        listed = run("list", "--json")
+        if listed.returncode == 0 and "krouter@krouter" in listed.stdout:
+            if dry:
+                print("would: claude plugin uninstall krouter@krouter")
+            elif run("uninstall", "krouter@krouter").returncode == 0:
+                print("removed: Claude Code plugin krouter@krouter")
+                gone.append("plugin")
+        try:
+            rows = json.loads(run("marketplace", "list", "--json").stdout or "[]")
+        except ValueError:
+            rows = []
+        for m in rows if isinstance(rows, list) else []:
+            if isinstance(m, dict) and m.get("name") == "krouter" and m.get("source") == "directory":
+                if dry:
+                    print(f"would: claude plugin marketplace remove krouter ({m.get('path')})")
+                elif run("marketplace", "remove", "krouter").returncode == 0:
+                    print(f"removed: Claude Code marketplace krouter ({m.get('path')})")
+                    gone.append("marketplace")
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return gone
+
+
+def register_mcp(t: dict, dry: bool, apps: set[str] | None = None, plugin: bool = True) -> list[str]:
     """Register the MCP server with the agent CLIs that are installed (user scope). Re-running is harmless."""
     if os.environ.get("KROUTER_NO_MCP") == "1":
         return []
@@ -783,10 +895,15 @@ def register_mcp(t: dict, dry: bool) -> list[str]:
     for cli, argv in (("claude", ["mcp", "add", "--scope", "user", "krouter", "--"]),
                       ("codex", ["mcp", "add", "krouter", "--"])):
         exe = shutil.which(cli)
-        if not exe:
+        if not exe or not wanted(cli, apps):
             continue
         if dry:
             print("  " + " ".join([cli, *argv, *server]))
+            if cli == "claude" and plugin and os.environ.get("KROUTER_NO_PLUGIN") != "1" \
+                    and (ROOT / ".claude-plugin" / "marketplace.json").is_file():
+                print(f"  claude plugin marketplace add {ROOT}   (writes extraKnownMarketplaces in ~/.claude/settings.json)")
+                print("  claude plugin install krouter@krouter   (enables its session hooks: SessionStart, "
+                      "UserPromptSubmit, Stop, SessionEnd)")
             continue
         if cli == "claude":
             subprocess.run([exe, "mcp", "remove", "--scope", "user", "krouter"], capture_output=True, timeout=60)
@@ -799,11 +916,11 @@ def register_mcp(t: dict, dry: bool) -> list[str]:
         if ok:
             done.append(cli)
             print(t["mcp"].format(cli=cli))
-            if cli == "claude" and install_plugin(exe):
+            if cli == "claude" and plugin and install_plugin(exe):
                 done.append("claude-plugin")
                 print(t["plugin_done"])
     for app in MCP_APPS:  # 本机装了哪个就接哪个，和 claude / codex 一样不问
-        if register_app(app, server, dry, t):
+        if wanted(app["id"], apps) and register_app(app, server, dry, t):
             done.append(app["id"])
             print(t["mcp_desktop"] if app["id"] == "claude-desktop" else t["mcp_app"].format(app=app["name"], file=app_config(app)))
     return done
@@ -828,6 +945,64 @@ def open_in_obsidian(vault: Path) -> bool:
     return False
 
 
+def interactive() -> bool:
+    """Run by a person at a terminal (the one-line install's output goes to it), not by an agent capturing output."""
+    if os.environ.get("KROUTER_NO_PROMPT") == "1":
+        return False
+    try:
+        return sys.stdout.isatty()
+    except (AttributeError, ValueError):
+        return False
+
+
+def should_open(args: argparse.Namespace) -> bool:
+    """Open a new vault in Obsidian: `--open`, or a person at a terminal; never `--no-open`, never for an agent."""
+    return not args.no_open and (args.open or interactive())
+
+
+def stable_root() -> Path:
+    """This copy of KRouter, by the path that survives upgrades: ~/.dsh-krouter/current when it points here."""
+    current = ROOT.parent / "current"
+    try:
+        if current.is_symlink() and current.resolve() == ROOT:
+            return current
+    except OSError:
+        pass
+    return ROOT
+
+
+def cli_path() -> str:
+    """How to call `krouter` right now: on PATH when pipx / uvx put it there, else this copy's own launcher."""
+    if shutil.which("krouter"):
+        return "krouter"
+    if WINDOWS:
+        return f'set "PYTHONPATH={stable_root() / "sdk"}" && python -m krouter.cli'
+    return str(stable_root() / "scripts" / "krouter")
+
+
+def remembering_timer() -> bool:
+    """A nightly job installed on this machine (launchd / systemd / crontab / Windows task)."""
+    if WINDOWS:
+        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution"], capture_output=True, text=True)
+        return res.returncode == 0
+    home = Path.home()
+    if (home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist").is_file():
+        return True
+    if (home / ".config/systemd/user/dsh-krouter-daily.timer").is_file():
+        return True
+    res = subprocess.run(["crontab", "-l"], capture_output=True, text=True) if shutil.which("crontab") else None
+    return bool(res and "# dsh-krouter-daily" in res.stdout)
+
+
+def set_lamp(vault: Path, on: bool) -> None:
+    """The health page says `lamp: running` only when a nightly job is installed; else `unused`, so `status`
+    never shows a job running that is not there."""
+    health = zones.path(vault, "90 系统文件/自动化/日更健康.md")
+    if health.is_file():
+        subprocess.run([sys.executable, str(ROOT / "extras/host-daily-evolution/patch_health.py"), str(health), "lamp",
+                        "running" if on else "unused"], capture_output=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="One-step install: vault + router + daily timer")
     ap.add_argument("--vault", default="")
@@ -835,6 +1010,13 @@ def main() -> int:
     ap.add_argument("--timer", action="store_true", help="install the nightly job without asking (you have read what it does)")
     ap.add_argument("--no-timer", action="store_true", help="do not install the nightly job, and do not ask")
     ap.add_argument("--no-open", action="store_true", help="do not open the vault in Obsidian")
+    ap.add_argument("--open", action="store_true",
+                    help="open a new vault in Obsidian even with no terminal (default: only when run from a terminal)")
+    ap.add_argument("--minimal", action="store_true",
+                    help="lookup only: no session import, nightly job, plugin, hooks or Cursor rules; connects only --apps")
+    ap.add_argument("--apps", default=None,
+                    help="comma-separated apps to connect (claude, codex, cursor, claude-desktop, vscode, copilot-cli, "
+                         "gemini-cli, kiro, zed, cline); default: every one installed, none with --minimal")
     ap.add_argument("--import", dest="import_sessions", action="store_true",
                     help="import the last 7 days of agent sessions, and claude-mem's memory if present, without asking (local only)")
     ap.add_argument("--import-distill", action="store_true", help="import, and have the model lane distill the latest sessions")
@@ -845,11 +1027,18 @@ def main() -> int:
     ap.add_argument("--unregister-mcp", action="store_true", help=argparse.SUPPRESS)  # uninstall.sh 用
     args = ap.parse_args()
     if args.unregister_mcp:
+        uninstall_plugin(args.dry_run)
         unregister_apps(args.dry_run)
         unregister_hooks(args.dry_run)
         return 0
     lang = system_lang() if args.lang == "auto" else args.lang
     t = MSG[lang]
+    apps = {a.strip() for a in args.apps.split(",") if a.strip()} if args.apps is not None else (set() if args.minimal else None)
+    if args.minimal:
+        args.no_import, args.no_timer, args.ask = True, True, False
+        if apps is not None and "cursor" not in apps:
+            os.environ["KROUTER_NO_CURSOR_RULES"] = "1"
+        os.environ["KROUTER_NO_PLUGIN"] = "1"
     if sys.version_info < (3, 9):
         print(t["py_old"].format(v=platform.python_version()))
         return 1
@@ -857,27 +1046,31 @@ def main() -> int:
     state = vault_state(vault)
     template = template_for(lang)
     print(f"{t['plan']}: {t['vault_' + state]} → {vault}")
-    added = lay_down(template, vault, args.dry_run)
-    if added and state != "new":
-        print(f"  {t['added']}: {len(added)}" + "".join(f"\n    {a}" for a in added[:12]) + ("\n    …" if len(added) > 12 else ""))
+    added = lay_down(template, vault, args.dry_run, lang)
+    if added and (state != "new" or args.dry_run):
+        shown = added if args.dry_run else added[:12]  # 预演把每个文件都列出来
+        print(f"  {t['added']}: {len(added)}" + "".join(f"\n    {a}" for a in shown) + ("\n    …" if len(added) > len(shown) else ""))
     os.environ["KROUTER_NO_TIMER"] = "1"  # 先只装只读部分：库、路由、规则；夜间任务等宿主点头再装
     rc = install_windows(vault, args.dry_run, False) if WINDOWS else install_posix(vault, args.dry_run)
     if rc != 0:
         return rc
     if args.dry_run:
-        register_mcp(t, True)
+        register_mcp(t, True, apps, not args.minimal)
         if not args.no_import:
-            register_hooks(t, True)
+            register_hooks(t, True, apps)
         print("  nightly job: " + ("yes (--timer)" if args.timer else "no (--no-timer)" if args.no_timer
                                    else "asks first (--ask)" if args.ask else "no (--ask to be asked)"))
         print("  session import: " + ("no (--no-import)" if args.no_import else "yes (--import)" if args.import_sessions
                                       else "asks first (--ask)" if args.ask else "yes, local only, no model (--no-import to skip)"))
+        print("  open in Obsidian: " + ("no (--no-open)" if args.no_open else "yes (--open)" if args.open and state == "new"
+                                        else "only if run from a terminal and Obsidian is installed" if state == "new"
+                                        else "no (existing vault)"))
         return 0
     sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
     from krouter_home import remember
 
     remember(vault)  # agent、MCP、插件不用先 export OBSIDIAN_VAULT 也找得到这个库
-    mcp = register_mcp(t, False)
+    mcp = register_mcp(t, False, apps, not args.minimal)
     os.environ.pop("KROUTER_NO_TIMER", None)
     timer, asked = decide_timer(args, vault, t)
     if timer:
@@ -899,34 +1092,42 @@ def main() -> int:
         if do_distill:
             print(t["distilling"])
         imported = run_import(vault, *extra)
-        hooked = register_hooks(t, False) if capture_consented() else []
+        hooked = register_hooks(t, False, apps) if capture_consented() else []
         n = imported.get("distilled") or 0
         if imported.get("pages"):
-            print(t["import_done"].format(pages=imported.get("pages", 0), folder="05 时间日志/会话摘录",
+            print(t["import_done"].format(pages=imported.get("pages", 0), folder=zones.real(vault, "05 时间日志/会话摘录"),
                                           distilled=t["distilled"].format(n=n) if n else ""))
         py = "python" if WINDOWS else "python3"
         live = (["Claude Code"] if "claude-plugin" in mcp else []) + [a["name"] for a in HOOK_APPS if a["id"] in hooked]
         how = ([t["capture_how_live"].format(apps=(" / " if lang == "en" else "、").join(live))] if live else []) + (
             [] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
         print(t["capture_on"].format(how="；".join(how) if lang == "zh" else "; ".join(how),
-                                     revoke=f'{py} "{IMPORT}" --revoke'))
+                                     revoke=f'{py} "{IMPORT}" --revoke',
+                                     ledger=zones.real(vault, "90 系统文件/自动化/记忆变更记录.md")))
     elif tell_later:
         cmd = f"{'python' if WINDOWS else 'python3'} \"{IMPORT}\" --consent --vault \"{vault}\""
         print(t["import_off"].format(cmd=cmd))
     if not do_import and capture_consented():
-        hooked = register_hooks(t, False)  # 升级：以前同意过导入，钩子照样接上（换成这一版的路径）
+        hooked = register_hooks(t, False, apps)  # 升级：以前同意过导入，钩子照样接上（换成这一版的路径）
     cmem = offer_claude_mem(args, vault, t, do_distill)
-    if not (timer or do_import or args.ask or remembering_already()):
+    set_lamp(vault, timer or remembering_timer())
+    if args.minimal:
+        print(t["minimal"].format(apps=", ".join(mcp) or "-"))
+    elif not (timer or do_import or args.ask or remembering_already()):
         cmd = f"{'python' if WINDOWS else 'python3'} \"{ROOT / 'scripts' / 'bootstrap.py'}\" --ask --vault \"{vault}\""
         print(t["lookup_only"].format(cmd=cmd))
-    if "claude" in mcp and "claude-plugin" not in mcp:
+    if "claude" in mcp and "claude-plugin" not in mcp and not args.minimal:
         print(t["plugin_hint"])
     skill = Path(os.environ.get("KROUTER_SKILL_HOME") or Path.home() / ".agents/skills/krouter-obsidian")
     router = skill / "scripts" / ("route_knowledge.py" if WINDOWS else "route_knowledge.sh")
     print(t["done"].format(vault=vault, router=router))
     print(t["try"].format(q=try_question(vault, lang)))
+    print(t["cli"].format(cli=cli_path(), uninstall=stable_root() / "scripts" / "uninstall.sh"))
     if state == "new" and not args.no_open:
-        print(t["obsidian"] if open_in_obsidian(vault) else t["obsidian_none"].format(vault=vault))
+        if should_open(args):
+            print(t["obsidian"] if open_in_obsidian(vault) else t["obsidian_none"].format(vault=vault))
+        else:
+            print(t["obsidian_skip"].format(vault=vault))
     print(json.dumps({"vault": str(vault), "lang": lang, "state": state, "added": len(added), "model": lane or None,
                       "timer": timer, "imported": imported.get("pages", 0), "distilled": imported.get("distilled", 0),
                       "claude_mem": cmem.get("sessions", 0),

@@ -18,6 +18,9 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
 
+No key is needed to start: lookup, sources and refusals run with no model. Without one, a change of mind is
+not distilled, so the old answer is not replaced on its own ([what works without a model](#install)).
+
 **See it for yourself in a few seconds, with nothing installed and no key:** the same story on a throwaway memory,
 deleted afterwards.
 
@@ -28,7 +31,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 | I want to… | Start here |
 |---|---|
 | see it answer, correct itself and refuse, before installing anything | `krouter demo` (above) |
-| give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds |
+| give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds (`--minimal`: lookup only, the apps you name) |
 | check which apps it connects to | [Works with](#works-with) |
 | call it from my own code | [From your own code](#from-your-own-code) |
 | share a memory with my team, or run several | [`docs/TEAM.md`](docs/TEAM.md) |
@@ -77,26 +80,74 @@ page it came from, why that page, how sure), and a memory you can open and edit.
 ## Install
 
 ```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
-Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` ([versions, updating](docs/DETAILS.md#the-claude-code-plugin)).
+The script is saved to a file first, so a failed download stops right there with a non-zero exit (`curl … | sh`
+would run an empty script and report success). Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex`
+· Claude Code plugin only: `/plugin install krouter --marketplace 398894496-arch/KRouter` ([versions, updating](docs/DETAILS.md#the-claude-code-plugin)).
+
+Python 3 is the only requirement; ripgrep, when present, only makes literal search faster on a big vault. Neither way
+asks anything. Pick one (options go after the script: `sh /tmp/krouter-install.sh --minimal --apps claude`):
+
+| | Default | `--minimal` |
+|---|---|---|
+| Lookup with the source page, "not in the memory" instead of a guess | yes | yes |
+| Apps connected | every app on [the list below](#works-with) that it finds | only the ones you name with `--apps claude,codex,cursor,…` (none when you name none) |
+| Claude Code plugin (session hooks) | installed when `claude` is found | no |
+| Codex and Cursor session hooks | added when the app is found | no |
+| Cursor rules (`~/.cursor/rules/`) | yes | only with `--apps cursor` |
+| Imports the last 7 days of agent sessions | yes: on this machine, redacted, no model call, undoable | no |
+| Nightly job, distilling with your model (the steps that send text out) | no: `--ask` asks, `--timer` turns the job on | no |
+| Opens the new memory in Obsidian | only when you run it from a terminal (`--open` always, `--no-open` never); run by an agent, no | same |
+
+Every file the default install creates or changes (`--dry-run` lists them for your machine first, changing nothing):
+
+| Where | What |
+|---|---|
+| `~/Documents/Second Brain/` (or your folder, `--vault`) | the memory: plain Markdown. An existing folder keeps every file; only missing ones are added |
+| `~/.dsh-krouter/<version>/`, `~/.dsh-krouter/current` | the downloaded release (installing from a clone uses the clone) |
+| `~/.agents/skills/krouter-obsidian/` | the router |
+| `~/.config/krouter/vault` | where the memory is, for hooks and the MCP server |
+| `~/.claude.json` (`claude mcp add`), `~/.claude/settings.json` (plugin and its marketplace) | Claude Code |
+| `~/.codex/config.toml` (`codex mcp add`), `~/.codex/hooks.json` | Codex |
+| `~/.cursor/mcp.json`, `~/.cursor/hooks.json`, `~/.cursor/rules/` | Cursor |
+| each other app's MCP settings file, [listed below](#works-with) | only for apps it finds; a copy of each changed file is kept as `*.krouter-bak` |
+| `~/.cache/krouter/`, `~/.local/state/krouter/` | the search cache (rebuildable) and what the import has seen |
+
+Nothing leaves the machine during the install except the download itself. When it is done:
+
+```bash
+~/.dsh-krouter/current/scripts/krouter doctor     # OK, or what is missing and the command that fixes it
+~/.dsh-krouter/current/scripts/krouter search "what did we decide about X?"
+```
+
+(From a clone, `./scripts/krouter`; with the Python package on your PATH, just `krouter`.)
+
+**Without a model** (no logged-in AI coding CLI, no API key), lookup, answers with their source page, refusals,
+the local session import and noting what reads like a correction all work. Distilling (each page's "what was
+decided, what changed"), the nightly upkeep and settling those corrections do not. The consequence: when you
+change your mind, the old answer is not replaced on its own, and the older page can still rank first until a model
+is connected and the session is distilled. The installer and `krouter doctor` both say which state you are in.
 
 Rather look first? Nothing below changes your machine until the last line:
 
 ```bash
 git clone https://github.com/398894496-arch/KRouter.git && cd KRouter
-./scripts/first_run.sh                      # a receipt on the bundled sample vault
-python3 scripts/bootstrap.py --dry-run      # every change the install would make, made nowhere
-python3 scripts/bootstrap.py --vault ~/notes --no-timer   # install against your vault, nightly job off
+./scripts/first_run.sh                      # a receipt on a throwaway copy of the sample memory
+python3 scripts/bootstrap.py --dry-run      # every file and app setting the install would change, changed nowhere
+python3 scripts/bootstrap.py --minimal --apps claude --vault ~/notes   # lookup only, Claude Code only, your folder
 ```
 
-Python 3 is the only requirement, and the installer asks nothing. It makes a memory folder (or uses yours with
-`--vault`, overwriting nothing), connects every app on [the list below](#works-with) that it finds, and imports the
-last 7 days of agent sessions as pages: locally, redacted, with no model call, each one listed in the change ledger
-and undoable. From then on it remembers by itself, turn by turn, in Claude Code, Codex and Cursor, and nothing leaves
-the machine. `--no-import` installs lookup only; `--ask` asks first, and is how you turn on the two steps that send
-text out: distilling with your model, and the nightly job.
+**Uninstall:**
+
+```bash
+sh ~/.dsh-krouter/current/scripts/uninstall.sh     # from a clone: sh scripts/uninstall.sh; --dry-run lists first
+```
+
+It stops and removes the nightly job, the router, the rules, KRouter's MCP entries and hooks, the Claude Code plugin
+(and its marketplace when it points at a folder on this machine) and the recorded path. It never touches your
+memory folder or your keys file. `--purge` also removes the cache, the state and `~/.dsh-krouter`.
 
 ## Works with
 

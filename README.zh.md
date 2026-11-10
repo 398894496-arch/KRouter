@@ -10,6 +10,8 @@
 
 ![周一定了 A，周三改成 B，周四 agent 答 B 并引用那条纠错；库里没有的问题直接拒答](docs/img/demo.gif)
 
+开始用不需要 key：查询、出处、拒答都不调模型。没有模型时改主意不会被提炼，旧答案不会被自动替换（[没有模型时哪些能用](#安装)）。
+
 **不用安装、不用 key，几秒钟亲眼看一遍**：同样的过程，在一个用完即删的临时记忆库上跑。
 
 ```bash
@@ -19,7 +21,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 | 我想…… | 从这里开始 |
 |---|---|
 | 装之前先看它怎么答、怎么被纠正、怎么拒答 | `krouter demo`（上面这行） |
-| 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个 |
+| 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个（`--minimal`：只装查询、只接你点名的） |
 | 看能接哪些应用 | [能接哪些应用](#能接哪些应用) |
 | 从自己的代码里调用 | [从你自己的代码里用](#从你自己的代码里用) |
 | 团队共用一份记忆，或者跑好几份 | [`docs/TEAM.md`](docs/TEAM.md) |
@@ -50,21 +52,66 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 ## 安装
 
 ```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
-Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（[版本要求和更新办法](docs/DETAILS.zh.md#claude-code-插件)）。
+先把脚本存成文件再运行：下载失败就停在这一步，退出码非零（`curl … | sh` 会拿空脚本跑一遍，还报成功）。Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex`
+· 只装 Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（[版本要求和更新办法](docs/DETAILS.zh.md#claude-code-插件)）。
+
+唯一的前提是 Python 3；装了 ripgrep 只是让大库的原文搜索快一点。两种装法都什么都不问，选一种（参数跟在脚本后面：`sh /tmp/krouter-install.sh --minimal --apps claude`）：
+
+| | 默认 | `--minimal`（最小安装） |
+|---|---|---|
+| 查询带出处、库里没有就直说 | 有 | 有 |
+| 接哪些应用 | [下面这张表](#能接哪些应用)里本机装了的全部 | 只接你用 `--apps claude,codex,cursor,…` 点名的（不点名就一个都不接） |
+| Claude Code 插件（会话钩子） | 找到 `claude` 就装 | 不装 |
+| Codex、Cursor 的会话钩子 | 找到应用就加 | 不加 |
+| Cursor 规则（`~/.cursor/rules/`） | 写 | 只在 `--apps cursor` 时写 |
+| 导入近 7 天的 agent 会话 | 导：只在本机、先脱敏、不调模型、可撤回 | 不导 |
+| 夜间任务、用你的模型提炼（会把文字发出去的两步） | 不开：`--ask` 先问你，`--timer` 直接开夜间任务 | 不开 |
+| 在 Obsidian 里打开新库 | 只在你从终端运行时打开（`--open` 总是打开，`--no-open` 从不）；agent 代跑时不打开 | 同左 |
+
+默认安装会建或改的全部文件（`--dry-run` 先按你这台机器列一遍，一处都不改）：
+
+| 位置 | 是什么 |
+|---|---|
+| `~/Documents/第二大脑/`（或你用 `--vault` 指定的文件夹） | 记忆本身，纯 Markdown。已有的文件夹一个文件都不覆盖，只补缺的 |
+| `~/.dsh-krouter/<版本>/`、`~/.dsh-krouter/current` | 下载下来的发布包（从 clone 里装就用 clone 本身） |
+| `~/.agents/skills/krouter-obsidian/` | 路由器 |
+| `~/.config/krouter/vault` | 记着记忆在哪，给钩子和 MCP 服务用 |
+| `~/.claude.json`（`claude mcp add`）、`~/.claude/settings.json`（插件和它的市场） | Claude Code |
+| `~/.codex/config.toml`（`codex mcp add`）、`~/.codex/hooks.json` | Codex |
+| `~/.cursor/mcp.json`、`~/.cursor/hooks.json`、`~/.cursor/rules/` | Cursor |
+| [下面表里](#能接哪些应用)其他应用各自的 MCP 设置文件 | 只动本机装了的；改过的文件旁边留一份 `*.krouter-bak` |
+| `~/.cache/krouter/`、`~/.local/state/krouter/` | 搜索缓存（可重建）和导入进度 |
+
+安装过程中除了下载本身，没有任何内容离开本机。装完：
+
+```bash
+~/.dsh-krouter/current/scripts/krouter doctor     # 一句结论：正常，或缺什么、用哪条命令补
+~/.dsh-krouter/current/scripts/krouter search "上周 X 最后定了什么？"
+```
+
+（在 clone 里用 `./scripts/krouter`；装了 Python 包、`krouter` 在 PATH 上，直接 `krouter`。）
+
+**没有模型时**（没登录任何 AI 编程工具、也没有 API key）：查询、带出处的回答、库里没有就直说、本地导入会话、记下读起来像纠正的话，都照常；不工作的是提炼（每页开头的「定了什么、改了什么」）、夜间整理和这些纠正的判定。后果：你改了主意，旧答案不会被自动替换，查询时旧页可能仍排第一，要等接上模型、那段会话提炼过之后才换。安装输出和 `krouter doctor` 都会说你现在是哪种状态。
 
 想先看看再装？下面只有最后一行会改动你的机器：
 
 ```bash
 git clone https://github.com/398894496-arch/KRouter.git && cd KRouter
-./scripts/first_run.sh                      # 在自带的示例库上出一张回执
-python3 scripts/bootstrap.py --dry-run      # 列出安装会做的每一处改动，一处都不做
-python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的库，先不开夜间任务
+./scripts/first_run.sh                      # 在示例库的临时副本上出一张回执
+python3 scripts/bootstrap.py --dry-run      # 列出安装会改的每个文件和应用设置，一处都不改
+python3 scripts/bootstrap.py --minimal --apps claude --vault ~/notes   # 只装查询、只接 Claude Code、用你的文件夹
 ```
 
-唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记：Claude Code、Codex、Cursor 每一轮结束就记下，没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，会把文字发出去的那两步（用你的模型提炼、夜间任务）也是在这里开。
+**卸载：**
+
+```bash
+sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/uninstall.sh；加 --dry-run 先列出来
+```
+
+它会停掉并删除夜间任务、路由器、规则、KRouter 的 MCP 条目和钩子、Claude Code 插件（插件市场指向本机文件夹时一并删）和记下的库路径；你的记忆文件夹和钥匙文件一律不动。`--purge` 另外删缓存、状态和 `~/.dsh-krouter`。
 
 ## 能接哪些应用
 

@@ -13,7 +13,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from . import ask
+from . import ask, router_dir
 
 PAGES = {
     "en": {
@@ -54,9 +54,18 @@ def template_dir(lang: str) -> Path:
 
 
 def build(root: Path, lang: str) -> Path:
+    """The template in a throwaway folder; in English with English folder and file names, as the install lays it."""
+    import sys
+
     vault = root / "vault"
-    shutil.copytree(template_dir(lang), vault)
-    rules = vault / "02 经验与方法"
+    sys.path.insert(0, str(router_dir()))
+    import zones
+
+    if lang == "en":
+        zones.lay_out(template_dir(lang), vault, alias_sample=router_dir() / "canonical_sources.psv")
+    else:
+        shutil.copytree(template_dir(lang), vault)
+    rules = zones.path(vault, "02 经验与方法")
     for name, (status, day, replaces, body) in PAGES[lang].items():
         title = name[:-3]
         fm = f"---\ntitle: {title}\nstatus: {status}\ndate: {day}\n"

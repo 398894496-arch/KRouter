@@ -112,7 +112,10 @@ fixes for a week; **1.2.0 (2026-10-19) came ahead of the planned 2026-11-12** at
 at most once a week, patches when ready. Pin a release (`KROUTER_TAG`).
 What the stability promise covers and what is best-effort: [`DETAILS.md` → Core and extras](DETAILS.md#core-and-extras).
 For a cautious host, the smallest install is router only, nothing in the background:
-`bootstrap.py --vault <vault> --no-timer --no-import` (no nightly job, no session import, no model call, no hook).
+`bootstrap.py --minimal --apps claude --vault <vault>` (no nightly job, session import, model call, plugin, hook or
+Cursor rule; only the apps named in `--apps`). Run by an agent, the installer does not open Obsidian. After any
+install, `~/.dsh-krouter/current/scripts/krouter doctor` (from a clone: `./scripts/krouter doctor`) gives one verdict:
+OK, or what is missing and the command that fixes it. Uninstall: `sh ~/.dsh-krouter/current/scripts/uninstall.sh`.
 
 ## What to know before installing
 
@@ -122,7 +125,7 @@ For a cautious host, the smallest install is router only, nothing in the backgro
    `~/.dsh-krouter-keys.env`. Without either, `krouter_status` says so (`host_action:`).
 3. Queries never leave the machine. Keys and pages marked secret are never sent or quoted. `--dry-run` on the
    install, the import and the nightly job shows what would be sent first.
-4. Session excerpts under `05 时间日志/会话摘录/` are the turn-by-turn record (time-log tier in recall). Distilled
+4. Session excerpts under `05 时间日志/会话摘录/` (`05 Journal/Sessions/` in an English vault) are the turn-by-turn record (time-log tier in recall). Distilled
    lines take effect without a yes; every run's additions, replaced decisions and settled correction candidates are
    listed in `90 系统文件/自动化/记忆变更记录.md` with one undo command per run (a git revert of that run's commit).
 

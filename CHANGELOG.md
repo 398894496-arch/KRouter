@@ -11,6 +11,28 @@ notice, then the details.
 
 ## Unreleased
 
+- **An English install is English all the way through, and the install says what it changes.** A new English vault
+  gets English folder and file names (`Home.md`, `02 Methods/`, `90 System/Automation/Daily health.md`, …) from
+  `skill/krouter-obsidian/scripts/zones_en.psv`, recorded in the vault's `krouter-zones.psv`; `krouter demo`, `status`,
+  receipts' `how` lines, `first_run.sh` and the correction-candidates page (`YYYY-MM-DD｜Correction candidates.md`)
+  follow it. Vaults with the default (Chinese) names keep working unchanged; nothing is migrated. The language is
+  `--lang`, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's (an English terminal on a Mac set to Chinese
+  used to get the Chinese install).
+- **Install:** the README line saves the script to a file before running it, so a failed download exits non-zero
+  (`curl … | sh` exited 0 on a 404). `--minimal` installs lookup only (no session import, nightly job, Claude Code
+  plugin, hooks or Cursor rules) and connects only the apps named with `--apps`. Run with no terminal (by an agent),
+  the installer no longer opens Obsidian; `--open` forces it. `--dry-run` lists every vault file, the router, the
+  rules, the recorded path, the plugin and its marketplace. The install output and the README say what works without
+  a model and the consequence (a change of mind is not distilled, so the old answer can still rank first). The
+  health page's `lamp` is `running` only when a nightly job is installed. A `~/.codex` holding only `tmp/` (left by
+  probing the Codex app's login) no longer counts as a Codex install.
+- **`krouter doctor`** (and `scripts/krouter doctor` from a clone or `~/.dsh-krouter/current`, no pip needed): one
+  verdict, OK or what is missing with the command that fixes it. The installer prints where `krouter` is.
+- **Uninstall** also uninstalls the Claude Code plugin and removes its marketplace when it points at a folder on this
+  machine (its session hooks kept firing before); `--purge` also removes `~/.dsh-krouter`. The README's Install
+  section has the uninstall command. `first_run.sh` no longer requires ripgrep (the router already fell back to a
+  built-in search). The release package now carries `sdk/krouter`, `.claude-plugin/`, `hooks/` and `plugin/`, so a
+  release install gets the plugin and `krouter doctor` like a clone does.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
