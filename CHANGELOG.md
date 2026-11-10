@@ -11,6 +11,32 @@ notice, then the details.
 
 ## Unreleased
 
+- **When the vault changed its mind and nothing has been distilled yet, the newer page now comes first, and the
+  receipt says an earlier page says otherwise.** No model needed. Two of the top three pages that match the question
+  about as well, share most of its words and carry dates, where the newer one has a line saying something was
+  changed (`switched … to`, `instead of`, `no longer`, `改成`, `换成`, …) that names the subject: the newer page is
+  listed first, both are marked (`conflict=newer` / `conflict=older`), and the receipt prints
+  `recall_conflict: an earlier page says otherwise. …`. When the dates cannot order them (the same day) the pages are
+  marked `possible` and the order is kept; anything less is left alone. The audit's case (Monday PostgreSQL,
+  Wednesday SQLite, imported, no key; the old page was first) is a test. On LongMemEval's answerable questions it
+  fires as "sure" for 42 of 470 and reorders 21; the newest answer session is first for 44 instead of 39 of the 72
+  knowledge-update questions, and an answer session is first for 420 of 470 either way (counted without the
+  refusal gate; not a registered set). Memory honesty, six sets: unchanged. On by default; `KROUTER_CONFLICT=0` turns it off.
+- **An associative recall path, measured and off by default.** The recall cache now keeps an edge table: links,
+  `supersedes:`, same imported session, same day, shared rare words, and co-citation read from a state file
+  (`associate.reinforce`, for the nightly job; not wired yet). With `KROUTER_ASSOC=1`, one of every three pages (1 of
+  3, 2 of 5, 3 of 8) goes to pages reached from the first three direct hits along those edges, hub pages (index,
+  overview, 12+ links) and replaced pages never offered, and only when an edge is explicit or the pages share at least
+  six rare words. The receipt lists them apart, under `associated:`, each with the edge it came along (`via:`). Set
+  18 (`bench/memory_honesty/HELDOUT.md`, registered before the path was written; LongMemEval split in half, tuned on
+  one half, the other run once), "every answer session among the k pages", multi-session questions at k = 3 / 5 / 8:
+  BM25 24 / 31 / 35 of 47, KRouter 28 / 32 / 36, with the path **29 / 40 / 42**; all 235: 184 / 198 / 208, 187 / 198 /
+  209, **190 / 210 / 218**. The bar fixed beforehand asked for a gain over BM25 shown at both 3 and 5 pages; at 3 the
+  interval is [0, +10], so the path is **not on by default**. On LoCoMo it does not help (1 104 → 1 078 at three pages,
+  against KRouter without it). Memory honesty, six sets: unchanged with it on. The edge table costs a 10,000-page
+  build 6.0 s instead of 3.6 s and 38 MB of cache instead of 29; a lookup 83 ms instead of 69. Offline count, no model:
+  `bench/longmemeval/assoc.py` (`--half dev|heldout`, `--locomo`).
+
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

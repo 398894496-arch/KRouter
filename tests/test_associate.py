@@ -220,19 +220,20 @@ def test_newer_page_first_and_conflict_named_without_any_model(changed_mind):
     assert f"- {old} tier=log status=imported conflict=older" in out
 
 
-def test_conflict_flag_only_when_the_change_does_not_name_the_subject(ri, tmp_path):
-    """Two dated pages on the same question, the newer one says something changed but not about this: flagged,
-    order kept."""
+def test_conflict_flag_only_when_the_dates_cannot_order_the_pages(ri, tmp_path):
+    """Two pages on the same question with the same date, one says the thing was changed: marked, order kept."""
     v = tmp_path / "vault"
     _filler(v)
-    _write(v, "05 时间日志/2026-11-02 cache.md", "---\ndate: 2026-11-02\n---\nThe report cache expires after "
-           "ten minutes for the report cache of the dashboard. The report cache expires nightly too.\n")
-    _write(v, "05 时间日志/2026-11-04 cache.md", "---\ndate: 2026-11-04\n---\nThe report cache of the dashboard "
-           "expires after one hour.\nUnrelated: we switched the lunch order to pizza.\n")
-    res = ri.recall(v, "when does the dashboard report cache expire", limit=3)
+    _write(v, "05 时间日志/2026-11-04 a.md", "---\ndate: 2026-11-04\n---\nThe report cache of the dashboard "
+           "expires after ten minutes. The dashboard report cache is shared by all dashboard users.\n")
+    _write(v, "05 时间日志/2026-11-04 b.md", "---\ndate: 2026-11-04\n---\nWe changed the dashboard report cache "
+           "to expire after one hour.\n")
+    q = "when does the dashboard report cache expire"
+    off = [h["rel"] for h in ri.recall(v, q, limit=3, conflict=False)["hits"]]
+    res = ri.recall(v, q, limit=3)
     c = res.get("conflict")
-    assert c and not c["sure"] and not c["reorder"]
-    assert res["hits"][0]["rel"] == "05 时间日志/2026-11-02 cache.md"  # not reordered
+    assert c and not c["sure"] and not c["reorder"] and c["newer"] == "05 时间日志/2026-11-04 b.md"
+    assert [h["rel"] for h in res["hits"]] == off  # not reordered
     assert {h.get("conflict") for h in res["hits"][:2]} == {"possible"}
     assert "recall_conflict: possible." in ri.associate.conflict_note(c)
 
@@ -250,6 +251,14 @@ def test_no_conflict_when_pages_are_undated_or_about_different_things(ri, tmp_pa
     _write(w, "05 时间日志/2026-11-04 b.md", "---\ndate: 2026-11-04\n---\nThe login page moved to a new "
            "domain; we switched DNS to the new provider.\n")
     assert "conflict" not in ri.recall(w, "when does the dashboard report cache expire", limit=3)
+    # the same subject, but the change line is about something else: nothing
+    x = tmp_path / "vault3"
+    _filler(x)
+    _write(x, "05 时间日志/2026-11-02 cache.md", "---\ndate: 2026-11-02\n---\nThe report cache expires after "
+           "ten minutes for the report cache of the dashboard. The report cache expires nightly too.\n")
+    _write(x, "05 时间日志/2026-11-04 cache.md", "---\ndate: 2026-11-04\n---\nThe report cache of the dashboard "
+           "expires after one hour.\nUnrelated: we switched the lunch order to pizza.\n")
+    assert "conflict" not in ri.recall(x, "when does the dashboard report cache expire", limit=3)
 
 
 def test_conflict_tie_break_can_be_turned_off(ri, tmp_path, monkeypatch):

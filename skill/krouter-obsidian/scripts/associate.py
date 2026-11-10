@@ -19,7 +19,11 @@ score) along its edges; a page reached by several seeds or edges adds them up, t
 matches the question by itself (`QUERY_BOOST`). Hubs (index and overview pages, pages with `HUB_DEGREE` or more links)
 are never offered, and what they pass on is split over all their links. Replaced pages are never offered.
 
-Chosen on set 18's development half of LongMemEval (HELDOUT.md) and the memory-honesty development benches.
+Chosen on set 18's development half of LongMemEval (HELDOUT.md) and the memory-honesty development benches. Off by
+default (`KROUTER_ASSOC=1` turns it on): on the held-out half it brings every answer session for more multi-session
+questions than BM25 at 5 and 8 pages, but at 3 pages the gain is not shown, and on LoCoMo it does not help.
+
+The conflict tie-break (`conflicts`) is on by default (`KROUTER_CONFLICT=0` turns it off).
 """
 
 from __future__ import annotations
@@ -392,7 +396,9 @@ def enabled(value: bool | None = None) -> bool:
     return DEFAULT_ON
 
 
-DEFAULT_ON = False  # set 18 decides; see CHANGELOG
+# 第 18 组（HELDOUT.md）的过关线没全过：留出半上 k=3 时多会话题比 BM25 多 5 道，但配对区间下限是 0；
+# LoCoMo 上还略亏。所以默认关，`KROUTER_ASSOC=1` 打开
+DEFAULT_ON = False
 
 
 def conflict_enabled() -> bool:
@@ -440,10 +446,11 @@ def change_lines(ri, text: str, subject: set[str]) -> tuple[bool, bool]:
 def conflicts(ri, con: sqlite3.Connection, vault: Path, hits: list[dict], qtok: list[str]) -> dict | None:
     """The first pair among the top hits that look like the same thing said twice, at different dates.
 
-    Sure (reorder): both pages match the question about as well, share most of its words, the lower one is newer,
-    and the newer one has a line that says something was changed and names the subject. Unsure (flag only): the same,
-    but the change line does not name the subject, or the newer page is already first, or the pages carry the same
-    date. No pair, or a page without a date: nothing. Replaced pages are left to their own marking."""
+    Both pages match the question about as well and share most of its words, both are dated, and the newer one has a
+    line that says something was changed and names the subject. Sure, at different dates: the newer page goes first
+    (if it is not already) and both are marked. Unsure, the same date (which is newer cannot be told): marked, order
+    kept. Anything less (no change line naming the subject, a page without a date): nothing. Replaced pages are left
+    to their own marking."""
     live = [h for h in hits[:CONFLICT_DEPTH] if h.get("tier") != "dead" and h.get("status") not in ri.DEAD_STATUS]
     if len(live) < 2 or not qtok:
         return None
@@ -474,14 +481,16 @@ def conflicts(ri, con: sqlite3.Connection, vault: Path, hits: list[dict], qtok: 
         day1 = page_day(other["rel"], ri.split_frontmatter(text1)[0])
         if not day0 or not day1:
             continue
-        if day1 < day0:  # 首条才是较新的那页：顺序已经对了，只说明较早的一页说法不同
-            older, newer, new_text = other, first, _page_text(vault, first["rel"])
+        text0 = _page_text(vault, first["rel"])
+        if day1 < day0 or day1 == day0 and change_lines(ri, ri.split_frontmatter(text0)[1], common)[1]:
+            # 首条才是较新的（或同一天、改动的话在首条）：顺序已经对了，只说明较早的一页说法不同
+            older, newer, new_text = other, first, text0
         else:
             older, newer, new_text = first, other, text1
-        changed, named = change_lines(ri, ri.split_frontmatter(new_text)[1], common)
-        if not changed:
+        _changed, named = change_lines(ri, ri.split_frontmatter(new_text)[1], common)
+        if not named:  # 改动的话没点到这件事（长会话里随处都有 instead of、replace）：不算
             continue
-        sure = named and day1 != day0
+        sure = day1 != day0
         reorder = sure and newer is other
         return {"older": older["rel"], "newer": newer["rel"], "older_day": min(day0, day1),
                 "newer_day": max(day0, day1), "sure": sure, "reorder": reorder}
