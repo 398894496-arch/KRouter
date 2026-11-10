@@ -209,21 +209,29 @@ class Worker:
     def ask(self, argv: list[str], env: dict, timeout: float) -> dict:
         req = {"argv": argv, "env": env, "refresh": self.stale}
         self.stale = False
-        self.proc.stdin.write(json.dumps(req, ensure_ascii=False) + "\n")
-        self.proc.stdin.flush()
         try:
+            self.proc.stdin.write(json.dumps(req, ensure_ascii=False) + "\n")
+            self.proc.stdin.flush()
             line = self.replies.get(timeout=timeout)
+            if line is None:
+                raise OSError("lookup process exited")
+            reply = json.loads(line)
+            if not isinstance(reply, dict):
+                raise ValueError("bad reply")
+            return reply
         except queue.Empty:
             self.close()
             raise TimeoutError from None
-        if line is None:
-            raise OSError("lookup process exited")
-        return json.loads(line)
+        except (OSError, ValueError):
+            self.close()  # 回了坏行的进程不再用：它的下一行可能是上一问的答案
+            raise
 
     def close(self) -> None:
+        """Kill the process and wait for it, so `alive()` is false by the time this returns."""
         try:
             self.proc.kill()
-        except OSError:
+            self.proc.wait(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
             pass
 
 
@@ -250,9 +258,6 @@ class Pool:
                 with self.lock:
                     self.started = [x for x in self.started if x.alive()] + [w]
             return w.ask(argv, env, LOOKUP_TIMEOUT)
-        except BaseException:
-            w = None if w is None or not w.alive() else w
-            raise
         finally:
             self.idle.put(w if w is not None and w.alive() else None)
 

@@ -117,9 +117,38 @@ def test_a_lookup_that_hangs_times_out_and_frees_its_slot(vault, monkeypatch, tm
     monkeypatch.setattr(mcp_server.Worker, "__init__", slow)
     text, err = mcp_server._route("search", "what port does the api use", None)
     assert err and "timed out" in text
+    pool = mcp_server.POOLS[str(vault)]
+    assert list(pool.idle.queue) == [None]  # 被杀掉的进程没被放回去：下一问直接起新的，不用先退回一次
     monkeypatch.setattr(mcp_server.Worker, "__init__", real)
     text, err = mcp_server._route("search", "what port does the api use", None)  # 槽位空出来了，换上正常的
     assert not err and "API port" in text
+
+
+def test_a_worker_that_replies_garbage_is_not_used_again(vault, monkeypatch, tmp_path):
+    chatty = tmp_path / "chatty_worker.py"  # 每问先回一行不是协议的东西：之后每一行都会对不上问题
+    chatty.write_text("import sys\nfor line in sys.stdin:\n    print('not json', flush=True)\n"
+                      "    print('{\"code\": 0, \"out\": \"someone else\\'s answer\", \"err\": \"\"}', flush=True)\n",
+                      encoding="utf-8")
+    real = mcp_server.Worker.__init__
+
+    def bad(self, v):
+        import queue
+
+        self.proc = subprocess.Popen([sys.executable, str(chatty)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     text=True, bufsize=1)
+        self.replies, self.stale = queue.Queue(), False
+        threading.Thread(target=self._read, daemon=True).start()
+
+    monkeypatch.setattr(mcp_server, "WORKERS", 1)
+    monkeypatch.setattr(mcp_server, "POOLS", {})
+    monkeypatch.setattr(mcp_server.Worker, "__init__", bad)
+    text, err = mcp_server._route("search", "what port does the api use", None)  # 坏行：这一次退回一次性进程
+    assert not err and "API port" in text
+    pool = mcp_server.POOLS[str(vault)]
+    assert list(pool.idle.queue) == [None] and pool.count() == 0  # 那个进程已经关掉，留下的那行答案没人会读到
+    monkeypatch.setattr(mcp_server.Worker, "__init__", real)
+    text, err = mcp_server._route("search", "what port does the api use", None)
+    assert not err and "API port" in text and "someone else" not in text
 
 
 def test_a_note_is_found_by_the_very_next_lookup(vault, monkeypatch):
@@ -201,6 +230,19 @@ def test_the_literal_fallback_reads_only_pages_that_can_hold_the_question_and_pr
     assert narrowed > 50
     assert route_knowledge.literal_candidates("no page has this sentence in it at all", vault, vault) == []
     assert route_knowledge.literal_candidates("8080", vault, vault) is None  # 一个词：没有可筛的，照旧全读
+
+
+def test_when_recall_fails_the_literal_search_reads_the_whole_scope(vault, monkeypatch):
+    def broken(*a, **k):
+        raise RuntimeError("index unavailable")
+
+    monkeypatch.setattr(recall_index, "recall", broken)  # bounded_search 每次现从 recall_index 取
+    monkeypatch.setattr(route_knowledge, "literal_candidates", lambda *a, **k: [])  # 一份什么都挑不出来的旧索引
+    out = io.StringIO()
+    monkeypatch.setattr(sys, "argv", ["route_knowledge.py", "search", "staging API on 9090"])
+    with contextlib.redirect_stdout(out):
+        route_knowledge.main()
+    assert "API port.md" in out.getvalue() and "9090" in out.getvalue()  # 没问索引，直接扫了范围里的文件
 
 
 def test_server_flags_set_the_pool(monkeypatch):

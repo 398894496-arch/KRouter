@@ -331,6 +331,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
             ],
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,  # 常驻进程里 stdin 是请求通道，不能让 rg 接过去
         )
         lines = (proc.stdout or "").splitlines()
     else:
@@ -423,7 +424,8 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     print(f"scope: {scope}")
     if res is not None:
         print("recall: none (no page covers enough of the question; do not guess)")
-    md_search(query, scope, vault=vault)
+    # 索引这次没用上（recall 抛了错）就别拿它挑候选页：它可能缺页或过期，整个范围照老办法扫
+    md_search(query, scope, vault=vault if res is not None else None)
 
 
 def main() -> int:
