@@ -556,7 +556,8 @@ def prior_digest(path: Path | None, e: dict) -> tuple[list[str], int]:
 def render(e: dict, digest: str = "", covers: int | None = None) -> str:
     """The page for one session and day. `covers`: how many turns the digest was made from (all of them by default)."""
     turns = e["turns"]
-    meta = ["---", "type: session-excerpt", f"source: {MARK}", "status: imported", f"date: {e['day'].isoformat()}",
+    status = "superseded" if e.get("superseded_by") else "imported"  # 后来的会话整页改掉了它：重新导入也照旧标着
+    meta = ["---", "type: session-excerpt", f"source: {MARK}", f"status: {status}", f"date: {e['day'].isoformat()}",
             f"agent: {e['agent']}", f"session: {e['id']}", f"project: {e['project'] or '-'}",
             *([f"project_root: {e['root']}"] if e.get("root") else []), f"turns: {len(turns)}",
             f"first_turn: {e.get('first_key') or turn_key(turns[0])}"]
@@ -564,6 +565,8 @@ def render(e: dict, digest: str = "", covers: int | None = None) -> str:
         meta.append(f"forked_from: {e['forked_from']}")
     if e.get("covered_by"):
         meta.append(f'covered_by: "[[{e["covered_by"].removesuffix(".md")}]]"')
+    if e.get("superseded_by"):
+        meta.append(f"superseded_by: {e['superseded_by']}")
     title = clean(e["title"], 80).replace("\n", " ")
     meta.append(f"title: {title}")
     if digest:
@@ -713,17 +716,39 @@ def old_lines(path: Path | None) -> list[str]:
     return [ln.strip() for ln in block.splitlines() if ln.strip().startswith(("-", "*"))]
 
 
+def supersede_replaced(vault: Path, roots: set[str]) -> list[tuple[Path, str]]:
+    """Session pages every decision of which a later change of mind replaced ("原来 A → 改成 B" on a later page, the
+    rule session start already uses) get `status: superseded` and `superseded_by`, so a lookup no longer gives the
+    old answer as current. Only our own pages; a page with any decision still standing is left alone. No model call.
+    Returns [(old page, link to the page that replaced it)]."""
+    import corrections
+    import session_hook
+
+    out = []
+    for root in sorted(r for r in roots if r):
+        for old_rel, new_rel in session_hook.replaced_pages(vault, root).items():
+            path = zones.path(vault, old_rel)
+            if not path.is_file() or frontmatter(path).get("source") != MARK:
+                continue
+            link = f'"[[{new_rel.removesuffix(".md")}]]"'
+            path.write_text(corrections._frontmatter_set(path.read_text(encoding="utf-8"),
+                                                         {"status": "superseded", "superseded_by": link}),
+                            encoding="utf-8")
+            out.append((path, link.strip('"')))
+    return out
+
+
 def log_run(vault: Path, rid: str, pages: list[dict], verdicts: list[dict], gone: list[Path],
-            touched: list[Path]) -> None:
+            touched: list[Path], superseded: list[tuple[Path, str]] | None = None) -> None:
     """Make the run observable: one commit with exactly what it wrote, then its entry in the change ledger."""
     import capture_ledger
 
-    if not (pages or verdicts or gone):
+    if not (pages or verdicts or gone or superseded):
         return
     added = sum(len(p["added"]) for p in pages)
     sha = capture_ledger.commit(vault, rid, touched, f"run {rid}（{len(pages)} 页新增 {added} 条，判定纠正 {len(verdicts)} 条）")
     undo = f"python3 {Path(__file__).resolve()} --vault '{vault}' --undo {rid}"
-    entry = capture_ledger.section(vault, rid, pages, verdicts, gone, undo, sha)
+    entry = capture_ledger.section(vault, rid, pages, verdicts, gone, undo, sha, superseded or [])
     ledger = capture_ledger.append(vault, entry)
     capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
 
@@ -841,12 +866,23 @@ def main() -> int:
     verdicts: list[dict] = []
     touched: list[Path] = []          # 这一轮写过或删过的文件，进同一个提交
     written, kept, sent, calls, failed, incremental = [], [], 0, 0, 0, 0
+    exp_cards = exp_failed = exp_uses = 0
+    import experience
+    uses_on = experience.digest_on() and not args.dry_run
     for e in entries:
+        if uses_on:
+            # 经验卡被提出、被采纳（回复里带了卡号、下一句说照做了）：只读记录，不调模型，摘要按它排序
+            try:
+                exp_uses += experience.record_uses(vault, f"{e['agent']}:{e['id'][:8]}", e["turns"])
+            except Exception as exc:  # noqa: BLE001
+                print(f"experience uses: {str(exc)[:200]}", file=sys.stderr)
         target = folder / file_name(e)
         if target.exists() and frontmatter(target).get("source") != MARK:
             kept.append(target.name)
             continue
         before = have.get((e["id"], e["day"].isoformat()))
+        if before and before.exists():
+            e["superseded_by"] = frontmatter(before).get("superseded_by", "")
         page = render(e)
         digest = old_digest(before, len(e["turns"]))
         covers = len(e["turns"])
@@ -862,6 +898,21 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001  模型失败不影响本地摘录
                 failed += 1
                 print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
+            if (fresh or args.dry_run) and experience.enabled():
+                # 经验卡（实验，KROUTER_EXPERIENCE=1）：同一段摘录再问一次「遇到什么、怎么做、结果如何」；没有模型就安静跳过
+                link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
+                try:
+                    excerpt = from_turn(page.split("\n## 摘录", 1)[-1], done)[:DISTILL_MAX]
+                    cards, n = experience.extract(e, excerpt, vault, link, args.dry_run)
+                    sent += n
+                    for card in cards:
+                        touched.append(card)
+                        changed_pages.append({"path": card, "agent": e["agent"], "session": e["id"],
+                                              "added": ["经验卡：" + card.stem.removeprefix("经验｜")]})
+                    exp_cards += len(cards)
+                except Exception as exc:  # noqa: BLE001
+                    exp_failed += 1
+                    print(f"experience {target.name}: {str(exc)[:200]}", file=sys.stderr)
         mine = cands.pop((e["day"].isoformat(), e["id"][:8]), []) if fresh and not args.dry_run else []
         if mine:
             # 你当场说的纠正，提炼里有对应的行就挂上那一行；没有就用你的原话补记进提炼（提炼漏掉的往往正是这一句）
@@ -903,11 +954,13 @@ def main() -> int:
             if path.exists() and frontmatter(path).get("source") == MARK:
                 path.unlink()
                 gone.append(path)
+        superseded = supersede_replaced(vault, {e.get("root") for e in entries if e.get("root")})
+        touched += [old for old, _new in superseded]
         if verdicts:
             # hook 当场记下的候选先原样进一次提交：撤销这一轮时候选回到"待判定"，而不是跟着消失
             capture_ledger.commit(vault, rid, sorted({v["page"] for v in verdicts}), "纠正候选（hook 记下）", tagged=False)
         touched += corrections.mark(verdicts)
-        log_run(vault, rid, changed_pages, verdicts, gone, touched + gone)
+        log_run(vault, rid, changed_pages, verdicts, gone, touched + gone, superseded)
     if args.consent and not args.dry_run:
         save_state({**st, "consent": True, "distill": bool(args.distill), "overlap": overlap, "cli": args.cli,
                     "exclude_roots": roots_out,
@@ -919,7 +972,9 @@ def main() -> int:
            "covered_by_daily_log": covered, "skipped_covered": skipped_covered, "fork_duplicates": forks_dropped,
            "kept_out": sum(1 for v in dropped.values() if v == "kept out"), "removed_kept_out": len(removed),
            "writes": written if len(written) <= 20 else written[:20] + [f"… {len(written) - 20} more"],
-           "kept_foreign": kept}
+           "kept_foreign": kept,
+           **({"experience_cards": exp_cards, "experience_failed": exp_failed} if experience.enabled() else {}),
+           **({"experience_uses": exp_uses} if exp_uses else {})}
     print(json.dumps(row, ensure_ascii=False))
     return 1 if failed and not calls else 0
 

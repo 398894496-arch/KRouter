@@ -677,3 +677,281 @@ the close. Results are reported whatever they show; cases read after the run are
 | 2026-10-18 | **Reading it** (exploratory, not registered, said as such): plain BM25 with no floor, top three pages, cites an answer session for 447/470 and the latest update for 69/72, level with KRouter. The registered baseline's floor was picked on dev3, a 60-page Chinese vault, and on these 50-session English haystacks it refuses 43% of answerable questions; KRouter's lead over it comes from that floor, not from ranking, as on heldout3. What does hold: KRouter's refusal gate does not cost answerable questions here (12/470), and on raw sessions with no `superseded` marks it still cites the newest fact for 70 of 72 updates. What fails: it refuses 3 of 30 unanswerable questions. LongMemEval's abstention questions ask about a near neighbour of something the haystack does mention (a pet it never named, a trip it never took), the case KRouter's gate handles worst; it is the next thing to fix, measured on a seed-drawn half of `longmemeval_m` as registered. The model-judged secondary (reader and judge) has not been run. |
 | 2026-10-18 | Set 7 amended (S `_abs` now development; final abstention numbers from heldout3 neighbours and set 9, since M repeats S's questions). Set 9 registered before any item was written. |
 | 2026-10-18 | Development use of S (seen; not a reported score): candidate `fix/named-absent` (PR #61) refuses 9 of the 30 `_abs` questions (3 before) and 14 of 470 answerable (12 before); evidence cited 437 of 470 (439). Set 9 collection page published (owner reads all cases; each writer reads and writes only their own); a probe document was written, read back at owner and at `interact` level (not visible there), and deleted. |
+
+## Set 13: same situation, different subject — does an experience card come back as a suggestion? (registered 2026-11-09, before any matcher was written)
+
+**Why.** Every set above asks whether KRouter finds the page that answers a question. This one asks something else:
+whether a lesson learned on one task ("the stew tasted flat; a spoonful of sugar fixed it") comes back as a
+*suggestion* on a task with a different subject in the same situation ("the poster's colours look dull"), and stays
+quiet otherwise. Code: `skill/krouter-obsidian/scripts/experience.py`; bench: `bench/transfer/`.
+
+**Cards.** 14 experience cards written by hand in `bench/transfer/cards/` (situation, what was done, what came of it,
+the lesson without the subject, the "when" triggers, a source line). Chinese only. Each comes from one subject (nginx,
+CI, a stew, a production database…). The cards are frozen at registration with the cases: SHA-256 of the
+concatenated card files in name order `df0cfe6a…5d6f191e`.
+
+**Cases.** 56, Chinese, written in one sitting before the matcher existed: 28 *transfer* cases (two per card, each on
+a subject different from the card's and from each other; the expected card is the one whose lesson a careful person
+would offer) and 28 that should get no suggestion: 14 *topic traps* (the card's own subject, a different situation:
+"does nginx's server_name take wildcards"), 6 *word traps* (a word from some card's triggers, a different situation:
+"the drawer is stuck"), 8 *unrelated*. Split at seed 20261109: for each card one transfer case to development and one
+to held-out; topic traps 7 / 7, word traps 3 / 3, unrelated 4 / 4. `bench/transfer/dev.jsonl` (28) is what the
+matcher is tuned on; `bench/transfer/heldout.jsonl.gz` (28, SHA-256 of the uncompressed text `3a7f625c…3361f33`) is
+run once.
+
+**Who wrote what.** The cards, all 56 cases and the matcher are written by the same Claude Code session (Opus 5.5).
+The cases were written before any matching code and are not edited after the split, but the author knew the cards'
+trigger wording when writing them: the held-out number measures generalisation from the development cases to unseen
+cases of the same author, not to other people's phrasing. This is the main limit of the set and is said with any
+number from it.
+
+**System.** The default suggestion path: lexical only (the recall index's tokenizer and word lists, the cards'
+`when` triggers and lesson line; no embeddings, no model call), up to two suggestions, a quiet threshold picked on
+development only. The optional dense tier (`docs/DENSE-OPTIN.md`) may be measured on development as a comparison; it
+is not the default and is not run on held-out unless registered here first.
+
+**Scored mechanically.** Recalled: on a transfer case, the expected card is among the suggestions. Wrong suggestion:
+any suggestion on a case that should get none, and any card other than the expected one on a transfer case. Reported
+for development and held-out: recalled / 28 transfer… per split, cases with a wrong suggestion, total wrong cards,
+and by negative kind.
+
+**Pass line (fixed now).** On held-out: recalled on at least 8 of 14 transfer cases (a majority), and at most 1 of the
+14 should-be-quiet cases gets any suggestion, and at most 1 wrong card on the transfer cases. If it fails, the
+suggestion path ships off by default, marked experimental, with the numbers as they are.
+
+### Log, set 13
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`e2b33e5`): cards, development cases and the sealed held-out file committed before `experience.py` existed. |
+| 2026-11-09 | **Development (in-sample).** Two lexical rules tried: a card's best single `when` phrase covered (`phrase`), and all its phrases pooled (`bag`); for `phrase`, also counting bigrams outside the word list at half weight. Thresholds swept with `run.py dev --sweep`. Choice rule, fixed before the sweep was read: highest recalled − 2 × (quiet cases with a suggestion + wrong cards on transfer cases), ties to the stricter. Chosen: `phrase`, at least 2 words of the phrase, coverage ≥ 0.6: **recalled 3 / 14, quiet cases with a suggestion 0 / 14, wrong cards 1**. The loosest setting tried recalled 6 / 14 with 2 quiet cases suggested and 4 wrong cards; `bag` at best 3 / 14 with 3 wrong cards; the half-weight variant was worse at every setting and was dropped. Reading the misses: most transfer cases share no word with the card's triggers ("差点意思" against "缺点什么", "改过" against "改了"); lexical matching cannot bridge them. The dense tier was not measured: no embedding model is on this machine and downloading one (about 250 MB) was not approved in this session. Threshold frozen; held-out next. |
+| 2026-11-09 | **Held-out, run once** (`run.py heldout`, threshold as frozen above). **Recalled 0 / 14 transfer cases. Quiet cases with a suggestion 2 / 14 (both word traps; topic traps 0 / 7, unrelated 0 / 4). Wrong cards on transfer cases 2.** Fails all three parts of the pass line (8 / 14, ≤ 1, ≤ 1). The development number (3 / 14) did not carry over at all: the three it recalled were cases whose wording happened to share two words with a trigger, and none of the held-out cases did. As registered, the suggestion path ships off by default, marked experimental (`KROUTER_EXPERIENCE=1` to try it). What it does show: a lexical matcher over subject-free triggers does stay quiet on questions about a card's own subject (0 of 14 topic traps over both splits); what it cannot do is recognise the same situation said in other words, which is the point of the feature. The held-out cases are now spent. |
+
+## Set 15: the host model judges the situation itself, from a digest of every card (registered 2026-11-09, before any host was run or the usage wording was settled)
+
+**Why.** Set 13 matched tasks to cards by shared words and recalled 0 of 14 held-out cases: one situation in other
+words shares no words. Here nothing is matched. The session-start hook gives the host model the whole experience
+digest (`experience.digest`: every card as one subject-free line "situation → what to do〔id〕", at most 30 lines,
+then one line on how to use them), and the host decides whether this task's situation is one of them. Set 13 and its
+spent held-out file stay as they are.
+
+**Cards.** Set 13's 14 cards, unchanged. For the scale check, 40 distractor cards in `bench/transfer/distractors/`
+(lessons about plants, cooking, travel, money…), written before any set 15 case was read; SHA-256 of the
+concatenated files in name order `8860fc6d…25a48`.
+
+**Cases.** 56, Chinese, written by Fable 5.2 (claude-fable-5-2) in a fresh Claude Code subagent, a different model
+from the session that wrote the cards and the code (Opus 5.5) and from both hosts. The writer saw one input file:
+the 14 lessons (`通用说法`) in shuffled order under neutral labels, each with a few words naming the card's original
+subject (needed for the topic traps). It did not see the triggers, the situation/action fields, the digest, the
+usage wording or any code, and was told to read nothing else. It wrote 28 *transfer* cases (two per lesson, subjects
+other than the original), 14 *topic traps* (the original subject, another situation), 8 *word traps* (a word from
+some lesson, another situation) and 6 *unrelated*. Not edited. Split at seed 20261115: one transfer case per card to
+each side, traps 7 / 7, word traps 4 / 4, unrelated 3 / 3. `bench/transfer/set15_dev.jsonl` (28) is where the usage
+wording may be revised; `bench/transfer/set15_heldout.jsonl.gz` (28; SHA-256 of the uncompressed text
+`88bec167…e854b5`) is sealed and run once per host. The writer's raw file (with its notes) is kept out of the repository.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, run as set 12 ran its reader: `bench/transfer/host.py prepare` writes batches of
+14 prompts (the injected digest, the user's message, and one bench line asking for only the first few sentences of
+the reply and no tools); a Claude Code subagent on the named model (`model: haiku` / `sonnet`) answers each prompt in
+a batch as if it were the only one and writes the replies back; each agent's reported model is logged. No API key
+and no stored Claude login are used. About 250 short prompts in all.
+
+**Scored mechanically** (`host.py score`): recalled = the expected card's id is cited; quiet case with a suggestion =
+any id cited where none should be; wrong cards = any other id cited on a transfer case (distractor ids included).
+Replies citing more than two ids are counted too.
+
+**Pass line (fixed now), per host, on held-out:** recalled ≥ 8 / 14, quiet cases with a suggestion ≤ 1 / 14, wrong
+cards ≤ 1. The digest passes when both hosts pass. Only then is a default-on proposal made.
+
+**Scale check (development only).** The same development cases with the 40 distractors added (54 cards, all listed);
+reported next to the 14-card development row for each host. Not a pass condition.
+
+**Known limits, said with any number.** Each agent sees up to 14 cases in one batch, so it may compare them; the bench
+line asks for short replies, which a real session does not; the writer saw each card's subject label; Chinese only;
+the digest's token count is an estimate (no tokenizer is downloaded: one token per CJK character, one per three
+other characters, an upper-end figure).
+
+### Log, set 15
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`dc985b4`). Before the first host run two harness faults were fixed, neither touching the digest or its wording: prompts were batched in case order (one batch all transfer cases, the other all quiet ones), and case ids such as `C01-x1` carried the expected card's id into the prompt. Prompts are now ordered and named by an opaque hash (`host.py opaque`). |
+| 2026-11-09 | **Development, first and only wording** (the digest and usage line as committed with this log; 28 prompts per host, two batches of 14; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: 13 / 14, 0 / 14, 1** (it added C05 to C11 on one case and missed C09 on another). No reply cited more than two ids. The wording was not revised: frozen as is. Digest: 14 lines, 842 characters, about 690 tokens by the registered estimate. |
+| 2026-11-09 | **Held-out, run once per host** (wording as frozen in `a581b84`; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: recalled 11 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0.** No reply cited more than two ids. Both hosts pass the registered line (≥ 8, ≤ 1, ≤ 1). A mechanical check not in the registration, reported for what it is: no quiet-case reply on either split says 「可以试试」 or offers a lesson without an id (one development reply uses 经验 in its ordinary sense, "常见的经验是测试金字塔"); every transfer case that cited its card also used the 「别的任务里的经验」 wording. Limits as registered: up to 14 cases per agent, short replies asked for, writer saw the subject labels, Chinese only. |
+| 2026-11-09 | **Scale check, development only** (14 cards + 40 distractors, all 54 listed; about 1 906 characters, about 1 518 tokens by the estimate). **Sonnet 5.5: 14 / 14, 0 / 14, 0. Haiku 5.5: 13 / 14, 0 / 14, 0** (against 13 / 14, 0, 1 with 14 cards): no distractor id was cited, quiet cases stayed quiet. Found while preparing it: with the shipped cap of 30 lines, all 14 real cards would have been left out, because nothing yet writes `adopted_at` and the bench cards share one date, so ties fall to file-name order (`D…` before `C…`). The cap's ordering is only as good as the dates and adoption marks on the cards. Totals for the set: 168 host prompts (56 per run: development, scale, held-out) in 12 agents, plus the case writer. |
+
+## Set 16: set 15 in English (registered 2026-11-09, before any host was run on it or its usage wording was settled)
+
+**Why.** Set 15 was Chinese only. This set asks the same question on an English vault with English sessions.
+
+**Cards.** Set 13's 14 cards translated into English by the session that wrote the code (`bench/transfer/cards_en/`,
+same ids; SHA-256 of the concatenated files in name order `b27d45a3…59f03bc`), on the public English template.
+
+**Digest.** The English digest: each card's lesson as written ("When …, … [id]"), then an English usage line with the
+same rules as set 15's (genuinely the same situation, not a shared word or subject; at most two, as "A lesson from
+another task you could try: … [id]"; otherwise say nothing). Written once before this registration; it may be revised
+on development only and is frozen before held-out.
+
+**Cases.** 56, English, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh Claude Code subagent that saw only the
+14 English lessons, shuffled under neutral labels, each with its original subject named in a few words, and was told
+to read nothing else; same four kinds and counts as set 15 (28 transfer, 14 topic traps, 8 word traps, 6 unrelated).
+Not edited. Split at seed 20261116 as set 15 was. `bench/transfer/set16_dev.jsonl` (28); `bench/transfer/set16_heldout.jsonl.gz`
+(28; SHA-256 of the uncompressed text `d939c2ca…5b24ba8a`), run once per host.
+
+**Hosts, scoring and pass line:** as set 15 (`host.py --set 16`): Haiku 5.5 and Sonnet 5.5, 14 prompts per agent,
+ids cited; per host on held-out, recalled ≥ 8 / 14, quiet cases with a suggestion ≤ 1 / 14, wrong cards ≤ 1.
+
+**Known limits,** beyond set 15's: **the case writer is also one of the two hosts** (Sonnet 5.5), so Sonnet's number
+may read better than an outside writer's cases would give it; the cards are a translation.
+
+## Set 17: are the cards a host agent writes itself any good? (registered 2026-11-09, before any host was run on it)
+
+**Why.** The zero-key path has the agent that ran a session write the card (`krouter_learn` / `experience.py learn`);
+no model lane, no key. Sets 15 and 16 used hand-written cards. This is a small check of what the hosts write.
+
+**Sessions.** 12 synthetic sessions written for this check by the session that wrote the code, never a real one
+(`bench/transfer/set17_sessions.jsonl`, SHA-256 `7ccda464…c4ba2de`): 7 with a lesson (5 Chinese, 2 English), 3 whose
+lesson is already one of the 14 cards in another subject (2 Chinese, 1 English), 2 with no lesson (one each). Each
+has gold: the subject's words, and terms the action and the result must hold.
+
+**Run.** `bench/transfer/extract.py`: each host (Haiku 5.5, Sonnet 5.5; one agent each, 12 prompts) gets the
+session-start digest of the vault in that language, the session, and the tool's own description, and says with what
+arguments it would call `krouter_learn` at the end. Every proposed card goes through `experience.learn()` on a fresh
+copy of the vault, as the tool would. Run once; no development split.
+
+**Scored mechanically.** Lesson sessions with a card written; of cards written, subject-free (no subject word in
+title, lesson or `when`) and faithful (action and result each hold a gold term); duplicate sessions with a card
+written (and whether the host proposed one at all); cards written on sessions with no lesson.
+
+**Bar (fixed now), both hosts together:** lesson sessions with a card ≥ 10 / 14; subject-free ≥ 90% and faithful ≥ 90%
+of cards written; duplicates written ≤ 1 / 6; cards on no-lesson sessions ≤ 1 / 4.
+
+**Known limits.** Twelve sessions, written by the code's author, short and clean; whether a host calls the tool on its
+own at the end of a real session, unprompted, is not measured here.
+
+### Log, sets 16 and 17
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`361f906`). |
+| 2026-11-09 | **Set 16, development, first and only wording** (English digest, 14 lines, 2 522 characters, about 846 tokens by the estimate; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). **Haiku 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Sonnet 5.5: 14 / 14, 0 / 14, 0.** Wording not revised; frozen. |
+| 2026-11-09 | **Set 17, run once** (one agent per host, 12 sessions). Haiku 5.5: lesson sessions with a card 7 / 7; of 7 cards, subject-free 6, faithful 6; duplicate sessions: none proposed, none written (0 / 3); no-lesson sessions: none written (0 / 2). Sonnet 5.5: 7 / 7; of 7 cards, subject-free 6, faithful 4; duplicates 0 / 3; no-lesson 0 / 2. **Both hosts together: lesson sessions with a card 14 / 14 (bar ≥ 10); subject-free 12 / 14 = 86% (bar ≥ 90%); faithful 10 / 14 = 71% (bar ≥ 90%); duplicates written 0 / 6 (≤ 1); no-lesson written 0 / 4 (≤ 1). The bar is not met** on subject-free and faithful. Reading the five failing cards afterwards (not part of the registered score, said as such): the four "unfaithful" cards say what the session says in other words than the gold terms ("明显减少" for 少了, "唯一标识" for 请求 id, "planned 22 and finished 21" for close/within); the two subject leaks are real, each one `when` phrase naming the subject ("新人总来问", "no reply to my email"), while both cards' lessons, the only field the digest shows, are subject-free. The duplicates were all skipped by the hosts themselves (the digest showed the same lesson), not caught by the code's lexical same-lesson check. |
+| 2026-11-09 | **Set 16, held-out, run once per host** (English wording as frozen in `f9597e6`). **Haiku 5.5: recalled 13 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Sonnet 5.5: 14 / 14, 0 / 14, 0.** Both pass (≥ 8, ≤ 1, ≤ 1). Sonnet also wrote the cases (registered limit). 112 host prompts for set 16, 24 for set 17. |
+
+## Set 19: set 17 again, on sessions that read like real ones, judged by a model (registered 2026-11-09, before any host was run on it)
+
+(Set 18 is kept for another session's work.)
+
+**Why.** Set 17 missed its bar, and its result has been read, so it is spent. Two changes were made before this
+registration, on the strength of set 17's reading: cards no longer carry `when` phrases (nothing uses them since set
+13; both of set 17's subject leaks were there), and faithfulness is judged by a model reading the session instead of
+fixed gold terms.
+
+**Sessions.** 16, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh subagent, not by the session that wrote the
+code: 8 to 10 turns each, with drift and changes of course. 8 with a lesson (5 Chinese, 3 English), 4 whose lesson
+is one of the 14 cards in another subject (2 each; the writer saw the 14 lessons for that), 4 with no lesson (2 each).
+The writer also gave each session's subject words and the lesson's gist. Not read by the code's author before the
+run (counts only). `bench/transfer/set19_sessions.jsonl`, SHA-256 `b137cc96…9a07c85caf`.
+
+**Run.** As set 17 (`extract.py --set 19`): each host (Haiku 5.5, Sonnet 5.5; one agent each, 16 prompts) gets the
+digest, the session and `krouter_learn`'s description, now without `when`, and proposes arguments; every proposed card
+goes through `experience.learn()` on a fresh copy of the vault. Run once.
+
+**Judged.** Every card written on a lesson session is judged by the *other* host model (Haiku's cards by Sonnet,
+Sonnet's by Haiku; one agent each), reading the session and the card: faithful (situation, action and result say only
+what the session shows, nothing invented or abandoned) and subject-free (lesson and title would read unchanged on
+another subject), yes or no. The mechanical subject check against the writer's subject words is reported beside it.
+
+**Bar (fixed now), both hosts together:** lesson sessions with a card ≥ 12 / 16; of cards written on lesson sessions,
+judged faithful ≥ 90% and judged subject-free ≥ 90%; duplicate sessions with a card ≤ 1 / 8; no-lesson sessions with a
+card ≤ 1 / 8. If it passes, the digest, the use records and `krouter_learn` become the default when the vault has
+cards (`experience.DEFAULT_ON`); if not, they stay off.
+
+**Known limits.** Sonnet wrote the sessions, is one of the two hosts, and judges Haiku's cards; Haiku is a weaker
+judge of Sonnet's. Sixteen synthetic sessions. Whether a host calls the tool unprompted at the end of a real session
+is still not measured.
+
+### Log, set 19
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`4fbb174`). |
+| 2026-11-09 | **Run once.** Cards: Haiku 5.5 8, Sonnet 5.5 8; judges: Sonnet 5.5 for Haiku's, Haiku 5.5 for Sonnet's (agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); judged faithful 14 / 16 = 87.5% (bar ≥ 90%); judged subject-free 14 / 16 = 87.5% (bar ≥ 90%); duplicates written 0 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on each of the two counts. Haiku's cards: faithful 6 / 8, subject-free 8 / 8 (mechanical 7 / 8). Sonnet's: faithful 8 / 8, subject-free 6 / 8 (mechanical 8 / 8). The four judged failures: a result claiming two restructures where the session shows one; an action stating a step the session only suggested; two lessons keeping a subject term ("大件东西 / 运得进", "执行计划"). Set 19 is now development: the card instructions are revised on it, and a new set of held-out sessions is registered before the revised wording is checked on them. |
+| 2026-11-09 | **Development iterations on set 19** (in-sample; each round: both hosts propose cards, the other host judges). Round 2: a host-named `subject` list, and the code refuses a lesson or title that uses one of its own subject words (`experience.names_subject`), returning the reason; action only for steps actually carried out; result only as the session shows. Hosts listed ordinary words as subject and 3 Sonnet calls were refused; since the MCP tool returns its reason to the agent, the bench now lets a refused call be rewritten once with that reason (`extract.py retry`). Faithful 13 / 16, subject-free 15 / 16. Round 3: one sentence each; a corrected figure or cause, the corrected one; reread before calling. Sonnet 9 / 9 and 9 / 9, but Haiku wrote cards on 2 no-lesson sessions. Round 4: record only when something did not work, a way out was tried and its outcome seen; drafting, polishing, formatting, comparing options do not count; when in doubt, do not. Faithful 15 / 15, subject-free 13 / 15 (one session, judged by both hosts as tied to its subject), duplicates 1 / 8. Round 5: a self-test, "would the lesson make sense word for word to someone fixing a bug, writing a report and cooking; if not, one level higher". **Both hosts: lesson sessions with a card 14 / 16, faithful 14 / 14, subject-free 14 / 14, duplicates 0 / 8, no-lesson 0 / 8: the bar met in-sample.** Wording frozen here, before set 20. |
+
+## Set 20: set 19's check on new held-out sessions, with the wording revised on set 19 (registered 2026-11-09, before any host was run on it)
+
+**Sessions.** 16, written by Sonnet 5.5 in a fresh subagent with set 19's instructions, plus "the assistant sometimes
+suggests things the person does not end up doing"; same kinds and counts (8 lesson: 5 Chinese, 3 English; 4 duplicate;
+4 none). Written while the wording was being revised, without seeing it; not read by the code's author (counts only).
+`bench/transfer/set20_sessions.jsonl`, SHA-256 `56ad0b0c…8aabb780`.
+
+**Run, judging and bar:** as set 19 (`extract.py --set 20`), with the frozen wording of set 19's round 5, and one
+retry of a refused call with the tool's reason (`extract.py retry`), as an agent using the MCP tool would get. Bar,
+both hosts together: lesson sessions with a card ≥ 12 / 16; judged faithful ≥ 90% and judged subject-free ≥ 90% of cards
+on lesson sessions; duplicates ≤ 1 / 8; no-lesson ≤ 1 / 8. Run once. If it passes, `experience.DEFAULT_ON` is set.
+
+**Known limits:** as set 19 (Sonnet wrote the sessions, is a host and judges Haiku's cards).
+
+### Log, set 20
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`79bafe3`). |
+| 2026-11-09 | **Run once** (frozen wording; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Sonnet's calls refused for naming the subject and rewritten once with the tool's reason, none of Haiku's). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); of 18 cards on lesson sessions, judged faithful 16 = 88.9% (bar ≥ 90%), judged subject-free 17 = 94.4% (≥ 90%); duplicates written 1 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on faithfulness. Haiku's cards: faithful 7 / 9, subject-free 9 / 9, one duplicate written. Sonnet's: faithful 9 / 9, subject-free 8 / 9. Both unfaithful cards are Haiku's and misstate a figure (a result claimed for all batches where the session confirmed 20 of 24; a gap given as height where the session gave width); the subject leak is a Sonnet title naming "图纸". `experience.DEFAULT_ON` stays off. The sessions are now spent. |
+
+## Set 21: set 20's check again, with numbers held to the session (registered 2026-11-10, before any host was run on it)
+
+**Why.** Set 20 missed by one card on faithfulness, and both misses were figures. One change since, made without a
+development run to save calls (said as such): every number left in a card must be in the session, mechanically
+(`experience.unsupported_figures`); for a card the host writes, the session snippets it gives in `quotes`, since the
+MCP server does not see the session; for the model lane, the excerpt. A card with an unquoted number is sent back with
+the numbers named, and the instructions now say to leave numbers out of action and result unless the lesson needs
+them. Offline, both of set 20's unfaithful cards would have been sent back.
+
+**Sessions.** 16 new ones by Sonnet 5.5 in a fresh subagent with set 20's instructions, plus "numbers appear naturally,
+and some are corrected later"; same kinds and counts. Counts only read. `bench/transfer/set21_sessions.jsonl`, SHA-256
+`d1d77769…3d52744`.
+
+**Run, judging and bar:** exactly as set 20 (one retry of a refused call with the tool's reason; the other host
+judges; lesson sessions with a card ≥ 12 / 16, judged faithful ≥ 90%, judged subject-free ≥ 90%, duplicates ≤ 1 / 8,
+no-lesson ≤ 1 / 8). Run once. If it passes, `experience.DEFAULT_ON` is set.
+
+### Log, set 21
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`0eea66c`). |
+| 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 1 of Sonnet's calls refused and rewritten once, none of Haiku's). **Both hosts together: lesson sessions with a card 15 / 16 (bar ≥ 12); of 15 cards on lesson sessions, judged faithful 15 = 100% (≥ 90%), judged subject-free 15 = 100% (≥ 90%); no-lesson sessions with a card 0 / 8 (≤ 1); duplicates written 2 / 8 (bar ≤ 1). Not passed**, on duplicates. Both duplicate cards are on one session (N09), written as a duplicate of C06 ("before an action you cannot undo, keep a copy you can restore"); both hosts drew a different lesson from it ("delete what a tool keeps a record of through that tool, so the record and the files stay in step"), and the code's same-lesson check, lexical, did not match them to C06. Read afterwards, not part of the score: whether that session's lesson is C06's is arguable. `experience.DEFAULT_ON` stays off. |
+
+## Set 23: a repeated lesson is recorded on the old card, not written again (registered 2026-11-10, before any host was run on it)
+
+**Why.** Set 21 missed only on duplicates (2 of 8 sessions got a new card), both on one session whose duplicate label
+was arguable. Changes since, made without a development run (calls are short): when the digest already has the lesson,
+the host names that line's id (`same_as`) and the old card gets an `again` record, which counts in the digest's order
+like an adoption; the code's lexical same-lesson check records `again` too, as a fallback; nightly lists near-duplicate
+cards to merge by hand.
+
+**Sessions.** 16 new ones by Sonnet 5.5 in a fresh subagent, same kinds and counts as set 21; for each duplicate the
+writer also says which stored lesson it repeats and why (`dup_reason`), and was asked to make each duplicate teach that
+lesson and nothing else worth recording. 7 to 8 turns each, shorter than the 8 to 14 asked for. Counts only read.
+`bench/transfer/set23_sessions.jsonl`, SHA-256 `2d7d4c15…c65c2ef`.
+
+**Duplicate labels reviewed, rule fixed now.** Haiku 5.5, not the writer, reads each duplicate session with the stored
+lesson and the writer's reason and answers whether the session's lesson is the same (yes / no / unclear;
+`extract.py review`). A duplicate session the reviewer does not answer "yes" for is reported on its own and left out of
+the duplicates denominator; nothing else is left out.
+
+**Run, judging and bar:** as set 21 (one retry of a refused call; the other host judges faithfulness and
+subject-freedom; lesson sessions with a card ≥ 12 / 16, judged faithful ≥ 90%, judged subject-free ≥ 90%, no-lesson
+sessions with a card ≤ 1 / 8), and duplicates: at most 1 new card over the confirmed duplicate sessions of both hosts.
+Also reported: how many duplicates were linked to the right card with `same_as`. Run once. If it passes,
+`experience.DEFAULT_ON` is set.
+
+### Log, set 23
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`8ea41c3`). |
+| 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
+| 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |

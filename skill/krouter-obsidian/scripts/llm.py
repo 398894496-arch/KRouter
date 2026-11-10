@@ -347,6 +347,113 @@ class NoModel(RuntimeError):
     """No key and no logged-in CLI: the caller skips its step."""
 
 
+# ---- The host lane: the agent the user already has, through its own official CLI ---------------------------------
+#
+# 1. In session: the agent does the work in its own turn (krouter_learn / krouter_note over MCP, experience.py
+#    learn): no call from here at all.
+# 2. MCP sampling (the server asks the client's model): deprecated in the 2026-07-28 MCP specification and not
+#    supported by Claude Code (anthropics/claude-code#1785); not used. mcp_server.py records whether a client
+#    declares it.
+# 3. No session around (the nightly run, a session-end hook): the host's own CLI in non-interactive mode, on the
+#    login the user already has (`claude -p`, `codex exec`, `cursor-agent -p`, …), found by `detect_writer()`.
+#    This spends the user's subscription, so: at most HOST_CLI_MAX_DEFAULT calls a day (`KROUTER_HOST_CLI_MAX`),
+#    every call recorded where the user can see it (HOST_LOG_PAGE in the vault, host-calls.jsonl in the state
+#    directory; metadata only, never the prompt), and `KROUTER_HOST_CLI=0` turns it off. KRouter only runs the CLI
+#    the official way; it never reads, copies or forwards any app's login token, keychain item or credential file.
+# 4. A key the user set (`*_API_KEY`): used as before, and before an auto-detected CLI, because the user chose it.
+
+HOST_CLI_FLAG = "KROUTER_HOST_CLI"
+HOST_CLI_MAX_DEFAULT = 30
+HOST_LOG_PAGE = "90 系统文件/自动化/订阅调用记录.md"
+# 没有任何模型通道时，这些功能不开；其余（召回、纠错捕获、经验摘要、宿主自己写卡和笔记）照常
+NEEDS_MODEL = ("会话提炼（定了什么、改了什么）", "经验卡的模型抽取", "主题档案整合", "问答卡", "触发词提议",
+               "claude-mem 导入的提炼")
+
+
+class HostCapReached(NoModel):
+    """Today's host-CLI calls reached the cap: the caller skips its step, as with no model."""
+
+
+def host_cli_on() -> bool:
+    """`KROUTER_HOST_CLI=0` (environment or keys file) stops every call through an agent's CLI."""
+    val = os.environ.get(HOST_CLI_FLAG, "").strip()
+    if not val:
+        path = keys_file()
+        if path.is_file():
+            val = _parse(path.read_text(encoding="utf-8", errors="replace")).get(HOST_CLI_FLAG, "").strip()
+    return val.lower() not in ("0", "off", "false", "no")
+
+
+def host_cli_max() -> int:
+    try:
+        return max(0, int(os.environ.get("KROUTER_HOST_CLI_MAX", "") or HOST_CLI_MAX_DEFAULT))
+    except ValueError:
+        return HOST_CLI_MAX_DEFAULT
+
+
+def _host_calls_file() -> Path:
+    return Path(os.environ.get("KROUTER_STATE_DIR") or Path.home() / ".local/state/krouter") / "host-calls.jsonl"
+
+
+def host_calls_today() -> int:
+    from datetime import date
+
+    path, today, n = _host_calls_file(), date.today().isoformat(), 0
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            n += line.startswith('{"at": "' + today)
+    return n
+
+
+def _host_record(vault: Path | None, cli: str, prompt: str, text: str, ok: bool) -> None:
+    """One line per host-CLI call, in the state directory and on the vault page: when, which CLI, which KRouter
+    step, characters in and out, whether it worked. Never the prompt or the reply."""
+    import sys
+    from datetime import datetime
+
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    kind = writer_probe_argv(cli)[0]
+    step = Path(sys.argv[0] or "?").stem
+    row = {"at": now, "cli": kind, "step": step, "chars_in": len(prompt), "chars_out": len(text or ""), "ok": ok}
+    try:
+        path = _host_calls_file()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+    if vault is None:
+        return
+    try:
+        import zones
+
+        page = zones.path(Path(vault), HOST_LOG_PAGE)
+        page.parent.mkdir(parents=True, exist_ok=True)
+        if not page.exists():
+            page.write_text("---\ntitle: 订阅调用记录\ntype: automation-log\nstatus: generated\nsource: krouter-llm\n---\n\n"
+                            "# 订阅调用记录\n\nKRouter 借你已登录的 agent 命令行（`claude -p`、`codex exec` 等）做夜间提炼时，每一次"
+                            "调用记一行。这会用掉你的订阅额度；每天最多 `KROUTER_HOST_CLI_MAX` 次（默认 "
+                            f"{HOST_CLI_MAX_DEFAULT}），`KROUTER_HOST_CLI=0` 关掉。只记元数据，不记内容。\n\n"
+                            "| 时间 | 命令行 | 步骤 | 发出字数 | 收到字数 | 结果 |\n|---|---|---|---|---|---|\n",
+                            encoding="utf-8")
+        with page.open("a", encoding="utf-8") as fh:
+            fh.write(f"| {now} | {kind} | {step} | {len(prompt)} | {len(text or '')} | {'成功' if ok else '失败'} |\n")
+    except OSError:
+        pass
+
+
+def channel_report(vault: Path | None = None) -> dict:
+    """What the model lane is and what is off without one; for the nightly report and `krouter_status`."""
+    steps = plan(vault)
+    first = steps[0] if steps else ("none", "")
+    out = {"lane": first[0] if first[0] != "cli" else f"cli {writer_probe_argv(first[1])[0]}",
+           "host_cli": "on" if host_cli_on() else f"off ({HOST_CLI_FLAG}=0)",
+           "host_cli_calls_today": host_calls_today(), "host_cli_max": host_cli_max()}
+    if not steps:
+        out["off_without_model"] = list(NEEDS_MODEL)
+    return out
+
+
 def _usable(val: str) -> bool:
     val = (val or "").strip().strip('"').strip("'")
     return bool(val) and not any(val.upper().startswith(p.upper()) for p in PLACEHOLDERS)
@@ -609,7 +716,7 @@ def plan(vault: Path | None = None) -> list[tuple[str, str]]:
     """Ordered (kind, detail) the channel would try. No secrets in the output."""
     keys = collect_keys(vault)
     steps: list[tuple[str, str]] = []
-    explicit = os.environ.get("KROUTER_LEARN_CLI", "")
+    explicit = os.environ.get("KROUTER_LEARN_CLI", "") if host_cli_on() else ""
     if explicit and writer_probe_argv(explicit)[0] not in CONFINED_KINDS and not allow_unconfined():
         explicit = ""  # 点名的 CLI 也一样：KRouter 管不住的，没有宿主的明确同意就不用
     if explicit and Path(explicit).is_file() and os.access(explicit, os.X_OK):
@@ -619,7 +726,7 @@ def plan(vault: Path | None = None) -> list[tuple[str, str]]:
     for spec in api_specs(keys):
         # without an override the model is the catalog's flagship, decided at call time
         steps.append((f"api:{spec['name']}", override or f"flagship (default {spec['model']})"))
-    if not explicit:
+    if not explicit and host_cli_on():
         cli = logged_in_cli()
         if cli:
             steps.append(("cli", cli))
@@ -672,6 +779,7 @@ def complete(prompt: str, vault: Path | None = None) -> str:
     specs = {f"api:{s['name']}": s for s in api_specs(keys)}
     override = _override(keys)
     errors: list[str] = []
+    capped = False
     for kind, detail in plan(vault):
         try:
             if kind in specs:
@@ -686,6 +794,9 @@ def complete(prompt: str, vault: Path | None = None) -> str:
                 _record(kind, model, prompt, text, usage)
                 return text
             if kind == "cli":
+                if host_calls_today() >= host_cli_max():
+                    capped = True  # 今天借订阅的次数用完了：跳过这一级，不算失败
+                    continue
                 with tempfile.TemporaryDirectory(prefix="krouter-llm-") as tmp:
                     prompt_file = str(Path(tmp) / "prompt.md")
                     Path(prompt_file).write_text(prompt, encoding="utf-8")
@@ -694,6 +805,7 @@ def complete(prompt: str, vault: Path | None = None) -> str:
                         proc = subprocess.run(argv, input=prompt if on_stdin else None, capture_output=True, text=True,
                                               timeout=TIMEOUT, cwd=tmp, stdin=None if on_stdin else subprocess.DEVNULL,
                                               env=cli_env())
+                _host_record(vault, detail, prompt, proc.stdout if proc.returncode == 0 else "", proc.returncode == 0)
                 if proc.returncode != 0:
                     raise RuntimeError((proc.stderr or proc.stdout)[-200:])
                 _record("cli", detail, prompt, proc.stdout)
@@ -703,4 +815,7 @@ def complete(prompt: str, vault: Path | None = None) -> str:
             errors.append(f"{kind}: {str(exc)[:160]}")
     if errors:
         raise RuntimeError("all model channels failed: " + " | ".join(errors))
+    if capped:
+        raise HostCapReached(f"today's {host_cli_max()} calls through the agent's CLI are used up "
+                             f"(KROUTER_HOST_CLI_MAX to change, {HOST_CLI_FLAG}=0 to turn off)")
     raise NoModel("no API key and no logged-in CLI; set a *_API_KEY or log in one of: " + ", ".join(PATH_NAMES))

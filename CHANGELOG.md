@@ -114,6 +114,52 @@ notice, then the details.
   new nightly step, `cocite` (after `checkup`, no model, writes only a file in the state directory), adds one to the
   co-citation weight of every pair a `high` or `medium` lookup returned, reading each log line once. The weight
   saturates at five.
+- **"Use SQLite from now on" holds at once, with no key.** The agent calls `krouter_correct` in the turn you correct
+  something (or `corrections.py apply`): a correction page that supersedes the old one, the old page marked
+  `superseded` (or its line annotated when it says other things too), the corrections page and the change ledger, one
+  commit. And the nightly distill now marks a session page `superseded` when a later change of mind replaced every
+  decision on it, so a lookup stops giving the old answer as current. "改用" now counts as a correction.
+  `docs/AUTO_CAPTURE.md` §4, `tests/test_correct_now.py`.
+- **The nightly run works with no key, on the agent you are logged in to.** Run for real in a throwaway vault: the
+  nightly job found the logged-in Codex CLI by itself, distilled two sessions and settled the correction candidate in 6
+  calls, each on the subscription record page, stopped at the cap. The install's nightly question says, in one
+  sentence, that it uses that CLI's subscription, the daily cap and how to turn it off. `docs/HOST-LANE.md`.
+- **Experience cards are on by default when your vault has some.** The digest at session start, the use records and
+  `krouter_learn` now default on (`KROUTER_EXPERIENCE=0` turns them off; extraction through the model lane stays
+  opt-in). Cards no longer carry `when` phrases; the agent names the session's subject and a lesson that still uses it
+  is sent back; every number left in a card must be in the session; and a lesson the digest already has is recorded
+  on the old card as seen again (`same_as`) instead of written twice, which also moves that card up the digest.
+  Nightly lists near-duplicate cards to merge by hand. Set 23 (new sessions by another model, duplicate labels
+  confirmed by a second model, each card judged by the host that did not write it): a card for 13 of 16 lesson
+  sessions, faithful 92%, subject-free 92%, no new card on any of 8 duplicates, none on empty sessions: passed.
+- **Experience cards: a lesson from one task offered on another task in the same situation, measured; off by
+  default.** With `KROUTER_EXPERIENCE=1`, distilling a session also asks the model lane for at most two cards
+  (situation, action, result, the lesson without the subject, source) in `02 经验与方法/经验卡/`, checked before they
+  are written and recorded in the change ledger (no model lane, nothing happens), and the session-start hook gives the
+  host model a digest of every card (one subject-free line each, at most 30, about 780 tokens at the cap) with one line
+  on how to use it: offer at most two, as lessons from another task with their id, only when the situation is the
+  same. Cards never appear among recalled facts. Set 15 (`bench/memory_honesty/HELDOUT.md`, registered before any
+  host ran; 56 cases written by Fable 5.2 from the lessons alone): on held-out, **Sonnet 5.5 recalled 14 of 14 and
+  Haiku 5.5 11 of 14 tasks with a new subject, and neither spoke on any of the 14 that should get nothing**; with 40
+  distractor cards added (development), 14 and 13 of 14, still none. The first version matched by shared words
+  (set 13) and found 0 of 14: one situation in other words shares no words. Still off by default pending the
+  maintainer's call. `docs/EXPERIENCE.md`, `bench/transfer/`.
+- **Experience cards, round three: in English, written by the agent itself, ranked by use; still off by default.**
+  The digest is English on an English vault; on set 16 (English, cases by Sonnet 5.5) held-out Sonnet 5.5 offered the
+  right lesson on 14 of 14 and Haiku 5.5 on 13 of 14, and neither spoke on any of the 14 that should get nothing. The
+  agent that ran a session can write the card itself, with no key: `krouter_learn` over MCP or `experience.py learn`.
+  Session imports record when a card was offered (its id in an answer) and, conservatively, when it was adopted (the
+  next question says it was followed or worked); the digest lists adopted cards first and sinks cards offered three
+  times and never taken. Set 17 checked twelve synthetic sessions: a card for every one with a lesson, none for
+  duplicates or empty ones, but subject-free 86% and faithful 71% against a 90% bar, so the "on when the vault has
+  cards" default (`experience.DEFAULT_ON`) stays off.
+- **Model steps can borrow the agent you already use, with a cap you can see.** With no key, the nightly steps run
+  through the agent's own CLI on your login (`claude --print`, `codex exec`, …), at most 30 calls a day
+  (`KROUTER_HOST_CLI_MAX`), each one a line in `90 系统文件/自动化/订阅调用记录.md` (metadata only); this spends your
+  subscription, and `KROUTER_HOST_CLI=0` turns it off. KRouter never reads or reuses an app's login or keychain. A key
+  you set still goes first. MCP sampling is not used (deprecated; Claude Code does not support it); the server records
+  whether a client declares it. The nightly report lists what is off when there is no lane at all. The one real run on
+  the author's machine failed on a lapsed CLI login. `docs/HOST-LANE.md`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

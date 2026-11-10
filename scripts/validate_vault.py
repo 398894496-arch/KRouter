@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mechanical vault gates. Read-only. Requires OBSIDIAN_VAULT."""
+"""Mechanical vault gates. Read-only. Requires KROUTER_VAULT (or the older name OBSIDIAN_VAULT)."""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skill/krouter-obsidian/scripts"))
 import zones  # noqa: E402  区名按库自己的（krouter-zones.psv）
 
-env = os.environ.get("OBSIDIAN_VAULT")
+env = os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT")
 if not env:
-    raise SystemExit("set OBSIDIAN_VAULT")
+    raise SystemExit("set KROUTER_VAULT (or the older name OBSIDIAN_VAULT)")
 VAULT = Path(env)
 CLIPPINGS_LEDGER = zones.path(VAULT, "90 系统文件/Clippings 整理记录.json")
 LOG_ROOT = zones.path(VAULT, "05 时间日志")

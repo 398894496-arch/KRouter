@@ -7,7 +7,7 @@ Tools
   correction, memory, project, suggest.
 - `krouter_status()`: whether the vault and the nightly job are healthy, and what the host must do if not.
 
-The vault is `--vault`, else `OBSIDIAN_VAULT`, else the path the one-line install recorded (`~/.config/krouter/vault`).
+The vault is `--vault`, else `KROUTER_VAULT` (or the older name `OBSIDIAN_VAULT`), else the path the one-line install recorded (`~/.config/krouter/vault`).
 Register it, e.g. for Claude Code: `claude mcp add krouter -- python3 ~/.agents/skills/krouter-obsidian/scripts/mcp_server.py`.
 
 Over HTTP (a team server, or an app that only takes a remote MCP server), Streamable HTTP with JSON responses:
@@ -55,8 +55,18 @@ INSTRUCTIONS = (
     "Call krouter_ask before answering a question about how this user does things, what was decided before, or what "
     "was corrected. Answer from the `how` line and cite the page path; open the page only when `how` does not close "
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
-    "instead of guessing; `recall_note:` means only part of the question matched: say that too. If a receipt has `host_action:`, tell the user that line."
+    "instead of guessing; `recall_note:` means only part of the question matched: say that too. "
+    "`recall_conflict:` means an earlier page says otherwise: answer from the page listed first (the newer one) and "
+    "say the decision was changed; when it says `possible`, read both pages before answering. Pages under "
+    "`associated:` are connected to the hits but were not named by the question: read one only when the hits leave "
+    "part of the question open, and never cite one as the answer by itself. "
+    "If a receipt has `host_action:`, tell the user that line."
 )
+CORRECT_INSTRUCTION = (" When the user corrects a decision or says to do something differently from now on, call "
+                       "krouter_correct in the same turn (new, old, and the page that gave the old answer), so the "
+                       "next lookup already has the new answer.")
+LEARN_INSTRUCTION = (" When a session solved a problem in a way that would help on other tasks in the same situation, record "
+                     "the lesson with krouter_learn before the session ends.")
 TOOLS = [
     {
         "name": "krouter_ask",
@@ -97,11 +107,53 @@ NOTE_TOOL = {
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }
+LEARN_TOOL = {
+    "name": "krouter_learn",
+    "description": "",  # experience.LEARN_HELP，见 tools()
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "situation": {"type": "string", "description": "What happened; may name the subject."},
+            "action": {"type": "string", "description": "What was done."},
+            "result": {"type": "string", "description": "How it turned out."},
+            "subject": {"type": "array", "items": {"type": "string"},
+                        "description": "2–6 words naming this session's subject; the lesson must use none of them."},
+            "lesson": {"type": "string", "description": "The lesson without the subject: \"When …, …\"."},
+            "title": {"type": "string", "description": "Optional: the lesson in one line."},
+            "same_as": {"type": "string", "description": "When the digest already has this lesson: that line's id; "
+                                                         "no new card, the old one is recorded as seen again."},
+            "quotes": {"type": "array", "items": {"type": "string"},
+                       "description": "Short verbatim snippets of the session stating every number the card keeps."},
+        },
+        "required": ["situation"],
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
+}
+CORRECT_TOOL = {
+    "name": "krouter_correct",
+    "description": "Make a correction hold now, in this turn, with no model and no nightly wait: when the user changes "
+                   "a decision or says to do something differently from now on (\"use SQLite from now on\"). Writes a "
+                   "correction page that supersedes the old one, marks the page that gave the old answer as superseded "
+                   "(or annotates the old line when that page says other things too), logs it in the corrections "
+                   "page and the change ledger, one git commit the user can revert. Use the user's own words for new.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "new": {"type": "string", "description": "The decision as it stands now, one sentence."},
+            "old": {"type": "string", "description": "The sentence that no longer holds, as the old page says it."},
+            "page": {"type": "string", "description": "Vault-relative path of the page that gave the old answer "
+                                                      "(from a krouter_ask receipt); leave out when there is none."},
+        },
+        "required": ["new"],
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
+}
 NOTES = "05 时间日志/会话摘录"
 NOTE_MAX = 500
 KINDS = {"decision": "决定", "correction": "纠正", "note": "备注"}
 WRITE = True               # stdio：本机的 agent 可以记一笔；HTTP 团队服务器默认只读（--allow-write 才开）
 CLIENT = ""                # initialize 里客户端报的名字，记在每条笔记后面
+CLIENT_SAMPLING = False    # 客户端在 initialize 里声明了 sampling 没有（只记，不用）
 
 
 LABEL = ""                 # --label: which vault this server answers from, stamped on every receipt
@@ -290,7 +342,7 @@ def route(name: str, query: str, extra_env: dict | None = None) -> tuple[str, bo
 def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
     vault = cur_vault()
     if not vault:
-        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     if WORKERS > 0:
         try:
             res = pool_for(vault).ask([name, query], extra_env or {})
@@ -315,8 +367,90 @@ def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
     return (text, False)
 
 
+def learn_on() -> bool:
+    try:
+        import experience
+
+        return WRITE and experience.digest_on()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def tools() -> list[dict]:
-    return TOOLS + ([NOTE_TOOL] if WRITE else [])
+    out = TOOLS + ([NOTE_TOOL, CORRECT_TOOL] if WRITE else [])
+    if learn_on():
+        import experience
+
+        out = out + [{**LEARN_TOOL, "description": experience.LEARN_HELP}]
+    return out
+
+
+def correct(args: dict) -> tuple[str, bool]:
+    """One correction made to hold now (corrections.apply_now), in the ledger, one commit."""
+    from datetime import datetime
+
+    import capture_ledger
+    import corrections
+    import zones
+
+    raw = cur_vault()
+    if not raw:
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
+    vault = Path(raw).expanduser()
+    res = corrections.apply_now(vault, str(args.get("new") or ""), str(args.get("old") or ""),
+                                str(args.get("page") or ""), f"MCP（{CLIENT or 'unknown client'}）")
+    if "error" in res:
+        return (res["error"], True)
+    now = datetime.now()
+    rid = capture_ledger.run_id(now)
+    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+    what = {"page": "旧页整页标为 superseded", "line": "旧页那一行下面加了「已改」", "recorded": "没有指出旧页"}[res["mode"]]
+    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
+                                          f"- 会话内纠正（MCP，{CLIENT or '未知客户端'}）：[[{res['written'].removesuffix('.md')}]]"
+                                          + (f"，取代 [[{res['superseded'].removesuffix('.md')}]]（{what}）" if res["superseded"] else "")
+                                          + (f"；判定当天的纠正候选 {res['settled']} 条" if res["settled"] else "") + "\n")
+    if str(raw) in POOLS:
+        POOLS[str(raw)].mark_stale()  # 下一次查询就要看到取代
+    sha = capture_ledger.commit(vault, rid, res["touched"], "会话内纠正 1 条")
+    if sha:
+        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+    return (f"corrected: {res['written']}\nsuperseded: {res['superseded'] or '(none named)'} ({res['mode']})\nrun: {rid}"
+            + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; revert the pages by hand"), False)
+
+
+def learn(args: dict) -> tuple[str, bool]:
+    """One experience card the host agent wrote itself: checked, written, in the ledger, one commit."""
+    from datetime import datetime
+
+    import capture_ledger
+    import experience
+    import zones
+    from krouter_redact import redact
+
+    raw = cur_vault()
+    if not raw:
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
+    vault = Path(raw).expanduser()
+    item = {k: (redact(v) if isinstance(v, str) else [redact(str(x)) for x in v] if isinstance(v, list) else v)
+            for k, v in args.items()}
+    path, why = experience.learn(vault, item, f"MCP（{CLIENT or 'unknown client'}）")
+    if not path and why.startswith("again: "):
+        return (f"recorded: the lesson of {why[7:]} came up again (no new card)", False)
+    if not path:
+        return (why, True)
+    now = datetime.now()
+    rid = capture_ledger.run_id(now)
+    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+    rel = zones.canon(vault, str(path.relative_to(vault)).replace(os.sep, "/"))
+    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
+                                          f"- 经验卡：[[{rel.removesuffix('.md')}]]（MCP，{CLIENT or '未知客户端'}）\n")
+    if str(raw) in POOLS:
+        POOLS[str(raw)].mark_stale()
+    sha = capture_ledger.commit(vault, rid, [path], "MCP 经验卡 1 张")
+    if sha:
+        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+    return (f"learned: {rel}\nrun: {rid}" + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; "
+                                                                          "delete the card by hand"), False)
 
 
 def note(args: dict) -> tuple[str, bool]:
@@ -329,7 +463,7 @@ def note(args: dict) -> tuple[str, bool]:
 
     raw = cur_vault()
     if not raw:
-        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     text = " ".join(str(args.get("text") or "").split())
     kind = str(args.get("kind") or "note")
     if not text:
@@ -374,6 +508,12 @@ def call(name: str, args: dict) -> dict:
     if name == "krouter_note" and WRITE:
         text, err = note(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
+    if name == "krouter_correct" and WRITE:
+        text, err = correct(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
+    if name == "krouter_learn" and learn_on():
+        text, err = learn(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_ask":
         query = str(args.get("query") or "").strip()
         rname = str(args.get("route") or "search")
@@ -385,6 +525,8 @@ def call(name: str, args: dict) -> dict:
             text, err = route(rname, query)
     elif name == "krouter_status":
         text, err = route("status", "")
+        text += ("\nclient_sampling: " + ("declared" if CLIENT_SAMPLING else "not declared")
+                 + " (KRouter does not use MCP sampling; with no key it borrows the agent's own CLI, see llm.py)")
     else:
         return {"content": [{"type": "text", "text": f"unknown tool {name}"}], "isError": True}
     return {"content": [{"type": "text", "text": text}], "isError": err}
@@ -399,12 +541,16 @@ def handle(msg: dict) -> dict | None:
         global CLIENT
         info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
         CLIENT = " ".join(str(info.get("name") or "").split())[:60]
+        caps = params.get("capabilities") if isinstance(params.get("capabilities"), dict) else {}
+        # MCP sampling（服务端请客户端的模型来答）：只记客户端声明了没有，不用它（规范已弃用，Claude Code 不支持）
+        global CLIENT_SAMPLING
+        CLIENT_SAMPLING = "sampling" in caps
         asked = params.get("protocolVersion")
         result = {"protocolVersion": asked if asked in PROTOCOLS else PROTOCOLS[0],
                   "capabilities": {"tools": {"listChanged": False}},
                   "serverInfo": {"name": "krouter", "title": f"KRouter ({cur_label()})" if cur_label() else "KRouter",
                                  "version": VERSION},
-                  "instructions": INSTRUCTIONS + (f" This server answers from the '{cur_label()}' vault "
+                  "instructions": INSTRUCTIONS + (CORRECT_INSTRUCTION if WRITE else "") + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
                                                   "(`vault_label:` in each receipt); say which vault an answer "
                                                   "came from." if cur_label() else "")}
     elif method == "ping":
@@ -680,7 +826,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--allow-origin", action="append", default=[], help="a browser Origin allowed to call (repeat)")
     ap.add_argument("--label", default=os.environ.get("KROUTER_LABEL", ""),
                     help="name of this vault, stamped on every receipt (e.g. team)")
-    ap.add_argument("--vault", default="", help="the vault to serve (default: OBSIDIAN_VAULT, else the installed one)")
+    ap.add_argument("--vault", default="", help="the vault to serve (default: KROUTER_VAULT or OBSIDIAN_VAULT, else the installed one)")
     ap.add_argument("--log-queries", action="store_true", help="HTTP: also write question text to the query log")
     ap.add_argument("--allow-write", action="store_true", help="HTTP: offer krouter_note (off by default: read only)")
     ap.add_argument("--workers", type=int, default=None, metavar="N",

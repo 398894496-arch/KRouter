@@ -62,11 +62,11 @@ def groups_since(vault: Path, log: Path, offset: int) -> tuple[list[list[str]], 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
+    ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     if not args.vault:
-        print("set OBSIDIAN_VAULT", file=sys.stderr)
+        print("set KROUTER_VAULT (or the older name OBSIDIAN_VAULT)", file=sys.stderr)
         return 2
     vault = Path(args.vault)
     cur = cursor_file(vault)

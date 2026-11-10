@@ -22,6 +22,11 @@ active` plus corrections, as before 1.3, `KROUTER_INJECT=0` nothing. Nothing is 
 has none or the import was never turned on. In English unless the lines are Chinese. Reads only the vault; sends
 nothing; well under a second.
 
+With `KROUTER_EXPERIENCE=1` (experimental) `start` also prints the experience digest (`experience.py`): every
+experience card as one subject-free line, at most 30, and how to use them: the host model offers at most two, as lessons
+from other tasks with their card id, only when the task's situation is the same, and says nothing otherwise. That
+needs no import consent (it only reads the vault).
+
 `session_hook.py prompt` (UserPromptSubmit): when what you just typed reads like a correction ("改成 B", "以后一律",
 "锁死", "from now on", "that's wrong"), it appends what you typed, redacted and cut to 300 characters, to the day's
 `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional; the next distill of that session settles it on its own (`corrections.py`). Local pattern match
@@ -68,7 +73,7 @@ OLD_SIDE = re.compile(r"^(原来|以前|之前|起初|最初|was|from|before|pre
 NEW_SIDE = re.compile(r"^(改成|改为|改回|换成|换回|变成|现在|now|back to|to|became)\s*[:：]?\s*", re.I)
 TIME = re.compile(r"[（(]\s*(\d{1,2}):(\d{2})\s*[)）]")
 # 纠正用语：说的是"以后照这个来"或"刚才那个不对"，不是提问
-CORRECTION = re.compile(r"(改成|改为|改回|换成|换回|以后都|以后一律|一律|锁死|(?<!要)不要再|别再|记住|纠正|纠错|搞错|说错|弄错|你错了|"
+CORRECTION = re.compile(r"(改成|改为|改回|改用|换成|换回|换用|以后都|以后一律|一律|锁死|(?<!要)不要再|别再|记住|纠正|纠错|搞错|说错|弄错|你错了|"
                         r"不对[，,。！!]|应该是|from now on|instead of|that'?s wrong|that is wrong|don'?t ever|never again|"
                         r"stop doing|always use|you got it wrong)", re.I)
 # 反问不是纠正："……不是吗""对不对""难道不是"
@@ -134,7 +139,9 @@ def sides(line: str) -> tuple[set[str], set[str]] | None:
     if "→" not in line:
         return None
     old, new = line.split("→", 1)
-    return terms(OLD_SIDE.sub("", old.strip())), terms(NEW_SIDE.sub("", new.strip()))
+    # 模型常把「原来」写在句中（「本地开发数据库原来用 PostgreSQL → 改成 SQLite」）：句中的也去掉，否则主语里多出「库原」「来用」
+    old = re.sub(r"(原来|以前|之前|起初|最初)\s*", "", OLD_SIDE.sub("", old.strip()))
+    return terms(old), terms(NEW_SIDE.sub("", new.strip()))
 
 
 def specific(words: set[str]) -> set[str]:
@@ -153,7 +160,7 @@ def holds(value: set[str], line: set[str], share: float = 1.0) -> bool:
     return bool(value) and len(value & line) >= share * len(value)
 
 
-def stale_lines(found: list[tuple[str, str, str, bool]]) -> tuple[set[int], set[int]]:
+def stale_lines(found: list[tuple[str, str, str, bool]], who: dict | None = None) -> tuple[set[int], set[int]]:
     """Indices of recorded lines a later correction replaced. Order is the page date, then the line's (HH:MM), then its
     place on the page; a correction only replaces what came before it.
 
@@ -186,6 +193,8 @@ def stale_lines(found: list[tuple[str, str, str, bool]]) -> tuple[set[int], set[
                         continue
                     if not subject or subject <= mine:
                         out.add(i)
+                        if who is not None:
+                            who[i] = j  # 取代它的那一行（found 里的下标）
                         break
                     unsure.add(i)  # 值对得上、主语只对上一部分：别的环境、别的服务，不删，提醒核对
         else:
@@ -195,6 +204,8 @@ def stale_lines(found: list[tuple[str, str, str, bool]]) -> tuple[set[int], set[
             for j, old2, new2 in after:
                 if holds(came1, old2) and (not subject1 or subject1 & old2):
                     out.add(i)
+                    if who is not None:
+                        who[i] = j
                     break
     return out, unsure - out
 
@@ -204,15 +215,9 @@ MAYBE_CHANGED = {"zh": "（可能已被上面的「→」改过，先核对）",
 CJK = re.compile(r"[\u3400-\u9fff]")
 
 
-def project_lines(vault: Path, root: str, everything: bool = False) -> list[tuple[str, str, bool]]:
-    """[(line, page, confirmed)] for the project at `root`, corrections first, then newest first.
-
-    A page counts only when its `project_root` is this repo: two repos that are both called `api` never share
-    decisions. Pages from before 1.0.1 have no `project_root` and are left out until re-imported. With `everything`
-    (the default) every distilled line comes; without it (`KROUTER_INJECT=confirmed`) only pages you confirmed
-    (`status: active`, or `confirmed: true`) bring every line, the rest only corrections ("A → B")."""
-    if not root:
-        return []
+def recorded_lines(vault: Path, root: str, everything: bool = True) -> list[tuple[str, str, str, bool]]:
+    """[(page date, digest line, page, confirmed)] recorded for the repository at `root` in the last DAYS days; pages
+    already marked superseded are left out."""
     cut = (date.today() - timedelta(days=DAYS)).isoformat()
     found: list[tuple[str, str, str, bool]] = []
     for folder in ("05 时间日志/会话摘录", "02 经验与方法/从 claude-mem 导入"):
@@ -227,12 +232,45 @@ def project_lines(vault: Path, root: str, everything: bool = False) -> list[tupl
             meta = meta_of(text)
             if meta.get("project_root") != root or (meta.get("date") and meta["date"] < cut):
                 continue
+            if meta.get("status", "").lower() == "superseded":
+                continue
             ok = meta.get("status", "").lower() in CONFIRMED or meta.get("confirmed", "").lower() == "true"
             rel = zones.canon(vault, str(page.relative_to(vault)).replace(os.sep, "/"))
             for ln in digest_lines(text):
                 line = re.sub(r"^[-*]\s*", "", ln)
                 if ok or everything or "→" in line:
                     found.append((meta.get("date") or "9999", line, rel, ok))
+    return found
+
+
+def replaced_pages(vault: Path, root: str) -> dict[str, str]:
+    """{page: the page that replaced it} for session pages every recorded decision of which a later change of mind
+    replaced (the same rule `start` uses to leave stale decisions out)."""
+    found = recorded_lines(vault, root)
+    who: dict[int, int] = {}
+    gone, _unsure = stale_lines(found, who)
+    by_page: dict[str, list[int]] = {}
+    for n, (_d, _line, rel, _ok) in enumerate(found):
+        by_page.setdefault(rel, []).append(n)
+    out = {}
+    for rel, idx in by_page.items():
+        if idx and all(n in gone for n in idx):
+            by = {found[who[n]][2] for n in idx if n in who} - {rel}
+            if by:
+                out[rel] = sorted(by)[-1]
+    return out
+
+
+def project_lines(vault: Path, root: str, everything: bool = False) -> list[tuple[str, str, bool]]:
+    """[(line, page, confirmed)] for the project at `root`, corrections first, then newest first.
+
+    A page counts only when its `project_root` is this repo: two repos that are both called `api` never share
+    decisions. Pages from before 1.0.1 have no `project_root` and are left out until re-imported. With `everything`
+    (the default) every distilled line comes; without it (`KROUTER_INJECT=confirmed`) only pages you confirmed
+    (`status: active`, or `confirmed: true`) bring every line, the rest only corrections ("A → B")."""
+    if not root:
+        return []
+    found = recorded_lines(vault, root, everything)
     found.sort(key=lambda x: x[0], reverse=True)
     # 后来改过主意的：旧决定不再当现行决定带进新会话（纠错那一行本身就写着「原来 A → 改成 B」）
     gone, unsure = stale_lines(found)
@@ -273,24 +311,44 @@ def normalize(payload: dict, agent: str) -> dict:
     return p
 
 
-def start(payload: dict, agent: str = "claude") -> int:
-    mode = os.environ.get("KROUTER_INJECT", "")
-    if mode == "0" or not consented():
-        return 0
-    raw = vault_path()
-    if not raw or not Path(raw).is_dir():
-        return 0
+def decisions_text(payload: dict, vault: Path, mode: str) -> str:
+    if not consented():
+        return ""
     root = project_root(payload.get("cwd") or os.getcwd())
     strict = mode == "confirmed"
-    lines = project_lines(Path(raw), root, everything=not strict)
+    lines = project_lines(vault, root, everything=not strict)
     if not lines:
-        return 0
+        return ""
     lang = "zh" if any(CJK.search(line) for line, _, _ in lines) else "en"
     body = [HEAD[lang].format(name=Path(root).name, days=DAYS)]
     for line, rel, ok in lines:
         body.append(f"- {line}{MARK_UNCONFIRMED[lang] if strict and not ok else ''} 〔{rel}〕")
     body.append(TAIL[lang])
-    text = redact("\n".join(body))[:MAX_CHARS]
+    return redact("\n".join(body))[:MAX_CHARS]
+
+
+def experience_text(vault: Path) -> str:
+    """The experience digest (experience.py) unless `KROUTER_EXPERIENCE=0`; read-only, so no import consent needed."""
+    try:
+        import experience
+
+        return experience.digest(vault) if experience.digest_on() else ""
+    except Exception as exc:  # noqa: BLE001  经验摘要出错不影响决定的注入
+        print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
+        return ""
+
+
+def start(payload: dict, agent: str = "claude") -> int:
+    mode = os.environ.get("KROUTER_INJECT", "")
+    if mode == "0":
+        return 0
+    raw = vault_path()
+    if not raw or not Path(raw).is_dir():
+        return 0
+    parts = [t for t in (decisions_text(payload, Path(raw), mode), experience_text(Path(raw))) if t]
+    if not parts:
+        return 0
+    text = "\n\n".join(parts)
     if agent == "cursor":
         print(json.dumps({"additional_context": text}, ensure_ascii=False))
     else:
