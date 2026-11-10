@@ -160,6 +160,19 @@ notice, then the details.
   you set still goes first. MCP sampling is not used (deprecated; Claude Code does not support it); the server records
   whether a client declares it. The nightly report lists what is off when there is no lane at all. The one real run on
   the author's machine failed on a lapsed CLI login. `docs/HOST-LANE.md`.
+- **Codex and Cursor tested through their command line agents (2026-11-09).** Codex (codex-cli 0.155.0-alpha.9.2, a real
+  model, a copy of the sample vault): the MCP tools were found, a question the vault answers was answered with its page, one
+  it does not answer was refused; the hooks noted a typed correction and ran the turn-end and session-end imports. Cursor
+  (agent CLI 2026.11.05-86047df, `-p --force`; `--mode ask` rejects MCP calls in print mode): the project-level MCP entry
+  was found, its tools listed, a question answered with its page, another refused; the turn-end and session-end hooks wrote
+  the session pages, but the CLI's non-interactive mode did not run `beforeSubmitPrompt`, so a typed correction is not
+  noted there (the hook handles Cursor's payload when fed it by hand). Both vendors document that the command line and
+  the editor read the same MCP configuration (Cursor) / configuration layers (Codex, CLI and IDE extension). Claude Desktop
+  4.23118.1: the config entry's command started the server, listed the three tools, answered with its page and refused
+  outside the app; three restarts did not load an entry written while the app was running (it writes its in-memory
+  settings back when it quits). That finding is why the installer now leaves the file alone while the app runs and
+  builds the extension instead, which was then tested inside the app (the Claude Desktop entry above). Also found: a Codex `hooks.json` with top-level event names
+  is skipped whole (already documented); `krouter_ask` takes `query`, not `question`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

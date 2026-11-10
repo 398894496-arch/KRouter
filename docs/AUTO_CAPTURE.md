@@ -162,9 +162,14 @@ and a local mock of the Responses API, hooks installed by `register_hooks` and r
 `--dangerously-bypass-hook-trust` (the same as trusting them in `/hooks`): the recorded decision reached the model as
 a developer message, "以后一律用 pnpm" became a `codex:` candidate, and `Stop` and `SessionEnd` both ran the import.
 `codex exec` sessions are headless, so the import writes no page for them (by design); the rollout that run wrote
-was read back correctly as an interactive session. Without the bypass the untrusted hooks did not run. **Not checked
-inside Cursor**: no Cursor agent CLI on the test machine; the hook formats follow Cursor's hooks documentation and are
-covered by `tests/test_live_hooks.py`, which also runs the installed command line through a shell.
+was read back correctly as an interactive session. Without the bypass the untrusted hooks did not run. The same version was also run on 2026-11-09 against a real model (ChatGPT login, a throwaway `CODEX_HOME`): the
+prompt "以后一律用 pnpm" became a candidate on the day's 纠正候选 page, and `Stop` and `SessionEnd` each ran the import
+(0 sessions, as above). **Checked in the Cursor agent CLI** (2026.11.05-86047df, 2026-11-09, `cursor-agent -p --force`, project-level
+`.cursor/mcp.json` and `.cursor/hooks.json`): the turn-end and session-end hooks wrote a `cursor` session page for each
+run; `beforeSubmitPrompt` did not run, so "以后一律用 pnpm" was not noted there (fed to `session_hook.py prompt --agent
+cursor` by hand with Cursor's payload it is). The hook formats follow
+Cursor's hooks documentation and are covered by `tests/test_live_hooks.py`, which also runs the installed command line
+through a shell.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 

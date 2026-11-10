@@ -117,8 +117,8 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
 | Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
-| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
-| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
+| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | 已实测（命令行，codex-cli 0.155.0-alpha.9.2，2026-11-09）：发现 MCP 工具、有答案的问题带出处答对、库里没有的问题拒答；钩子记下了输入的纠正句，并跑了每轮结束和会话结束的导入。命令行和 IDE 扩展共用同一份配置（Codex 文档） |
+| Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；其余已在 Cursor 命令行 agent（2026.11.05-86047df，2026-11-09）实测：MCP 条目被发现、列出工具、带出处答对、拒答；每轮结束和会话结束的钩子写出了会话页。命令行和编辑器读同一份 MCP 配置（Cursor 文档）。实测到的差异：命令行的非交互模式不触发 `beforeSubmitPrompt`，所以输入的纠正句不会在那里被记下 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
 | Claude Desktop | 扩展包：双击 [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb)，点一次安装（不改设置文件、不用重启；点完应用会先联网检查几秒，这期间界面没有反应）。也可以让安装脚本写它的设置文件，但只在应用关着时写：Claude Desktop 开着的时候把设置留在内存里，退出时把整份文件写回去，开着时写进去的条目一重启就没了。安装脚本发现它在运行，就不碰那个文件，改为按你的记忆文件夹做一个扩展包 | **扩展包已在应用里实测**（Claude Desktop 4.23118.1，macOS，2026-11-10）：点一次安装、不用重启就装好，3 个工具都连上；在普通聊天里，一个问题答出结论并给出出处页，一个库里没有的问题被拒答（`recall: none`）。实测用的包写的是 Python 的完整路径（和安装脚本生成的一样）；发布附件里写的是 `python3`，应用会走另一条启动路径，还没实测。设置文件由测试检查过 |
 | VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |

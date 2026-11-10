@@ -30,7 +30,7 @@
 >   file it changed (a copy of each kept), and imports nothing from the past (`--all` imports the last 7 days, locally,
 >   no model call; `--minimal` is lookup only and connects only the apps you name). From then on, Claude Code, Codex and Cursor each
 >   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
->   in `/hooks`; Cursor's checked against its docs, not yet inside Cursor). Distilling with a model and the nightly job
+>   in `/hooks`; Cursor's run in its agent CLI, where a typed correction is not noted). Distilling with a model and the nightly job
 >   ask first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
 >   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
