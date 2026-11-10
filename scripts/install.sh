@@ -83,7 +83,7 @@ if [ -z "$WRITER" ]; then
   fi
 fi
 printf '%s\n' "self-evolution writer: $RUN_SH"
-printf '%s\n' "keys file: $KEYS_ENV (chmod 600). never written into the vault."
+printf '%s\n' "keys file: $KEYS_ENV (chmod 600). never written into the memory folder."
 wire=$(python3 "$ROOT/extras/host-daily-evolution/wire_keys.py") || wire="missing path=$KEYS_ENV"
 printf '%s\n' "key wire: $wire"
 case "$wire" in
@@ -114,7 +114,7 @@ else
   VAULT_FILE="${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}"
   if [ ! -s "$VAULT_FILE" ]; then
     mkdir -p "$(dirname "$VAULT_FILE")" && printf '%s\n' "$VAULT" > "$VAULT_FILE" \
-      && printf '%s\n' "vault recorded for hooks and MCP: $VAULT_FILE"
+      && printf '%s\n' "memory folder recorded for hooks and MCP: $VAULT_FILE"
   fi
   # 别名表放进库：库里已有就不动；没有就把旧表（不是样例时）搬进去、原位置留软链；全新安装放一份样例
   # 路径按库自己的区名（krouter-zones.psv，英文库是 90 System/…）

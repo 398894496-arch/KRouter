@@ -11,6 +11,19 @@ notice, then the details.
 
 ## Unreleased
 
+- **The default install no longer imports past sessions.** It makes the memory folder, connects the apps it finds
+  (each settings file it changes is copied to `*.krouter-bak` first, and every file it created or changed is listed
+  at the end) and records sessions from then on. Its last line gives the one command that imports the last 7 days;
+  `--all` does that up front, with claude-mem's memory (the old default). `--no-import` / `--minimal` stay lookup only.
+- **`KROUTER_VAULT`** is the memory folder's name. `OBSIDIAN_VAULT` still works for older installs; when both are set,
+  `KROUTER_VAULT` wins (an explicit `--vault` / `vault=` beats both). Messages and the README say "memory folder";
+  Obsidian is one optional way to open it.
+- **Release checks you can run before tagging:** `scripts/release_pack.sh` builds the assets exactly as the release
+  workflow does (the workflow now calls it) and fails when a README links an asset the release would not attach or the
+  package lacks what a release install runs. `scripts/release_smoke.py` runs every install command in both READMEs
+  against the real addresses (assets, the one-line install with its checksum, `uvx --from`, `pipx install`, the
+  Claude Code marketplace); a new `smoke` job runs it after each release. Against today's addresses it fails, as it
+  should: `releases/latest/download/bootstrap.sh` is a 404 and `main` has no `pyproject.toml` yet.
 - **An English install is English all the way through, and the install says what it changes.** A new English vault
   gets English folder and file names (`Home.md`, `02 Methods/`, `90 System/Automation/Daily health.md`, …) from
   `skill/krouter-obsidian/scripts/zones_en.psv`, recorded in the vault's `krouter-zones.psv`; `krouter demo`, `status`,

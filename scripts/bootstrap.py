@@ -110,7 +110,7 @@ MSG = {
         "vault_ours": "Already a KRouter memory folder (upgrade)", "added": "files added", "skill": "Router", "timer": "Daily timer",
         "model_ok": "Model lane", "model_none": "No model yet: log in to one AI coding CLI (`claude`, Codex, grok, …), "
         "or put an API key in {keys} (one line, e.g. DEEPSEEK_API_KEY=sk-…). With the nightly job on, it then runs every night on its own.\n"
-        "Without a model: lookup, answers with their source page, \"not in the vault\" instead of a guess, the local "
+        "Without a model: lookup, answers with their source page, \"not in the memory\" instead of a guess, the local "
         "session import and noting correction candidates all work. What does not run: distilling (each page's \"what was "
         "decided, what changed\"), the nightly upkeep, and settling correction candidates. The consequence: when you "
         "change your mind, the old answer is not replaced on its own; the older page can still rank first until a model "

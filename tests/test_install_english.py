@@ -311,3 +311,13 @@ def test_default_install_lists_and_backs_up_each_settings_file_it_changes(tmp_pa
     assert str(gemini) in listed.split("Done.", 1)[0]
     assert "Files and folders created:" in res.stdout and "Second Brain" in res.stdout
     assert out["imported"] == 0 and "Past sessions were not imported" in res.stdout and "--consent" in res.stdout
+
+
+@POSIX
+@pytest.mark.skipif(not shutil.which("npm"), reason="npm packs the release")
+def test_release_pack_attaches_what_the_readmes_link_and_what_a_release_install_runs(tmp_path):
+    res = subprocess.run(["/bin/sh", str(REPO / "scripts/release_pack.sh"), str(tmp_path / "out")], capture_output=True,
+                         text=True, timeout=300)
+    assert res.returncode == 0 and "release assets OK" in res.stdout, res.stdout[-1500:] + res.stderr[-1500:]
+    names = {p.name for p in (tmp_path / "out").iterdir()}
+    assert {"bootstrap.sh", "bootstrap.ps1", "SHA256SUMS"} <= names and any(n.endswith(".tgz") for n in names)
