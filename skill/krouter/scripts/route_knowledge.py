@@ -369,7 +369,9 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
     lines = [ln for ln in lines if not ((m := hit.match(ln)) and is_secret_page(m.group(1).rsplit("/", 1)[-1]))]
     if vault is not None:  # 经验卡只走建议通路，字面搜索也不把它当事实打出来
         cards = str(zones.path(vault, "02 经验与方法/经验卡")) + os.sep
-        skills = str(zones.path(vault, "02 经验与方法/技能")) + os.sep  # 技能同理（skills.py）
+        import recall_index
+
+        skills = str(vault / recall_index.skills_rel(vault)) + os.sep  # 技能同理（skills.py）
         lines = [ln for ln in lines if not ln.startswith((cards, skills))]
     for i, line in enumerate(lines):
         if i >= max_lines:

@@ -108,7 +108,7 @@ def _section(body: str, heads: tuple[str, ...]) -> str:
 
 def load(vault: Path, include_retired: bool = False) -> list[dict]:
     """Every skill page: [{id, rel, name, use_when, steps, cards, status, drafted, promoted, lang}]."""
-    folder = zones.path(vault, FOLDER)
+    folder = vault / ri.skills_rel(vault)
     if not folder.is_dir():
         return []
     out = []
@@ -450,7 +450,7 @@ def write_draft(vault: Path, draft: dict, cards: list[dict], used: dict, lane: s
     day = day or date.today().isoformat()
     taken = {s["id"] for s in load(vault, include_retired=True)} | {c["id"] for c in cards}
     sid = skill_id(draft, taken)
-    folder = zones.path(vault, FOLDER)
+    folder = vault / ri.skills_rel(vault)
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / file_name(draft["name"], sid)
     if path.exists():
@@ -566,7 +566,7 @@ def digest(vault: Path, used: dict | None = None) -> str:
     ordered = rank(skills, used)
     active = [s for s in ordered if s["status"] == "active"][:LIST_ACTIVE]
     drafts = [s for s in ordered if s["status"] == "draft"][:LIST_DRAFTS]
-    out = [HEAD[lang].format(folder=zones.real(vault, FOLDER))]
+    out = [HEAD[lang].format(folder=ri.skills_rel(vault))]
     out += [line(s, lang) for s in active]
     if drafts:
         out += [DRAFT_HEAD[lang]] + [line(s, lang) for s in drafts]

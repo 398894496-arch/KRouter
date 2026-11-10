@@ -319,3 +319,26 @@ def test_an_english_vault_writes_english_turn_labels_and_both_kinds_parse(monkey
 
     assert [t for t, _ in capture_bench.turns_of(body)] == [t for t, _ in capture_bench.turns_of(imp.excerpt_of(zh))]
     assert len(capture_bench.turns_of(body)) == 2
+
+
+def test_an_english_vault_keeps_skills_in_an_english_folder_and_digest(tmp_path, monkeypatch):
+    monkeypatch.setenv("KROUTER_SKILLS", "1")
+    monkeypatch.setenv("KROUTER_STATE_DIR", str(tmp_path / "state"))
+    v = tmp_path / "vault"
+    shutil.copytree(REPO / "template", v)
+    (v / "krouter-zones.psv").write_text("@lang|en\n02 经验与方法|02 Methods\n", encoding="utf-8")  # 没有 Skills 那一行的旧库
+    folder = v / "02 Methods/经验卡"
+    folder.mkdir(parents=True)
+    for card in sorted((BENCH / "cards_en").glob("C02*.md")):
+        shutil.copy(card, folder / card.name)
+    _uses(v, [("C02", "adopted")] * 3)
+    _model(monkeypatch, [{"cards": ["C02"], "name": "Keep the result of slow repeated work",
+                          "use_when": "When the same slow step is redone from scratch every time",
+                          "steps": ["Check whether the step's input changed", "Store the step's result",
+                                    "Reuse the stored result while the input is unchanged"]}])
+    row = skills.nightly(v)
+    assert row["drafted"] and row["drafted"][0]["rel"].startswith("02 Methods/Skills/Skill - ")
+    text = skills.digest(v)
+    assert text.startswith("KRouter skills") and "Skill drafts" in text and "\"02 Methods/Skills\"" in text
+    assert not any("一" <= ch <= "鿿" for ch in text)
+    assert "## Steps" in skills.show(v, row["drafted"][0]["id"])
