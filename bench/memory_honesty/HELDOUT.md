@@ -1101,3 +1101,87 @@ index or a resident process before the default is decided.
 |---|---|
 | 2026-11-10 | **Delivery.** Codex: codex-cli 0.155.0-alpha.9.2 (the app's own binary, not the shell wrapper on this machine), throwaway `CODEX_HOME` and `HOME`, a local mock of the Responses API (no login carries over to a throwaway home, so no real model was called), hooks run with `--dangerously-bypass-hook-trust`: for 「新项目的仓库我就建在公司自己的 GitLab 上吧」 the hook ran and the memory note (代码托管.md, with the earlier page named) arrived in the request as a **developer message right after the user message**; for a message naming nothing, no note was sent. Claude Code: output format per its hooks documentation (`hookSpecificOutput.additionalContext` on `UserPromptSubmit`) and the hook tests; not run inside the Claude Code app here. Cursor: not available (`beforeSubmitPrompt` can only allow or block); the hook does not run the lookup there. |
 | 2026-11-10 | **Speed** (`bench/subconscious/speed.py`, results in `bench/subconscious/results/set34-speed.txt`; Apple laptop shared with other sessions, load average 5–6). A first run set `PYTHONPYCACHEPREFIX` for cold starts, which turned out to add about 90 ms to every run (the same hook: 62 → 154 ms) and was discarded; cold now means the scripts' bytecode cache deleted and the phrase table not yet compiled. Whole hook process, routes as frozen (alias, trigger, recall), 200 warm and 20 cold runs each. **vault3 + overlay: warm p50 / p95 87 / 124 ms (a message that names a page) and 83 / 102 ms (one that names nothing); cold 91 / 126 and 94 / 121. 10,000 pages, 2,000 alias rows, 10,000 trigger lines: warm 126 / 144 and 116 / 139; cold 221 / 246 and 214 / 327.** Alias and trigger routes only: 10,000 pages warm 129 / 149 and 72 / 82. The hook with the lookup off: 62 / 73 ms on either vault. **Line (warm p95 ≤ 250 ms on both vaults): holds.** Two changes made before this run, on development timings only: the phrase table is compiled once and kept next to the recall index (`marshal`, 9 ms to load 26,000 phrases instead of re-reading the files: the JSON form took 38 ms), and related-page titles are resolved without walking the vault. Set 32's held-out pages brought were checked to be identical before and after each change (compared, not re-scored). |
+
+## Set 35: the subconscious as a whole — the prompt hook, then the host reading a standing index (registered 2026-11-10, before any case existed)
+
+**Why.** Set 32: the prompt hook alone stays quiet but brings the right page for only 7 of 24 mentions, because people
+mostly mention a thing in other words. Set 15 met the same wall with experience cards (0 / 14 by words) and got past
+it by putting the cards in front of the host (14 / 14). Here the session-start hook hands the host a standing index
+(`compile_subconscious.standing_index`: one line per live topic of the alias table, name / one other name / what was
+decided / page; replaced pages counted under the page that replaced them; rule pages first, then most recently used or
+updated; at most 60 lines and 5,400 characters; then one usage line that says how to fetch a page with `krouter_ask`,
+the route command or the file path, since some hosts show the model no tool list). A message then counts as
+remembered when either layer brings the right page.
+
+**Vault and hook.** Set 32's: vault3 with `bench/subconscious/overlay/`, the prompt hook exactly as frozen there
+(`b6cfb53`, routes alias, trigger, recall). The index on it: 60 topics, all listed.
+
+**Cases.** 120 new messages, written by Sonnet 5.5 in a fresh Claude Code subagent that reads the same one input file
+as set 32's writer (pages, statuses, alias names) and nothing else; it has not seen set 32's cases, the index, its
+wording or any code. Per language (zh, en): 24 *recall*, of which at least 16 must not use any of the page's listed
+names (the writer marks each `named`); 24 *quiet* (6 each: unrelated; a name in another sense; a name or key word as
+an everyday word; a name only inside pasted code or logs); 12 *changed* (the newer page expected). Not edited. Split
+at seed 20261135, stratified by language, kind, subkind and `named`: `bench/subconscious/set35_dev.jsonl` (60), where
+the index's usage line may be revised at most once; `bench/subconscious/set35_heldout.jsonl.gz` (60), run once per host.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, as Claude Code subagents (`model: haiku` / `sonnet`), one agent per host and
+split. The batch file gives the session-start context once at the top (exactly the index the hook would print) and
+then each message as a separate session, with the prompt hook's note above it when the hook brought something. The
+host writes the start of its reply; a fetch it would make is written as a first line `CALL krouter_ask: …`,
+`CALL shell: …` or `CALL read: …` instead of being run. No API key, no stored login.
+
+**Scored mechanically** (`bench/subconscious/both.py`). A fetch is resolved by running it for real on the bench vault
+(`route_knowledge.py search` with the question or the command's query: the lock's page, else recall's first page when
+recall answers; a `read` path as written). The host *recalls* a page when it fetches it or names its path in the reply.
+Recall or changed case **right** when the hook brought the expected page or the host recalled it; **wrong page** when
+the hook brought, or the host fetched or named, any other page; **old-page delivery** when the superseded page was
+brought, fetched or named. Quiet case **loud** when the hook brought anything or the host fetched anything or named any
+page. Reported per host and language, with what each layer contributed (hook right; host right where the hook was not).
+
+**Pass line (fixed now), held-out, each host:** recall cases right ≥ 18 / 24 and ≥ 8 / 12 in each language; changed
+cases right ≥ 9 / 12; quiet cases loud ≤ 2 / 24; wrong pages ≤ 2; old-page deliveries 0. Both hosts must pass for the
+prompt hook and the standing index to be on by default.
+
+**Scale check (development only, not a pass condition).** (a) Crowded: the index with 240 distractor topics added
+(synthetic pages with alias rows on subjects the cases never touch), all 300 lines listed regardless of the budget, to
+see whether a long list makes the host fetch wrongly or speak on quiet cases; both hosts. (b) At the shipped budget
+with the same 240 distractors dated newer than the real pages: how many real topics stay listed, and the hook-plus-host
+numbers with Haiku 5.5.
+
+**Known limits, said with any number.** One writer model, also one of the hosts; the writer saw the alias names;
+batches show the host every case of a split at once; the host is told to write fetches instead of making them, so a
+real session's tool use may differ; token counts are the registered estimate (one per CJK character, one per three
+other characters).
+
+### Log, set 35
+
+| Date | Event |
+|---|---|
+
+## Set 36: does it get better with use — learning a mention from what the host fetched (registered 2026-11-10, before any case existed)
+
+**Why.** When the hook says nothing and the host fetches a page itself and uses it, the turn hook notes the message and
+the page; the nightly `learn_mentions` step turns the message's most distinctive phrase into a provisional trigger word
+for that page. The question: does the hook then bring that page by itself the next time the team says it that way,
+without getting louder?
+
+**Cases.** Written in the same sitting as set 35 by the same writer: per language 8 *pairs* (two messages on one
+topic that share a team expression the pages and names do not contain, as teams have nicknames for their own rules;
+the first is the learning message, the second the test message, written so it would not share the expression by
+accident with any other page), and 4 *lookalike* quiet messages (the same team expression's ordinary words used about
+something unrelated). `bench/subconscious/set36.jsonl`, not split (nothing is tuned on it).
+
+**Procedure.** Learning: each first message goes through the hook (frozen) and Sonnet 5.5 with the index, as in set
+35; where the hook brought nothing and the host fetched and named the right page, that is a learning event, exactly as
+the turn hook would write it; `learn_mentions.run` then writes the trigger file. Test: the prompt hook alone, before
+and after learning, on the 16 second messages, on the 8 lookalikes, and on set 35's 24 held-out quiet messages.
+
+**Pass line (fixed now):** after learning, the hook alone brings the right page for at least half of the second
+messages whose first message produced a learning event (before learning: counted and reported); quiet messages (the
+lookalikes and set 35's held-out quiet ones) bringing something: no more than before learning; no wrong page brought
+on a second message. If it fails, the nightly step stays in the code but is reported as not shown to work.
+
+### Log, set 36
+
+| Date | Event |
+|---|---|
