@@ -253,10 +253,11 @@ Measured with [`bench/scale/serve_load.py`](bench/scale/serve_load.py) on synthe
 
 Ten people with their own tokens and agents reading and writing at once ([`bench/team/load.py`](bench/team/load.py);
 asks, notes, concurrent corrections of one page and contradicting corrections of one decision; the same laptop, then
-busy with other test runs): reads p50 / p95 47 / 160 ms on the template, 124 / 361 ms at 10,000 pages,
-755 / 4,033 ms at 50,000; one memory takes about 9, 5 and 2 writes a second (one at a time; the git commit is most of
-it); no errors. Every write was attributed to the right person, nothing acknowledged went missing, and each contested
-decision ended with the last correction in force. A smaller run of it is a CI test. Not tested: several machines, or a
+busy with other test runs): reads p50 / p95 39 / 129 ms on the template, 102 / 284 ms at 10,000 pages,
+446 / 2,010 ms at 50,000; one memory takes about 8, 5 and 2.5 writes a second (one at a time; the git commits are most
+of it); no errors. Every write was attributed to the right person, nothing acknowledged went missing, and each contested
+decision ended with the last correction in force. Thirty minutes of it at 10,000 pages: 0 errors in 21,218 calls, no memory growth (on the third run; the first two
+found three bugs, now fixed). A smaller run of it is a CI test. Not tested: several machines, or a
 real team over weeks.
 
 Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).

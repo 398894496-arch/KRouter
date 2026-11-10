@@ -133,6 +133,12 @@ python3 skill/krouter/scripts/mcp_server.py --http 0.0.0.0:8787 --vault /srv/tea
 python3 skill/krouter/scripts/team.py remove-user --users /etc/krouter/users alice   # her token stops at once
 ```
 
+In Docker, mount the file read-only too (`-v /etc/krouter/users:/run/secrets/krouter_users:ro`) and end the `docker
+run` line with `--label team --users /run/secrets/krouter_users` (plus `--allow-write` and a read-write vault mount,
+not `:ro`, for a server that writes). The image's entry point still reads the shared token at
+`/run/secrets/krouter_token`, which keeps working beside the personal ones. (Personal tokens were tested with the
+Python server; not yet inside the image.)
+
 One line per person: `name|sha256:<hex>|write or read|* or bank names`. The server re-reads the file when it changes,
 so adding or removing someone needs no restart. A `read` token is not offered the write tools and is refused if it
 calls one; a token restricted to some banks gets 403 on the others. The shared tokens of §2 and §2b (`--token-file`,
@@ -269,14 +275,14 @@ with its own token and app name. First four bursts in which all ten do the same 
 correct one shared line of a long page; correct one decision, all naming its original page, so every correction after
 the first contradicts one already in force), then a seeded mix of 40 operations each (60 % asks, 20 % notes, 10 %
 corrections of the client's own lines on the shared page, 5 % of the decision, 5 % of the shared line). Apple M2,
-8 GB, server and clients on one machine, which was busy with other test runs (load average 8 to 11). Default server
-settings (4 lookup processes).
+8 GB, server and clients on one machine, which was busy with other test runs (load average 5 to 14). Default server
+settings (4 lookup processes). KRouter at `c255760`.
 
 | Pages | Reads p50 / p95 / p99 | Writes p50 / p95 / p99 | Done per second (mix): all, reads, writes | Errors | Ready after |
 |---|---|---|---|---|---|
-| 136 (template) | 47 / 160 / 297 ms | 0.95 / 1.26 / 1.41 s | 21.1, 11.9, 9.2 | 0 of 440 | 0.2 s |
-| 10,136 | 124 / 361 / 1,611 ms | 1.67 / 2.46 / 4.94 s | 10.9, 6.2, 4.7 | 0 of 440 | 6.2 s |
-| 50,136 | 755 / 4,033 / 6,294 ms | 2.70 / 4.18 / 4.43 s | 5.3, 3.0, 2.3 | 0 of 440 | 43 s |
+| 136 (template) | 39 / 129 / 234 ms | 1.09 / 1.38 / 1.46 s | 18.4, 10.4, 8.0 | 0 of 440 | 0.3 s |
+| 10,136 | 102 / 284 / 396 ms | 1.52 / 2.01 / 2.15 s | 12.7, 7.2, 5.5 | 0 of 440 | 6.4 s |
+| 50,136 | 446 / 2,010 / 2,885 ms | 2.99 / 4.35 / 4.65 s | 5.8, 3.3, 2.5 | 0 of 440 | 40 s |
 
 Each row: 204 writes acknowledged, 90 correction replies with a `conflict:` line, 236 answers. **Every property held
 at every size:** every acknowledged write is in the journal, in order, with its own run; every note is on its page
@@ -289,10 +295,22 @@ correction page, with `how: 现在：…` (the corrections log, a rule page, com
 
 **What the numbers mean.** Writes are one at a time per memory, so a write's time is mostly its wait behind the
 others: with ten agents writing 40 % of the time, the queue is several deep. What one write costs is about
-1 / writes-per-second: 0.11 s on the template, 0.21 s at 10,000 pages, 0.43 s at 50,000, nearly all of it the two git
+1 / writes-per-second: 0.13 s on the template, 0.18 s at 10,000 pages, 0.40 s at 50,000, most of it the two git
 commits (about 20 ms each on a small repository, 150 ms on a 50,000-file one, on this machine). So one memory takes
-about 9, 5 and 2 writes a second. Reads run beside writes, not behind them, but share the CPU with git. Ten agents in a
+about 8, 5 and 2.5 writes a second. Reads run beside writes, not behind them, but share the CPU with git. Ten agents in a
 real team write a few times an hour, not twice a second; this is a stress test, not a forecast.
+
+**Thirty minutes** ([set 28](../bench/memory_honesty/HELDOUT.md#set-28-thirty-minutes-of-mixed-load-registered-2026-11-10-before-the-run);
+10,136 pages, the same ten clients without pause, 80 % asks): 21,218 calls (16,956 reads, 4,262 writes), **0 errors**,
+every property above held (2,132 corrections of 32 contested things, 544 of them of one decision, all converged;
+2,100 conflict replies each naming the right page). Server memory (server and its lookup processes) 195 MB at 5
+minutes, 205 MB at the end, highest 230 MB: no growth. Reads p50 / p95 / p99 717 ms / 2.7 s / 4.1 s (slowest 8.2 s),
+writes 291 ms / 1.6 s / 1.9 s, 11.7 calls a second. Reads are slower than in the short run because the pages every
+write touches had grown: at the end each correction re-indexed the corrections log (589 KB, 0.39 s) and the long
+shared page (0.15 s), each note the day's notes page (0.12 s), with the index locked meanwhile. **The first two
+30-minute runs failed** and are kept in the log: one let corrections stand side by side after the 100th correction of
+one decision, and the change ledger re-indexed at 1.6 MB slowed every lookup; the other lost the correction in force
+among 544 replaced ones. All three are fixed (§2c) and have tests.
 
 **The CI test** (`tests/test_team_concurrency.py`) runs the same harness on the template vault with 8 mixed operations
 per client and two seeds, and asserts every property above, on Linux, macOS and Windows. **Identity and the conflict
@@ -305,11 +323,17 @@ Rerun:
 python3 bench/team/load.py --ops 40                                   # the template vault
 python3 bench/scale/gen.py 10000 /tmp/v10000 && python3 bench/team/load.py --vault /tmp/v10000 --ops 40
 python3 bench/team/load.py --vault /tmp/v10000 --duration 1800 --write-share 0.2 --rss-every 30 --out run.json
-python3 bench/team/load.py --vault /tmp/v10000 --duration 43200 --write-share 0.05 --rss-every 300 --out 12h.json  # not run yet
+python3 bench/team/load.py --vault /tmp/v10000 --duration 43200 --write-share 0.05 --rss-every 300 --out 12h.json  # 12 hours: not run yet
 ```
 
 The report is JSON: latency by kind, the checks with any failure's details, memory samples. Exit status 1 if any
 check fails. Tokens are generated into the work folder and never printed.
+
+**Known limits.** One memory takes a few writes a second, bounded by git. The corrections log
+(`纠错与取代记录.md`) grows by about 280 bytes a correction and every correction re-indexes it (0.39 s at 589 KB, here
+after about 2,000 corrections); a long page with hundreds of `⚠ 已改` notes and a busy day's notes page cost the same
+way. A question worded like the corrections themselves can miss once more than about 80 nearly identical corrections
+of one thing exist, since a lookup starts from the 80 best full-text matches.
 
 **Not tested:** more than one machine (server and clients were on one laptop, over loopback); more than one server
 writing the same vault; a real team using it over weeks (nobody has run it in production that we know of); networks

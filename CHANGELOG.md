@@ -286,9 +286,11 @@ install path change (below).
   correct one shared page and contradict one decision at once, then check from the vault, the journal, git and every
   reply that nothing acknowledged is missing, no page is broken, every write is attributed to its token, each
   contested decision ends with the last correction in force, and every answer names a page ([set 27](bench/memory_honesty/HELDOUT.md)).
-  All held at 136, 10,136 and 50,136 pages; reads p50 / p95 47 / 160 ms, 124 / 361 ms, 755 / 4,033 ms; about 9, 5
-  and 2 writes a second (git commits are most of a write); no errors (`docs/TEAM.md` §5). `tests/test_team_concurrency.py`
-  runs a smaller version on every platform in CI.
+  All held at 136, 10,136 and 50,136 pages; reads p50 / p95 39 / 129 ms, 102 / 284 ms, 446 / 2,010 ms; about 8, 5
+  and 2.5 writes a second (git commits are most of a write); no errors (`docs/TEAM.md` §5). `tests/test_team_concurrency.py`
+  runs a smaller version on every platform in CI. Thirty minutes at 10,000 pages (21,218 calls): 0 errors, memory
+  195 MB at 5 minutes and 205 MB at the end, every property held, on the third run; the first two failed and are kept
+  in set 28's log.
 - **Long-running fixes the 30-minute run found** (set 28's first run failed on both): a correction now follows the
   supersede chain to its end (it stopped after 100 steps, so from the 101st correction of one decision on, each new
   one superseded nothing and two or more stood in force), and a chain that is broken or goes round is reported in the
@@ -296,6 +298,11 @@ install path change (below).
   `90 系统文件/自动化/记忆变更记录/<time>.md` once it passes 256 KB, with a link from the new page and in the same
   commit, because every write re-indexed all of it (at 1.6 MB, 945 ms with the index locked, so lookups queued
   behind writes and slowed as the server ran).
+- **A replaced correction stops answering the old page's questions.** When a correction page is itself replaced, the
+  title words it took from the page it replaced are cleared (correction pages only). After 544 corrections of one
+  decision, the 80 full-text candidates a lookup starts from were all replaced corrections and the answer was
+  `recall: none`; now the correction in force is found. A question worded like the corrections themselves can still
+  miss once more than about 80 nearly identical corrections of one thing exist (the candidate limit; not changed).
 - **A write no longer makes every lookup re-walk the vault.** After a note or correction, each resident lookup
   process re-reads just the files that write changed, instead of every file's modification time (the full re-check
   every 2 s stays, for changes from a `git pull`). Each write also starts fewer git processes (5 instead of 8 for a
