@@ -227,10 +227,10 @@ def _sources(vault: Path) -> list[Path]:
 def _entries_cache(vault: Path) -> Path:
     """Next to the recall index (`recall_index.cache_path`, same folder and key), without importing it."""
     base = Path(os.environ.get("KROUTER_CACHE_DIR") or Path.home() / ".cache" / "krouter")
-    return base / f"mentions-{hashlib.sha1(str(vault.resolve()).encode('utf-8')).hexdigest()[:12]}.json"
+    return base / f"mentions-{hashlib.sha1(str(vault.resolve()).encode('utf-8')).hexdigest()[:12]}.marshal"
 
 
-def entries(vault: Path) -> list[dict]:
+def entries(vault: Path) -> list[tuple]:
     """Every phrase that can bring a page: alias rows (with their anchor) and trigger lines, normalised. Compiled once
     and kept next to the recall index, keyed by each source file's size and modification time, so a message does not
     re-read a 10,000-line trigger file."""
@@ -247,30 +247,36 @@ def entries(vault: Path) -> list[dict]:
             pass
     cache = _entries_cache(vault)
     try:
-        got = json.loads(cache.read_text(encoding="utf-8"))
-        if got.get("v") == ENTRIES_VERSION and got.get("stamp") == stamp:
-            _ENTRIES[key] = got["entries"]
-            return got["entries"]
-    except (OSError, ValueError, AttributeError):
+        import marshal
+
+        got = marshal.loads(cache.read_bytes())
+        if got[0] == ENTRIES_VERSION and got[1] == stamp:
+            _ENTRIES[key] = got[2]
+            return got[2]
+    except (OSError, ValueError, EOFError, TypeError, IndexError):
         pass
     out = _compile(vault, files)
     try:
+        import marshal
+
         cache.parent.mkdir(parents=True, exist_ok=True)
         tmp = cache.with_name(cache.name + f".{os.getpid()}.tmp")
-        tmp.write_text(json.dumps({"v": ENTRIES_VERSION, "stamp": stamp, "entries": out}, ensure_ascii=False),
-                       encoding="utf-8")
+        tmp.write_bytes(marshal.dumps((ENTRIES_VERSION, stamp, out)))
         os.replace(tmp, cache)
-    except OSError:
+    except (OSError, ValueError):
         pass
     _ENTRIES[key] = out
     return out
 
 
-ENTRIES_VERSION = 1
+FIELDS = ("route", "a", "word", "rel", "anchor", "id", "learned")  # 每条短语是这样一个元组（缓存里也是）
 
 
-def _compile(vault: Path, files: list[Path]) -> list[dict]:
-    out: list[dict] = []
+ENTRIES_VERSION = 3
+
+
+def _compile(vault: Path, files: list[Path]) -> list[tuple]:
+    out: list[tuple] = []
     mp = map_for(vault)
     if mp.is_file():
         try:
@@ -281,7 +287,7 @@ def _compile(vault: Path, files: list[Path]) -> list[dict]:
             for alias in aliases:
                 a = norm(alias)
                 if a:
-                    out.append({"route": "alias", "a": a, "word": alias, "rel": source, "anchor": anchor, "id": case_id})
+                    out.append(("alias", a, alias, source, anchor, case_id, False))
     for f in files:
         if f == mp:
             continue
@@ -297,12 +303,11 @@ def _compile(vault: Path, files: list[Path]) -> list[dict]:
             for w in ([words] if learned else words.split(";")):
                 a = norm(w)
                 if a and (not learned or len(a) >= 6):
-                    out.append({"route": "trigger", "a": a, "word": w.strip(), "rel": rel, "anchor": "",
-                                "learned": learned})
+                    out.append(("trigger", a, w.strip(), rel, "", "", learned))
     return out
 
 
-_ENTRIES: dict[str, list[dict]] = {}
+_ENTRIES: dict[str, list[tuple]] = {}
 _PAGES: dict[str, tuple[dict, str] | None] = {}
 
 
@@ -328,8 +333,9 @@ def page(vault: Path, rel: str) -> tuple[dict, str] | None:
 LINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 
 
-def resolve(vault: Path, target: str, near: str = "") -> str:
-    """The vault path a `[[link]]` names: next to `near` first, then anywhere (by file name)."""
+def resolve(vault: Path, target: str, near: str = "", anywhere: bool = True) -> str:
+    """The vault path a `[[link]]` names: next to `near` first, then at the top, then (with `anywhere`) by file name
+    anywhere in the vault, which walks it once per process."""
     name = target.strip().strip('"').strip("'")
     m = LINK.search(name)
     name = (m.group(1) if m else name).strip()
@@ -343,11 +349,25 @@ def resolve(vault: Path, target: str, near: str = "") -> str:
             return cand
     if (vault / name).is_file():
         return name
-    base = Path(name).name
-    for p in vault.rglob(base):
-        if p.is_file() and ".trash" not in p.parts:
-            return p.relative_to(vault).as_posix()
-    return ""
+    if not anywhere:
+        return ""
+    return _by_name(vault).get(Path(name).name, "")
+
+
+_NAMES: dict[str, dict[str, str]] = {}
+
+
+def _by_name(vault: Path) -> dict[str, str]:
+    key = str(vault)
+    if key not in _NAMES:
+        names: dict[str, str] = {}
+        for root, dirs, files in os.walk(vault):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            for f in files:
+                if f.endswith(".md"):
+                    names.setdefault(f, (Path(root) / f).relative_to(vault).as_posix())
+        _NAMES[key] = names
+    return _NAMES[key]
 
 
 def alive(fm: dict, today: date) -> bool:
@@ -417,7 +437,7 @@ def describe(vault: Path, rel: str, anchor: str, older: str, today: date) -> dic
         notes.append(("older", zones.canon(vault, old)))
     links = []
     for m in LINK.finditer(body):
-        r = resolve(vault, m.group(1), rel)
+        r = resolve(vault, m.group(1), rel, anywhere=False)  # 只是带个标题：不为它走遍整个库
         if r and r not in (rel, old) and r not in links:
             got = page(vault, r)
             if got and alive(got[0], today) and not secret(vault, r, got[0]):
@@ -441,10 +461,12 @@ def recollect(vault: Path, text: str, use: tuple[str, ...] | None = None, today:
     if not s:
         return []
     found: list[dict] = []
-    for e in entries(vault):
-        if e["a"] not in s or e["route"] not in use or not (e.get("learned") or carries(e["a"], s)):
+    for row in entries(vault):
+        a = row[1]
+        if a not in s or row[0] not in use or not (row[6] or carries(a, s)):
             continue
-        for sp in spans(e["a"], s, cuts):
+        e = dict(zip(FIELDS, row))
+        for sp in spans(a, s, cuts):
             found.append({**e, "span": sp})
     hits = _choose(vault, found, today)
     res = None
