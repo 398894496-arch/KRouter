@@ -218,8 +218,8 @@ What it guarantees, each checked by `tests/test_view.py` without a browser:
 - A list is always one screen of it: 40 rows a request (200 at most), however large the memory.
 
 Measured on one M2 laptop with a synthetic memory of 10,000 pages (`krouter.sample.build_big`): the first start
-indexes it in about 6 s, a later start in 0.06 s; from loading the page to the first 40 rows on screen 52 ms; one `why`
-about 0.1 s. Pages edited while it runs show up within about 20 s.
+indexes it in 6–7 s, a later start in 0.06 s; from loading the page to the first 40 rows on screen 0.05–0.3 s (three loads in a
+browser pane: 52, 109 and 311 ms; 79 ms on the 35-page sample); one `why` about 0.1 s. Pages edited while it runs show up within about 20 s.
 
 What it does not do: edit, delete or move a page, send anything anywhere, or call a model. The nightly report and the
 change ledger are written in Chinese by the job; with the page in English the fixed phrases are put into English and

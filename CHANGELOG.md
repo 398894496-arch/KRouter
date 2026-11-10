@@ -218,8 +218,8 @@ install path change (below).
   answers GET and HEAD only (every other method is 405, there is no endpoint that writes), refuses a request whose
   `Host` is not its own address, and sends a Content-Security-Policy that allows nothing from outside; none of its
   responses names an external address. `tests/test_why.py` and `tests/test_view.py` check these over HTTP without a
-  browser. On a synthetic memory of 10,000 pages (M2): first index about 6 s, later starts 0.06 s, the first screen
-  of rows 52 ms after the page loads, one explanation about 0.1 s ([how to read it](docs/DETAILS.md#see-what-it-remembers-krouter-why-and-krouter-view)).
+  browser. On a synthetic memory of 10,000 pages (M2): first index 6–7 s, later starts 0.06 s, the first screen
+  of rows 0.05–0.3 s after the page loads, one explanation about 0.1 s ([how to read it](docs/DETAILS.md#see-what-it-remembers-krouter-why-and-krouter-view)).
 - `krouter.sample` builds the sample memory (and, for timing, a synthetic memory of any size) the page, its tests and
   the README screenshot use.
 
