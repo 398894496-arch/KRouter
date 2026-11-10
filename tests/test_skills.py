@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -342,3 +343,43 @@ def test_an_english_vault_keeps_skills_in_an_english_folder_and_digest(tmp_path,
     assert text.startswith("KRouter skills") and "Skill drafts" in text and "\"02 Methods/Skills\"" in text
     assert not any("一" <= ch <= "鿿" for ch in text)
     assert "## Steps" in skills.show(v, row["drafted"][0]["id"])
+
+
+SETS = {"24": ("c0dd8f8e4008b02a54e00a22d5b754c5fa3a2da22079e49ceeb984611919ef10",
+               "f8d39268b1a968bf6676009bfdc7068335bc6d335c32ef92371f216b8bc20430"),
+        "25": ("6f74995dc70125a35c16a94296e188a525e55603a8b7795b6feb5e39ebcfd710",
+               "7625411fdd80dd4b58bcd6f326160ebf0f4802a3449b2d3cc29686fab6e79406"),
+        "26": ("8a10dcbfde311e2308e66bd6bc419bd83680e8e2d6bb576104038ea429c20a3d",
+               "ca1edc8c5516c444210186ff76c854ee69b22d04afddca52b04f9cf12f3fc49b")}
+
+
+def test_sets_24_to_26_are_frozen():
+    import gzip
+    import hashlib
+
+    folder = REPO / "bench/skills"
+    for n, (dev, held) in SETS.items():
+        assert hashlib.sha256((folder / f"set{n}_dev.jsonl").read_bytes()).hexdigest() == dev
+        with gzip.open(folder / f"set{n}_heldout.jsonl.gz", "rb") as fh:
+            assert hashlib.sha256(fh.read()).hexdigest() == held
+    skills_file = (folder / "set25_skills.json").read_bytes()
+    assert hashlib.sha256(skills_file).hexdigest() == "a093d11d59434e7c97a0a1291539b680c818ab9dfb51da3ad7e9bc6be47905d2"
+
+
+def test_the_bench_scores_drafts_through_the_codes_own_checks(tmp_path):
+    sys.path.insert(0, str(REPO / "bench/skills"))
+    import run as bench
+
+    s = {"id": "x", "kind": "group", "lang": "zh", "expect": [["a", "b"]], "cards": [
+        {"key": "a", "situation": "网页加载慢", "action": "把图片缓存起来", "result": "快了", "lesson": "同一件慢事每次重做时，把结果存起来复用", "adopted": 0, "again": 0},
+        {"key": "b", "situation": "每天手抄报表", "action": "把上次结果存起来复用", "result": "省了时间", "lesson": "反复做同样的慢活时，存下结果", "adopted": 1, "again": 0},
+        {"key": "c", "situation": "汤太咸", "action": "加水", "result": "好了", "lesson": "味道过头时，加一点中和的东西", "adopted": 0, "again": 0}]}
+    ids = bench.card_ids(s)
+    with tempfile.TemporaryDirectory() as tmp:
+        vault = bench.build24(Path(tmp), s)
+        pool, singles, used, covered = bench.state24(vault)
+        reply = json.dumps([{"cards": [ids["a"], ids["b"]], "name": "慢活结果存起来", "use_when": "当同样的慢活反复做时",
+                             "steps": ["把结果存起来", "下次直接复用"]}], ensure_ascii=False)
+        drafts, _ = skills.parse(reply, {c["id"]: c for c in pool}, {c["id"] for c in singles}, covered)
+    assert drafts and set(drafts[0]["cards"]) == {ids["a"], ids["b"]} and not singles
+    assert bench.called('CALL krouter_skill {"id": "Sca77"}') == "Sca77" and bench.called("好的，我们先看看") == ""

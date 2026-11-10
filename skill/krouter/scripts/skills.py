@@ -202,14 +202,19 @@ PROMPT = """下面是一个人攒下的经验卡（每张是别的任务里学�
 只有两种情况可以起草：
 1. 「被反复证实的卡」里列出的卡，可以单独长成一个技能；
 2. 两张或更多张卡说的是**同一类处境**：题材不同，但遇到的是同一类问题、管用的是同一类办法，合成一个技能。
-   只是用了同一个词、同一个题材或同一个工具，处境却不一样的，不算；拿不准就不要合。
+   只是用了同一个词、同一个题材或同一个工具，处境却不一样的，不算；两条通用说法只是都很笼统地沾边（都是「慢慢来」
+   「先留一手」「先问清楚」）也不算：要遇到的问题是一类，要做的那一步也是同一步，才合；拿不准就不要合。
 已有技能用到的卡不要再用。没有值得起草的，就回 []。
 
 每个技能一个 JSON 对象：
 - "cards"：依据的卡号列表，例 ["C05", "E1a2b"]
-- "name"：技能名，6–20 字，不带题材
-- "use_when"：一句话说什么时候用，写成「当……时」，不带题材，换一个领域原样也说得通
-- "steps"：2–6 步，每步一句话，能照着做；只写这些卡的做法、结果和通用说法里有的，不加卡里没有的步骤、工具或数字
+- "name"：技能名，6–20 字
+- "use_when"：一句话说什么时候用，写成「当……时」
+- name 和 use_when 从卡的「通用说法」概括，不从「处境」里取词：不出现题材、工具、行当、东西的名字，专门的词换成一般的说法
+  （「合并数据」→「把几份东西合到一起」，「恢复训练」→「停了一阵再接着做一件费力的事」，「转机」→「两段安排之间」）。
+  自测：这句话原样讲给修 bug 的人、写报告的人、做饭的人都说得通吗？只适合这一类事，就再往上概括一层
+- "steps"：2–6 步，每步一句话，能照着做；只写这些卡的做法、结果和通用说法里有的，不加卡里没有的步骤、工具或数字；
+  也用一般的说法，让换了题材的人照样能做
 不写密钥、人名和私人信息。只输出 JSON 数组。
 
 被反复证实的卡（可以单独起草）：{singles}
@@ -228,15 +233,20 @@ a certain kind of situation comes up. Draft only in two cases:
 1. a card listed under "cards borne out repeatedly" may become a skill on its own;
 2. two or more cards describe **the same kind of situation**: different subjects, but the same kind of problem and
    the same kind of way out; merge them into one skill. Sharing a word, a subject or a tool while the situation
-   differs does not count; when unsure, do not merge.
+   differs does not count; nor do two lessons that only share some broad advice ("go gradually", "keep a fallback",
+   "ask first"): the problem must be of one kind and the step to take the same step. When unsure, do not merge.
 Do not use a card an existing skill already uses. If nothing is worth drafting, reply [].
 
 Each skill is a JSON object:
 - "cards": the ids it rests on, e.g. ["C05", "E1a2b"]
-- "name": the skill's name, 3–8 words, without the subject
-- "use_when": one sentence on when to use it, "When …", without the subject, so that it reads unchanged in another area
+- "name": the skill's name, 3–8 words
+- "use_when": one sentence on when to use it, "When …"
+- take name and use_when from the cards' lessons, not their situations: no subject, tool, trade or object named,
+  each specific term replaced by a general word ("merging data" → "putting several pieces together", "a flight
+  connection" → "the gap between two parts of a plan"). Test it: would it make sense word for word to someone fixing a
+  bug, writing a report and cooking? If it only fits this kind of thing, say it one level higher
 - "steps": 2–6 steps, one sentence each, that can be followed; only what these cards' actions, results and lessons
-  say, no step, tool or number the cards do not have
+  say, no step, tool or number the cards do not have; in general words too, so someone on another subject can follow them
 No keys, names or private details. Output only the JSON array.
 
 Cards borne out repeatedly (may be drafted alone): {singles}
