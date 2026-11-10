@@ -173,6 +173,16 @@ notice, then the details.
   settings back when it quits). That finding is why the installer now leaves the file alone while the app runs and
   builds the extension instead, which was then tested inside the app (the Claude Desktop entry above). Also found: a Codex `hooks.json` with top-level event names
   is skipped whole (already documented); `krouter_ask` takes `query`, not `question`.
+- **The refusal gate was checked against LongMemEval's unanswerable questions: no change, and the "3 of 30" is stale.**
+  Set 14 (`bench/memory_honesty/HELDOUT.md`, no model called) found: 3 of 30 is 1.1.1 at the retrieval layer; the shipped
+  gate refuses 9 of 30, and the answer says "not mentioned" for 29 of 30 (sets 11 and 12, same for plain BM25). These
+  questions ask for a detail that a related session in the vault does not give, so the best page is an answer session
+  for 22 of 30. 49,288 one- and two-signal rules searched on the development half (a seed-drawn half of the 470
+  answerable questions, the 30 `_abs`, and the half with its answer sessions removed): none refuses clearly more within a
+  1-point loss of answerable questions (at most 2 more of the 21 still answered; 5 more at 2.1 points lost). With
+  the answer sessions removed from each vault the unchanged gate refuses 220 of 470 (46.8%). Nothing in the product
+  changed; the held-out half was not opened. `bench/longmemeval/lme.py` gains `ablate`, new `gate_study.py` reproduces
+  the search. README, STATUS and the doc banners still say 3 of 30: to fix with the next README pass.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

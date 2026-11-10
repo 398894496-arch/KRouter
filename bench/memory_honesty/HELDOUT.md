@@ -539,9 +539,9 @@ sets 7, 11 and 12), BM25's top 3 holds every answer session for 384 of 500, mult
 supersedes, same session or day, shared rare words, and later co-citation) brings more of the whole answer in the
 same number of pages. Retrieval only: no reader and no judge, no model is called.
 
-**Data.** `longmemeval_s_cleaned.json`, as set 7. The 470 answerable questions are split as set 13 split them
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 470 answerable questions are split as set 14 split them
 (`lme.split_of` on branch `claude/wp2-refusal-396930`: seed 20261110, `random.Random.sample` of the sorted ids, half to
-*dev*): 235 dev (74 multi-session, 54 temporal), 235 held out (47 multi-session, 73 temporal). Set 13 counted only
+*dev*): 235 dev (74 multi-session, 54 temporal), 235 held out (47 multi-session, 73 temporal). Set 14 counted only
 refusals of the unchanged gate on held-out ablated vaults; no ranking on the held-out half was looked at for this
 set. The 30 `_abs` questions are left out (no answer to bring). Every design choice and constant of the associative
 path is chosen on the dev half and on the development benches of this directory (`dev`, `dev2`, `dev3`).
@@ -617,7 +617,7 @@ batches; about 37 judge batches. In all **about 410 subagent runs and 60 M chara
 input**. Not started until the maintainer says so.
 
 **Amendment (2026-11-10, before any reader or judge call; replaces *Rows*' scope, the batch size, *Reported*'s
-claim and the cost above).** (1) **Held-out half only**: the 235 answerable questions of set 13's held-out half
+claim and the cost above).** (1) **Held-out half only**: the 235 answerable questions of set 14's held-out half
 (`lme.split_of`, seed 20261110). The associative path's settings were chosen on the dev half, so a reader result on it
 would not be clean; the held-out half is the number to trust. The dev half and the 30 `_abs` questions are not run.
 (2) The two rows are unchanged (BM25's top five, KRouter's five pages at the commit that carries this amendment);
@@ -639,6 +639,46 @@ KRouter 23 shared with BM25 and 17 copied from sets 11 and 12, so 195 to run; **
 | 2026-11-10 | Registered. Not run (waiting for the maintainer, for cost). |
 | 2026-11-10 | Amended as above, before any reader or judge call: held-out half only, batches of 400 000 characters, the bar for "ahead" fixed, cost recounted (about 96 subagent runs instead of about 410). Not run. |
 | 2026-11-10 | **Registered, not run: the maintainer decided not to spend the quota on it.** No reader or judge call was made and there is no result at the answer level for five pages. The registration (as amended) stands; it can be run as written later. |
+## Set 14: can the refusal gate refuse more, without losing answers? (registered 2026-11-09, after the development analysis below and before any held-out half was opened)
+
+**Why.** The README's "refuses 3 of 30 LongMemEval questions that have no answer" is quoted as a gap. Two things in it
+are stale or mixed up: 3 of 30 is KRouter 1.1.1 (set 7); the gate shipped since the absent-name rule (`fix/named-absent`)
+refuses 9 of 30 (set 7's log), and set 11's retrieval was that 9. And it is a *retrieval* number (the cited-pages
+list is empty); the benchmark's own question is whether the *answer* says the information is not there, which
+set 11 and 12 measured: 29 of 30, for KRouter and for plain BM25 alike, and 30 of 30 when the reader is given nothing.
+This set asks the narrower product question: can the gate itself be made to refuse more of them, without refusing
+questions it can answer?
+
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 30 `_abs` questions stay a development set (set 7 amendment: they
+were read question by question and the gate was tuned on them once already, so no abstention number from them is a
+test). The 470 answerable questions are split by `lme.split_of` (seed 20261110, `random.Random.sample` of the sorted
+ids): 235 *dev*, 235 *held out*. Held-out unanswerable questions come from two places no rule is chosen on: (a) the
+*held-out half with its answer sessions removed* (`lme.make_ablated`: every page the authors label as an answer session
+is deleted from the question's vault, so nothing can answer it; labelled by the authors, no model; easier than the real
+`_abs`, whose topical sessions stay in the vault), and (b) LoCoMo category 5 (set 10; KRouter's 37 of 446 there was an
+aggregate seen once, nothing was tuned on it).
+
+**Pass bar, fixed before any rule is chosen.** A candidate rule ("also refuse when ...") is kept only if, on the dev half,
+it loses at most 1 point of the answerable questions' evidence-cited rate (at most 2 of 235) and refuses clearly more
+of the real `_abs` than the 9 of 30 now (a gain of 5 or more of the 21 that are answered). Only then is the held-out
+half run, once, for that one rule: held-out answerable evidence cited must not fall by more than 1 point (of 235) and
+refusals on the held-out ablated vaults and on LoCoMo category 5 must rise. If no rule passes on dev, the held-out
+half is not opened and the report says so. No model is called, as for the reader-free sets.
+
+**Development analysis, said as it happened (before this registration, on dev data only).** Features per question for
+the gate shipped at `9d73bd5`: top score, gap to the second page, strong-match count, the share of the question's idf
+mass found on the best page, question words that no page contains, and a few more (`bench/longmemeval/gate_study.py`).
+One- and two-signal rules over a threshold grid, scored on: the 30 `_abs`, the dev half's answers the gate now gets
+right (225 of 235), and the dev half with answer sessions removed. The held-out half was not read; the unchanged
+gate's refusal rate on all 470 ablated vaults was counted (the product is not changed by this set, so that count tunes
+nothing). The same script reproduces the numbers below.
+
+### Log, set 14
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Gate at `9d73bd5`, unchanged: 9 of 30 `_abs` refused, 14 of 470 answerable refused, evidence cited 437 of 470 (reproduces set 11's retrieval). On the answer-sessions-removed vaults: **220 of 470 refused** (dev 103 of 235, held-out 117 of 235). For the 30 `_abs`, the labelled "answer" sessions are in the vault and the best page is one of them for 22 of 30: these questions ask for a detail a related session does not give. |
+| 2026-11-09 | Dev search, 49 288 rules: **no rule passes.** Within the 1-point budget (at most 2 of 235 answers lost) the best rule refuses 2 more of the 21 real `_abs` that are answered (in-sample, so an upper bound); at 5 lost (2.1 points) it refuses 5 more. Share of the question's idf mass on the best page, refuse below 0.40: 11 of 30 `_abs`, 17 answers lost; below 0.55: 18 of 30, 53 lost. Signals that carry the near-miss (best-page coverage, missing words, gap to the second page) separate the real `_abs` from answerable questions no better than chance (AUC 0.46–0.54: coverage 0.54, missing words 0.53 and 0.46, among the 21 still answered and the 225 right); the ones that do separate them (top score 0.70, strong-match count 0.72, short questions 0.68; gap to the second page 0.62) are what the gate already uses. The held-out half and LoCoMo were not opened; nothing in the product changed. |
 
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 

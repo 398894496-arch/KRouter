@@ -16,7 +16,7 @@ include every session the benchmark labels as holding the answer. Systems, each 
 with evidence labels, a session counts as an answer session when the authors cite a turn in it). Nothing is tuned on
 it; it is a second outside check, all questions, no halves.
 
-The halves are set 13's (`lme.split_of`, seed 20261110). Questions come from `lme.py convert` (state in
+The halves are set 14's (`lme.split_of`, seed 20261110). Questions come from `lme.py convert` (state in
 `~/.local/state/krouter-eval/lme/`, `KROUTER_LME_STATE` to move it). The recall cache goes to a temporary directory.
 """
 
