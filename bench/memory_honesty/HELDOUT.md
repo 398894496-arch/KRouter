@@ -995,3 +995,90 @@ Also reported: how many duplicates were linked to the right card with `same_as`.
 | 2026-11-10 | Registered (`8ea41c3`). |
 | 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
 | 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |
+
+## Set 24: does experience grow into a skill where it should, and only there? (registered 2026-11-10, before any scenario was written or any host was run)
+
+**Why.** The nightly run now drafts skills from experience cards (`skills.py`): one card borne out repeatedly
+(adopted + seen again ≥ `DRAFT_EVIDENCE` = 3), or two or more cards the drafting model judges to be the same kind of
+situation. This set asks whether a draft appears where it should, says only what its cards say, and does not appear
+where it should not.
+
+**Scenarios.** 32, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh Claude Code subagent that sees neither the
+drafting prompt nor any code, only a description of what a card holds and of the four kinds: 8 *single* (one card
+borne out ≥ 3 times among unrelated ones), 8 *group* (two or three cards on the same kind of situation in different
+subjects, low counts, among unrelated ones), 8 *none* (unrelated cards, counts ≤ 2), 8 *trap* (cards sharing a
+subject, a tool or a word but not the situation, counts ≤ 2). Each kind 6 Chinese and 2 English, 5 to 7 cards each;
+the writer names the group that should become a skill (none for *none* and *trap*). Not edited. Split by kind and
+language at seed 2026112424 (`bench/skills/run.py split`): `bench/skills/set24_dev.jsonl` (16), where the drafting
+wording may be revised, and `bench/skills/set24_heldout.jsonl.gz` (16), sealed, run once per host. Card ids in the
+prompts are opaque hashes.
+
+**Run.** `run.py prepare24`: the prompt is exactly what `skills.draft_step` sends through the host lane. Hosts Haiku
+5.5 and Sonnet 5.5, Claude Code subagents on the named model, one agent per host and split, answer each prompt as if
+it were the only one; the reply goes through `skills.parse`, the code's own checks, as the nightly run does. No key,
+no stored Claude login.
+
+**Scored.** Mechanically: on *single* and *group*, a *right draft* = a draft whose cards are within the named group
+(and at least two of them when the group has two or more); *wrong-card drafts* = drafts that take a card outside the
+named group; on *none* and *trap*, any draft that passes the code. Judged: every right draft is read by the other host
+model (Haiku's by Sonnet, Sonnet's by Haiku) with the cards it rests on: faithful (every step supported by the cards'
+actions, results and lessons) and subject-free (name and "when to use"), yes or no.
+
+**Bar (fixed now), both hosts together on held-out:** right drafts on *single* + *group* ≥ 13 / 16; judged faithful
+≥ 90% and judged subject-free ≥ 90% of right drafts; scenarios of *none* + *trap* with a draft ≤ 2 / 16; wrong-card
+drafts ≤ 2.
+
+**Known limits.** The writer writes cards directly (the cards a host writes were measured in sets 17–23); 32
+scenarios; Sonnet writes them, is a host and judges Haiku's drafts; a real vault has more cards, written over months.
+
+## Set 25: does the host fetch and follow a skill when it fits, and keep quiet when it does not? (registered 2026-11-10, before any skill or case was written or any host was run)
+
+**Skills and cases.** Written by Sonnet 5.5 in a fresh subagent (another one than set 24's), which sees neither the
+digest wording nor any code: 6 skills (name, "when to use", 3 to 5 steps; 4 active, 2 drafts), each on its own kind of
+situation, and 24 user messages: 12 *applicable* (two per skill, a subject other than the one the skill's wording
+suggests) and 12 *quiet* (6 sharing a word or a subject with a skill but not its situation, 6 unrelated). Chinese.
+Skill ids are opaque. Split at seed 2026112425 by kind: `set25_dev.jsonl` (12) and `set25_heldout.jsonl.gz` (12).
+
+**Run.** The vault is the Chinese template with set 13's 14 cards and the 6 skills. Phase 1: the host gets the
+session-start context as the hook builds it (the experience digest, then `skills.digest`), `krouter_skill`'s
+description as the MCP server builds it, and the message; it either writes `CALL krouter_skill {"id": …}` or starts
+its reply. Phase 2, only where it called: the same context, the tool's answer (`skills.show`), and it replies. Hosts
+Haiku 5.5 and Sonnet 5.5 as in set 24.
+
+**Scored.** Mechanically: applicable cases where the right skill was fetched; where another was fetched; quiet cases
+where any skill was fetched or a skill id cited. Judged: on each applicable case with the right skill fetched, the
+other host model reads message, skill and reply: does the reply follow the skill's steps (yes / no)?
+
+**Bar (fixed now), both hosts together on held-out:** right skill fetched ≥ 10 / 12; judged as following ≥ 90% of
+those; wrong skill fetched ≤ 1; quiet cases with a skill fetched or cited ≤ 1 / 12.
+
+**If sets 24 and 25 both pass,** `skills.DEFAULT_ON` is set (skills in the digest, `krouter_skill`, the nightly
+step). If either fails, skills stay off by default (`KROUTER_SKILLS=1` turns them on) and the docs say so.
+
+**Known limits.** One-shot prompts with a bench note, not a live session; the case writer saw the skills; Chinese
+only; the tool call is simulated by a line the host writes, not a real MCP call.
+
+## Set 26: is a skill recorded as adopted only when the user says so, and what do the promotion and withdrawal counts become? (registered 2026-11-10, before any item was written)
+
+**Items.** 40, written by Sonnet 5.5 in set 25's writer subagent (after set 25's material): a user message, the
+assistant's reply following a skill (with `{id}` where the reply cites it), and the user's next message: 10 *adopt*
+(says it was followed or worked), 10 *reject*, 10 *ignore* (moves on), 10 *unclear* (neither). 30 Chinese, 10 English.
+Split at seed 2026112426 by kind and language: `set26_dev.jsonl` (20), `set26_heldout.jsonl.gz` (20).
+
+**Scored mechanically** (`run.py score26`) by `experience.uses_in`, the code that records card and skill use, not
+tuned here: p_true = adopt items recorded `adopted`; p_false = other items recorded `adopted`.
+
+**Thresholds, by a rule fixed now, on development only** (`run.py thresholds`): over W ∈ {4, 5, 6, 8, 10} and k ∈
+{1, 2, 3}, the smallest W, then the smallest k, such that a draft that never fits is promoted before withdrawal with
+probability ≤ 5% (Binomial(W, p_false) ≥ k, p_false taken as at least 2%) and one that always fits is promoted within W
+offers with probability ≥ 90% (Binomial(W, p_true) ≥ k). k becomes `PROMOTE_ADOPTED`, W `WITHDRAW_OFFERED`;
+`SINK_OFFERED` is half of W, rounded up; `WITHDRAW_DAYS` stays 45, a policy, not measured. **Held-out:** p_true and
+p_false reported once; bar p_false ≤ 1 / 15. Set 26 does not gate the default.
+
+**Known limits.** It assumes every offer of a fitting skill could be adopted, and treats offers as independent; real
+users answer in their own ways.
+
+### Log, sets 24–26
+
+| Date | Event |
+|---|---|
