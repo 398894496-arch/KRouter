@@ -181,14 +181,18 @@ INDEX_HEAD = {
 INDEX_TAIL = {
     "zh": ("用法：用户的话提到上面任何一件事，哪怕换了说法、没说名字，回答前先取那一页：调用 krouter_ask（MCP 服务 "
            "krouter，工具列表里没有就按名字找），问题写那件事的名字；没有这个工具就在终端运行 {cmd}，或直接读 {vault}/〔页〕。"
-           "回答里注明出处页。和用户的话无关就什么都不做，也不要提这份索引。{more}"),
+           "只取和这句话最相关的那一页，回答里注明出处页。用户粘贴的代码、日志、命令输出里碰巧出现的词不算提到。"
+           "和用户的话无关就什么都不做，也不要提这份索引。{more}"),
     "en": ("How to use: when the user's message touches anything listed above, even in other words and without its "
            "name, fetch that page before answering: call krouter_ask (MCP server krouter; look it up by name if your "
            "tool list does not show it) with the thing's name; with no such tool, run {cmd} in a terminal, or read "
-           "{vault}/[page]. Cite the page in your answer. If nothing listed bears on the message, do nothing and do "
-           "not mention this index.{more}"),
+           "{vault}/[page]. Fetch only the one page that bears on the message most, and cite it in your answer. A "
+           "word that merely appears inside code, a log or command output the user pasted is not a mention. If "
+           "nothing listed bears on the message, do nothing and do not mention this index.{more}"),
 }
 INDEX_MORE = {"zh": "库里还有 {n} 件没列出，别的事也可以照样先查。", "en": " {n} more are not listed; the same applies to them."}
+INDEX_FULL_MIN = 0.2      # 主题多时，整行至少占预算的这么多（排在最前的那些），其余的主题只列名字
+INDEX_NAMES_HEAD = {"zh": "也记着（只列名字，提到了同样先取那一页）：", "en": "Also known (names only; the same applies): "}
 
 
 def _tail_jsonl(path: Path, limit: int = 2_000_000) -> list[dict]:
@@ -282,20 +286,39 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
         return ""
     lang = "en" if zones.lang(vault) == "en" else "zh"
     body, used = [], 0
+    rows = []
     for t in topics:
-        if len(body) >= lines:
-            break
         cjk = bool(re.search(r"[\u3400-\u9fff]", t["how"] + t["name"]))
         n = INDEX_HOW["zh" if cjk else "en"]
         how = re.sub(r"\s+", " ", t["how"]).strip()
         how = how if len(how) <= n else how[: n - 1].rstrip() + "…"
         names = "／".join([t["name"]] + t["others"][:INDEX_NAMES]) if cjk else " / ".join([t["name"]] + t["others"][:INDEX_NAMES])
-        line = redact(f"- {names}：{how}〔{t['rel']}〕" if cjk else f"- {names}: {how} [{t['rel']}]")
-        if used + len(line) + 1 > chars:
+        rows.append((t, redact(f"- {names}：{how}〔{t['rel']}〕" if cjk else f"- {names}: {how} [{t['rel']}]")))
+    fits = sum(len(r) + 1 for _t, r in rows[:lines]) <= chars and len(rows) <= lines
+    # 放不下时：先给每个主题的名字留位置（一个几个字），剩下的预算再按排序给前面的主题整行
+    names_len = len(INDEX_NAMES_HEAD[lang]) + sum(len(t["name"]) + 1 for t in topics)
+    full_room = chars if fits else max(int(chars * INDEX_FULL_MIN), chars - names_len)
+    rest = []
+    for t, line in rows:
+        if len(body) < lines and used + len(line) + 1 <= full_room and not rest:
+            body.append(line)
+            used += len(line) + 1
+        else:
+            rest.append(t)
+    # 放不下整行的：只列名字（和页名），一个主题几个字，两三百个主题也装得下
+    named, shown = [], 0
+    head = INDEX_NAMES_HEAD[lang]
+    room = chars - used - len(head)
+    for t in rest:
+        item = t["name"]  # 名字就是别名：拿它去 krouter_ask 正好锁到那一页
+        if room - (len(item) + 1) < 0:
             break
-        body.append(line)
-        used += len(line) + 1
-    more = len(topics) - len(body)
+        named.append(item)
+        room -= len(item) + 1
+    if named:
+        body.append(head + ("、" if lang == "zh" else "; ").join(named))
+    shown = len(body) - (1 if named else 0) + len(named)
+    more = len(topics) - shown
     script = Path(__file__).resolve().with_name("route_knowledge.sh")
     cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
     tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=INDEX_MORE[lang].format(n=more) if more else "")

@@ -124,14 +124,16 @@ def prepare(split: str, work: Path, crowd: int, capped: bool) -> None:
         items.append({"id": pid, "message": tpl.format(note=nt.format(note=note) if note else "", text=r["text"])})
         key[pid] = {**r, "hook": [h["real"] for h in hits]}
     random.Random(20261136).shuffle(items)
-    listed = re.findall(r"[〔\[]([^〔〕\[\]]+\.md)[〕\]]", index)
+    listed = [x["rel"] for x in compile_subconscious.index_topics(v)]  # 索引里的每个主题（整行或只列名字）
     (work / "batch.json").write_text(json.dumps({"instructions": INSTRUCTIONS, "context": index, "items": items},
                                                 ensure_ascii=False, indent=1), encoding="utf-8")
     (work / "key.json").write_text(json.dumps(key, ensure_ascii=False, indent=1), encoding="utf-8")
     (work / "listed.json").write_text(json.dumps(listed, ensure_ascii=False), encoding="utf-8")
     import compile_subconscious as cs
 
-    print(f"{len(items)} items; index {len(index)} characters, about {cs.est_tokens(index)} tokens, {len(listed)} topics listed")
+    full = len(re.findall(r"^- ", index, re.M))
+    print(f"{len(items)} items; index {len(index)} characters, about {cs.est_tokens(index)} tokens, {len(listed)} topics, "
+          f"{full} as full lines")
 
 
 CALL = re.compile(r"^\s*[`*>-]*\s*CALL\s+(krouter_ask|shell|read)\s*[:：]\s*(.+?)\s*`?\s*$", re.M | re.I)
@@ -168,9 +170,17 @@ def resolve(work: Path, kind: str, arg: str) -> str:
     return ""
 
 
+def memory_fetch(work: Path, kind: str, arg: str) -> bool:
+    """A fetch from the memory: krouter_ask, the route command, or reading a file inside the vault. Reading the
+    project's own files (`package.json`) is ordinary work, not a memory fetch (set 35's log, before held-out)."""
+    k = kind.lower()
+    return k == "krouter_ask" or (k == "shell" and ("route_knowledge" in arg or str(work / "vault") in arg)) or \
+        (k == "read" and (str(work / "vault") in arg or (work / "vault" / arg.strip().strip("'\"`")).is_file()))
+
+
 def host_pages(work: Path, reply: str, listed: list[str]) -> tuple[list[str], int]:
-    """(pages the reply fetched or named, number of fetch lines)."""
-    calls = CALL.findall(reply)
+    """(pages the reply fetched or named, number of memory fetches)."""
+    calls = [(k, a) for k, a in CALL.findall(reply) if memory_fetch(work, k, a)]
     pages = []
     for kind, arg in calls:
         p = resolve(work, kind, arg)
