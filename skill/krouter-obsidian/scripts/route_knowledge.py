@@ -391,24 +391,6 @@ def print_recall(res: dict, vault: Path, lines: int) -> None:
             print(f"  L{ln}: {text}")
 
 
-def emit_experience(query: str, vault: Path) -> None:
-    """Experience cards whose situation this question reads like, apart from the facts above (experience.py).
-    Off unless `KROUTER_EXPERIENCE=1`; prints nothing when no card clears the quiet threshold."""
-    try:
-        import experience
-
-        if not experience.enabled():
-            return
-        lines = experience.render(experience.suggest(vault, query), vault)
-    except Exception:  # noqa: BLE001  建议通路出错不影响事实召回
-        return
-    if lines:
-        print("experience_suggestions:")
-        print("experience_note: " + lines[0])
-        for line in lines[1:]:
-            print(line)
-
-
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
     res = None
     try:
@@ -483,7 +465,6 @@ def main() -> int:
         "search": vault,
     }
     if route in scopes and query and canonical_lookup(query, vault, map_path, route):
-        emit_experience(query, vault)
         return 0
     if route == "status":
         emit_receipt(canonical, "requested-fields-returned", route, query, vault, map_path)
@@ -517,7 +498,6 @@ def main() -> int:
             )
             return 2
         bounded_search(scopes[route], vault, map_path, route, query)
-        emit_experience(query, vault)
         return 0
     return 2
 

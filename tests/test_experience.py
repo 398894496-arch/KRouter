@@ -1,5 +1,5 @@
-"""Experience cards (experimental, `KROUTER_EXPERIENCE=1`): written next to the distill, offered as suggestions apart
-from the facts, quiet when nothing fits, off by default. Set 13's files are pinned (HELDOUT.md)."""
+"""Experience cards (experimental, `KROUTER_EXPERIENCE=1`): written next to the distill, given to the host model as one
+digest at session start, never among the facts, off by default. Sets 13 and 15's files are pinned (HELDOUT.md)."""
 
 from __future__ import annotations
 
@@ -68,45 +68,69 @@ def test_cards_never_come_back_as_facts(bench_vault, tmp_path):
     assert own["hits"] and "经验卡" in own["hits"][0]["rel"]  # 只在明确查经验卡目录时才出现
 
 
-def _route(vault: Path, query: str, tmp_path: Path, on: bool) -> str:
-    e = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_CACHE_DIR": str(tmp_path / "cache"),
-         "KROUTER_NO_QUERY_LOG": "1"}
-    e.pop("KROUTER_EXPERIENCE", None)
-    if on:
-        e["KROUTER_EXPERIENCE"] = "1"
-    res = subprocess.run([sys.executable, str(SCRIPTS / "route_knowledge.py"), "search", query], env=e,
-                         capture_output=True, text=True, timeout=120)
-    assert res.returncode == 0, res.stderr
-    return res.stdout
+SET15_DEV = 28
+SET15_HELDOUT_SHA = "88bec1675873250db2db32202fff959db12ac9d06154e961f721d00821e854b5"
+DISTRACTORS_SHA = "8860fc6d3805b465ce0c50be9664211276fb02a2626ca6f209616f0c99125a48"
 
 
-def test_router_adds_suggestions_after_the_facts_only_when_switched_on(bench_vault, tmp_path):
-    off = _route(bench_vault, C02_CASE, tmp_path, on=False)
-    assert "experience_" not in off
-    on = _route(bench_vault, C02_CASE, tmp_path, on=True)
-    assert on.index("experience_suggestions:") > on.index("route: search")
-    assert "experience_note: 建议（别的任务里的经验" in on and "C02｜" in on.split("experience_suggestions:", 1)[1]
-    assert "experience_" not in _route(bench_vault, "用 Python 写一个快速排序", tmp_path, on=True)
+def test_set_15_files_are_frozen():
+    import host
+
+    with gzip.open(BENCH / "set15_heldout.jsonl.gz", "rb") as fh:
+        assert hashlib.sha256(fh.read()).hexdigest() == SET15_HELDOUT_SHA
+    noise = b"".join(p.read_bytes() for p in sorted((BENCH / "distractors").glob("*.md")))
+    assert hashlib.sha256(noise).hexdigest() == DISTRACTORS_SHA
+    dev = host.load("dev")
+    assert len(dev) == SET15_DEV and sum(1 for c in dev if c["expect"]) == 14
 
 
-def _prompt(vault: Path, agent: str, on: bool, text: str = C02_CASE) -> subprocess.CompletedProcess:
-    e = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_NO_QUERY_LOG": "1"}
-    e.pop("KROUTER_EXPERIENCE", None)
-    if on:
-        e["KROUTER_EXPERIENCE"] = "1"
-    return subprocess.run([sys.executable, str(SCRIPTS / "session_hook.py"), "prompt", "--agent", agent],
-                          input=json.dumps({"prompt": text, "session_id": "s1"}), env=e, capture_output=True,
+def test_digest_is_one_subject_free_line_per_card_with_its_id_and_a_cap(bench_vault):
+    d = experience.digest(bench_vault)
+    lines = [ln for ln in d.splitlines() if ln.startswith("- ")]
+    assert len(lines) == 14 and all(ln.endswith("〕") for ln in lines)
+    assert "整体发平、缺一点层次 → 不要再加同一种东西" in d and "〔C08〕" in d
+    assert "红烧肉" not in d and "nginx" not in d  # 只有通用说法，没有题材
+    assert d.splitlines()[-1].startswith("用法：") and "最多两条" in d and "一个字都不要提" in d
+    short = experience.digest(bench_vault, max_lines=5)
+    assert sum(1 for ln in short.splitlines() if ln.startswith("- ")) == 5 and "还有 9 张没列出" in short
+    card = next((bench_vault / experience.FOLDER).glob("C03｜*.md"))
+    card.write_text(card.read_text(encoding="utf-8").replace("date: 2026-01-01", "date: 2026-01-01\nadopted_at: 2026-11-01"),
+                    encoding="utf-8")
+    first = [ln for ln in experience.digest(bench_vault, max_lines=5).splitlines() if ln.startswith("- ")][0]
+    assert first.endswith("〔C03〕")  # 最近被采纳的排最前
+    assert 0 < experience.token_estimate(d) <= len(d)
+
+
+def _start(vault: Path, tmp_path: Path, agent: str = "claude", **env) -> subprocess.CompletedProcess:
+    e = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_STATE_DIR": str(tmp_path / "no-consent"),
+         "KROUTER_NO_QUERY_LOG": "1", **env}
+    for k in ("KROUTER_EXPERIENCE", "KROUTER_INJECT"):
+        if k not in env:
+            e.pop(k, None)
+    return subprocess.run([sys.executable, str(SCRIPTS / "session_hook.py"), "start", "--agent", agent],
+                          input=json.dumps({"cwd": str(tmp_path), "session_id": "s1"}), env=e, capture_output=True,
                           text=True, timeout=60)
 
 
-def test_prompt_hook_adds_suggestions_to_the_context(bench_vault):
-    res = _prompt(bench_vault, "claude", on=True)
-    ctx = json.loads(res.stdout)["hookSpecificOutput"]
-    assert ctx["hookEventName"] == "UserPromptSubmit" and "C02｜" in ctx["additionalContext"]
-    assert "建议（别的任务里的经验" in _prompt(bench_vault, "codex", on=True).stdout
-    assert json.loads(_prompt(bench_vault, "cursor", on=True).stdout) == {"continue": True}
-    assert _prompt(bench_vault, "claude", on=False).stdout == ""
-    assert _prompt(bench_vault, "claude", on=True, text="用 Python 写一个快速排序").stdout == ""
+def test_session_start_gives_the_digest_only_when_switched_on(bench_vault, tmp_path):
+    assert _start(bench_vault, tmp_path).stdout == ""  # 默认关
+    ctx = json.loads(_start(bench_vault, tmp_path, KROUTER_EXPERIENCE="1").stdout)["hookSpecificOutput"]
+    assert ctx["hookEventName"] == "SessionStart" and ctx["additionalContext"].startswith("KRouter 经验摘要")
+    cursor = json.loads(_start(bench_vault, tmp_path, "cursor", KROUTER_EXPERIENCE="1").stdout)
+    assert "〔C08〕" in cursor["additional_context"]
+    assert _start(bench_vault, tmp_path, KROUTER_EXPERIENCE="1", KROUTER_INJECT="0").stdout == ""
+
+
+def test_host_scoring_reads_cited_ids_and_never_shows_the_answer():
+    import host
+
+    cases = host.load("dev")
+    assert all(c["expect"] not in host.opaque(c["id"]) for c in cases if c["expect"])
+    t = next(c for c in cases if c["expect"])
+    q = next(c for c in cases if not c["expect"])
+    replies = {t["id"]: f"别的任务里的经验，可以试试：……〔{t['expect']}〕和〔D07〕", q["id"]: "好的，我先看看。"}
+    r = host.score_rows([t, q], replies)
+    assert (r["recalled"], r["transfer_wrong_cards"], r["quiet_cases_with_suggestion"]) == (1, 1, 0)
 
 
 EXCERPT = "- **问**（10:05）：红烧肉炖好了，咸是够了，但吃着发平怎么办\n  **答**：最后加一小勺糖，味道一下子有了层次\n"

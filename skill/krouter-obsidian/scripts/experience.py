@@ -101,6 +101,9 @@ def load_cards(vault: Path) -> list[dict]:
             "condition": condition(lesson),
             "source": meta.get("source_ref") or f.get("出处", ""),
             "status": (meta.get("status") or "").lower(),
+            "id": meta.get("card_id") or "E" + hashlib.sha1(page.name.encode("utf-8")).hexdigest()[:4],
+            "date": meta.get("date") or "",
+            "adopted_at": meta.get("adopted_at") or "",
         })
     return cards
 
@@ -111,7 +114,49 @@ def condition(lesson: str) -> str:
     return m.group(1) if m else ""
 
 
-# ---------- 匹配 ----------
+# ---------- 经验摘要（会话开始时整份交给宿主模型，由它判断处境像不像） ----------
+
+DIGEST_MAX_LINES = 30
+DIGEST_HEAD = ("KRouter 经验摘要：别的任务里攒下的经验，不是这个项目的事实，也不保证对。每行是「处境 → 做法〔编号〕」，"
+               "卡片在「{folder}」，编号就是卡里的 card_id 或文件名。")
+DIGEST_USE = ("用法：只有当用户这次要做的事和某一行的处境确实相同（不是只沾到同一个词或同一个题材）时，才在回复里顺带提一句"
+              "「别的任务里的经验，可以试试：……〔编号〕」，最多两条；没有处境相同的，就一个字都不要提，也不要说没有相关经验。")
+
+
+def digest_line(card: dict) -> str:
+    """One card as "situation → what to do〔id〕", subject-free (the lesson, split at its "…时，")."""
+    lesson = re.sub(r"\s+", " ", card["lesson"] or card["title"]).strip().rstrip("。")
+    m = re.match(r"^(.{2,60}?)(?:时|的时候)[，,]\s*(.+)$", lesson)
+    body = f"{m.group(1)} → {m.group(2)}" if m else lesson
+    return f"- {body}〔{card['id']}〕"
+
+
+def ranked(cards: list[dict]) -> list[dict]:
+    """Most recently adopted first (`adopted_at`), then confirmed (`status: active`), then newest (`date`)."""
+    return sorted(cards, key=lambda c: (c["adopted_at"], c["status"] == "active", c["date"], c["rel"]), reverse=True)
+
+
+def digest(vault: Path, max_lines: int = DIGEST_MAX_LINES, cards: list[dict] | None = None) -> str:
+    """The whole experience digest the session-start hook gives the host model; "" when there are no cards."""
+    cards = load_cards(vault) if cards is None else cards
+    if not cards:
+        return ""
+    shown = ranked(cards)[:max_lines]
+    out = [DIGEST_HEAD.format(folder=zones.real(vault, FOLDER))] + [digest_line(c) for c in shown]
+    if len(cards) > len(shown):
+        out.append(f"（还有 {len(cards) - len(shown)} 张没列出：按最近采纳、已确认、最新的顺序只列前 {max_lines} 张）")
+    out.append(DIGEST_USE)
+    return redact("\n".join(out))
+
+
+def token_estimate(text: str) -> int:
+    """An upper-end estimate with no tokenizer download: one token per CJK character, one per three other
+    characters. Real tokenizers usually come in lower on Chinese."""
+    cjk = sum(len(r) for r in ri.CJK_RE.findall(text))
+    return cjk + (len(text) - cjk + 2) // 3
+
+
+# ---------- 词法匹配（Set 13：留出集 0/14，没有接进任何通路，只留着复现） ----------
 
 def words(text: str) -> dict[str, float]:
     """{word: weight} of a phrase: latin words, and CJK bigrams that are words in the bundled list (the generic

@@ -659,3 +659,10 @@ reported next to the 14-card development row for each host. Not a pass condition
 line asks for short replies, which a real session does not; the writer saw each card's subject label; Chinese only;
 the digest's token count is an estimate (no tokenizer is downloaded: one token per CJK character, one per three
 other characters, an upper-end figure).
+
+### Log, set 15
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`dc985b4`). Before the first host run two harness faults were fixed, neither touching the digest or its wording: prompts were batched in case order (one batch all transfer cases, the other all quiet ones), and case ids such as `C01-x1` carried the expected card's id into the prompt. Prompts are now ordered and named by an opaque hash (`host.py opaque`). |
+| 2026-11-09 | **Development, first and only wording** (the digest and usage line as committed with this log; 28 prompts per host, two batches of 14; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: 13 / 14, 0 / 14, 1** (it added C05 to C11 on one case and missed C09 on another). No reply cited more than two ids. The wording was not revised: frozen as is. Digest: 14 lines, 842 characters, about 690 tokens by the registered estimate. |
