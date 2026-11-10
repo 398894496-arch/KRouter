@@ -1078,6 +1078,7 @@ input is byte for byte what it was before 2.0; that is checked by the hook tests
 
 | Date | Event |
 |---|---|
+| 2026-11-10 | **Run** (`bench/subconscious/host.py`; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`; 33 prompts each in one batch, opaque ids, shuffled). Only **11** of set 32's held-out recall and changed cases had the right page brought (8 zh, 3 en), so 11 cases, not the 16 the line was written for. **Haiku 5.5: (A) used 10 / 11, cited 11 / 11; (B) pulled 0 / 11; (C) key term without the note 3 / 11. Sonnet 5.5: (A) 10 / 11, 11 / 11; (B) 0 / 11; (C) 1 / 11.** In proportion both pass (10 / 11 ≥ 12 / 16, 11 / 11 ≥ 8 / 16, 0 ≤ 2); in the registered counts "used ≥ 12" cannot be met with 11 cases. Read after scoring: the one (A) miss per host is the same case (third-party scripts), and both replies state the page's rule in full, in Chinese (the batch was mostly Chinese and the agents answered this English message in Chinese), so the English key terms did not match: in substance 11 / 11. Replies in `bench/subconscious/results/set33/`. Limits: 11 cases, all ones the hook got right; one batch per host; short replies. |
 
 ## Set 34: does it reach the app, and is it fast enough to run on every message? (registered 2026-11-10, before any timing run)
 

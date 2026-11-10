@@ -16,8 +16,18 @@ What counts as a mention, from most to least sure (`ROUTES`; the default is `DEF
 - `trigger`: a phrase from the trigger sidecars (`下意识触发词*.psv`: generated trigger words, and questions the
   nightly step learned from real lookups). Same matching, and a learned question counts only when the message repeats
   it.
-- `recall`: full-text recall over the message, only at `high` confidence. Off by default: see `docs/NUMBERS.md`
-  (set 32) for why.
+- `recall`: full-text recall over the message, at `medium` or `high` confidence with the top page at least
+  `RECALL_MARGIN` times the second, never a log page.
+
+A name or trigger match also needs a second key: full-text recall over the whole message must not refuse it, or its
+top page must match at least `GATE_STRONG` of the message's content words. A name inside a message about something
+else ("a sunset header banner for my photography site") fails it. Recall reads the index as it is and never builds it
+in the hook: `keep_index_fresh` updates it in a detached process at most every ten minutes, and until the first build
+finishes nothing is brought.
+
+The whole thing is off by default (`DEFAULT_ON`): on set 32's held-out half (`bench/memory_honesty/HELDOUT.md`) it
+stayed quiet (1 of 24 should-be-quiet messages brought a page, no wrong or superseded page) but brought the right
+page on only 7 of 24 mentions and 4 of 12 changed rules, under the registered line.
 
 Never brought: a page marked superseded (or retired, rejected, …), expired, not yet valid, or secret. A mention of an
 old page brings the page that replaced it (`superseded_by`) and says an earlier page said otherwise; a page that
@@ -28,8 +38,8 @@ Not matched: code fences, and lines that read like pasted code, logs, stack trac
 already drops blocks the app attached). A message over `PROSE_MAX` characters of prose is not matched at all.
 
 Quiet: a page already brought in this session is not brought again unless its conclusion changed; at most
-`PER_SESSION` pages per session. `KROUTER_RECALL_PROMPT=0` turns it off (`1` on; a comma list such as
-`alias,trigger,recall` picks the routes); `KROUTER_INJECT=0` also turns it off.
+`PER_SESSION` pages per session. `KROUTER_RECALL_PROMPT=1` turns it on (`0` off; a comma list such as `alias,trigger`
+picks the routes); `KROUTER_INJECT=0` turns it off too; `KROUTER_RECALL_GATE=0` drops the second key (not advised).
 
 Every page brought is written to `~/.local/state/krouter/recalled.jsonl` (`KROUTER_STATE_DIR`): time, app and session,
 the sentence (redacted, cut to 200 characters), the phrase, the route, the page. That file is what `why` and the
@@ -56,7 +66,7 @@ from krouter_redact import is_secret_page, redact  # noqa: E402
 
 ROUTES = ("alias", "trigger", "recall")
 DEFAULT_ROUTES = ("alias", "trigger", "recall")
-DEFAULT_ON = True
+DEFAULT_ON = False  # 第 32 套留出没过（想起 7/24、改过主意 4/12）：默认关，KROUTER_RECALL_PROMPT=1 打开
 PER_PROMPT = 2
 PER_SESSION = 10
 PROSE_MAX = 2000
@@ -476,6 +486,28 @@ def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> 
             older = zones.real(vault, c["older"])
     return [{"route": "recall", "word": " ".join(res.get("query_tokens", [])[:4]), "rel": real, "real": cur[0],
              "anchor": "", "older": cur[1] or older}]
+
+
+REFRESH_EVERY = 600
+
+
+def keep_index_fresh(vault: Path) -> None:
+    """At most once every REFRESH_EVERY seconds, bring the recall index up to date in a detached process (it only
+    re-reads pages that changed), so this hook never waits for it and a new page shows up within minutes."""
+    stamp = state_dir() / f"recall-refresh-{hashlib.sha1(str(vault).encode()).hexdigest()[:12]}.stamp"
+    try:
+        if stamp.exists() and time.time() - stamp.stat().st_mtime < REFRESH_EVERY:
+            return
+        stamp.parent.mkdir(parents=True, exist_ok=True)
+        stamp.touch()
+        import subprocess
+
+        kw = {"start_new_session": True} if os.name != "nt" else {"creationflags": 0x00000008}
+        subprocess.Popen([sys.executable, str(HERE / "recall_index.py"), "--vault", str(vault), "--stats"],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         env={**os.environ, "KROUTER_NO_QUERY_LOG": "1"}, **kw)
+    except OSError:
+        pass
 
 
 # ---------- the session: no repeats, a cap ----------

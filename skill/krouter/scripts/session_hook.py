@@ -34,12 +34,20 @@ only, no model call, nothing sent; a rhetorical question ("不是吗", "对不�
 before you said yes to importing, for a prompt over 1500 characters, under a KRouter model call (`KROUTER_IN_DISTILL`),
 or in a session marked `#不记`.
 
+With `KROUTER_RECALL_PROMPT=1` (off by default: set 32 in `bench/memory_honesty/HELDOUT.md`) `prompt` also looks the
+message up on this machine (`recollect.py`: the alias table, the trigger words, full-text recall only with a wide
+margin; no model call) and, when it names a page, prints that page's conclusion and path as context marked as memory,
+at most two pages, each at most once per session. Nothing matched, nothing printed: exactly as before. Pasted code and
+logs are not matched; superseded pages never come; what was brought is listed in `recalled.jsonl` in the state folder.
+It only reads the vault, so it needs no import consent. Cursor's `beforeSubmitPrompt` cannot add context, so it is
+not run there.
+
 All four read the hook's JSON on stdin and never fail the session. `--agent` says whose hook it is (default `claude`):
 
 | | Claude Code (plugin) | Codex (`~/.codex/hooks.json`) | Cursor (`~/.cursor/hooks.json`) |
 |---|---|---|---|
 | start | `SessionStart` | `SessionStart` | `sessionStart`, prints `additional_context` |
-| prompt | `UserPromptSubmit` | `UserPromptSubmit` (prints nothing: Codex adds plain output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` |
+| prompt | `UserPromptSubmit` (`additionalContext` when a page is recalled) | `UserPromptSubmit` (the same JSON when a page is recalled, nothing otherwise: Codex adds any output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` (no recall: it cannot add context) |
 | turn | `Stop` | `Stop` | `stop`, prints `{}` (never a follow-up message) |
 | end | `SessionEnd`, `PreCompact` | `SessionEnd` | `sessionEnd` |
 
@@ -426,17 +434,53 @@ def marked_out(transcript: Path, agent: str = "claude") -> bool:
 
 def prompt(payload: dict, agent: str = "claude") -> int:
     text = own_words(str(payload.get("prompt") or ""))
-    if (not text.strip() or len(text) > PROMPT_MAX or os.environ.get("KROUTER_IN_DISTILL") or NO_CAPTURE.search(text)
-            or not consented()):
+    if not text.strip() or os.environ.get("KROUTER_IN_DISTILL"):
         return 0
+    try:
+        note_correction(payload, agent, text)
+    finally:
+        if agent != "cursor":  # Cursor 的 beforeSubmitPrompt 只能放行或拦下，加不了上下文
+            recall_note(payload, agent, text)
+    return 0
+
+
+def recall_note(payload: dict, agent: str, text: str) -> None:
+    """Mention it and it comes to mind (`recollect.py`): the pages this message names, handed to the agent as context
+    marked as memory. Prints nothing when nothing matches, when it is off, or when anything goes wrong."""
+    try:
+        import recollect
+
+        if not recollect.routes():
+            return
+        raw = vault_path()
+        if not raw or not Path(raw).is_dir():
+            return
+        sid = str(payload.get("session_id") or "")
+        recollect.keep_index_fresh(Path(raw).expanduser())
+        hits = recollect.keep_new(recollect.recollect(Path(raw).expanduser(), text), agent, sid)
+        if not hits:
+            return
+        transcript = str(payload.get("transcript_path") or "")
+        if NO_CAPTURE.search(text) or (transcript and marked_out(Path(transcript), agent)):
+            hits = [{**h, "sentence": ""} for h in hits]  # 标了不记：照样想起，但不把你的话写进记录
+        recollect.log(hits, agent, sid)
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
+                                                 "additionalContext": recollect.render(hits)}}, ensure_ascii=False))
+    except Exception as exc:  # noqa: BLE001  想不起来不能让这一轮失败
+        print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
+
+
+def note_correction(payload: dict, agent: str, text: str) -> None:
+    if len(text) > PROMPT_MAX or NO_CAPTURE.search(text) or not consented():
+        return
     cue = correction_cue(text)
     raw = vault_path()
     if not cue or not raw:
-        return 0
+        return
     sid = str(payload.get("session_id") or "")
     transcript = str(payload.get("transcript_path") or "")
     if transcript and marked_out(Path(transcript), agent):
-        return 0  # 这个会话前面标过不记
+        return  # 这个会话前面标过不记
     vault = Path(raw).expanduser()
     now = datetime.now()
     folder = zones.path(vault, CANDIDATES)
@@ -473,7 +517,6 @@ def prompt(payload: dict, agent: str = "claude") -> int:
                         encoding="utf-8")
     with page.open("a", encoding="utf-8") as fh:
         fh.write(line)
-    return 0
 
 
 # Cursor 要的回执：提问照常发出；一轮结束不追加任何消息（stop 的 followup_message 会被当成下一条提问）
