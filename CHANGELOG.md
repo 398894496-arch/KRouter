@@ -21,12 +21,14 @@ notice, then the details.
   nightly job found the logged-in Codex CLI by itself, distilled two sessions and settled the correction candidate in 6
   calls, each on the subscription record page, stopped at the cap. The install's nightly question says, in one
   sentence, that it uses that CLI's subscription, the daily cap and how to turn it off. `docs/HOST-LANE.md`.
-- **Experience cards written by the agent: faithful and subject-free on held-out, one duplicate too many.** Cards no
-  longer carry `when` phrases; the agent names the session's subject, and a lesson that still uses it is sent back;
-  every number left in a card must be in the session (the agent's `quotes`, or the excerpt), or it is sent back too.
-  Set 21 (new sessions by another model, judged by the host that did not write the card): faithful 15 of 15,
-  subject-free 15 of 15, but 2 of 8 duplicate sessions got a card against a bar of 1, so the digest stays off by
-  default.
+- **Experience cards are on by default when your vault has some.** The digest at session start, the use records and
+  `krouter_learn` now default on (`KROUTER_EXPERIENCE=0` turns them off; extraction through the model lane stays
+  opt-in). Cards no longer carry `when` phrases; the agent names the session's subject and a lesson that still uses it
+  is sent back; every number left in a card must be in the session; and a lesson the digest already has is recorded
+  on the old card as seen again (`same_as`) instead of written twice, which also moves that card up the digest.
+  Nightly lists near-duplicate cards to merge by hand. Set 23 (new sessions by another model, duplicate labels
+  confirmed by a second model, each card judged by the host that did not write it): a card for 13 of 16 lesson
+  sessions, faithful 92%, subject-free 92%, no new card on any of 8 duplicates, none on empty sessions: passed.
 - **Experience cards: a lesson from one task offered on another task in the same situation, measured; off by
   default.** With `KROUTER_EXPERIENCE=1`, distilling a session also asks the model lane for at most two cards
   (situation, action, result, the lesson without the subject, source) in `02 经验与方法/经验卡/`, checked before they

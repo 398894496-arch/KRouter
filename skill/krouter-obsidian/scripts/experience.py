@@ -39,10 +39,10 @@ host model, which reads the task anyway, judges the situation; one situation in 
 retriever cannot (set 13). Cards never appear among recalled facts. `suggest()` (the lexical matcher of set 13) is
 kept only to reproduce that set; nothing calls it.
 
-**Switch.** `KROUTER_EXPERIENCE=1` turns on the digest, the use records, `krouter_learn` and the model-lane
-extraction; `KROUTER_EXPERIENCE=0` turns everything off. DEFAULT_ON (False) would make the digest, the records and
-`krouter_learn` the default when the vault has cards; it stays off until the card-writing check passes (set 17 did not).
-Measured: sets 13, 15, 16, 17 in `bench/memory_honesty/HELDOUT.md`; numbers and limits in `docs/EXPERIENCE.md`.
+**Switch.** On by default (DEFAULT_ON, since set 23 passed): the digest when the vault has cards, the use records,
+and `krouter_learn`. `KROUTER_EXPERIENCE=0` turns all of it off; `KROUTER_EXPERIENCE=1` also turns on the model-lane
+extraction at distill time, which spends a call per session-day and stays off otherwise.
+Measured: sets 13, 15, 16, 17, 19, 20, 21, 23 in `bench/memory_honesty/HELDOUT.md`; numbers in `docs/EXPERIENCE.md`.
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ FIELDS = ("处境", "做法", "结果", "通用说法", "适用于", "出处")
 SPLIT = re.compile(r"[;；,，、/|]")
 
 
-DEFAULT_ON = False  # 库里有经验卡时摘要默认开（第三轮第 5 项定）；KROUTER_EXPERIENCE=0 总是关
+DEFAULT_ON = True  # 第 23 套过线（2026-11-10）：库里有经验卡时摘要、使用记录、krouter_learn 默认开；KROUTER_EXPERIENCE=0 总是关
 
 
 def _flag() -> str:

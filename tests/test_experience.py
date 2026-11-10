@@ -112,8 +112,10 @@ def _start(vault: Path, tmp_path: Path, agent: str = "claude", **env) -> subproc
                           text=True, timeout=60)
 
 
-def test_session_start_gives_the_digest_only_when_switched_on(bench_vault, tmp_path):
-    assert _start(bench_vault, tmp_path).stdout == ""  # 默认关
+def test_session_start_gives_the_digest_by_default_and_not_when_off(bench_vault, tmp_path):
+    default = json.loads(_start(bench_vault, tmp_path).stdout)["hookSpecificOutput"]["additionalContext"]
+    assert default.startswith("KRouter 经验摘要")  # 第 23 套过线后：库里有卡就默认给
+    assert _start(bench_vault, tmp_path, KROUTER_EXPERIENCE="0").stdout == ""
     ctx = json.loads(_start(bench_vault, tmp_path, KROUTER_EXPERIENCE="1").stdout)["hookSpecificOutput"]
     assert ctx["hookEventName"] == "SessionStart" and ctx["additionalContext"].startswith("KRouter 经验摘要")
     cursor = json.loads(_start(bench_vault, tmp_path, "cursor", KROUTER_EXPERIENCE="1").stdout)

@@ -40,7 +40,7 @@ def test_initialize_list_and_ask(tmp_path):
                     {"jsonrpc": "2.0", "id": 5, "method": "nope"})
     assert [r["id"] for r in replies] == [1, 2, 3, 4, 5]  # 通知不回
     assert replies[0]["result"]["protocolVersion"] == "2025-06-18" and "recall: none" in replies[0]["result"]["instructions"]
-    assert {t["name"] for t in replies[1]["result"]["tools"]} == {"krouter_ask", "krouter_status", "krouter_note", "krouter_correct"}
+    assert {t["name"] for t in replies[1]["result"]["tools"]} == {"krouter_ask", "krouter_status", "krouter_note", "krouter_correct", "krouter_learn"}
     ask = replies[2]["result"]
     assert ask["isError"] is False and "receipt_version:" in ask["content"][0]["text"]
     assert str(vault) in ask["content"][0]["text"]

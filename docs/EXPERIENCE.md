@@ -11,10 +11,7 @@ held-out tasks with a new subject in Chinese and 14 of 14 in English, Haiku 5.5 
 anything on any of the 28 held-out tasks that should get nothing. Matching by shared words, the first try, found 0 of
 14. Cards the host agent writes itself need no key; on a small check they did not yet reach their bar.
 
-**Status: off by default** (`KROUTER_EXPERIENCE=1` turns it on, `=0` off). The digest passed in both languages; the
-checks of host-written cards did not pass (set 17; set 20, the held-out check after revising on set 19, by one card
-on faithfulness), so the "on when the vault has cards" default is not switched on
-(`experience.DEFAULT_ON`). What is missing is at the end.
+**Status: on by default when the vault has cards** (since set 23, 2026-11-10): the digest at session start, the use records and `krouter_learn`. `KROUTER_EXPERIENCE=0` turns it all off; the model-lane extraction at distill time stays opt-in (`KROUTER_EXPERIENCE=1`), since it spends a call per session-day. With no cards, nothing is printed.
 
 ## What it does when on
 
@@ -101,13 +98,13 @@ Set 17 is spent, so set 19 wrote 16 longer sessions (8 to 10 turns, drift, chang
 judged each card by a model that did not write it. Then the card instructions were revised on set 19 and checked once
 on set 20's new sessions. Both hosts together:
 
-| | Set 19, first run | Set 19, round 5 (in-sample) | Set 20, held-out | **Set 21, held-out, numbers checked** | Bar |
-|---|---|---|---|---|---|
-| Lesson sessions with a card | 16 / 16 | 14 / 16 | 16 / 16 | **15 / 16** | ≥ 12 |
-| Judged faithful | 14 / 16, 87.5% | 14 / 14 | 16 / 18, 88.9% | **15 / 15, 100%** | ≥ 90% |
-| Judged subject-free | 14 / 16, 87.5% | 14 / 14 | 17 / 18, 94.4% | **15 / 15, 100%** | ≥ 90% |
-| Duplicates written | 0 / 8 | 0 / 8 | 1 / 8 | **2 / 8** | ≤ 1 |
-| No-lesson sessions with a card | 0 / 8 | 0 / 8 | 0 / 8 | **0 / 8** | ≤ 1 |
+| | Set 19, first run | Set 19, round 5 (in-sample) | Set 20, held-out | Set 21, held-out, numbers checked | **Set 23, held-out, repeats linked** | Bar |
+|---|---|---|---|---|---|---|
+| Lesson sessions with a card | 16 / 16 | 14 / 16 | 16 / 16 | 15 / 16 | **13 / 16** | ≥ 12 |
+| Judged faithful | 14 / 16, 87.5% | 14 / 14 | 16 / 18, 88.9% | 15 / 15, 100% | **12 / 13, 92.3%** | ≥ 90% |
+| Judged subject-free | 14 / 16, 87.5% | 14 / 14 | 17 / 18, 94.4% | 15 / 15, 100% | **12 / 13, 92.3%** | ≥ 90% |
+| New cards on duplicate sessions | 0 / 8 | 0 / 8 | 1 / 8 | 2 / 8 | **0 / 8** (8 linked right) | ≤ 1 |
+| No-lesson sessions with a card | 0 / 8 | 0 / 8 | 0 / 8 | 0 / 8 | **0 / 8** | ≤ 1 |
 
 What changed between them: no `when` phrases; one plain sentence each for situation, action, result; action only for
 steps actually carried out, result as the session ends (corrected figures, nothing added); a `subject` list the host
@@ -121,10 +118,9 @@ in a card's result does not change what is offered, but it is on the page a pers
 
 ## Not done, and the recommendation
 
-- **Default on is not switched.** Set 21 met faithfulness and subject-freedom (100% each) and missed on duplicates
-  (2 / 8, both on one session whose lesson is arguably new). What it would take: a duplicate check that is not lexical
-  (the host is told to skip a lesson the digest already has, and the code's check compares words), or a decision that
-  a card for a near-duplicate is acceptable, and a new registered set either way.
+- **Default on since set 23.** A repeated lesson is no longer refused by comparing words: the host names the digest
+  line it repeats (`same_as`) and the old card is recorded as seen again; on set 23 all 8 duplicate sessions were linked
+  to the right card. The duplicate labels were confirmed by a second model before scoring; none was disputed.
 - **Whether a host calls `krouter_learn` on its own** at the end of a real session, unprompted, is not measured; set 17
   asked it directly.
 - **The no-key model lane** (the agent's own CLI on the user's subscription) is built with a daily cap, a visible record
