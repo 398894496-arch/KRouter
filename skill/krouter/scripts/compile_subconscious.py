@@ -8,9 +8,12 @@ Agents load that page; they open a vault page only after a lock hit.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 from datetime import date, datetime
 from pathlib import Path
+
+import sys
 
 import zones
 from canonical_lookup import in_force, load_rows, map_for, parse_frontmatter
@@ -159,14 +162,192 @@ def compile_vault(
     return dest
 
 
+# ---------- the standing index handed to the host at session start (2.0) ----------
+#
+# The hook's lock catches a page by its name. People mostly mention a thing in other words (set 32: 7 of 24), and a
+# lookup by words cannot see that; the host model can, when the list of things the vault knows is in front of it. So
+# the session-start hook hands over this index: one line per topic (its name, other names, what was decided, the
+# page), live pages only, a line budget, and one usage line that says how to fetch a page, with no tool assumed.
+
+INDEX_LINES = 60          # 主题行数上限
+INDEX_CHARS = 5400        # 索引正文的字数上限（Claude Code 单条 additionalContext 上限 10,000 字，会话开始还要带决定和经验）
+INDEX_HOW = {"zh": 26, "en": 48}
+INDEX_NAMES = 1           # 每行最多列几个别的叫法
+INDEX_HEAD = {
+    "zh": "KRouter 下意识索引（用户记忆库里定过的事，每行：名字／别的叫法：定了什么〔页〕；不是用户说的话）：",
+    "en": "KRouter standing index (things the user's vault has settled; each line: name / other names: what was "
+          "decided [page]; not something the user said):",
+}
+INDEX_TAIL = {
+    "zh": ("用法：用户的话提到上面任何一件事，哪怕换了说法、没说名字，回答前先取那一页：调用 krouter_ask（MCP 服务 "
+           "krouter，工具列表里没有就按名字找），问题写那件事的名字；没有这个工具就在终端运行 {cmd}，或直接读 {vault}/〔页〕。"
+           "只取和这句话最相关的那一页，回答里注明出处页。用户粘贴的代码、日志、命令输出里碰巧出现的词不算提到。"
+           "和用户的话无关就什么都不做，也不要提这份索引。{more}"),
+    "en": ("How to use: when the user's message touches anything listed above, even in other words and without its "
+           "name, fetch that page before answering: call krouter_ask (MCP server krouter; look it up by name if your "
+           "tool list does not show it) with the thing's name; with no such tool, run {cmd} in a terminal, or read "
+           "{vault}/[page]. Fetch only the one page that bears on the message most, and cite it in your answer. A "
+           "word that merely appears inside code, a log or command output the user pasted is not a mention. If "
+           "nothing listed bears on the message, do nothing and do not mention this index.{more}"),
+}
+INDEX_MORE = {"zh": "库里还有 {n} 件没列出，别的事也可以照样先查。", "en": " {n} more are not listed; the same applies to them."}
+INDEX_FULL_MIN = 0.2      # 主题多时，整行至少占预算的这么多（排在最前的那些），其余的主题只列名字
+INDEX_NAMES_HEAD = {"zh": "也记着（只列名字，提到了同样先取那一页）：", "en": "Also known (names only; the same applies): "}
+
+
+def _tail_jsonl(path: Path, limit: int = 2_000_000) -> list[dict]:
+    try:
+        with path.open("rb") as fh:
+            fh.seek(0, 2)
+            size = fh.tell()
+            fh.seek(max(0, size - limit))
+            data = fh.read().decode("utf-8", errors="replace")
+    except OSError:
+        return []
+    out = []
+    for line in data.splitlines()[1 if len(data) >= limit else 0:]:
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            continue
+    return out
+
+
+def last_used(vault: Path) -> dict[str, str]:
+    """{page: newest time it was brought by the prompt hook or cited by a lookup}, from the state folder's logs."""
+    import os
+
+    base = Path(os.environ.get("KROUTER_STATE_DIR") or Path.home() / ".local/state/krouter")
+    seen: dict[str, str] = {}
+    for row in _tail_jsonl(base / "recalled.jsonl"):
+        if row.get("page"):
+            seen[row["page"]] = max(seen.get(row["page"], ""), str(row.get("ts", "")))
+    for row in _tail_jsonl(base / "queries.jsonl"):
+        for rel in ([row.get("top")] if row.get("top") else []) + list(row.get("pages") or []):
+            if rel:
+                seen[rel] = max(seen.get(rel, ""), str(row.get("ts", "")))
+    return seen
+
+
+def index_topics(vault: Path, today: date | None = None) -> list[dict]:
+    """One topic per live page the alias table names: [{rel, name, others, how, rule, when}], best first (rule pages,
+    then the newest of last used and last updated). A row on a replaced page counts for the page that replaced it."""
+    import recollect
+    import recall_index as ri
+
+    import os
+
+    today = today or date.today()
+    mp = map_for(vault)
+    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
+    if not mp.is_file() or (mp.resolve() == sample.resolve() and not os.environ.get("KROUTER_MAP")):
+        return []  # 代码目录里那份是样例，不是这个库的知识：库里没有自己的别名表就不给索引
+    try:
+        rows = load_rows(mp)
+    except ValueError:
+        return []
+    topics: dict[str, dict] = {}
+    for case_id, aliases, source, anchor in rows:
+        cur = recollect.current(vault, source, today)
+        if cur is None:
+            continue
+        rel = cur[0]
+        t = topics.setdefault(rel, {"rel": rel, "names": [], "anchor": "", "direct": False})
+        direct = rel == source
+        names = [a for a in aliases if a not in t["names"]]
+        t["names"] = (names + t["names"]) if direct and not t["direct"] else (t["names"] + names)
+        if direct and not t["direct"]:
+            t["anchor"], t["direct"] = anchor, True
+    used = last_used(vault)
+    out = []
+    for rel, t in topics.items():
+        fm, body = recollect.page(vault, rel) or ({}, "")
+        canon = zones.canon(vault, rel)
+        how = fm.get("how") or t["anchor"] or recollect.gist(body) or fm.get("title") or Path(rel).stem
+        updated = str(fm.get("date") or fm.get("valid_from") or fm.get("verified_at") or "")[:10]
+        if not updated:
+            try:
+                updated = date.fromtimestamp((vault / rel).stat().st_mtime).isoformat()
+            except OSError:
+                updated = ""
+        when = max(updated, used.get(canon, "")[:10])
+        out.append({"rel": canon, "name": t["names"][0] if t["names"] else Path(rel).stem,
+                    "others": t["names"][1:], "how": how, "rule": ri.tier_of(canon, fm.get("status", "")) == "rule",
+                    "when": when})
+    out.sort(key=lambda x: (not x["rule"], "".join(chr(0x10FFFF - ord(c)) for c in x["when"]), x["name"]))
+    return out
+
+
+def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LINES, chars: int = INDEX_CHARS) -> str:
+    """The session-start index: at most `lines` topics within `chars` characters, then the usage line."""
+    import shlex
+
+    from krouter_redact import redact
+
+    topics = index_topics(vault, today)
+    if not topics:
+        return ""
+    lang = "en" if zones.lang(vault) == "en" else "zh"
+    body, used = [], 0
+    rows = []
+    for t in topics:
+        cjk = bool(re.search(r"[\u3400-\u9fff]", t["how"] + t["name"]))
+        n = INDEX_HOW["zh" if cjk else "en"]
+        how = re.sub(r"\s+", " ", t["how"]).strip()
+        how = how if len(how) <= n else how[: n - 1].rstrip() + "…"
+        names = "／".join([t["name"]] + t["others"][:INDEX_NAMES]) if cjk else " / ".join([t["name"]] + t["others"][:INDEX_NAMES])
+        rows.append((t, redact(f"- {names}：{how}〔{t['rel']}〕" if cjk else f"- {names}: {how} [{t['rel']}]")))
+    fits = sum(len(r) + 1 for _t, r in rows[:lines]) <= chars and len(rows) <= lines
+    # 放不下时：先给每个主题的名字留位置（一个几个字），剩下的预算再按排序给前面的主题整行
+    names_len = len(INDEX_NAMES_HEAD[lang]) + sum(len(t["name"]) + 1 for t in topics)
+    full_room = chars if fits else max(int(chars * INDEX_FULL_MIN), chars - names_len)
+    rest = []
+    for t, line in rows:
+        if len(body) < lines and used + len(line) + 1 <= full_room and not rest:
+            body.append(line)
+            used += len(line) + 1
+        else:
+            rest.append(t)
+    # 放不下整行的：只列名字（和页名），一个主题几个字，两三百个主题也装得下
+    named, shown = [], 0
+    head = INDEX_NAMES_HEAD[lang]
+    room = chars - used - len(head)
+    for t in rest:
+        item = t["name"]  # 名字就是别名：拿它去 krouter_ask 正好锁到那一页
+        if room - (len(item) + 1) < 0:
+            break
+        named.append(item)
+        room -= len(item) + 1
+    if named:
+        body.append(head + ("、" if lang == "zh" else "; ").join(named))
+    shown = len(body) - (1 if named else 0) + len(named)
+    more = len(topics) - shown
+    script = Path(__file__).resolve().with_name("route_knowledge.sh")
+    cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
+    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=INDEX_MORE[lang].format(n=more) if more else "")
+    return "\n".join([INDEX_HEAD[lang], *body, tail])
+
+
+def est_tokens(text: str) -> int:
+    """Upper-end estimate used by the benches (no tokenizer downloaded): one per CJK character, one per three others."""
+    cjk = len(re.findall(r"[\u3400-\u9fff]", text))
+    return cjk + (len(text) - cjk + 2) // 3
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compile KRouter L0 下意识 index")
     parser.add_argument("--vault", required=True)
     parser.add_argument("--map", default="")
     parser.add_argument("--out", default="")
     parser.add_argument("--today", default="")
+    parser.add_argument("--index", action="store_true", help="print the session-start standing index instead")
     args = parser.parse_args()
     today = date.fromisoformat(args.today) if args.today else None
+    if args.index:
+        text = standing_index(Path(args.vault), today)
+        print(text)
+        print(f"({len(text)} characters, about {est_tokens(text)} tokens)", file=sys.stderr)
+        return 0
     dest = compile_vault(
         Path(args.vault),
         Path(args.map) if args.map else None,

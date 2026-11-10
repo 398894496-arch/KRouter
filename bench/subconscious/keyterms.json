@@ -1,0 +1,15 @@
+{
+ "_note": "Set 33 key terms per page, taken from the page text on 2026-11-10 before any host run. A reply 'uses' a page when it contains any of them (case-insensitive).",
+ "团队手册/代码托管.md": ["GitHub"],
+ "团队手册/技术分享.md": ["两周", "每季度", "每个组"],
+ "团队手册/意见反馈.md": ["两小时", "2 小时", "2小时", "产品经理"],
+ "团队手册/接口文档.md": ["OpenAPI"],
+ "团队手册/节假日安排.md": ["3 点", "3点", "三点", "15:00", "15 点", "15点"],
+ "团队手册/团队周会.md": ["10 点", "10点", "十点", "只同步风险", "不念进度"],
+ "团队手册/测试环境.md": ["快照", "凌晨 3 点", "凌晨3点", "重置"],
+ "团队手册/技术方案模板.md": ["直接在文档里批注", "文档里批注", "统一模板", "回滚"],
+ "团队手册/权限申请.md": ["双人审批", "工单", "7 天", "7天"],
+ "Handbook/Product search.md": ["OpenSearch"],
+ "Handbook/Third-party scripts.md": ["security review", "cookie consent", "five approved", "5 approved"],
+ "Handbook/Cloud cost alerts.md": ["40%", "#cost"]
+}

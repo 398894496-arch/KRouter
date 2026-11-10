@@ -1,0 +1,16 @@
+{"id": "81d9bf7b3c", "response": "CALL krouter_ask: bug bounty\nLet me check the bug bounty handbook page before naming an owner for the invoices IDOR."}
+{"id": "f724e60e56", "response": "CALL krouter_ask: GPU usage\nSorry about the lost notebook. Let me pull up what the handbook says about the rules for notebooks and compute before I say why it was killed."}
+{"id": "77872853f0", "response": "CALL krouter_ask: 开源许可证\n我先查一下团队手册里关于开源许可证的规定，再回答这个 copyleft 库能不能用。"}
+{"id": "d6bd50dee2", "response": "CALL krouter_ask: 测试环境\n我先查团队手册里测试环境的重置规则，看看这批数据能不能保住。"}
+{"id": "d5aff12aa1", "response": "这和团队周会的规矩是对得上的：周会只同步风险和需要协调的事，不念进度，所以你只讲两个风险就够了（出处：团队手册/团队周会.md）。"}
+{"id": "ec96aab86b", "response": "CALL krouter_ask: 办公网络\n我先查团队手册里办公网络和公司 VPN 的会话规定，再看隔夜断线有什么办法。"}
+{"id": "7ae363ae37", "response": "CALL krouter_ask: status page\nLet me check the handbook's status page rule for who posts the banner and how fast."}
+{"id": "eb49e2b709", "response": "CALL krouter_ask: browser support\nLet me check the handbook's supported-browsers page before saying whether Safari 15 is covered."}
+{"id": "4417272772", "response": "CALL krouter_ask: A/B test\nLet me pull up the A/B test page in the handbook to confirm what it says about calling a variant early."}
+{"id": "02ab3f7d68", "response": "CALL krouter_ask: 图片资源\n我先查团队手册里图片资源的规定，确认体积上限和格式再说怎么压。"}
+{"id": "203dbad19f", "response": "CALL krouter_ask: code comments language\nBefore reminding Kenji of anything, let me check the handbook page on code comment language, since I'm not sure it says Esperanto."}
+{"id": "904d9cf634", "response": "CALL krouter_ask: access review\nLet me check the handbook's access review page to see whether that is what pulled Dana's credentials."}
+{"id": "1ed540bdbe", "response": "是的，要走。软件采购超过 1 万元要走采购流程，至少比价三家，2 万的年费监控工具在这条线以上；另外年费订阅到期前 60 天由使用部门确认是否续费（出处：团队手册/软件采购.md）。"}
+{"id": "0189a216a2", "response": "CALL krouter_ask: 数据分级\n我先查团队手册里数据分级和敏感数据的规定，看用户明细属于哪一级、能不能带出公司。"}
+{"id": "b1c4b69628", "response": "对，需求进开发前要开评审会，产品、研发、测试三方都到，通过后才在看板上标为已就绪；没过这关就先不排期（出处：团队手册/需求评审.md）。"}
+{"id": "6e35afe33c", "response": "CALL krouter_ask: price change\nLet me check the handbook's price change page for what it says about grandfathered plans and notice before an increase."}

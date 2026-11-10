@@ -995,3 +995,200 @@ Also reported: how many duplicates were linked to the right card with `same_as`.
 | 2026-11-10 | Registered (`8ea41c3`). |
 | 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
 | 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |
+
+## Set 32: mention it and it comes to mind — does the prompt hook bring the right page, and only then? (registered 2026-11-10, before any case was split or run)
+
+**Why.** Until 2.0 the lock and the trigger words ran only when the agent chose to call `krouter_ask`: whether the
+vault "came to mind" depended on the agent. `session_hook.py prompt` now looks every message up (`recollect.py`: no
+model call) and hands the agent at most two pages, marked as memory. This set asks whether it brings the right page
+when a message mentions something the vault knows, brings the newer page when the rule changed, and stays silent
+otherwise. Silence matters most: this runs on every message.
+
+**Vault.** `bench/memory_honesty/vault3` (frozen, 110 pages, English and Chinese, 18 old/new page pairs), copied to a
+temporary folder at run time with `bench/subconscious/overlay/` laid into `90 系统文件/`: an alias table of 63 rows
+(some rows still point at a page that was later superseded, as a table nobody updated would; three topics have a row
+for both pages) and two trigger sidecars (20 generated lines, 7 learned questions). The overlay was written before any
+case existed, by the session that writes the matcher.
+
+**Cases.** 120, written by Sonnet 5.5 in a fresh Claude Code subagent that read one input file (every Handbook and
+团队手册 page with its status and text, and the alias names of the pages that have them) and nothing else: not the
+trigger sidecars, not the anchors, not any code. Told to write the way people write to a coding assistant mid-work
+and neither to use nor to avoid the names. Per language (zh, en): 24 *recall* (a message that mentions something one
+active page covers; the expected page), 24 *quiet* (6 each: unrelated; a name meant in another sense; a name or key
+word as an everyday word in a longer sentence; a name only inside pasted code, a log, a diff or command output, at
+least half unfenced), 12 *changed* (a topic with an old and a new page; the new page expected, the old one recorded).
+Not edited. Split at seed 20261132, stratified by language, kind and subkind, half to each side:
+`bench/subconscious/dev.jsonl` (60) is where the matcher, the paste filter and the routes may be tuned;
+`bench/subconscious/heldout.jsonl.gz` (60) is sealed and run once. The writer's raw file stays out of the repository.
+
+**System.** `recollect.recollect()` as the hook calls it, with the routes chosen on development. Choice rule, fixed
+now: maximise recalled (recall + changed cases bringing the expected page) − 3 × (quiet cases bringing anything +
+wrong pages brought on recall and changed cases), ties to fewer routes. Full-text recall (`recall`, `high` confidence
+only) may enter the default only if on development it adds no quiet delivery and no wrong page.
+
+**Scored mechanically** (`bench/subconscious/run.py`): *brought* = the pages handed over (at most two). Recall case:
+right if the expected page is brought; any other page brought is a wrong page. Changed case: right if the new page is
+brought; the old page brought as a page is a wrong page *and* an old-page delivery (naming the old page in the
+"an earlier page said otherwise" note is expected, not a delivery). Quiet case: any page brought counts against it.
+
+**Pass line (fixed now), held-out, both languages together:** quiet cases bringing anything ≤ 1 / 24; wrong pages on
+recall and changed cases ≤ 1; old-page deliveries 0; changed cases bringing the new page ≥ 6 / 12; recall cases
+bringing the right page ≥ 12 / 24, and ≥ 5 / 12 in each language. All five must hold for the hook to be on by
+default (together with set 33's line below); otherwise it ships off (`KROUTER_RECALL_PROMPT=1` to try it) and the
+numbers are reported as they are.
+
+**Known limits, said with any number.** One writer model; the writer saw the alias names (it was told neither to use
+nor to avoid them, so recall depends on how often people say a page's name); the matcher's author wrote the alias
+table and triggers, knowing the pages; vault3 is small; the cases are single messages, not conversations.
+
+### Log, set 32
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`b5254b2`); split committed (`676e829`), held-out sealed (SHA-256 of the text `5ba6f5ed…fbe649c6`). |
+| 2026-11-10 | **Development.** First run, alias and trigger routes only, before any tuning: recall 2 / 24, changed 4 / 12, **quiet cases bringing something 8 / 24** (other sense 2, everyday word 3, pasted 3), wrong pages 0. Full-text recall at `high` confidence added nothing: on vault3 no page is in the rule tier, so `high` never happens. Changes, each justified on development only: (1) the paste filter learned three formats it missed (docker compose log prefixes `name_1  \| …`, merge-conflict markers, indented or diffed YAML): pasted 3 → 0; (2) a second key for a name match: recall over the whole message must not refuse it, or its top page must match at least 4 of the message's content words (every loud name match had recall refusing with ≤ 3 matched words; every right one had recall answering or ≥ 4 words): quiet 5 → 0, no right hit lost; (3) a `recall` route at `medium` or `high` confidence with the top page at least 2.5 × the second, never a log page. Sweep of the second key (3, 4, 5 words) × margin (1.3–2.5) × confidence set: best choice score 10 at 4 words for every margin ≥ 1.75; ties went to the strictest (2.5, medium/high). **Frozen** (`b6cfb53`): routes alias, trigger, recall; development **recall 5 / 24 (zh 2, en 3), changed 5 / 12, quiet 0 / 24, wrong pages 0, old-page deliveries 0.** The trigger sidecars brought nothing right or wrong on development. Reading the misses: most recall cases share no word with their page ("Dana's prod DB login vanished" against "access unused for 60 days is removed"); a lexical lookup cannot bridge them. |
+| 2026-11-10 | **Held-out, run once** (routes and thresholds as frozen; the first invocation stopped on a missing output folder while saving, before printing anything, and was re-run unchanged; the lookup is deterministic). **Quiet cases bringing something 1 / 24** (one name in another sense: 「iOS 里相机的权限申请弹窗」 brought 权限申请), **wrong pages 0, old-page deliveries 0, changed 4 / 12, recall 7 / 24 (zh 6 / 12, en 1 / 12).** Against the line: quiet ≤ 1 holds, wrong ≤ 1 holds, old 0 holds; changed ≥ 6 fails; recall ≥ 12 and ≥ 5 per language fails (English). **Fails. As registered, the prompt hook ships off by default** (`KROUTER_RECALL_PROMPT=1` turns it on). What it shows: on every message it stays quiet as required (1 of 24 over everything thrown at it, 0 of 12 pasted), and when it speaks it is right (11 pages brought on recall and changed cases, all the expected page, none old); what it cannot do is notice a mention said in other words, which is most mentions people make. |
+
+## Set 33: does the host use what the hook brought, and ignore what does not fit? (registered 2026-11-10, before any host was run)
+
+**Why.** Set 32 measures what the hook hands over. This set measures what the host model does with it: whether it
+uses a page that was brought and says where it came from, and whether a page that does not fit the message pulls it
+off course.
+
+**Cases.** From set 32's held-out file, after its single run: up to 16 recall and changed cases (8 per language, the
+first in file order) on which the hook brought the expected page. Each message is given to the host three ways, as
+the prompt hook would give it: (A) with the hook's own memory note; (B) with the memory note the hook gave a
+different case of the same language (the next one in the list, wrapping), so a page that does not fit; (C) with no
+note. The wording of the note is the one shipped in `recollect.render` at registration; it is not revised on this set.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, run as sets 12 and 15 ran theirs: a Claude Code subagent on the named model
+answers a batch of prompts, each as the only one, writing only the start of the reply (at most five sentences, no
+tools). No API key and no stored login are used.
+
+**Scored mechanically.** Each case lists one or two key terms of the expected page's rule (a number, a product name),
+taken from the page before any host run. (A) *used* = the reply contains a key term; *cited* = it names the page
+(its path or file name). (B) *pulled* = the reply contains a key term or the name of the page that was brought but
+does not fit. (C) the same key-term check, reported to show what the host knows without the note.
+
+**Pass line (fixed now), per host:** (A) used ≥ 12 / 16 and cited ≥ 8 / 16; (B) pulled ≤ 2 / 16. Both hosts must
+pass for the hook to be on by default (with set 32). When nothing is brought the hook prints nothing, so the host's
+input is byte for byte what it was before 2.0; that is checked by the hook tests, not by a host run.
+
+### Log, set 33
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | **Run** (`bench/subconscious/host.py`; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`; 33 prompts each in one batch, opaque ids, shuffled). Only **11** of set 32's held-out recall and changed cases had the right page brought (8 zh, 3 en), so 11 cases, not the 16 the line was written for. **Haiku 5.5: (A) used 10 / 11, cited 11 / 11; (B) pulled 0 / 11; (C) key term without the note 3 / 11. Sonnet 5.5: (A) 10 / 11, 11 / 11; (B) 0 / 11; (C) 1 / 11.** In proportion both pass (10 / 11 ≥ 12 / 16, 11 / 11 ≥ 8 / 16, 0 ≤ 2); in the registered counts "used ≥ 12" cannot be met with 11 cases. Read after scoring: the one (A) miss per host is the same case (third-party scripts), and both replies state the page's rule in full, in Chinese (the batch was mostly Chinese and the agents answered this English message in Chinese), so the English key terms did not match: in substance 11 / 11. Replies in `bench/subconscious/results/set33/`. Limits: 11 cases, all ones the hook got right; one batch per host; short replies. |
+
+## Set 34: does it reach the app, and is it fast enough to run on every message? (registered 2026-11-10, before any timing run)
+
+**Delivery.** For each app, whether the memory note the hook prints reaches the model: Claude Code
+(`UserPromptSubmit`, `hookSpecificOutput.additionalContext`), Codex (`UserPromptSubmit`, the same JSON, which Codex's
+hooks documentation says is added as developer context) and Cursor (`beforeSubmitPrompt`, whose documented output is
+only `continue` / `user_message`: no context can be added). Checked with the real Codex CLI in a throwaway
+`CODEX_HOME`; where the login does not carry over, against a local mock of the Responses API, and the report says so.
+
+**Speed.** The whole hook process (`python3 session_hook.py prompt`, from start to exit, as the app runs it) on a
+message that matches and one that does not, 200 runs each, on vault3 with the overlay and on a 10,000-page vault
+(`bench/scale/gen.py 10000`, with an alias table of 2,000 rows and 10,000 trigger lines added). Cold = the first run
+after the page cache of the vault folder is not warmed by a previous run (a fresh copy of the vault); warm = the rest.
+Reported: p50 and p95. **Line (fixed now):** warm p95 ≤ 250 ms on both vaults; if not, the lookup moves to a cached
+index or a resident process before the default is decided.
+
+### Log, set 34
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | **Delivery.** Codex: codex-cli 0.155.0-alpha.9.2 (the app's own binary, not the shell wrapper on this machine), throwaway `CODEX_HOME` and `HOME`, a local mock of the Responses API (no login carries over to a throwaway home, so no real model was called), hooks run with `--dangerously-bypass-hook-trust`: for 「新项目的仓库我就建在公司自己的 GitLab 上吧」 the hook ran and the memory note (代码托管.md, with the earlier page named) arrived in the request as a **developer message right after the user message**; for a message naming nothing, no note was sent. Claude Code: output format per its hooks documentation (`hookSpecificOutput.additionalContext` on `UserPromptSubmit`) and the hook tests; not run inside the Claude Code app here. Cursor: not available (`beforeSubmitPrompt` can only allow or block); the hook does not run the lookup there. |
+| 2026-11-10 | **Speed** (`bench/subconscious/speed.py`, results in `bench/subconscious/results/set34-speed.txt`; Apple laptop shared with other sessions, load average 5–6). A first run set `PYTHONPYCACHEPREFIX` for cold starts, which turned out to add about 90 ms to every run (the same hook: 62 → 154 ms) and was discarded; cold now means the scripts' bytecode cache deleted and the phrase table not yet compiled. Whole hook process, routes as frozen (alias, trigger, recall), 200 warm and 20 cold runs each. **vault3 + overlay: warm p50 / p95 87 / 124 ms (a message that names a page) and 83 / 102 ms (one that names nothing); cold 91 / 126 and 94 / 121. 10,000 pages, 2,000 alias rows, 10,000 trigger lines: warm 126 / 144 and 116 / 139; cold 221 / 246 and 214 / 327.** Alias and trigger routes only: 10,000 pages warm 129 / 149 and 72 / 82. The hook with the lookup off: 62 / 73 ms on either vault. **Line (warm p95 ≤ 250 ms on both vaults): holds.** Two changes made before this run, on development timings only: the phrase table is compiled once and kept next to the recall index (`marshal`, 9 ms to load 26,000 phrases instead of re-reading the files: the JSON form took 38 ms), and related-page titles are resolved without walking the vault. Set 32's held-out pages brought were checked to be identical before and after each change (compared, not re-scored). |
+
+## Set 35: the subconscious as a whole — the prompt hook, then the host reading a standing index (registered 2026-11-10, before any case existed)
+
+**Why.** Set 32: the prompt hook alone stays quiet but brings the right page for only 7 of 24 mentions, because people
+mostly mention a thing in other words. Set 15 met the same wall with experience cards (0 / 14 by words) and got past
+it by putting the cards in front of the host (14 / 14). Here the session-start hook hands the host a standing index
+(`compile_subconscious.standing_index`: one line per live topic of the alias table, name / one other name / what was
+decided / page; replaced pages counted under the page that replaced them; rule pages first, then most recently used or
+updated; at most 60 lines and 5,400 characters; then one usage line that says how to fetch a page with `krouter_ask`,
+the route command or the file path, since some hosts show the model no tool list). A message then counts as
+remembered when either layer brings the right page.
+
+**Vault and hook.** Set 32's: vault3 with `bench/subconscious/overlay/`, the prompt hook exactly as frozen there
+(`b6cfb53`, routes alias, trigger, recall). The index on it: 60 topics, all listed.
+
+**Cases.** 120 new messages, written by Sonnet 5.5 in a fresh Claude Code subagent that reads the same one input file
+as set 32's writer (pages, statuses, alias names) and nothing else; it has not seen set 32's cases, the index, its
+wording or any code. Per language (zh, en): 24 *recall*, of which at least 16 must not use any of the page's listed
+names (the writer marks each `named`); 24 *quiet* (6 each: unrelated; a name in another sense; a name or key word as
+an everyday word; a name only inside pasted code or logs); 12 *changed* (the newer page expected). Not edited. Split
+at seed 20261135, stratified by language, kind, subkind and `named`: `bench/subconscious/set35_dev.jsonl` (60), where
+the index's usage line may be revised at most once; `bench/subconscious/set35_heldout.jsonl.gz` (60), run once per host.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, as Claude Code subagents (`model: haiku` / `sonnet`), one agent per host and
+split. The batch file gives the session-start context once at the top (exactly the index the hook would print) and
+then each message as a separate session, with the prompt hook's note above it when the hook brought something. The
+host writes the start of its reply; a fetch it would make is written as a first line `CALL krouter_ask: …`,
+`CALL shell: …` or `CALL read: …` instead of being run. No API key, no stored login.
+
+**Scored mechanically** (`bench/subconscious/both.py`). A fetch is resolved by running it for real on the bench vault
+(`route_knowledge.py search` with the question or the command's query: the lock's page, else recall's first page when
+recall answers; a `read` path as written). The host *recalls* a page when it fetches it or names its path in the reply.
+Recall or changed case **right** when the hook brought the expected page or the host recalled it; **wrong page** when
+the hook brought, or the host fetched or named, any other page; **old-page delivery** when the superseded page was
+brought, fetched or named. Quiet case **loud** when the hook brought anything or the host fetched anything or named any
+page. Reported per host and language, with what each layer contributed (hook right; host right where the hook was not).
+
+**Pass line (fixed now), held-out, each host:** recall cases right ≥ 18 / 24 and ≥ 8 / 12 in each language; changed
+cases right ≥ 9 / 12; quiet cases loud ≤ 2 / 24; wrong pages ≤ 2; old-page deliveries 0. Both hosts must pass for the
+prompt hook and the standing index to be on by default.
+
+**Scale check (development only, not a pass condition).** (a) Crowded: the index with 240 distractor topics added
+(synthetic pages with alias rows on subjects the cases never touch), all 300 lines listed regardless of the budget, to
+see whether a long list makes the host fetch wrongly or speak on quiet cases; both hosts. (b) At the shipped budget
+with the same 240 distractors dated newer than the real pages: how many real topics stay listed, and the hook-plus-host
+numbers with Haiku 5.5.
+
+**Known limits, said with any number.** One writer model, also one of the hosts; the writer saw the alias names;
+batches show the host every case of a split at once; the host is told to write fetches instead of making them, so a
+real session's tool use may differ; token counts are the registered estimate (one per CJK character, one per three
+other characters).
+
+### Log, set 35
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`77aeb94`). Cases written (Sonnet 5.5): recall named / not named zh 7 / 17, en 6 / 18; changed named zh 1, en 3. Split: the first stratified split left odd-sized strata unbalanced (held-out 23 recall, 14 changed), so before any case was read it was redone with the odd case of each language-and-kind alternating between the sides: 60 / 60, each side 12 recall, 12 quiet and 6 changed per language. Held-out sealed, SHA-256 of the text `945ac5f6…f94a6b1`. |
+| 2026-11-10 | **Development, first wording** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). Sonnet 5.5: recall 23 / 24, changed 12 / 12, quiet loud 2 / 24 (both by the frozen hook: 「笔记本（记事那种纸质的）」, and a pasted `FAIL test_sms.py … 验证码短信` line the hook's paste filter does not treat as pasted), wrong pages 3 (a neighbouring page fetched as well), old 0. Haiku 5.5, as first scored: recall 22 / 24, changed 12 / 12, quiet loud 6 / 24, wrong 5. **Scoring clarified before held-out:** of Haiku's 6, three were `CALL read: package.json`, `README.md` and a Java file the user mentioned: ordinary work, not a fetch from the memory. A quiet case is now loud on a *memory* fetch (`krouter_ask`, the route command, reading a file inside the vault) or a named vault page, which is what the registration meant by "fetched" (the same rule resolves fetches); Haiku's quiet loud is then 3 / 24 (one host fetch on a pasted merge conflict, the two hook cases). **The one allowed wording revision:** the usage line now says to fetch only the one page that bears on the message most, and that a word inside pasted code, logs or output is not a mention (`compile_subconscious.INDEX_TAIL`). Haiku re-run on development once with it; then frozen. |
+| 2026-11-10 | **Development, revised wording, Haiku 5.5 re-run once** (`claude-haiku-5-5`): recall 22 / 24 (zh 11, en 11; hook 6, host 16), changed 12 / 12, quiet loud 3 / 24 (two by the frozen hook, one host fetch on a pasted merge conflict), wrong pages 1 (was 5), old 0. Sonnet's development run used the first wording and was not repeated. **Frozen** (`58f0437`); held-out next, once per host. |
+| 2026-11-10 | **Held-out, run once per host** (wording as frozen; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`; replies in `bench/subconscious/results/set35/b35held/`). **Sonnet 5.5: recall 24 / 24 (zh 12 / 12, en 12 / 12; the hook 7, the host where the hook was silent 17; mentions without the page's names 17 / 17), changed 12 / 12 (hook 5, host 7), quiet loud 1 / 24 (by the hook: a pasted line), wrong pages 0, old 0. Haiku 5.5: recall 23 / 24 (zh 11 / 12, en 12 / 12; hook 7, host 16; without names 16 / 17), changed 12 / 12 (hook 5, host 7), quiet loud 2 / 24 (one by the hook, one host fetch on an everyday word), wrong pages 0, old 0.** Against the line (recall ≥ 18 / 24 and ≥ 8 per language, changed ≥ 9 / 12, quiet ≤ 2 / 24, wrong ≤ 2, old 0): **both hosts pass. As registered, the prompt hook and the standing index are on by default** (`recollect.DEFAULT_ON`; `KROUTER_RECALL_PROMPT=0`, `KROUTER_RECALL_INDEX=0`, `KROUTER_INJECT=0` turn them off). Index: 60 topics, all as full lines, 5,600 characters, about 2,630 tokens by the registered estimate. |
+| 2026-11-10 | **Scale check, development only.** Before it ran, preparing (b) showed the index as first written would have listed **0 of the 60 real topics**: 240 newer distractors filled the line budget and the oldest, never-used real pages were cut. Changed then, on development only and without touching the 60-topic index (byte-identical on vault3): when the topics do not fit, every topic keeps its name in one "also known" line and the remaining budget goes to full lines for the first ones (`INDEX_FULL_MIN`); at 300 topics that is 16 full lines and all 300 names in 5,644 characters, about 2,510 tokens. (a) **Crowded, all 300 topics as full lines** (24,495 characters, about 10,690 tokens, over the shipped budget): Sonnet 5.5 recall 23 / 24, changed 12 / 12, quiet loud 1 / 24, wrong 2; Haiku 5.5 21 / 24, 11 / 12, 2 / 24, wrong 2 (development, against 23 / 24, 12 / 12, 2, 3 and 22 / 24, 12 / 12, 3, 1 with the 60 real topics). (b) **Shipped budget, distractors dated newer, real topics as names only**: Haiku 5.5 recall 19 / 24, changed 9 / 12, quiet loud 1 / 24, wrong 1. A long list did not make either host noisier; losing the one-line conclusion costs Haiku about 3 of 24 mentions. |
+| 2026-11-10 | Defaults switched as registered (prompt hook and standing index on; learning off after set 36). Found while switching: with no alias table of its own a vault fell back to the sample table shipped with the code; the index now uses only the vault's own table (or `KROUTER_MAP`). Session-start hook with the index: 115 ms median on vault3 (101 without), 430 ms at 10,000 pages with 2,000 alias rows (109 without); it runs once per session. |
+
+## Set 36: does it get better with use — learning a mention from what the host fetched (registered 2026-11-10, before any case existed)
+
+**Why.** When the hook says nothing and the host fetches a page itself and uses it, the turn hook notes the message and
+the page; the nightly `learn_mentions` step turns the message's most distinctive phrase into a provisional trigger word
+for that page. The question: does the hook then bring that page by itself the next time the team says it that way,
+without getting louder?
+
+**Cases.** Written in the same sitting as set 35 by the same writer: per language 8 *pairs* (two messages on one
+topic that share a team expression the pages and names do not contain, as teams have nicknames for their own rules;
+the first is the learning message, the second the test message, written so it would not share the expression by
+accident with any other page), and 4 *lookalike* quiet messages (the same team expression's ordinary words used about
+something unrelated). `bench/subconscious/set36.jsonl`, not split (nothing is tuned on it).
+
+**Procedure.** Learning: each first message goes through the hook (frozen) and Sonnet 5.5 with the index, as in set
+35; where the hook brought nothing and the host fetched and named the right page, that is a learning event, exactly as
+the turn hook would write it; `learn_mentions.run` then writes the trigger file. Test: the prompt hook alone, before
+and after learning, on the 16 second messages, on the 8 lookalikes, and on set 35's 24 held-out quiet messages.
+
+**Pass line (fixed now):** after learning, the hook alone brings the right page for at least half of the second
+messages whose first message produced a learning event (before learning: counted and reported); quiet messages (the
+lookalikes and set 35's held-out quiet ones) bringing something: no more than before learning; no wrong page brought
+on a second message. If it fails, the nightly step stays in the code but is reported as not shown to work.
+
+### Log, set 36
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`77aeb94`); cases written with set 35's (`bench/subconscious/set36.jsonl`). **Run once** (learning messages answered by Sonnet 5.5, `claude-sonnet-5-5`; replies in `bench/subconscious/results/set36/`). On the 16 first messages the hook brought the right page 3 times (Chinese) and the host fetched it on the other 13: **13 learning events** (zh 5, en 8). `learn_mentions` learned one phrase per event. **Second messages, the hook alone: before learning 0 / 16; after, right on 6 of the 13 whose first message was learned (zh 1 / 5, en 5 / 8); wrong pages 0. Quiet (8 lookalikes + set 35's 24 held-out quiet messages) bringing something: 1 before, 1 after.** Against the line (≥ half of 13, i.e. 7; quiet no worse; no wrong page): **fails by one**; quiet holds. Reading the learned phrases: English ones were the team expressions or close to them ("dusty-keys sweep", "white-hat queue", "lunch-break reaper strikes"); Chinese ones mostly were not (「回家加班」「昨晚连上」, or the expression with a word attached, 「每日洗牌刷掉」): without real Chinese word segmentation the picker cuts in the wrong places. As registered, the nightly step stays in the code, reported as not shown to work; it is **off by default** (`KROUTER_RECALL_LEARN=1`), because it also keeps the latest message's words in the state folder. |

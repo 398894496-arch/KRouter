@@ -1,0 +1,200 @@
+{
+ "349dc33885": {
+  "case": "zh-changed-02",
+  "cond": "A",
+  "expect": "团队手册/代码托管.md",
+  "injected": "团队手册/代码托管.md"
+ },
+ "17205b3eb8": {
+  "case": "zh-changed-02",
+  "cond": "B",
+  "expect": "团队手册/代码托管.md",
+  "injected": "团队手册/技术分享.md"
+ },
+ "e385fb4f7b": {
+  "case": "zh-changed-02",
+  "cond": "C",
+  "expect": "团队手册/代码托管.md",
+  "injected": ""
+ },
+ "6d59759f3b": {
+  "case": "zh-changed-06",
+  "cond": "A",
+  "expect": "团队手册/技术分享.md",
+  "injected": "团队手册/技术分享.md"
+ },
+ "ede927b239": {
+  "case": "zh-changed-06",
+  "cond": "B",
+  "expect": "团队手册/技术分享.md",
+  "injected": "团队手册/意见反馈.md"
+ },
+ "f8bca21800": {
+  "case": "zh-changed-06",
+  "cond": "C",
+  "expect": "团队手册/技术分享.md",
+  "injected": ""
+ },
+ "6534cd4677": {
+  "case": "zh-recall-07",
+  "cond": "A",
+  "expect": "团队手册/意见反馈.md",
+  "injected": "团队手册/意见反馈.md"
+ },
+ "1cf1c51b4e": {
+  "case": "zh-recall-07",
+  "cond": "B",
+  "expect": "团队手册/意见反馈.md",
+  "injected": "团队手册/接口文档.md"
+ },
+ "4cca58d044": {
+  "case": "zh-recall-07",
+  "cond": "C",
+  "expect": "团队手册/意见反馈.md",
+  "injected": ""
+ },
+ "5382af83cb": {
+  "case": "zh-recall-09",
+  "cond": "A",
+  "expect": "团队手册/接口文档.md",
+  "injected": "团队手册/接口文档.md"
+ },
+ "8bea26bdc1": {
+  "case": "zh-recall-09",
+  "cond": "B",
+  "expect": "团队手册/接口文档.md",
+  "injected": "团队手册/节假日安排.md"
+ },
+ "efa63fa8dc": {
+  "case": "zh-recall-09",
+  "cond": "C",
+  "expect": "团队手册/接口文档.md",
+  "injected": ""
+ },
+ "7894e211f8": {
+  "case": "zh-recall-12",
+  "cond": "A",
+  "expect": "团队手册/节假日安排.md",
+  "injected": "团队手册/节假日安排.md"
+ },
+ "3ae0c1a5fd": {
+  "case": "zh-recall-12",
+  "cond": "B",
+  "expect": "团队手册/节假日安排.md",
+  "injected": "团队手册/团队周会.md"
+ },
+ "22a80226ea": {
+  "case": "zh-recall-12",
+  "cond": "C",
+  "expect": "团队手册/节假日安排.md",
+  "injected": ""
+ },
+ "bdd7e11a6c": {
+  "case": "zh-recall-18",
+  "cond": "A",
+  "expect": "团队手册/团队周会.md",
+  "injected": "团队手册/团队周会.md"
+ },
+ "54a8d93fcb": {
+  "case": "zh-recall-18",
+  "cond": "B",
+  "expect": "团队手册/团队周会.md",
+  "injected": "团队手册/测试环境.md"
+ },
+ "dbb7bca4af": {
+  "case": "zh-recall-18",
+  "cond": "C",
+  "expect": "团队手册/团队周会.md",
+  "injected": ""
+ },
+ "84493283f8": {
+  "case": "zh-recall-22",
+  "cond": "A",
+  "expect": "团队手册/测试环境.md",
+  "injected": "团队手册/测试环境.md"
+ },
+ "3e947b8f6b": {
+  "case": "zh-recall-22",
+  "cond": "B",
+  "expect": "团队手册/测试环境.md",
+  "injected": "团队手册/技术方案模板.md"
+ },
+ "4de02f9fb2": {
+  "case": "zh-recall-22",
+  "cond": "C",
+  "expect": "团队手册/测试环境.md",
+  "injected": ""
+ },
+ "04e7c395f6": {
+  "case": "zh-recall-23",
+  "cond": "A",
+  "expect": "团队手册/技术方案模板.md",
+  "injected": "团队手册/技术方案模板.md"
+ },
+ "aebd633a08": {
+  "case": "zh-recall-23",
+  "cond": "B",
+  "expect": "团队手册/技术方案模板.md",
+  "injected": "团队手册/代码托管.md"
+ },
+ "627293e389": {
+  "case": "zh-recall-23",
+  "cond": "C",
+  "expect": "团队手册/技术方案模板.md",
+  "injected": ""
+ },
+ "74b284a8f5": {
+  "case": "en-changed-11",
+  "cond": "A",
+  "expect": "Handbook/Product search.md",
+  "injected": "Handbook/Product search.md"
+ },
+ "8dcc8ac80a": {
+  "case": "en-changed-11",
+  "cond": "B",
+  "expect": "Handbook/Product search.md",
+  "injected": "Handbook/Third-party scripts.md"
+ },
+ "4dedae7b5e": {
+  "case": "en-changed-11",
+  "cond": "C",
+  "expect": "Handbook/Product search.md",
+  "injected": ""
+ },
+ "d62594a335": {
+  "case": "en-changed-12",
+  "cond": "A",
+  "expect": "Handbook/Third-party scripts.md",
+  "injected": "Handbook/Third-party scripts.md"
+ },
+ "23d21d5c4a": {
+  "case": "en-changed-12",
+  "cond": "B",
+  "expect": "Handbook/Third-party scripts.md",
+  "injected": "Handbook/Cloud cost alerts.md"
+ },
+ "fb91b1ee4d": {
+  "case": "en-changed-12",
+  "cond": "C",
+  "expect": "Handbook/Third-party scripts.md",
+  "injected": ""
+ },
+ "a7633e81de": {
+  "case": "en-recall-20",
+  "cond": "A",
+  "expect": "Handbook/Cloud cost alerts.md",
+  "injected": "Handbook/Cloud cost alerts.md"
+ },
+ "983df5ac0e": {
+  "case": "en-recall-20",
+  "cond": "B",
+  "expect": "Handbook/Cloud cost alerts.md",
+  "injected": "Handbook/Product search.md"
+ },
+ "720d271fd4": {
+  "case": "en-recall-20",
+  "cond": "C",
+  "expect": "Handbook/Cloud cost alerts.md",
+  "injected": ""
+ }
+}

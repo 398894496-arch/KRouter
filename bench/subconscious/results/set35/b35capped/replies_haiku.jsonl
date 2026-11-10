@@ -1,0 +1,60 @@
+{"id": "7e5838ca89", "response": "生产库读权限不建议只口头说一声，口头授权没有留痕，之后做权限审计时说不清是谁批的。建议走正式的访问申请，写明用途、范围和期限，由负责人审批后再让运维开通。"}
+{"id": "0e92cedf06", "response": "大概率是对的：导出如果一次性把全部数据读进内存，大文件就会 OOM。改成分批或流式读取（数据库用游标或分页，写文件时边读边写），内存占用就和文件大小脱钩。你把 export 的代码贴出来，我可以指出具体是哪一行。"}
+{"id": "8acdcdf7f0", "response": "在 webpack 配置的 watchOptions 里加 ignored: /node_modules/，把 node_modules 排除在监听之外。另外还要看 dev 配置里有没有过重的 devtool（source map）设置，或者 watch 范围过大的其他问题。把 webpack 配置贴过来，我可以逐项看。"}
+{"id": "b6315d5c8c", "response": "知识库里能查到的是：生产库访问每季度审查一次，60 天未使用的权限会被移除（出处：Handbook/Access reviews.md）。页面里没写本季度由谁负责，我查不到负责人，需要问运维或看审查安排。"}
+{"id": "7bfcad44f8", "response": "报错是 renderRow 在 list.js:44 读取了 undefined 的 items，也就是传进来的行数据或其父对象是 undefined。先检查调用 renderRow 的地方，给 items 加空值判断，或者确认数据是否按预期加载。WARN 那行是 HTTP 响应头的提示，和这次崩溃无关。"}
+{"id": "dc6ed495c4", "response": "CALL krouter_ask: 图片资源\n先别直接提交 2MB 的 banner，我先查团队的图片资源规定，再告诉你具体要压缩成什么格式、控制在多大。"}
+{"id": "454267ae38", "response": "CALL krouter_ask: 节假日安排\n不建议在国庆前一天傍晚推版本。节假日期间出问题响应会变慢，如果一定要发，先确认有值班人员和回滚方案。取到团队的节假日规定后，我再按规定说明。"}
+{"id": "421361190b", "response": "我这里无法实际执行全仓库重命名。建议用 IDE 的 rename symbol 功能，或者用 codemod 批量改，然后跑测试。改完还要检查 import 路径，以及 IDE 抓不到的字符串引用和动态取值。"}
+{"id": "3125f6992e", "response": "CALL krouter_ask: 接口文档\n字段说明不建议留到以后再补，接口文档应该和代码一起上线。先在 PR 里写清每个字段的含义、类型和是否必填，合并前补全。取到团队的接口文档规定后，我再告诉你要放在哪里。"}
+{"id": "ec129370dd", "response": "CALL krouter_ask: 数据共享\n把订单明细发给外部合作方前，先确认数据共享的规定：字段是否涉及个人信息、是否需要脱敏、是否要审批。确认后再发，不要直接把原始 Excel 附件外发。"}
+{"id": "5976a66a3e", "response": "不是。按 Handbook/On-site days.md 的规定，团队的办公日现在是周二和周三，其余时间远程办公（该页取代了旧页 Handbook/On-site days (old).md，以新页为准）。开会室前一天在办公室应用里订位即可。"}
+{"id": "aec36d48e7", "response": "CALL krouter_ask: status page\n我不能确定你们团队对外通知的分工。通常由值班负责人确认故障、尽快在状态页更新，并由客服统一口径回复客户。先找值班负责人确认，并尽快发布状态更新。"}
+{"id": "2032a66a5b", "response": "CALL krouter_ask: 软件采购\n年费 3 万的设计工具不要直接刷公司卡，先按软件采购流程申请审批，再下单。否则事后报销和合规都可能出问题。"}
+{"id": "f4cbd9713e", "response": "CALL krouter_ask: 办公网络\n不要把自己的密码给访客。这样访客会拿到你的账号权限，而且没有留痕。应该让访客连接访客网络，如果没有就找负责人开通。"}
+{"id": "f02552ed64", "response": "在 Dockerfile 的 FROM 行改成目标版本，例如 FROM node:20-alpine，并先在 package.json 的 engines 字段确认项目支持的版本。然后本地执行 docker build 并跑测试。staging 不稳定不影响这一步，等它恢复后再验证即可。"}
+{"id": "c8ea138af7", "response": "CALL krouter_ask: bug bounty\n报酬要按漏洞等级和公司的 bug bounty 规则来定，我还没查到具体规定。现在不要给研究员承诺具体金额，先感谢对方、说明正在评估。"}
+{"id": "4070859eee", "response": "CALL krouter_ask: 测试环境\n我无法从这里判断原因。可能是 staging 被定时清理或重置，先查清理任务和部署记录。如果这批数据还需要，重新跑一次造数脚本即可。"}
+{"id": "134fd7d667", "response": "CALL shell: nginx -t\n这段片段本身没有明显的语法错误，问题可能出在外层的 server 或 http 块，单独贴出来无法加载。把 nginx -t 的完整报错贴过来，就能定位是哪一行。"}
+{"id": "3c09a8bdfd", "response": "不建议用烤箱或吹风机高温烤，纸会变形，墨水也可能晕开。先把水吸干，用吸水纸隔开每一页，阴干后压平。字迹如果已经晕开，先拍照保存，再用手机的扫描或增强对比度功能辨认。"}
+{"id": "aa36d525d1", "response": "这件事和这里无关，我不展开。GBK 乱码的问题可以在读取时明确指定编码：Python 用 open 或 pandas.read_csv 时加 encoding='gbk'（或 gb18030，兼容性更好）；Node 可以用 TextDecoder('gbk') 解码后再解析。"}
+{"id": "8ccf65a806", "response": "CALL krouter_ask: Terraform\n不建议直接在控制台点改实例规格，这会和 Terraform 的状态不一致，下次 apply 可能被改回去。改成在 Terraform 里修改实例类型，再执行 plan 和 apply，并记录这次变更。"}
+{"id": "72e01b27fb", "response": "解析失败，原因是 interval 的缩进错了：它比 timeout 多了 3 个空格，YAML 会把它当成非法缩进。把 interval 改成和 retries、timeout 一样的 2 个空格缩进即可。另外 status page url 这个键名含空格，语法上合法，但建议改成 status_page_url。"}
+{"id": "5401fa265e", "response": "按 Handbook/Bug bounty.md 的记录，奖金区间是 100 到 5000 美元，具体金额按漏洞等级定（出处：Handbook/Bug bounty.md）。"}
+{"id": "2a282a515a", "response": "对，按 Handbook/Language for code.md 的规定，代码注释和 commit message 都用英文（出处：Handbook/Language for code.md）。"}
+{"id": "010cfe30bc", "response": "CALL krouter_ask: App 系统版本\n先确认你们的最低支持版本到底是 13 还是 14，要看发布配置或产品文档里的最低系统版本，不要凭记忆判断。如果 iOS 14 确实打不开，多半是最低版本配置或某个 API 的兼容问题，需要先复现再查。"}
+{"id": "fd91676f7a", "response": "我没有可核实的译本信息，不敢推荐具体版本。挑选时可以看译者的注释是否完整、是否是从德语直接译过来的。我无法访问你的待读清单，所以不能帮你添加，你可以自己加一条。"}
+{"id": "67c0ab451d", "response": "在 sunset header 的选择器里加上：background: linear-gradient(to right, orange, purple);。注意检查header 上文字在橙紫渐变上的对比度，必要时给文字加阴影或换颜色。"}
+{"id": "75d8fd2c41", "response": "最常见的原因是开发环境开了 React StrictMode，它会在挂载时把 effect 跑两次，生产环境不会。另外也检查 effect 的依赖数组，以及 debounce 函数是否在每次渲染时都重新创建。把 useDebounce 的代码和调用处贴过来，我可以确认是哪一种。"}
+{"id": "fbb72b8b8b", "response": "大实例是按时计费的，午饭期间一直开着会产生不必要的费用。回去先查账单和实例状态，不用的话立即停掉。以后可以设置空闲自动关机或预算告警。"}
+{"id": "dcb672c3a2", "response": "大客户回访记录写进 CRM，不写飞书文档（出处：〔团队手册/客户回访.md〕）。该页规定大客户每季度回访一次，由客户成功经理负责。"}
+{"id": "be385fe72e", "response": "不要在自建仓库平台上建。按〔团队手册/代码托管.md〕的规定，代码统一迁到公司的 GitHub 企业版，自建 GitLab 只读到明年三月，新建仓库默认私有。该页取代了旧的代码托管页，以这一页为准。"}
+{"id": "4517b97368", "response": "用游标分页，按 created_at 和 id 排序，保证顺序稳定：SELECT * FROM orders WHERE (created_at, id) < (:last_created_at, :last_id) ORDER BY created_at DESC, id DESC LIMIT 50;。第一页不带游标条件，之后每页用上一页最后一条的 created_at 和 id 作为游标。"}
+{"id": "d5e6b8ef3d", "response": "好的，我把训练任务理解为每次训练，会在每一行加一个删除按钮。建议删除前加确认弹窗，并在后端做好鉴权，只允许删除属于自己的记录。"}
+{"id": "128c26b30e", "response": "测试报 provider=None 并返回 500，说明切换逻辑没有选出备用通道。按〔团队手册/短信通道.md〕的规定，验证码短信同时接了两家供应商，主通道失败率超过 2% 时自动切到备用通道，该页取代了旧的短信通道页。你需要检查 fallback 的选择代码，以及配置里备用供应商是否启用。"}
+{"id": "88980816bb", "response": "常见原因有三类：CI 没有缓存依赖，lint 扫描了 node_modules 或全仓库，或者 lint 在等某个网络依赖。先看 CI 日志里 lint 卡在哪一步，再对比本地命令是否一致，比如本地只跑改动文件，CI 却跑全量。"}
+{"id": "9781b37fc2", "response": "CALL krouter_ask: 意见反馈\n我现在无法确定这个入口的提交去向。取到团队的意见反馈规定后，我再告诉你谁在看、怎么处理。"}
+{"id": "7002dbdbde", "response": "可以用 jest 的 fake timers。测试开头调用 jest.useFakeTimers()；需要固定当前时间时用 jest.setSystemTime(new Date('2026-01-01'))；推进时间用 jest.advanceTimersByTime(ms)；结束后调用 jest.useRealTimers()。"}
+{"id": "8282ebe511", "response": "CALL krouter_ask: GPU usage\n8 张 A100 跑 3 天，动手前应先查 GPU 使用规定和审批流程，资源可能需要提前申请或排期。取到规定后，我再告诉你需要准备哪些材料。"}
+{"id": "3ac799fd74", "response": "CALL krouter_ask: database for new services\n不要默认照搬其他服务开 MySQL，先按新服务的数据库规定选存储。取到页面后，我再告诉你是否需要申请、用哪种数据库。"}
+{"id": "7be2e8278e", "response": "CALL krouter_ask: browser support\n可以按需给 IE11 加 polyfill，但要先看公司的浏览器支持范围，那里会规定 IE11 是否纳入支持，以及要不要专门适配。取到规定后，我再告诉你该怎么做。"}
+{"id": "abaacdb9dc", "response": "可以把安装步骤拆成 macOS 和 Linux 两节，每节列出各自的依赖安装命令（比如 Homebrew 或 apt）。两边共用的构建和运行步骤放在公共部分，这样读者不会在错误的系统上照做。"}
+{"id": "29d3759338", "response": "可以。用图表库（如 ECharts 或 Chart.js）把每周训练量画成折线图：x 轴是周，y 轴是训练量。先把数据按周聚合，再传给图表组件。"}
+{"id": "4f53807250", "response": "CALL krouter_ask: design handoff\n先别只写 happy path。动手前找 Mira 确认 loading 和 error 状态的设计，否则后面要返工。取到团队的设计交接规定后，我再给具体做法。"}
+{"id": "411a615f34", "response": "先别直接在 replica 上加索引，replica 通常是只读的，索引要在主库加。先用 EXPLAIN 看报表查询的执行计划，确认是不是全表扫描，再决定索引列。"}
+{"id": "f5e5b28a9c", "response": "用 CSS 类切换颜色：比较新旧价格，上涨时加绿色 class，下跌时加红色 class。配合 transition 或短暂的 keyframes 做闪烁，动画结束后移除 class，价格持平时不变色。"}
+{"id": "f5c1de369c", "response": "可以。提前在文档里写清风险、已知问题和需要决策的事项，并标注每项的负责人，这样你请假时周会上别人可以代为说明。"}
+{"id": "9356ebeab6", "response": "基础装备：合适的登山鞋、防风防水外套、保暖层、足够的水和食物、头灯和急救包。山上天气变化大，多带一件备用衣服。出发前看好天气，并告诉家人或朋友路线和预计下山时间。"}
+{"id": "8f37da7f9a", "response": "React 18.3 是 18 的小版本，正常不会有破坏性改动，主要是开发模式下对已废弃 API（如 ReactDOM.render、findDOMNode）给出警告。升级后跑一遍测试和开发模式，看控制台警告再逐个修。具体以 changelog 为准。"}
+{"id": "f605f409b6", "response": "按〔团队手册/客户回访.md〕的规定，大客户每季度回访一次，由客户成功经理负责，回访记录写进 CRM。如果你是这位客户的负责人且本季度还没联系，就尽快联系，并把结果记到 CRM；不是你负责的，先问负责人。"}
+{"id": "9a455204ab", "response": "原始客户邮件属于个人数据，不建议直接整表导出。先按数据共享的规定确认审批和脱敏要求，再决定给哪些字段。\nCALL krouter_ask: 数据共享"}
+{"id": "7a6da77453", "response": "CALL krouter_ask: right to be forgotten\n不要凭印象说 90 天。删除个人数据的时限和范围以公司规定为准，我先查规定再答。在那之前，不要向客户承诺具体时间。"}
+{"id": "196adc829a", "response": "CALL krouter_ask: code comments language\n代码注释语言要先按公司的规定来，我取到页面后再告诉你能否用德语。团队都是德语母语，不代表可以不遵守统一规定。"}
+{"id": "f8d8706e41", "response": "第 22 行 OpenAPIConfig.java 的 init 方法里，有对象为 null 时却被调用了方法。需要看那一行的代码和它的数据来源，把 OpenAPIConfig.java 第 15 到 30 行贴过来，我可以帮你定位是哪个变量为空。"}
+{"id": "dd6044a705", "response": "这是排期问题，不是技术问题。建议把未完成的部分拆成具体任务，写进迭代计划，并和负责人定下时间，否则这些事会一直被挤压。"}
+{"id": "8bb50648dc", "response": "按〔Handbook/Product search.md〕，商品搜索跑在云厂商托管的 OpenSearch 2 上，索引每天 01:00 重建，并在每次目录导入后重建。这一页取代了旧页 Handbook/Product search (old).md。页面没写负责人，我查不到 owner，需要问负责人或查服务清单。"}
+{"id": "6a2f2c8d86", "response": "建议把这个数字接到自动查询或看板上，不再每周一手工更新 Excel。手工更新容易漏和出错。如果数据在数据库里，可以写一个定时任务定期刷新。"}
+{"id": "14d857004d", "response": "按〔团队手册/图片资源.md〕的规定，图片统一上传到 CDN 图床，用 WebP 格式，单张不超过 300KB，超过的先压缩再上传。你可以用 cwebp 或 squoosh 转成 WebP，并压到 300KB 以下再传。"}
+{"id": "e21e033871", "response": "不行。即使你觉得这里不可能出错，也要处理 err，至少要返回或记录下来。否则出问题时就无从追查。"}
+{"id": "f5fff129b2", "response": "我不能替你决定 banner 文案。两边冲突只在文案上，应以产品同事确认的版本为准。如果保留 feature 分支的版本，建议把 TODO 注释留着，并确认 A/B 测试的计划。"}
+{"id": "0cfc34d03c", "response": "CALL krouter_ask: 技术分享\n我先去查分享的轮值规定，取到后告诉你这个月轮到谁。"}

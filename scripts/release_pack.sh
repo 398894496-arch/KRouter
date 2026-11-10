@@ -43,6 +43,7 @@ for need in package/scripts/bootstrap.py package/scripts/install.sh package/scri
             package/skill/krouter/scripts/associate.py package/skill/krouter/scripts/cocite.py \
             package/skill/krouter/scripts/experience.py package/skill/krouter/scripts/llm.py \
             package/skill/krouter/scripts/corrections.py package/skill/krouter/scripts/capture_ledger.py \
+            package/skill/krouter/scripts/recollect.py \
             package/.claude-plugin/marketplace.json package/.claude-plugin/plugin.json package/hooks/hooks.json \
             package/scripts/build_mcpb.py package/extras/claude-desktop/manifest.json \
             package/template/Agent第二大脑.md package/template-zh/Agent第二大脑.md; do

@@ -1,0 +1,136 @@
+{
+ "4417272772": {
+  "id": "en-pair-01",
+  "lang": "en",
+  "kind": "recall",
+  "text": "Sam looked at the dashboard on day three and wants to call it for the new variant. I guess the peeking rule applies here?",
+  "expect": "Handbook/A/B tests.md",
+  "hook": []
+ },
+ "904d9cf634": {
+  "id": "en-pair-02",
+  "lang": "en",
+  "kind": "recall",
+  "text": "Dana's db credentials got pulled overnight, I assume that's the dusty-keys sweep?",
+  "expect": "Handbook/Access reviews.md",
+  "hook": []
+ },
+ "f724e60e56": {
+  "id": "en-pair-03",
+  "lang": "en",
+  "kind": "recall",
+  "text": "My notebook got killed while I was eating, the lunch-break reaper strikes again.",
+  "expect": "Handbook/GPU usage.md",
+  "hook": []
+ },
+ "7ae363ae37": {
+  "id": "en-pair-04",
+  "lang": "en",
+  "kind": "recall",
+  "text": "We confirmed the checkout outage. Who's putting up the red banner?",
+  "expect": "Handbook/Status page.md",
+  "hook": []
+ },
+ "eb49e2b709": {
+  "id": "en-pair-05",
+  "lang": "en",
+  "kind": "recall",
+  "text": "A user on Safari 15 hit a layout bug. Is that under the evergreen line or can we shrug it off?",
+  "expect": "Handbook/Browser support.md",
+  "hook": []
+ },
+ "81d9bf7b3c": {
+  "id": "en-pair-06",
+  "lang": "en",
+  "kind": "recall",
+  "text": "There's a new one in the white-hat queue, an IDOR on invoices. Who picks it up?",
+  "expect": "Handbook/Bug bounty.md",
+  "hook": []
+ },
+ "203dbad19f": {
+  "id": "en-pair-07",
+  "lang": "en",
+  "kind": "recall",
+  "text": "Kenji is writing his code comments in Japanese again, guess we need to remind him about the Esperanto policy.",
+  "expect": "Handbook/Language for code.md",
+  "hook": []
+ },
+ "6e35afe33c": {
+  "id": "en-pair-08",
+  "lang": "en",
+  "kind": "recall",
+  "text": "Old customers on the Starter plan are asking about the loyalty freeze before the January increase.",
+  "expect": "Handbook/Price changes.md",
+  "hook": []
+ },
+ "0189a216a2": {
+  "id": "zh-pair-01",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "我想把用户明细拷回家加班跑，是不是撞到出不了公司那条了？",
+  "expect": "团队手册/数据分级.md",
+  "hook": []
+ },
+ "d6bd50dee2": {
+  "id": "zh-pair-02",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "我昨天造的数据被每日洗牌刷掉了，白忙一场。",
+  "expect": "团队手册/测试环境.md",
+  "hook": []
+ },
+ "02ab3f7d68": {
+  "id": "zh-pair-03",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "这张首页大图 800KB，肯定过不了瘦身线，我先压一下再传。",
+  "expect": "团队手册/图片资源.md",
+  "hook": []
+ },
+ "ec96aab86b": {
+  "id": "zh-pair-04",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "昨晚连上的内网早上又断了，隔夜失联这事能不能想想办法？",
+  "expect": "团队手册/办公网络.md",
+  "hook": []
+ },
+ "b1c4b69628": {
+  "id": "zh-pair-05",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "这个需求还没过三方到场那关，先别排期。",
+  "expect": "团队手册/需求评审.md",
+  "hook": [
+   "团队手册/需求评审.md"
+  ]
+ },
+ "1ed540bdbe": {
+  "id": "zh-pair-06",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "想订个年费 2 万的监控工具，是不是要走货比三家那套？",
+  "expect": "团队手册/软件采购.md",
+  "hook": [
+   "团队手册/软件采购.md"
+  ]
+ },
+ "77872853f0": {
+  "id": "zh-pair-07",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "这个库是 copyleft 的，会不会踩传染性那个坑？",
+  "expect": "团队手册/开源许可证.md",
+  "hook": []
+ },
+ "d5aff12aa1": {
+  "id": "zh-pair-08",
+  "lang": "zh",
+  "kind": "recall",
+  "text": "明天不念稿子的会我只讲两个风险，进度就不讲了。",
+  "expect": "团队手册/团队周会.md",
+  "hook": [
+   "团队手册/团队周会.md"
+  ]
+ }
+}
