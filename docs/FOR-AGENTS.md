@@ -11,6 +11,9 @@
 > - **Answer accuracy** (LongMemEval S, the number other projects publish): 400 of 500 right, 80.0% [76.4, 83.4],
 >   with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
 >   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
+>   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
+>   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
+>   BM25, not ahead.
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
@@ -144,7 +147,12 @@ show is abstention on near neighbours. **Answer accuracy** (set 11, KRouter 1.3.
 only the cited pages as context, a reader answered 400 of 500 LongMemEval S questions right (80.0%, 95% interval
 76.4–83.4; answerable 371 / 470; 29 of 30 unanswerable recognised); multi-session 69 / 121 is the weak type. Reader
 and judge are Claude Sonnet 5.5 with the benchmark's own prompts, so compare with GPT-4o-based figures with care;
-every reply and verdict is in `bench/longmemeval/results/`.
+every reply and verdict is in `bench/longmemeval/results/`. **The same reader given something else** (set 12,
+registered before the run): given nothing it answers 0 of the 470 answerable questions, so the 80% comes from the
+retrieved pages; given plain BM25's top three sessions it answers 405 of 500 (81.0% [77.4, 84.4]). Paired, KRouter
+minus BM25 is −1.0 points [−2.8, +0.8]: no difference shown, so on this benchmark KRouter's lookup is level with
+keyword search, not ahead. A fourth row (the benchmark's own answer sessions, perfect retrieval) was stopped at 183
+of 500 to limit cost and is not reported.
 
 The third memory honesty bench: 200 held-out questions (English and Chinese, 80 of them about something the vault
 does not hold) on a 110-page vault with 20 daily logs as distractors, written by an outside reviewer (Claude Opus in a

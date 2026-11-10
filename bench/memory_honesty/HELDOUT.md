@@ -472,6 +472,44 @@ rows 2 and 3 are expected to be close; that is the question this set puts a numb
 question) is not run: 500 such prompts through subagents is beyond what this run can spend. No other memory project
 is run here either; their published numbers use their own readers and are not put in the same table.
 
+**Result (2026-11-09).** Three of the four rows; the fourth was stopped (see *Deviations*).
+
+| The reader is given | All 500 | 470 answerable | 30 `_abs` |
+|---|---|---|---|
+| Nothing | 30, 6.0% [4.0, 8.2] | 0 | 30 |
+| Plain BM25, top three sessions | 405, 81.0% [77.4, 84.4] | 376, 80.0% [76.4, 83.6] | 29 |
+| KRouter (set 11) | 400, 80.0% [76.4, 83.4] | 371, 78.9% [75.1, 82.6] | 29 |
+
+| By type (right / of) | knowledge-update | multi-session | single-session-assistant | single-session-preference | single-session-user | temporal-reasoning |
+|---|---|---|---|---|---|---|
+| Nothing | 0 / 72 | 0 / 121 | 0 / 56 | 0 / 30 | 0 / 64 | 0 / 127 |
+| Plain BM25 | 68 / 72 | 69 / 121 | 56 / 56 | 21 / 30 | 62 / 64 | 100 / 127 |
+| KRouter | 69 / 72 | 69 / 121 | 55 / 56 | 20 / 30 | 61 / 64 | 97 / 127 |
+| KRouter − BM25, points [95%] | +1.4 [0.0, 4.2] | 0.0 [−5.0, 4.1] | −1.8 [−5.4, 0.0] | −3.3 [−13.3, 6.7] | −1.6 [−7.8, 3.1] | −2.4 [−6.3, 0.8] |
+
+*Paired, KRouter minus BM25:* −1.0 points [−2.8, +0.8] over the 500 (−1.1 [−3.0, +0.9] over the 470 answerable);
+only KRouter right on 8 questions, only BM25 on 13. **No difference shown, and the point estimate is on BM25's side.**
+For 262 of the 500 questions the two gave the reader the same sessions, so those replies and verdicts are set 11's
+(`from_set_11`); the *nothing* row copies 23 (the questions KRouter refused).
+
+*What it says.* The reader knows none of the answers by itself (0 of 470), so set 11's 80% comes from the retrieved
+pages, not from the model's own knowledge. But plain BM25 with no floor and no supersede rule gets the same reader
+just as far: on this benchmark KRouter's lookup adds nothing over keyword search. The floor does not help here
+either: given BM25's three sessions for an unanswerable question, the reader itself says the answer is not there
+(29 of 30), as often as when KRouter has a chance to refuse first. LongMemEval's raw sessions carry no `superseded`
+marks, so this set says nothing about corrections (sets 1–3 and 9 are about those).
+
+*Agents.* *Nothing*: 10 reader agents, 6 judge agents. *BM25*: 54 reader agents, 10 judge agents. All reported
+`claude-sonnet-5-5`, the model set 11's agents reported. Results: `bench/longmemeval/results/2026-11-09-sonnet-qa.none.jsonl`
+and `…-sonnet-qa.bm25.jsonl`; `qa.py compare` reproduces the tables from them.
+
+*Deviations from the registration.* (1) **The *answer sessions* row was stopped for cost** after 26 of 75 reader
+batches: 166 questions answered and 17 copied from set 11, of 500, none judged. They are the first batches in file
+order, not a random sample, so no number from that row is reported, and neither is "answer sessions minus KRouter".
+What this reader scores with perfect retrieval is therefore still unknown. (2) The *nothing* row was judged in six
+batches of up to 80 instead of 25 (the prompts unchanged), to use fewer agents. (3) One *nothing* judge agent wrote
+its verdict file with a short script and said so; it read only its input file.
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was

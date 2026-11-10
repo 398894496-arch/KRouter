@@ -155,7 +155,7 @@ server and its callers on the same machine.
 | 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
 | 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
 
-1.3.0's server on the same machine started one process per lookup and re-checked every file each time: 91 ms and
+Up to and including 1.3.0 the server started one process per lookup and re-checked every file each time; on the same machine: 91 ms and
 42 answers/s at most on 1,000 pages, 210 ms and 15/s on 10,000, 980 ms and 3/s on 50,000 (32 callers: p95 14.8 s);
 it held 15–29 MB. The server builds each memory's index before it starts listening, so the first person to ask does
 not wait for it ("Ready after"). Three changes made the difference: resident lookup processes, the file re-check at most every

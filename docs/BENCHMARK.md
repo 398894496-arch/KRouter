@@ -11,6 +11,9 @@
 > - **Answer accuracy** (LongMemEval S, the number other projects publish): 400 of 500 right, 80.0% [76.4, 83.4],
 >   with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
 >   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
+>   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
+>   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
+>   BM25, not ahead.
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
@@ -302,7 +305,7 @@ threads, 300 calls each, none failed; 4 resident lookup processes, files re-chec
 | 10,017 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
 | 50,017 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
 
-1.3.0's server, same machine and script (one process per lookup): 210 ms and 15/s at 10,017 pages, 980 ms and 3/s
+Up to and including 1.3.0 (one process per lookup), same machine and script: 210 ms and 15/s at 10,017 pages, 980 ms and 3/s
 at 50,017. On the 10,017-page vault right after 200 pages changed, 64 calls from 16 threads: no errors, 0.14 s
 median, 0.41 s slowest, and the index held exactly one entry per page.
 

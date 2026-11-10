@@ -72,7 +72,10 @@ def _decision(box, line: str = "原来手动上传 → 改成 CI 发布（10:20�
 
 
 def _codex_rollout(box, asks: list[tuple[str, str]], sid: str = "019a7f00-aaaa-bbbb-cccc-0000000000c1") -> Path:
-    ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    # 同一场测试里再写一次 = 同一个会话又多了几轮：真的会话是往后追加，前面几轮的时间和文件名不变。
+    # 每次都取当前时间的话，两次调用跨过一秒，第一轮的身份（时间 + 问题）就变了，留住旧提炼的那条测试会偶发失败
+    day = box.setdefault("started", datetime.now().astimezone().replace(microsecond=0))
+    ts = day.astimezone(timezone.utc).isoformat()
     rows = [{"type": "session_meta", "timestamp": ts,
              "payload": {"id": sid, "cwd": str(box["work"]), "originator": "codex_cli_rs"}}]
     for ask, answer in asks:
@@ -80,7 +83,6 @@ def _codex_rollout(box, asks: list[tuple[str, str]], sid: str = "019a7f00-aaaa-b
                   "content": [{"type": "input_text", "text": ask}]}},
                  {"type": "response_item", "timestamp": ts, "payload": {"type": "message", "role": "assistant",
                   "content": [{"type": "output_text", "text": answer}]}}]
-    day = datetime.now().astimezone()
     return _jsonl(box["tmp"] / "codex" / day.strftime("%Y/%m/%d") / f"rollout-{day:%Y-%m-%dT%H-%M-%S}-{sid}.jsonl", rows)
 
 
