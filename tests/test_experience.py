@@ -342,6 +342,7 @@ def test_session_import_records_uses_without_a_model(env, tmp_path):  # noqa: F8
 SET16_HELDOUT_SHA = "d939c2cacc24c9ece6e7c104dd99bacd30d6bf246c4f1d71a9dee4745b24ba8a"
 CARDS_EN_SHA = "b27d45a3fe439e86e99a8e9225c467eb4f57b89c27c0e693c4c25af0f59f03bc"
 SET17_SHA = "7ccda4641f7a2dd651708b68196cf0043c86bd174e405a2580bfea723c4ba2de"
+SET19_SHA = "b137cc968d0bb7cfe0ebf54f63ea4f774d9ea56daf17db64fe58cc9a07c85caf"
 
 
 def test_sets_16_and_17_are_frozen():
@@ -352,6 +353,7 @@ def test_sets_16_and_17_are_frozen():
     cards = b"".join(p.read_bytes() for p in sorted((BENCH / "cards_en").glob("*.md")))
     assert hashlib.sha256(cards).hexdigest() == CARDS_EN_SHA
     assert hashlib.sha256((BENCH / "set17_sessions.jsonl").read_bytes()).hexdigest() == SET17_SHA
+    assert hashlib.sha256((BENCH / "set19_sessions.jsonl").read_bytes()).hexdigest() == SET19_SHA
     assert len(host.load("dev", "16")) == 28
 
 
@@ -375,7 +377,7 @@ def test_extraction_scorer_counts_written_subject_free_and_duplicates():
              "result": "20 条全部通过", "lesson": "规则改来改去总有漏的时，先写一组正反例当测试，每改一次全跑一遍",
              "when": ["改来改去总漏", "顾此失彼", "老是漏掉"]}]
     r = extract.score_one(sessions["S01"], json.dumps(good, ensure_ascii=False))
-    assert r["written"] == [{"subject_free": True, "faithful": True}]
+    assert [{k: w[k] for k in ("subject_free", "faithful")} for w in r["written"]] == [{"subject_free": True, "faithful": True}]
     leaky = [{**good[0], "lesson": "正则改来改去总有漏的时，先写正反例", "title": "写正则先写例子"}]
     assert extract.score_one(sessions["S01"], json.dumps(leaky, ensure_ascii=False))["written"][0]["subject_free"] is False
     dup = [{"situation": "cargo build 报了 80 多个错误", "action": "只改第一个错误", "result": "剩下的七十多个都没了",

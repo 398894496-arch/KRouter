@@ -13,6 +13,11 @@ gold term (faithful); nothing written for a duplicate or a session with no lesso
     python3 bench/transfer/extract.py prepare --out DIR
     (DIR/batch_01.jsonl {id, prompt} answered into DIR/replies_<host>/batch_01.jsonl {id, response})
     python3 bench/transfer/extract.py score --replies DIR/replies_<host>
+
+Set 19 (`--set 19`, `set19_sessions.jsonl`: 16 longer sessions written by another model, with drift and changes of
+course) scores faithfulness and subject-freedom by a judge model that did not write the card: `score --set 19
+--judge-out J` writes one judge prompt per written card, a subagent on the *other* host model answers them, and
+`judged --set 19 --replies R --verdicts V` adds the verdicts. Cards no longer carry `when` phrases.
 """
 
 from __future__ import annotations
@@ -58,8 +63,30 @@ not call it, write []. Output only that JSON array.""",
 }
 
 
+SET = "17"
+JUDGE = """You are checking an experience card that an AI assistant wrote from a session. Judge it only against the session.
+
+[Session]
+{session}
+
+[Card]
+situation: {situation}
+action: {action}
+result: {result}
+lesson: {lesson}
+title: {title}
+
+Answer two questions, each yes or no:
+1. faithful: do situation, action and result say only what the session shows (nothing invented, nothing that the
+   session contradicts or abandoned along the way)?
+2. subject_free: do the lesson and the title read without any name, tool, product or noun specific to this session's
+   subject, so that they would apply unchanged to a task on another subject?
+Reply with JSON only: {{"faithful": "yes"|"no", "subject_free": "yes"|"no", "why": "one short sentence"}}"""
+
+
 def load() -> list[dict]:
-    return [json.loads(x) for x in (HERE / "set17_sessions.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
+    return [json.loads(x) for x in (HERE / f"set{SET}_sessions.jsonl").read_text(encoding="utf-8").splitlines()
+            if x.strip()]
 
 
 def build_vault(root: Path, lang: str) -> Path:
@@ -118,7 +145,9 @@ def score_one(s: dict, reply: str) -> dict:
                 text = " ".join([card["title"], card["lesson"], " ".join(card["when"])])
                 written.append({"subject_free": not has_any(text, s["subject"]),
                                 "faithful": has_any(str(item.get("action", "")), s.get("action_any", []))
-                                and has_any(str(item.get("result", "")), s.get("result_any", []))})
+                                and has_any(str(item.get("result", "")), s.get("result_any", [])),
+                                "card": {k: str(item.get(k) or "") for k in ("situation", "action", "result", "lesson")}
+                                | {"title": card["title"]}})
             else:
                 refused.append(why[:60])
     return {"id": s["id"], "kind": s["kind"], "proposed": len(items), "written": written, "refused": refused}
@@ -144,10 +173,54 @@ def score(args) -> None:
            "none_written": sum(1 for r in by["none"] if r["written"]), "none_sessions": len(by["none"]),
            "refused_by_checks": sum(len(r["refused"]) for r in rows), "missing_replies": sum(1 for s in load()
                                                                                           if s["id"] not in replies)}
+    if SET != "17":
+        res.pop("faithful")  # 第 19 套：忠于原会话由判分模型定（judged），这里只给机械的去题材数
+        res["subject_free_mechanical"] = res.pop("subject_free")
     print(json.dumps(res, ensure_ascii=False))
     if args.rows:
         for r in rows:
-            print(json.dumps(r, ensure_ascii=False))
+            print(json.dumps({**r, "written": [{k: v for k, v in w.items() if k != "card"} for w in r["written"]]},
+                             ensure_ascii=False))
+    if getattr(args, "judge_out", ""):
+        sessions = {x["id"]: x for x in load()}
+        out = Path(args.judge_out)
+        out.mkdir(parents=True, exist_ok=True)
+        lines = [json.dumps({"id": f"{r['id']}#{n}", "prompt": JUDGE.format(session=transcript(sessions[r["id"]]),
+                                                                           **w["card"])}, ensure_ascii=False)
+                 for r in rows for n, w in enumerate(r["written"])]
+        (out / "batch_01.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(json.dumps({"judge_prompts": len(lines)}))
+
+
+def judged(args) -> None:
+    """Set 19's registered score: lesson sessions with a card, and the judge's faithful / subject-free verdicts."""
+    replies, verdicts = {}, {}
+    for f in sorted(Path(args.replies).glob("*.jsonl")):
+        for line in f.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                replies[str(r["id"])] = str(r.get("response") or "")
+    for f in sorted(Path(args.verdicts).glob("*.jsonl")):
+        for line in f.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                m = re.search(r"\{.*\}", str(r.get("response") or ""), re.S)
+                try:
+                    verdicts[str(r["id"])] = json.loads(m.group(0)) if m else {}
+                except ValueError:
+                    verdicts[str(r["id"])] = {}
+    rows = [score_one(s, replies.get(s["id"], "")) for s in load()]
+    ids = [f"{r['id']}#{n}" for r in rows if r["kind"] == "lesson" for n in range(len(r["written"]))]
+    yes = lambda i, k: str(verdicts.get(i, {}).get(k, "")).lower().startswith("y")  # noqa: E731
+    by = {k: [r for r in rows if r["kind"] == k] for k in ("lesson", "duplicate", "none")}
+    print(json.dumps({"lesson_sessions_with_a_card": sum(1 for r in by["lesson"] if r["written"]),
+                      "lesson_sessions": len(by["lesson"]), "cards_on_lesson_sessions": len(ids),
+                      "faithful": sum(yes(i, "faithful") for i in ids), "subject_free": sum(yes(i, "subject_free") for i in ids),
+                      "unjudged": sum(1 for i in ids if i not in verdicts),
+                      "duplicates_written": sum(1 for r in by["duplicate"] if r["written"]),
+                      "duplicate_sessions": len(by["duplicate"]),
+                      "none_written": sum(1 for r in by["none"] if r["written"]), "none_sessions": len(by["none"])},
+                     ensure_ascii=False))
 
 
 def main() -> int:
@@ -158,8 +231,16 @@ def main() -> int:
     s = sub.add_parser("score")
     s.add_argument("--replies", required=True)
     s.add_argument("--rows", action="store_true")
+    s.add_argument("--judge-out", default="", help="set 19: write the judge prompts for the cards written here")
+    j = sub.add_parser("judged")
+    j.add_argument("--replies", required=True)
+    j.add_argument("--verdicts", required=True)
+    for sp in (p, s, j):
+        sp.add_argument("--set", default="17", choices=("17", "19"))
     args = ap.parse_args()
-    {"prepare": prepare, "score": score}[args.cmd](args)
+    global SET
+    SET = args.set
+    {"prepare": prepare, "score": score, "judged": judged}[args.cmd](args)
     return 0
 
 

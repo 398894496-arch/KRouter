@@ -726,3 +726,36 @@ own at the end of a real session, unprompted, is not measured here.
 | 2026-11-09 | **Set 16, development, first and only wording** (English digest, 14 lines, 2 522 characters, about 846 tokens by the estimate; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). **Haiku 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Sonnet 5.5: 14 / 14, 0 / 14, 0.** Wording not revised; frozen. |
 | 2026-11-09 | **Set 17, run once** (one agent per host, 12 sessions). Haiku 5.5: lesson sessions with a card 7 / 7; of 7 cards, subject-free 6, faithful 6; duplicate sessions: none proposed, none written (0 / 3); no-lesson sessions: none written (0 / 2). Sonnet 5.5: 7 / 7; of 7 cards, subject-free 6, faithful 4; duplicates 0 / 3; no-lesson 0 / 2. **Both hosts together: lesson sessions with a card 14 / 14 (bar ≥ 10); subject-free 12 / 14 = 86% (bar ≥ 90%); faithful 10 / 14 = 71% (bar ≥ 90%); duplicates written 0 / 6 (≤ 1); no-lesson written 0 / 4 (≤ 1). The bar is not met** on subject-free and faithful. Reading the five failing cards afterwards (not part of the registered score, said as such): the four "unfaithful" cards say what the session says in other words than the gold terms ("明显减少" for 少了, "唯一标识" for 请求 id, "planned 22 and finished 21" for close/within); the two subject leaks are real, each one `when` phrase naming the subject ("新人总来问", "no reply to my email"), while both cards' lessons, the only field the digest shows, are subject-free. The duplicates were all skipped by the hosts themselves (the digest showed the same lesson), not caught by the code's lexical same-lesson check. |
 | 2026-11-09 | **Set 16, held-out, run once per host** (English wording as frozen in `f9597e6`). **Haiku 5.5: recalled 13 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Sonnet 5.5: 14 / 14, 0 / 14, 0.** Both pass (≥ 8, ≤ 1, ≤ 1). Sonnet also wrote the cases (registered limit). 112 host prompts for set 16, 24 for set 17. |
+
+## Set 19: set 17 again, on sessions that read like real ones, judged by a model (registered 2026-11-09, before any host was run on it)
+
+(Set 18 is kept for another session's work.)
+
+**Why.** Set 17 missed its bar, and its result has been read, so it is spent. Two changes were made before this
+registration, on the strength of set 17's reading: cards no longer carry `when` phrases (nothing uses them since set
+13; both of set 17's subject leaks were there), and faithfulness is judged by a model reading the session instead of
+fixed gold terms.
+
+**Sessions.** 16, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh subagent, not by the session that wrote the
+code: 8 to 10 turns each, with drift and changes of course. 8 with a lesson (5 Chinese, 3 English), 4 whose lesson
+is one of the 14 cards in another subject (2 each; the writer saw the 14 lessons for that), 4 with no lesson (2 each).
+The writer also gave each session's subject words and the lesson's gist. Not read by the code's author before the
+run (counts only). `bench/transfer/set19_sessions.jsonl`, SHA-256 `b137cc96…9a07c85caf`.
+
+**Run.** As set 17 (`extract.py --set 19`): each host (Haiku 5.5, Sonnet 5.5; one agent each, 16 prompts) gets the
+digest, the session and `krouter_learn`'s description, now without `when`, and proposes arguments; every proposed card
+goes through `experience.learn()` on a fresh copy of the vault. Run once.
+
+**Judged.** Every card written on a lesson session is judged by the *other* host model (Haiku's cards by Sonnet,
+Sonnet's by Haiku; one agent each), reading the session and the card: faithful (situation, action and result say only
+what the session shows, nothing invented or abandoned) and subject-free (lesson and title would read unchanged on
+another subject), yes or no. The mechanical subject check against the writer's subject words is reported beside it.
+
+**Bar (fixed now), both hosts together:** lesson sessions with a card ≥ 12 / 16; of cards written on lesson sessions,
+judged faithful ≥ 90% and judged subject-free ≥ 90%; duplicate sessions with a card ≤ 1 / 8; no-lesson sessions with a
+card ≤ 1 / 8. If it passes, the digest, the use records and `krouter_learn` become the default when the vault has
+cards (`experience.DEFAULT_ON`); if not, they stay off.
+
+**Known limits.** Sonnet wrote the sessions, is one of the two hosts, and judges Haiku's cards; Haiku is a weaker
+judge of Sonnet's. Sixteen synthetic sessions. Whether a host calls the tool unprompted at the end of a real session
+is still not measured.
