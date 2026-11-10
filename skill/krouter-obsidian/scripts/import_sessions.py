@@ -837,9 +837,16 @@ def main() -> int:
     verdicts: list[dict] = []
     touched: list[Path] = []          # 这一轮写过或删过的文件，进同一个提交
     written, kept, sent, calls, failed, incremental = [], [], 0, 0, 0, 0
-    exp_cards = exp_failed = 0
+    exp_cards = exp_failed = exp_uses = 0
     import experience
+    uses_on = experience.digest_on() and not args.dry_run
     for e in entries:
+        if uses_on:
+            # 经验卡被提出、被采纳（回复里带了卡号、下一句说照做了）：只读记录，不调模型，摘要按它排序
+            try:
+                exp_uses += experience.record_uses(vault, f"{e['agent']}:{e['id'][:8]}", e["turns"])
+            except Exception as exc:  # noqa: BLE001
+                print(f"experience uses: {str(exc)[:200]}", file=sys.stderr)
         target = folder / file_name(e)
         if target.exists() and frontmatter(target).get("source") != MARK:
             kept.append(target.name)
@@ -933,7 +940,8 @@ def main() -> int:
            "kept_out": sum(1 for v in dropped.values() if v == "kept out"), "removed_kept_out": len(removed),
            "writes": written if len(written) <= 20 else written[:20] + [f"… {len(written) - 20} more"],
            "kept_foreign": kept,
-           **({"experience_cards": exp_cards, "experience_failed": exp_failed} if experience.enabled() else {})}
+           **({"experience_cards": exp_cards, "experience_failed": exp_failed} if experience.enabled() else {}),
+           **({"experience_uses": exp_uses} if exp_uses else {})}
     print(json.dumps(row, ensure_ascii=False))
     return 1 if failed and not calls else 0
 

@@ -295,11 +295,11 @@ def decisions_text(payload: dict, vault: Path, mode: str) -> str:
 
 
 def experience_text(vault: Path) -> str:
-    """The experience digest (experience.py), when `KROUTER_EXPERIENCE=1`; read-only, so no import consent needed."""
+    """The experience digest (experience.py) unless `KROUTER_EXPERIENCE=0`; read-only, so no import consent needed."""
     try:
         import experience
 
-        return experience.digest(vault) if experience.enabled() else ""
+        return experience.digest(vault) if experience.digest_on() else ""
     except Exception as exc:  # noqa: BLE001  经验摘要出错不影响决定的注入
         print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
         return ""

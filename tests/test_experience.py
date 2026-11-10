@@ -221,3 +221,120 @@ def test_distill_writes_an_experience_card_only_when_switched_on(env, monkeypatc
     ledger = (env["vault"] / "90 系统文件/自动化/记忆变更记录.md").read_text(encoding="utf-8")
     assert "经验卡：规则说不清时先定一条唯一的入口" in ledger
     assert _pages(env)  # 会话页照常写
+
+
+# ---------- 第三轮：使用记录、宿主自己写卡、英文 ----------
+
+IDS = {"C02", "C08", "C11"}
+
+
+def _turns(*pairs):
+    return [{"ask": a, "answer": b, "ts": f"2026-11-0{i + 1}T10:00:00"} for i, (a, b) in enumerate(pairs)]
+
+
+def test_offered_is_recorded_and_adopted_only_on_a_clear_yes():
+    offer = "先看第一条报错。别的任务里的经验，可以试试：只解决最前面那一条〔C11〕"
+    ev = experience.uses_in(_turns(("编译报了一屏", offer), ("按你说的只改了第一个，果然全好了", "好")), IDS)
+    assert [(e["card"], e["kind"]) for e in ev] == [("C11", "offered"), ("C11", "adopted")]
+    assert "按你说的" in ev[1]["why"]
+    for reply in ("好的", "不用，这次不是这个问题", "按你说的试了，没用", "嗯，然后呢"):  # 拿不准、或明说不是：只记提出
+        ev = experience.uses_in(_turns(("编译报了一屏", offer), (reply, "")), IDS)
+        assert [e["kind"] for e in ev] == ["offered"], reply
+    two = "可以试试〔C11〕，或者〔C02〕"
+    assert [e["kind"] for e in experience.uses_in(_turns(("x", two), ("有用", "")), IDS)] == ["offered", "offered"]
+    named = experience.uses_in(_turns(("x", two), ("C02 那条有用", "")), IDS)
+    assert ("C02", "adopted") in [(e["card"], e["kind"]) for e in named]  # 提了两条、你点了名：记被点名的那条
+    en = experience.uses_in(_turns(("x", "A lesson from another task you could try: … [C08]"), ("That worked, thanks", "")), IDS)
+    assert [(e["card"], e["kind"]) for e in en] == [("C08", "offered"), ("C08", "adopted")]
+    assert experience.uses_in(_turns(("x", "see C08 for details"), ("that worked", "")), IDS) == []  # 不带括号不算
+
+
+def test_use_records_are_kept_once_and_rank_the_digest(bench_vault):
+    turns = _turns(("x", "可以试试〔C02〕"), ("按你说的做了，管用", ""))
+    assert experience.record_uses(bench_vault, "claude:s1", turns) == 2
+    assert experience.record_uses(bench_vault, "claude:s1", turns) == 0  # 每轮都会重新导入：同一条不记两次
+    for n in range(3):  # C05 提了三次，一次都没人采纳
+        experience.record_uses(bench_vault, f"claude:s{n + 2}", _turns(("y", "可以试试〔C05〕"), ("嗯", "")))
+    u = experience.usage(bench_vault)
+    assert u["C02"]["adopted"] == 1 and u["C05"] == {**u["C05"], "offered": 3, "adopted": 0}
+    lines = [ln for ln in experience.digest(bench_vault).splitlines() if ln.startswith("- ")]
+    assert lines[0].endswith("〔C02〕") and lines[-1].endswith("〔C05〕")  # 被采纳的最前，屡提不用的沉底
+
+
+EN_CARD = {"situation": "Our nginx config change did nothing after three reloads",
+           "action": "Ran nginx -T and found a second file with the same server block being loaded",
+           "result": "Deleting the stale file made the change take effect at once",
+           "lesson": "When a change has no effect, first check that the system reads the copy you changed",
+           "when": ["changed it but nothing happened", "still the old behaviour", "nginx did not reload"]}
+
+
+def test_host_written_card_needs_no_model_and_reads_back_in_english(tmp_path):
+    vault = tmp_path / "v"
+    vault.mkdir()
+    path, why = experience.learn(vault, EN_CARD, "[[Journal/session]]")
+    assert path and not why and path.name.startswith("Lesson - ")
+    text = path.read_text(encoding="utf-8")
+    assert "- Lesson: When a change has no effect" in text and "nginx did not reload" not in text  # 带题材名的短语去掉
+    card = experience.load_cards(vault)[0]
+    assert card["lesson"].startswith("When a change") and len(card["when"]) == 2
+    d = experience.digest(vault)
+    assert d.startswith("KRouter experience digest") and "How to use:" in d
+    assert f"- a change has no effect → first check that the system reads the copy you changed [{card['id']}]" in d
+    assert experience.learn(vault, EN_CARD, "x") == (None, "not written: a card with the same lesson is already there")
+    assert experience.learn(vault, {**EN_CARD, "result": ""}, "x")[0] is None
+
+
+def test_learn_from_the_command_line(tmp_path):
+    vault = tmp_path / "v"
+    vault.mkdir()
+    res = subprocess.run([sys.executable, str(SCRIPTS / "experience.py"), "--vault", str(vault), "learn"],
+                         input=json.dumps(EN_CARD), capture_output=True, text=True, timeout=60)
+    assert res.returncode == 0, res.stderr
+    assert json.loads(res.stdout)["written"].startswith("02 经验与方法/经验卡/Lesson - ")
+
+
+def _mcp(env: dict, *msgs: dict) -> list[dict]:
+    data = "\n".join(json.dumps(m, ensure_ascii=False) for m in msgs) + "\n"
+    res = subprocess.run([sys.executable, str(SCRIPTS / "mcp_server.py")], input=data, env=env, capture_output=True,
+                         text=True, timeout=120)
+    assert res.returncode == 0, res.stderr
+    return [json.loads(line) for line in res.stdout.splitlines() if line.strip()]
+
+
+def test_mcp_learn_writes_a_card_into_the_ledger(tmp_path):
+    vault = tmp_path / "vault"
+    shutil.copytree(REPO / "template", vault)
+    env = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_NO_QUERY_LOG": "1", "KROUTER_CACHE_DIR": str(tmp_path / "c"),
+           "KROUTER_EXPERIENCE": "1"}
+    out = _mcp(env, {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
+               {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+               {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "krouter_learn", "arguments": EN_CARD}})
+    assert "krouter_learn" in out[0]["result"]["instructions"]
+    assert "krouter_learn" in [t["name"] for t in out[1]["result"]["tools"]]
+    assert out[2]["result"]["isError"] is False and "learned: 02 经验与方法/经验卡/Lesson - " in out[2]["result"]["content"][0]["text"]
+    assert "经验卡：" in (vault / "90 系统文件/自动化/记忆变更记录.md").read_text(encoding="utf-8")
+    off = _mcp({**env, "KROUTER_EXPERIENCE": "0"}, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+    assert "krouter_learn" not in [t["name"] for t in off[0]["result"]["tools"]]
+
+
+def test_session_import_records_uses_without_a_model(env, tmp_path):  # noqa: F811
+    from test_import_sessions import _jsonl, _run
+
+    folder = env["vault"] / experience.FOLDER
+    folder.mkdir(parents=True)
+    shutil.copy(next((BENCH / "cards").glob("C02｜*.md")), folder)
+    ts = _ts(1)
+    rows = [{"type": "user", "cwd": "/work/shop", "timestamp": ts, "origin": {"kind": "human"},
+             "message": {"role": "user", "content": "每次跑报表都要重新下载那份数据，太慢"}},
+            {"type": "assistant", "timestamp": ts, "message": {"content": [{"type": "text", "text":
+             "别的任务里的经验，可以试试：把这一步的结果存起来〔C02〕"}]}},
+            {"type": "user", "timestamp": _ts(1, 11), "origin": {"kind": "human"},
+             "message": {"role": "user", "content": "按你说的加了缓存，管用"}},
+            {"type": "assistant", "timestamp": _ts(1, 11), "message": {"content": [{"type": "text", "text": "好。"}]}}]
+    _jsonl(env["claude"] / "-work-shop" / "s1.jsonl", rows)
+    env["env"]["KROUTER_EXPERIENCE"] = "1"
+    out = _run(env)
+    assert out["experience_uses"] == 2
+    u = experience.usage(env["vault"])
+    assert u["C02"]["offered"] == 1 and u["C02"]["adopted"] == 1
+    assert _run(env).get("experience_uses") is None  # 再导入一遍不重复记

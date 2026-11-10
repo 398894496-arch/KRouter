@@ -57,6 +57,8 @@ INSTRUCTIONS = (
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
     "instead of guessing; `recall_note:` means only part of the question matched: say that too. If a receipt has `host_action:`, tell the user that line."
 )
+LEARN_INSTRUCTION = (" When a session solved a problem in a way that would help on other tasks in the same situation, record "
+                     "the lesson with krouter_learn before the session ends.")
 TOOLS = [
     {
         "name": "krouter_ask",
@@ -94,6 +96,24 @@ NOTE_TOOL = {
             "kind": {"type": "string", "enum": ["decision", "correction", "note"], "default": "note"},
         },
         "required": ["text"],
+    },
+    "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
+}
+LEARN_TOOL = {
+    "name": "krouter_learn",
+    "description": "",  # experience.LEARN_HELP，见 tools()
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "situation": {"type": "string", "description": "What happened; may name the subject."},
+            "action": {"type": "string", "description": "What was done."},
+            "result": {"type": "string", "description": "How it turned out."},
+            "lesson": {"type": "string", "description": "The lesson without the subject: \"When …, …\"."},
+            "when": {"type": "array", "items": {"type": "string"},
+                     "description": "3–5 short phrases a person in this situation would say; no subject nouns."},
+            "title": {"type": "string", "description": "Optional: the lesson in one line."},
+        },
+        "required": ["situation", "action", "result", "lesson", "when"],
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }
@@ -315,8 +335,55 @@ def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
     return (text, False)
 
 
+def learn_on() -> bool:
+    try:
+        import experience
+
+        return WRITE and experience.digest_on()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def tools() -> list[dict]:
-    return TOOLS + ([NOTE_TOOL] if WRITE else [])
+    out = TOOLS + ([NOTE_TOOL] if WRITE else [])
+    if learn_on():
+        import experience
+
+        out = out + [{**LEARN_TOOL, "description": experience.LEARN_HELP}]
+    return out
+
+
+def learn(args: dict) -> tuple[str, bool]:
+    """One experience card the host agent wrote itself: checked, written, in the ledger, one commit."""
+    from datetime import datetime
+
+    import capture_ledger
+    import experience
+    import zones
+    from krouter_redact import redact
+
+    raw = cur_vault()
+    if not raw:
+        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+    vault = Path(raw).expanduser()
+    item = {k: (redact(v) if isinstance(v, str) else [redact(str(x)) for x in v] if isinstance(v, list) else v)
+            for k, v in args.items()}
+    path, why = experience.learn(vault, item, f"MCP（{CLIENT or 'unknown client'}）")
+    if not path:
+        return (why, True)
+    now = datetime.now()
+    rid = capture_ledger.run_id(now)
+    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+    rel = zones.canon(vault, str(path.relative_to(vault)).replace(os.sep, "/"))
+    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
+                                          f"- 经验卡：[[{rel.removesuffix('.md')}]]（MCP，{CLIENT or '未知客户端'}）\n")
+    if str(raw) in POOLS:
+        POOLS[str(raw)].mark_stale()
+    sha = capture_ledger.commit(vault, rid, [path], "MCP 经验卡 1 张")
+    if sha:
+        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+    return (f"learned: {rel}\nrun: {rid}" + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; "
+                                                                          "delete the card by hand"), False)
 
 
 def note(args: dict) -> tuple[str, bool]:
@@ -374,6 +441,9 @@ def call(name: str, args: dict) -> dict:
     if name == "krouter_note" and WRITE:
         text, err = note(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
+    if name == "krouter_learn" and learn_on():
+        text, err = learn(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_ask":
         query = str(args.get("query") or "").strip()
         rname = str(args.get("route") or "search")
@@ -404,7 +474,7 @@ def handle(msg: dict) -> dict | None:
                   "capabilities": {"tools": {"listChanged": False}},
                   "serverInfo": {"name": "krouter", "title": f"KRouter ({cur_label()})" if cur_label() else "KRouter",
                                  "version": VERSION},
-                  "instructions": INSTRUCTIONS + (f" This server answers from the '{cur_label()}' vault "
+                  "instructions": INSTRUCTIONS + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
                                                   "(`vault_label:` in each receipt); say which vault an answer "
                                                   "came from." if cur_label() else "")}
     elif method == "ping":
