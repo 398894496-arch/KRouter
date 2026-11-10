@@ -154,7 +154,7 @@ def baseline(args) -> None:
     data = load_data(Path(args.data))
     rows = []
     for qid, it in data.items():
-        cited = {"none": [], "bm25": bm25_top(it, args.top),
+        cited = {"none": [], "bm25": bm25_top(it, getattr(args, "top", TOP)),
                  "oracle": list(dict.fromkeys(it["answer_session_ids"]))}[args.kind]
         rows.append({"id": qid, "cited": cited, "refused": not cited, "system": args.kind})
     Path(args.out).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
