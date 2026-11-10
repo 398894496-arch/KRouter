@@ -115,10 +115,12 @@ LEARN_TOOL = {
                         "description": "2–6 words naming this session's subject; the lesson must use none of them."},
             "lesson": {"type": "string", "description": "The lesson without the subject: \"When …, …\"."},
             "title": {"type": "string", "description": "Optional: the lesson in one line."},
+            "same_as": {"type": "string", "description": "When the digest already has this lesson: that line's id; "
+                                                         "no new card, the old one is recorded as seen again."},
             "quotes": {"type": "array", "items": {"type": "string"},
                        "description": "Short verbatim snippets of the session stating every number the card keeps."},
         },
-        "required": ["situation", "action", "result", "subject", "lesson"],
+        "required": ["situation"],
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }
@@ -427,6 +429,8 @@ def learn(args: dict) -> tuple[str, bool]:
     item = {k: (redact(v) if isinstance(v, str) else [redact(str(x)) for x in v] if isinstance(v, list) else v)
             for k, v in args.items()}
     path, why = experience.learn(vault, item, f"MCP（{CLIENT or 'unknown client'}）")
+    if not path and why.startswith("again: "):
+        return (f"recorded: the lesson of {why[7:]} came up again (no new card)", False)
     if not path:
         return (why, True)
     now = datetime.now()

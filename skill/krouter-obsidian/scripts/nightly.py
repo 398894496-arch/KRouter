@@ -176,6 +176,22 @@ def channel_lines(vault: Path) -> list[str]:
     return out
 
 
+def duplicate_lines(vault: Path) -> list[str]:
+    """Experience cards whose lessons are close: listed for the person to merge, never merged by the code. No model."""
+    try:
+        import experience
+
+        pairs = experience.near_duplicates(vault)
+    except Exception:  # noqa: BLE001
+        return []
+    if not pairs:
+        return []
+    out = ["经验卡可能重复（通用说法用词大半相同；要合并就留一张、另一张标 `status: retired`，这里不自动删）：", ""]
+    for a, b, j in pairs[:10]:
+        out.append(f"- 〔{a['id']}〕[[{a['rel'].removesuffix('.md')}]] ≈ 〔{b['id']}〕[[{b['rel'].removesuffix('.md')}]]（{j}）")
+    return out + [""]
+
+
 def write_report(vault: Path, results: list[dict], state: str, lane_name: str, at: str) -> None:
     rows = []
     for r in results:
@@ -187,6 +203,7 @@ def write_report(vault: Path, results: list[dict], state: str, lane_name: str, a
         "机器生成，每晚覆盖。只记元数据（步骤、结果、调用次数、发出的字数），不记内容。", "",
         f"结果：**{state}**（通道：{lane_name}）", "",
         *channel_lines(vault),
+        *duplicate_lines(vault),
         "| 步骤 | 结果 | 模型调用 / 发出 | 秒 | 原因 |", "|---|---|---|---|---|", *rows, "",
         "发出的内容：规则页 / 主题页全文（问答卡）、主题证据（主题档案）、路由器没答好的查询原文（夜间学习）；"
         "开了会话导入并选了提炼时，还有昨天会话的脱敏摘录。"

@@ -279,7 +279,8 @@ def test_host_written_card_needs_no_model_and_reads_back_in_english(tmp_path):
     d = experience.digest(vault)
     assert d.startswith("KRouter experience digest") and "How to use:" in d
     assert f"- When a change has no effect, first check that the system reads the copy you changed [{card['id']}]" in d
-    assert experience.learn(vault, EN_CARD, "x") == (None, "not written: a card with the same lesson is already there")
+    assert experience.learn(vault, EN_CARD, "x") == (None, f"again: {card['id']}")  # 字面兜底：记成又遇到一次
+    assert experience.usage(vault)[card["id"]]["again"] == 1
     assert experience.learn(vault, {**EN_CARD, "result": ""}, "x")[0] is None
 
 
@@ -421,3 +422,30 @@ def test_numbers_in_a_card_must_come_from_the_session(tmp_path):
     assert experience.unsupported_figures({"result": "3,000 files"}, "renamed 3000 files") == []
     assert experience.unsupported_figures({"result": "1.4 m"}, "it is 1.1 by 1.4") == []
     assert experience.unsupported_figures({"result": "1.1 m"}, "width 21.1") == ["1.1"]
+
+
+def test_same_as_records_the_lesson_again_instead_of_a_new_card(bench_vault):
+    before = len(experience.load_cards(bench_vault))
+    path, why = experience.learn(bench_vault, {"situation": "另一个项目里又碰到改了不生效", "same_as": "〔C01〕"}, "[[s9]]")
+    assert path is None and why == "again: C01" and len(experience.load_cards(bench_vault)) == before
+    assert experience.usage(bench_vault)["C01"]["again"] == 1
+    first = [ln for ln in experience.digest(bench_vault).splitlines() if ln.startswith("- ")][0]
+    assert first.endswith("〔C01〕")  # 又遇到一次：排到最前
+    assert experience.learn(bench_vault, {"situation": "x", "same_as": "Z99"}, "s")[1].startswith("not written: same_as")
+
+
+def test_nightly_lists_near_duplicate_cards_without_touching_them(tmp_path):
+    import nightly
+
+    vault = tmp_path / "v"
+    vault.mkdir()
+    experience.learn(vault, EN_CARD, "a")
+    folder = vault / experience.FOLDER
+    twin = {**EN_CARD, "lesson": "When a change has no effect, first check that the system reads the very copy you edited"}
+    (folder / "Lesson - twin.md").write_text(experience.page_text(experience.valid(twin, None), "b", "2026-01-02"),
+                                             encoding="utf-8")
+    pairs = experience.near_duplicates(vault)
+    assert len(pairs) == 1 and pairs[0][2] >= 0.4
+    text = "\n".join(nightly.duplicate_lines(vault))
+    assert "经验卡可能重复" in text and "不自动删" in text
+    assert len(list(folder.glob("*.md"))) == 2  # 只列出，不合并、不删

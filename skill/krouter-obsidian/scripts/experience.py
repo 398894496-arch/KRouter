@@ -191,10 +191,11 @@ def digest_line(card: dict, lang: str = "zh") -> str:
 
 
 def rank_key(card: dict, used: dict) -> tuple:
-    """Adopted cards first, the most recent adoption first; then cards not yet passed over (offered IGNORED_AFTER
+    """Adopted or seen again cards first, the most recent first; then cards not yet passed over (offered IGNORED_AFTER
     times and never adopted sink to the bottom); then times offered; then confirmed; then the newest date."""
     u = used.get(card["id"], {})
-    adopted = max(u.get("last_adopted", ""), card.get("adopted_at", ""))
+    # 被采纳、或在别的会话里又遇到一次（宿主判定"摘要里已有这条"）：都是这条经验站得住的证据
+    adopted = max(u.get("last_adopted", ""), u.get("last_again", ""), card.get("adopted_at", ""))
     passed_over = not adopted and u.get("offered", 0) >= IGNORED_AFTER
     fresh = max(card.get("date", ""), u.get("last_offered", "")[:10])
     return (bool(adopted), adopted, not passed_over, u.get("offered", 0), card.get("status") == "active", fresh,
@@ -291,7 +292,7 @@ def record_uses(vault: Path, session: str, turns: list[dict]) -> int:
 
 
 def usage(vault: Path) -> dict:
-    """{card id: {offered, adopted, last_offered, last_adopted}} from the use records."""
+    """{card id: {offered, adopted, again, last_offered, last_adopted, last_again}} from the use records."""
     path = zones.path(vault, USES)
     out: dict[str, dict] = {}
     if not path.is_file():
@@ -301,9 +302,10 @@ def usage(vault: Path) -> dict:
             d = json.loads(line)
         except ValueError:
             continue
-        u = out.setdefault(str(d.get("card")), {"offered": 0, "adopted": 0, "last_offered": "", "last_adopted": ""})
+        u = out.setdefault(str(d.get("card")), {"offered": 0, "adopted": 0, "again": 0, "last_offered": "",
+                                                "last_adopted": "", "last_again": ""})
         kind = d.get("kind")
-        if kind in ("offered", "adopted"):
+        if kind in ("offered", "adopted", "again"):
             u[kind] += 1
             u["last_" + kind] = max(u["last_" + kind], str(d.get("at") or "")[:10])
     return out
@@ -455,11 +457,12 @@ LEARN_HELP = ("Record one lesson from this session as an experience card, so it 
               "replace each specific term with a general word, \"the execution plan\" → \"how it actually runs\", "
               "「大件家具」→「东西」). Test it: would the lesson make sense word for word to someone fixing a bug, someone "
               "writing a report and someone cooking? If it only fits this kind of thing, say it once more one level "
-              "higher); title (optional, the lesson in one line, same rule). Skip it if the experience "
-              "digest already has the same lesson. Write in the language of the session; no keys, names or private "
+              "higher); title (optional, the lesson in one line, same rule). Write in the language of the session; no keys, names or private "
               "details. Leave specific numbers out of action and result unless the lesson cannot do without them; every "
               "number that stays anywhere in the card must appear in quotes (the short verbatim snippets of the session "
-              "that state it), or the card is sent back. Before calling, reread the session and check situation, action "
+              "that state it), or the card is sent back. If the experience digest already has this lesson (the same "
+              "situation and the same way out, whatever the subject), write no new card: call with same_as set to that "
+              "line's id instead, which records that the lesson came up again. Before calling, reread the session and check situation, action "
               "and result against it sentence by sentence.")
 
 
@@ -554,6 +557,22 @@ def unsupported_figures(item: dict, source: str) -> list[str]:
     return out
 
 
+def near_duplicates(vault: Path, share: float = 0.4) -> list[tuple[dict, dict, float]]:
+    """Pairs of cards whose lessons share at least `share` of their words: listed for a person to merge, never
+    merged or deleted by the code."""
+    cards = load_cards(vault)
+    out = []
+    for i, a in enumerate(cards):
+        wa = set(words(a["lesson"]))
+        for b in cards[i + 1:]:
+            wb = set(words(b["lesson"]))
+            if wa and wb:
+                j = len(wa & wb) / len(wa | wb)
+                if j >= share:
+                    out.append((a, b, round(j, 2)))
+    return sorted(out, key=lambda x: -x[2])
+
+
 def same_lesson(a: str, b: str) -> bool:
     wa, wb = set(words(a)), set(words(b))
     return bool(wa and wb) and len(wa & wb) / len(wa | wb) >= 0.5
@@ -588,9 +607,28 @@ def page_text(card: dict, source: str, day: str, writer: str = "krouter-capture"
                    + f"- Source: {source} (taken from a session, not checked by anyone; fix or delete it if wrong)\n")
 
 
+def record_again(vault: Path, card_id: str, source: str, why: str) -> None:
+    """The lesson of card `card_id` came up again in another session: one `again` line in the use records."""
+    path = zones.path(vault, USES)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    from datetime import datetime
+
+    row = {"at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), "card": card_id, "kind": "again", "session": source,
+           "turn": "", "why": why}
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def lexical_twin(vault: Path, lesson: str) -> dict | None:
+    """A card on file whose lesson shares most of its words with `lesson` (the code's own fallback check)."""
+    return next((c for c in load_cards(vault) if same_lesson(lesson, c["lesson"])), None)
+
+
 def write_card(vault: Path, card: dict, source: str, day: str, writer: str = "krouter-capture") -> Path | None:
-    """Write one checked card; None when a card with the same lesson is already there."""
-    if any(same_lesson(card["lesson"], c["lesson"]) for c in load_cards(vault)):
+    """Write one checked card; None when a card with the same lesson is already there (recorded as seen again)."""
+    twin = lexical_twin(vault, card["lesson"])
+    if twin:
+        record_again(vault, twin["id"], source, "同一条经验（字面检查）")
         return None
     folder = zones.path(vault, FOLDER)
     folder.mkdir(parents=True, exist_ok=True)
@@ -602,7 +640,14 @@ def write_card(vault: Path, card: dict, source: str, day: str, writer: str = "kr
 
 
 def learn(vault: Path, item: dict, source: str, writer: str = "krouter-learn") -> tuple[Path | None, str]:
-    """A card the host agent wrote itself (no model lane, no key). (path, "") when written, (None, why) when not."""
+    """A card the host agent wrote itself (no model lane, no key). (path, "") when written, (None, why) when not.
+    With `same_as` naming a card on file, no card is written: that card gets one `again` record ("again: <id>")."""
+    same = str(item.get("same_as") or "").strip().strip("〔〕[]") if isinstance(item, dict) else ""
+    if same:
+        if same not in {c["id"] for c in load_cards(vault)}:
+            return None, f"not written: same_as {same!r} is not the id of a card in the digest"
+        record_again(vault, same, source, str(item.get("situation") or "")[:200])
+        return None, f"again: {same}"
     named = names_subject(item) if isinstance(item, dict) else ""
     quotes = item.get("quotes") if isinstance(item, dict) and isinstance(item.get("quotes"), list) else []
     loose = unsupported_figures(item, "\n".join(str(q) for q in quotes)) if isinstance(item, dict) else []
@@ -616,7 +661,10 @@ def learn(vault: Path, item: dict, source: str, writer: str = "krouter-learn") -
     if not card:
         return None, "not written: fill situation, action, result and lesson; no key-shaped text"
     path = write_card(vault, card, source, date.today().isoformat(), writer)
-    return (path, "") if path else (None, "not written: a card with the same lesson is already there")
+    if path:
+        return path, ""
+    twin = lexical_twin(vault, card["lesson"])
+    return None, f"again: {twin['id'] if twin else '?'}"
 
 
 def extract(e: dict, excerpt: str, vault: Path, source: str, dry: bool = False) -> tuple[list[Path], int]:

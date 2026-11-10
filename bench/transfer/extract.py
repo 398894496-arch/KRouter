@@ -141,13 +141,16 @@ def score_one(s: dict, reply: str, retry: str | None = None) -> dict:
     """One session's proposed cards through experience.learn(). As the MCP tool returns its reason to the agent, a
     refused call may be retried once: `retry` is the host's answer to that reason, used in place of the refused call."""
     items = proposed(reply)
-    written, refused, retried = [], [], False
+    written, refused, retried, linked = [], [], False, []
     with tempfile.TemporaryDirectory() as tmp:
         vault = build_vault(Path(tmp), s["lang"])
         queue = list(items[:2])
         while queue:
             item = queue.pop(0)
             path, why = experience.learn(vault, item, "[[set17]]", writer="bench")
+            if not path and why.startswith("again: "):
+                linked.append(why[7:])  # 宿主判定摘要里已有：给旧卡记一次「又遇到」，不写新卡
+                continue
             if not path and retry is not None and not retried:
                 retried = True
                 queue = proposed(retry)[:1] + queue
@@ -163,7 +166,7 @@ def score_one(s: dict, reply: str, retry: str | None = None) -> dict:
             else:
                 refused.append(why[:60])
     return {"id": s["id"], "kind": s["kind"], "proposed": len(items), "written": written, "refused": refused,
-            "retried": retried}
+            "retried": retried, "linked": linked}
 
 
 def first_refusal(s: dict, reply: str) -> str:
@@ -172,7 +175,7 @@ def first_refusal(s: dict, reply: str) -> str:
         vault = build_vault(Path(tmp), s["lang"])
         for item in proposed(reply)[:2]:
             path, why = experience.learn(vault, item, "[[x]]", writer="bench")
-            if not path:
+            if not path and not why.startswith("again: "):
                 return why
     return ""
 
@@ -243,6 +246,54 @@ def score(args) -> None:
         print(json.dumps({"judge_prompts": len(lines)}))
 
 
+REVIEW = """A test writer labelled the session below as a *duplicate*: its lesson is meant to be the same as a lesson
+already stored, though the subject differs. Check the label, reading only the session and the two texts below.
+
+[Session]
+{session}
+
+[Stored lesson]
+{lesson}
+
+[The writer's reason]
+{reason}
+
+Is the lesson this session teaches the same as the stored lesson (the same situation and the same way out, whatever
+the subject)? Reply with JSON only: {{"same": "yes"|"no"|"unclear", "why": "one short sentence"}}"""
+
+
+def read_review(folder: str) -> set[str] | None:
+    """Session ids whose duplicate label the reviewer confirmed ("yes"); None when there is no review."""
+    if not folder:
+        return None
+    out = set()
+    for sid, text in read_replies(folder).items():
+        m = re.search(r"\{.*\}", text, re.S)
+        try:
+            if m and str(json.loads(m.group(0)).get("same", "")).lower().startswith("y"):
+                out.add(sid)
+        except ValueError:
+            pass
+    return out
+
+
+def review_prompts(args) -> None:
+    """One prompt per duplicate session, for a model other than the writer to confirm the label."""
+    lessons = {}
+    for folder in ("cards", "cards_en"):
+        for p in sorted((HERE / folder).glob("*.md")):
+            meta, body = experience.ri.split_frontmatter(p.read_text(encoding="utf-8"))
+            m = re.search(r"- (?:通用说法|Lesson)[:：]\s*(.+)", body)
+            lessons[(meta.get("card_id"), "zh" if folder == "cards" else "en")] = m.group(1).strip() if m else ""
+    rows = [{"id": s["id"], "prompt": REVIEW.format(session=transcript(s), lesson=lessons.get((s["dup_of"], s["lang"]), ""),
+                                                   reason=s.get("dup_reason") or "")}
+            for s in load() if s["kind"] == "duplicate"]
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "batch_01.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+    print(json.dumps({"review_prompts": len(rows)}))
+
+
 def judged(args) -> None:
     """Set 19's registered score: lesson sessions with a card, and the judge's faithful / subject-free verdicts."""
     replies, verdicts = {}, {}
@@ -265,7 +316,16 @@ def judged(args) -> None:
     ids = [f"{r['id']}#{n}" for r in rows if r["kind"] == "lesson" for n in range(len(r["written"]))]
     yes = lambda i, k: str(verdicts.get(i, {}).get(k, "")).lower().startswith("y")  # noqa: E731
     by = {k: [r for r in rows if r["kind"] == k] for k in ("lesson", "duplicate", "none")}
+    agreed = read_review(getattr(args, "review", ""))
+    if agreed is not None:
+        disputed = [r["id"] for r in by["duplicate"] if r["id"] not in agreed]
+        by["duplicate"] = [r for r in by["duplicate"] if r["id"] in agreed]
+    else:
+        disputed = []
+    dups = {x["id"]: x.get("dup_of") for x in load()}
     print(json.dumps({"lesson_sessions_with_a_card": sum(1 for r in by["lesson"] if r["written"]),
+                      "duplicates_linked_right": sum(1 for r in by["duplicate"] if dups.get(r["id"]) in r.get("linked", [])),
+                      "duplicates_disputed_left_out": disputed,
                       "lesson_sessions": len(by["lesson"]), "cards_on_lesson_sessions": len(ids),
                       "retried": sum(r["retried"] for r in rows),
                       "faithful": sum(yes(i, "faithful") for i in ids), "subject_free": sum(yes(i, "subject_free") for i in ids),
@@ -290,16 +350,19 @@ def main() -> int:
     j.add_argument("--replies", required=True)
     j.add_argument("--verdicts", required=True)
     j.add_argument("--retries", default="")
+    j.add_argument("--review", default="", help="set 23: the reviewer's answers on the duplicate labels")
+    v = sub.add_parser("review", help="set 23: prompts asking another model to confirm each duplicate label")
+    v.add_argument("--out", required=True)
     r = sub.add_parser("retry", help="prompts for refused calls, with the tool's reason, for one retry")
     r.add_argument("--replies", required=True)
     r.add_argument("--prompts", required=True, help="the batch file the replies answered")
     r.add_argument("--out", required=True)
-    for sp in (p, s, j, r):
-        sp.add_argument("--set", default="17", choices=("17", "19", "20", "21"))
+    for sp in (p, s, j, r, v):
+        sp.add_argument("--set", default="17", choices=("17", "19", "20", "21", "23"))
     args = ap.parse_args()
     global SET
     SET = args.set
-    {"prepare": prepare, "score": score, "judged": judged, "retry": retry_prompts}[args.cmd](args)
+    {"prepare": prepare, "score": score, "judged": judged, "retry": retry_prompts, "review": review_prompts}[args.cmd](args)
     return 0
 
 
