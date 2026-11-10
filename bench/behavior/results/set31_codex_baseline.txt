@@ -1,0 +1,4 @@
+runs: 12 of 12
+offer    should: 1 / 2 (its own card: 1 / 2)   should not: 0 / 7
+learn    should: 0 / 3   should not: 0 / 7
+correct  should: 0 / 3   should not: 0 / 9

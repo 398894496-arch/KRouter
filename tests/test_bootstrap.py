@@ -248,3 +248,69 @@ def test_default_install_asks_nothing_and_an_upgrade_keeps_what_is_on(tmp_path, 
     plist.parent.mkdir(parents=True)
     plist.write_text("", encoding="utf-8")
     assert bs.remembering_already()
+
+
+def test_timer_that_did_not_install_is_not_reported_as_installed(monkeypatch, capsys):
+    """A machine with no scheduler (a Linux container: no systemd user session, no crontab) gets no nightly job; the
+    install said "HOST ACTION" but its summary, the health page and `doctor` then claimed one ran (found in the
+    2.0.0 container test). `timer_took` is the check after the installer ran; the tests' explicit skip is trusted."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    import bootstrap as bs
+
+    t = bs.MSG["en"]
+    monkeypatch.delenv("KROUTER_SKIP_TIMER", raising=False)
+    monkeypatch.setattr(bs, "remembering_timer", lambda: False)
+    assert bs.timer_took(t) is False
+    assert "NOT installed" in capsys.readouterr().out
+    monkeypatch.setattr(bs, "remembering_timer", lambda: True)
+    assert bs.timer_took(t) is True
+    monkeypatch.setattr(bs, "remembering_timer", lambda: False)
+    monkeypatch.setenv("KROUTER_SKIP_TIMER", "1")
+    assert bs.timer_took(t) is True
+    assert bs.MSG["zh"]["timer_failed"] and bs.MSG["zh"]["capture_how_timer"]
+
+
+def test_windows_upgrade_keeps_the_table_and_falls_back_to_a_junction(tmp_path, monkeypatch):
+    """The Windows branch of the 2.0 move, run on any OS: the pre-2.0 `krouter-obsidian` folder is replaced by the new
+    skill with the user's alias table carried over, and when a symlink cannot be made (Windows without developer mode
+    or admin) the old path is made a directory junction with `cmd /c mklink /J`. Not run on a real Windows machine
+    (none was reachable for 2.0.0); this pins the logic, `docs/VERIFY.md` says what was and was not run there."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    import bootstrap as bs
+
+    home = tmp_path / "home"
+    old = home / ".agents/skills/krouter-obsidian"
+    (old / "scripts").mkdir(parents=True)
+    (old / "scripts/canonical_sources.psv").write_text("Q99|我的名词|01 项目/项目.md|x\n", encoding="utf-8")
+    (old / "scripts/route_knowledge.py").write_text("# the 1.x router\n", encoding="utf-8")
+    vault = tmp_path / "vault"
+    (vault / "90 系统文件").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    for k in ("KROUTER_SKILL_HOME", "KROUTER_CURSOR_RULE", "KROUTER_ASK_RULE"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("KROUTER_NO_CURSOR_RULES", "1")
+    real_symlink, real_run = os.symlink, subprocess.run
+    calls = []
+
+    def no_symlink(*a, **k):
+        raise OSError("A required privilege is not held by the client")
+
+    def fake_run(argv, *a, **k):
+        if isinstance(argv, list) and argv[:3] == ["cmd", "/c", "mklink"]:
+            calls.append(argv)
+            real_symlink(argv[5], argv[4], target_is_directory=True)  # stand in for the junction
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        return real_run(argv, *a, **k)
+
+    monkeypatch.setattr(bs.os, "symlink", no_symlink)
+    monkeypatch.setattr(bs.subprocess, "run", fake_run)
+    assert bs.legacy_skill_home() == old
+    assert bs.install_windows(vault, False, False) == 0
+    new = home / ".agents/skills/krouter"
+    assert (new / "SKILL.md").is_file()
+    assert "Q99|我的名词" in (new / "scripts/canonical_sources.psv").read_text(encoding="utf-8")
+    assert "Q99|我的名词" in (vault / "90 系统文件/canonical_sources.psv").read_text(encoding="utf-8")
+    assert calls == [["cmd", "/c", "mklink", "/J", str(old), str(new)]]
+    assert old.is_symlink() and old.resolve() == new.resolve()  # the old path leads to the new folder
+    assert bs.legacy_skill_home() is None  # a second run sees an upgraded install

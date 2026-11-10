@@ -1095,6 +1095,74 @@ users answer in their own ways.
 | 2026-11-10 | **Set 25, held-out, run once, complete** (phase 2 and judging; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). **Both hosts together: right skill fetched 12 / 12 (bar ≥ 10); judged as following 12 / 12 = 100% (≥ 90%); wrong skill fetched 0 (≤ 1); quiet cases with a skill fetched or cited 0 / 12 (≤ 1). Passed.** No quiet case cited an experience card either. |
 | 2026-11-10 | **Set 24, held-out, drafting run once** (frozen wording of `88e6f51`; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). Mechanical, both hosts together: **right drafts 16 / 16 (bar ≥ 13); drafts on *none* / *trap* 0 / 16 (≤ 2); wrong-card drafts 2 (≤ 2)**, one per host, each a second draft beside a right one. Found while scoring, before any held-out verdict was read: the scorer sent every draft of a scenario with a right draft to the judge, where the registration says right drafts; fixed to count right drafts only (a wrong-card draft is still judged, not counted). |
 | 2026-11-10 | **Set 24, held-out, judged** (Haiku's drafts by Sonnet, Sonnet's by Haiku; agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: right drafts 16 / 16 (bar ≥ 13); of 16 right drafts, judged faithful 16 = 100% (≥ 90%), judged subject-free 16 = 100% (≥ 90%); drafts on *none* / *trap* 0 / 16 (≤ 2); wrong-card drafts 2 (≤ 2). Passed.** With set 25 passed, as registered, `skills.DEFAULT_ON` is set. Model calls for sets 24–26: 3 writer agents, 20 host and judge agents (about 330 prompts). Limits as registered, and: the wording was revised three times on 16 development scenarios; Haiku is the weaker judge of Sonnet's drafts; the wrong-card bar was met exactly. |
+## Set 30: does a host agent do it by itself, in a real session? (registered 2026-11-10, before any scenario was run)
+
+**Why.** Everything measured about experience cards and corrections so far asked the host directly ("here is the digest,
+what would you suggest", "here is the session, write the card") or tested the protocol. Not measured: an agent in a
+working session, handed KRouter the way the README installs it, (a) mentions the digest's lesson when its situation is
+the task's, (b) calls `krouter_learn` when the session really hit a problem and worked it out, (c) calls
+`krouter_correct` when the user changes a decision the memory holds, and keeps quiet when none of those is the case.
+
+**Scenarios.** `bench/behavior/set30.json` (SHA-256 `889a954fd9dba79e326e7da49c1b8a708e73bd143f3c1e815f1186add1c0a03d`), 20 of them, written by Claude Sonnet 5.5 in the Claude Code
+session that ran the platform tests. Not an outside reviewer: the writer had read the MCP tool descriptions, the digest
+wording and the 14 cards, and wrote tasks to match or avoid them. Each is a small project (a few files) and one
+user message; none mentions memory, KRouter, lessons or corrections. Groups: `offer` 4 (a task in the same situation as a
+card, another subject: C01, C09, C10, C06), `learn` 4 (a real problem in the files: a BOM, a working-directory
+assumption, float rounding, a hand-split CSV), `correct` 4 (the user changes a decision a page of the memory holds:
+API timeout, branch naming, Node version, the test command), `notcorrect` 4 (a one-off exception, the existing rule
+restated, an open question, a correction of the code's own off-by-one), `quiet` 4 (a flag, a rename, docstrings, an
+explanation whose function name shares a word with a card).
+
+**Memory.** A throwaway copy per scenario: the English layout the installer makes, the 30-page engineering vault of the
+memory-honesty bench, the 14 English cards of the transfer bench (`bench/behavior/make_fixture.py`). The digest comes
+from the SessionStart hook, the tools from the MCP server, both installed by `scripts/bootstrap.py --apps codex` into the
+scenario's own Codex home.
+
+**Hosts.** Codex CLI (`codex exec`, 0.155.0-alpha.9.2, the model the ChatGPT login selects), 20 scenarios, each run once.
+A Claude Code subagent (Sonnet 5.5) and Cursor's agent get a subset or an approximation, said where the numbers are
+reported. A scenario is never rerun and never edited after its first run.
+
+**Rules, mechanical** (`bench/behavior/judge.py`). *offer*: a card id in brackets in any message of the session. *learn*: a
+`krouter_learn` call. *correct*: a `krouter_correct` call. Should: offer = group `offer`, learn = group `learn`,
+correct = group `correct`. Should not: offer and learn = groups `correct`, `notcorrect`, `quiet` (12); correct = every
+group but `correct` (16). Reference line, fixed now: at least 3 of 4 should, at most 1 should-not, per host and
+behaviour. Below it the host does not do it by itself, and the wording of the tool descriptions, the server
+instructions or the hook line gets revised on a new development set (31), not on this one.
+
+### Log, set 30
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. Before it, throwaway smoke prompts (not scenarios) were run to get the Codex runner working; one of them, with the real home folder, let Codex use the maintainer's own knowledge-base skill and read the real vault (`status` and one `search`, read-only); the runner now gives each run a home folder of its own. |
+| 2026-11-10 | **Run once** (Codex CLI 0.155.0-alpha.9.2, model `gpt-5.6-terra`: the first two launches, without `-m` and with `gpt-5.5`, died on "model not supported with a ChatGPT account" before the model saw anything, and were thrown away whole; the two sessions of the first launch that had finished were seen as "no krouter call", no scenario was changed). Claude Code subagent host: Sonnet 5.5, one fresh subagent per scenario. **Codex:** offer should 2 / 4 (C01, C09), should not 0 / 12; learn should 0 / 4, should not 0 / 12; correct should 0 / 4, should not 0 / 16. **Claude Code subagent (approximation: the tools reached through a shell helper, not MCP):** offer 2 / 4 (C09, C10), 0 / 12; learn 0 / 4, 0 / 12; correct 3 / 4 (the fourth, Node version, wrote `krouter_note` after `krouter_ask` found no page), 0 / 16. Below the reference line on both hosts for learn, and for correct on Codex. `bench/behavior/results/set30_*`. |
+| 2026-11-10 | Cause found for Codex, from a probe run (not a scenario): the model is given the SessionStart digest, but no tool definition that mentions krouter (this Codex lists MCP tools only when asked for them) and no server instructions, so nothing in its context says `krouter_correct` or `krouter_learn` exist. The digest's usage line and the tool descriptions are the only wording the model has, and the first never names a tool. |
+
+## Set 31: development set for the wording change after set 30 (registered 2026-11-10, before any scenario was run)
+
+**Why.** Set 30 found the hosts do not call `krouter_learn` (0 / 4 on both) and Codex does not call `krouter_correct` (0 / 4).
+This is the development set to revise the wording on; set 30 is not touched again. `bench/behavior/set31.json`
+(SHA-256 `3c90b98df7a9978b88362bea9f08b6fff36328e2eb1b5ff81d07760dfff4e958`), 12 new scenarios by the same writer (so the same limits as set 30): offer 2 (C05, C02), learn 3 (a
+Makefile with spaces for a tab, CRLF line endings in a script, a mutable default argument), correct 3 (local ports,
+backup schedule, review rule: each a decision a page of the memory holds), notcorrect 2 (a typo, a one-night exception),
+quiet 2. Same memory copy, same rules, same judge as set 30.
+
+**Design.** Codex runs the whole set twice, once on the wording as it stands (baseline), once after the change; each
+scenario once per condition. The Claude Code subagent host runs it once, after the change. The change, fixed now before
+the baseline is run: (1) the SessionStart hook adds one short line naming `krouter_correct` (when the user changes a
+decision or says to do something differently from now on, in the same turn, also when the lookup finds nothing about the
+old one) and `krouter_learn` (before the final reply, when the session met an error or a wrong result and found and
+fixed the cause), printed whenever the hook prints anything; (2) the server instructions' two sentences say the same in
+the same words. The tool descriptions (`LEARN_HELP`, the correct tool's) are not touched: they were tuned over sets 17
+to 23. Better means: should up on learn and correct, should-not not up beyond 1.
+
+### Log, set 31
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. |
+| 2026-11-10 | Baseline on the old wording, Codex (12 of 12 valid): offer 1 / 2, should not 0 / 7; learn 0 / 3, 0 / 7; correct 0 / 3, 0 / 9. Claude subagent (Sonnet 5.5, shell-helper approximation, old wording): offer 1 / 2, 0 / 7; learn 1 / 3, 0 / 7; correct 3 / 3, 0 / 9. |
+| 2026-11-10 | The wording changed (`589dffd`): the hook's tools line and the two server instruction sentences, as registered. Claude subagent after: offer 1 / 2, 0 / 7; learn 2 / 3, 0 / 7; correct 3 / 3, 0 / 9. **Codex after: void.** The account's usage limit was reached during the run (11 of 12 sessions failed with "You've hit your usage limit" before the model saw the task; the twelfth, S31-L2, ran and called nothing). The change is **not verified on Codex**, the host it was made for; it cannot be rerun before 2026-12-09. Cursor agent CLI (free account, `auto`, after wording): S31-K1 `krouter_correct` called; S31-L1 no `krouter_learn`; S31-Q1 two lookups, no write. Set 31 is not held out and is now spent as a development set for this wording. |
+
 ## Set 32: mention it and it comes to mind — does the prompt hook bring the right page, and only then? (registered 2026-11-10, before any case was split or run)
 
 **Why.** Until 2.0 the lock and the trigger words ran only when the agent chose to call `krouter_ask`: whether the

@@ -1,0 +1,233 @@
+[
+ {
+  "id": "S30-K1",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the client and its tests, then adjust the timeout and retry behavior and run the focused checks.",
+   "Updated [payments/client.py](<run>/proj/payments/client.py:3):\n\n- Timeout: 20 seconds\n- Retries: 3 after the initial attempt (4 total attempts)\n\nVerified with a mocked timeout sequence."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-K2",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll update the contribution guidance to use the new `<type>/<short-title>` branch convention and check for any nearby examples that need to stay consistent.",
+   "Updated [CONTRIBUTING.md](<run>/proj/CONTRIBUTING.md:5) with the new `<type>/<short-title>` convention and `fix/login-redirect` example."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-K3",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll update the runtime declarations to Node 24 and verify the repository’s relevant Dockerfile and package metadata afterward.",
+   "Updated Node runtime requirements:\n\n- [Dockerfile](<run>/proj/Dockerfile): `node:24`\n- [package.json](<run>/proj/package.json): `engines.node: \">=24\"`\n\nVerified the package metadata parses and reports the expected engine range."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-K4",
+  "group": "correct",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll update the README’s setup instructions to use `just test`, then check the diff.",
+   "Updated [README.md](<run>/proj/README.md:6): unit-test setup now says `just test`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-L1",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll reproduce the crash, inspect how the JSON is read, then make the smallest safe fix and run the script again.",
+   "Found it: the file begins with an invisible UTF‑8 BOM. It renders normally in editors, but Python’s JSON decoder rejects it under plain `utf-8`. I’m updating the file reader to accept either BOM-prefixed or ordinary UTF‑8.",
+   "Fixed [parse_prices.py](<run>/proj/parse_prices.py:3) to use `utf-8-sig`, which transparently handles the invisible BOM in `prices.json`.\n\nVerified with `python3 parse_prices.py`; it now prints:\n\n```text\n3.75\n```\n\nYour environment has `python3` but not a `python` command."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-L2",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll reproduce both invocation paths, identify the cwd-sensitive file access, and adjust it so tests resolve project resources independent of where unittest starts.",
+   "The failure is in the test: it treats both imports and the fixture path as relative to the current directory. I’m making those paths derive from the test file instead.",
+   "Fixed cwd-dependent paths in [tests/test_loader.py](<run>/proj/tests/test_loader.py).\n\nThe test now derives both the project import path and fixture path from `__file__`, so it works from either directory.\n\nVerified with `python3`:\n\n- `python3 -m unittest discover -s tests`\n- `cd tests && python3 -m unittest`\n\nBoth pass."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-L3",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll trace the invoice calculation alongside the spreadsheet inputs, reproduce a mismatching customer, then patch and test the rounding behavior.",
+   "I reproduced it: the values are exact half-cent amounts, where binary floats round unpredictably (for example, `2.675` becomes `2.67`). The spreadsheet is rounding each line to cents using the usual half-up rule before summing.",
+   "Fixed [invoices.py](<run>/proj/invoices.py).\n\nCause: binary `float` rounding mishandled half-cent values. The script now uses exact `Decimal` values and spreadsheet-style `ROUND_HALF_UP` per invoice line.\n\nVerified: it now prints `March total: 3.98`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-L4",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll trace how `summarize.py` reads and matches customer records, then reproduce the affected path without changing files.",
+   "`summarize.py` splits lines on every comma, rather than parsing CSV quoting rules.\n\nFor example, this valid CSV row:\n\n```csv\n\"Smith, John\",42\n```\n\nbecomes three pieces (`\"Smith`, ` John\"`, `42`), so `len(parts) != 2` and the script substitutes `\"unknown\"`—even though `42` is present. It also truncates the name.\n\nUse Python’s `csv` module (`csv.reader`) instead of `line.split(\",\")`; it correctly treats the comma inside quoted names as part of the name."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-N1",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll locate the one-off backfill script and change only its payments request timeout to 60 seconds, then run the focused checks available.",
+   "The edit is in place. The environment doesn’t provide `python`, so I’m rerunning the same parse-only validation with `python3`.",
+   "Updated [scripts/backfill.py](<run>/proj/scripts/backfill.py:4): the payments POST timeout is now 60 seconds. Verified it parses successfully."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-N2",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the logging configuration and adjust the production setting for the new worker, then run the relevant checks.",
+   "The production branch was incorrectly set to `DEBUG`; it now uses `INFO` while non-production remains `DEBUG`. I’m verifying both environment paths directly.",
+   "Production logging now uses `INFO` in [logging_setup.py](<run>/proj/logging_setup.py:6); non-production remains `DEBUG`.\n\nVerified syntax and both `prod`/`dev` configuration paths."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-N3",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the existing component styling patterns and dependencies, then give a recommendation without touching the code.",
+   "CSS Modules fit this page better.\n\n`src/` currently has one small component, [Settings.jsx](<run>/proj/src/Settings.jsx), already importing [Settings.module.css](<run>/proj/src/Settings.module.css). There’s no Tailwind configuration or dependency visible.\n\nFor a single settings page, keeping styles colocated and scoped with CSS Modules is the least disruptive, most consistent choice. Tailwind would make sense later if the app expands into many screens with repeated layout/spacing patterns and the team wants a shared utility-first convention—but introducing it now would be framework overhead rather than a clear payoff."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-N4",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the loop and its surrounding expectations, then make the smallest correction and run the relevant check.",
+   "Fixed the off-by-one in [total.py](<run>/proj/total.py:3). The loop now includes the last item.\n\nVerified: `python3 total.py` outputs `10`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-O1",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll trace which configuration `run.py` actually loads and confirm whether the worker restart can affect that value.",
+   "The mismatch is already clear: there are two settings files, and the code points at the other one. I’m running the entry point once to verify the observed behavior.",
+   "`run.py` does not read `conf/settings.json`. `app/worker.py` explicitly loads:\n\n```python\n... / \"conf.d\" / \"settings.json\"\n```\n\nThat file still contains `{\"retries\": 3}`, so `python3 run.py` prints `will retry 3 times`.\n\nUpdate `conf.d/settings.json` to 5 (or change `app/worker.py` to use `conf/settings.json`). Worker restarts won’t change which path this standalone script reads.\n\nA lesson from another task you could try: when a change has no effect, first confirm the system reads the copy you edited. [C01]"
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-O2",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll trace where the upload duration is calculated and check the source units before changing anything.",
+   "The input is explicitly in milliseconds, but the script multiplies its average by 1,000 before labeling it seconds. I’m correcting that conversion and running the report against the included data.",
+   "Fixed [weekly_report.py](<run>/proj/weekly_report.py:5): it now converts milliseconds to seconds by dividing by 1,000.\n\nVerified output: `Average upload time: 2 seconds`.\n\nA lesson from another task you could try: when a result is wildly off, check units and defaults first. [C09]"
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-O3",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll trace the digest’s date bucketing and adjust it to use the intended New York business day, then run the relevant tests or a focused reproduction.",
+   "The issue was UTC-date grouping: 9–11:59pm in New York is already the next UTC date. I’ve switched bucketing to `America/New_York` before taking the date and am checking the supplied boundary examples now.",
+   "Fixed [digest.py](<run>/proj/digest.py).\n\nOrders are now converted to `America/New_York` before grouping by date. Verified the sample output groups orders 2 and 3 under `2026-11-03`, rather than tomorrow."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-O4",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll first inventory the dated files and temporary files in `data/` so I can confirm the exact deletion set before removing anything.",
+   "The deletion set is two dated exports from June/July plus two `.tmp` files; the September and October exports will remain. I’m removing those four exact files now.",
+   "Deleted the two pre-2026-09-01 exports and both `.tmp` files from `data/`.\n\nRemaining:\n\n- `export_2026-09-15.csv`\n- `export_2026-10-20.csv`\n\nThe deleted files were permanently removed."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-Q1",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the CLI’s current argument parsing and output paths, then add the flag and run the relevant checks.",
+   "The text and JSON modes produce the expected output. The initial compile check hit a system Python cache-permission issue, so I’ll rerun it with the bytecode cache redirected to a writable temporary directory.",
+   "Added `--json` to [cli.py](<run>/proj/cli.py).\n\n- `python3 cli.py 7` → `square: 49`\n- `python3 cli.py 7 --json` → `{\"square\": 49}`\n\nVerified help output and Python compilation."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-Q2",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll locate every project reference to `calc`, rename the function and call sites, then run the relevant test suite.",
+   "The rename is complete and no `calc` references remain. This environment exposes `python3` rather than `python`, so I’m rerunning the tests with that interpreter.",
+   "Renamed `calc` to `calculate_total` in the implementation and test.\n\nVerified no remaining `calc` references; `python3 test_pricing.py` passes. (`pytest` is not installed.)"
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-Q3",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect `utils.py` and add concise one-line docstrings only to its public functions, then run the relevant checks.",
+   "Added one-line docstrings to public `slug` and `clamp` in `utils.py`. Private `_private` was left unchanged.\n\nVerified with `python3 -m py_compile utils.py`."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S30-Q4",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll trace `check_units` and the validation flow around it, then translate it into plain language.",
+   "`check_units(row)` validates the `\"unit\"` field of a dictionary-like `row`.\n\nIt:\n\n1. Gets `row[\"unit\"]`; if it’s missing, uses an empty string.\n2. Removes surrounding spaces and converts it to lowercase.\n3. Allows only `\"kg\"`, `\"g\"`, or `\"lb\"`.\n4. Raises `ValueError` for anything else; otherwise returns the normalized unit.\n\nExamples:\n\n```python\ncheck_units({\"unit\": \" KG \"})  # returns \"kg\"\ncheck_units({\"unit\": \"oz\"})    # raises ValueError(\"unknown unit 'oz'\")\ncheck_units({})                # raises ValueError(\"unknown unit ''\")\n```\n\nSo it both rejects unsupported units and makes accepted input consistent for later code."
+  ],
+  "vault_commits_after_fixture": 0
+ }
+]

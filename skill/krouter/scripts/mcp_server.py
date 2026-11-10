@@ -65,10 +65,11 @@ INSTRUCTIONS = (
     "If a receipt has `host_action:`, tell the user that line."
 )
 CORRECT_INSTRUCTION = (" When the user corrects a decision or says to do something differently from now on, call "
-                       "krouter_correct in the same turn (new, old, and the page that gave the old answer), so the "
-                       "next lookup already has the new answer.")
-LEARN_INSTRUCTION = (" When a session solved a problem in a way that would help on other tasks in the same situation, record "
-                     "the lesson with krouter_learn before the session ends.")
+                       "krouter_correct in the same turn (new, old, and the page that gave the old answer; leave old and "
+                       "page out when krouter_ask finds nothing about it), so the next lookup already has the new answer.")
+LEARN_INSTRUCTION = (" When this session ran into an error or a wrong result and you found the cause and fixed it, record "
+                     "the lesson with krouter_learn before your final reply (not for plain edits, renames, explanations "
+                     "or questions).")
 TOOLS = [
     {
         "name": "krouter_ask",

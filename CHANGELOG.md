@@ -59,6 +59,28 @@ install path change (below).
   before and after); the line was 7 of 13, so it stays off. Chinese phrases are cut in the wrong places without word
   segmentation.
 
+### Platform and real-session tests (2026-11-10)
+
+- **A nightly job that did not install is no longer reported as installed.** On a machine with no systemd user session
+  and no crontab (a container, a minimal server) `--timer` printed "HOST ACTION: no systemd … and no crontab" and then
+  went on to say, in its summary line and on the health page, that the job was running, and `krouter doctor` failed
+  with "no job is installed". The install now checks that a job exists after asking for one and says "The nightly job
+  was NOT installed". The "keeps up by itself" line also no longer comes out empty when the nightly job is on and no app
+  has hooks.
+- **Linux tested in a clean `python:3.12-slim` container** from the release package: install, upgrade from the pre-2.0
+  folder (the old path becomes a link to the new one), lookup, refusal, `doctor`, `krouter mcp`, uninstall, cold
+  install. **Windows was not tested for 2.0** (no reachable Windows host); the junction fallback of the folder move is
+  covered by a test that runs on any OS. [`docs/VERIFY.md`](docs/VERIFY.md#platforms-and-real-sessions-200-candidate-2026-11-10)
+- **Real sessions, measured for the first time** (sets 30 and 31): Codex CLI, a Claude Sonnet 5.5 subagent and the Cursor
+  agent CLI, given small tasks that never mention the memory. They mention a stored lesson when the situation matches
+  (2 of 4 on both full runs) and never when it does not; they rarely call `krouter_learn` (0 of 4 on both hosts) and
+  Codex never called `krouter_correct` (0 of 4; the Claude subagent 3 of 4). Cause on Codex: this version shows the model
+  no krouter tool and none of the server's instructions. **Changed:** the session hook now ends with one line naming
+  `krouter_ask`, `krouter_correct` and `krouter_learn` and when to call each, and the server's instruction sentences for
+  the last two say the same. On a development set the Claude subagent went from 1 of 3 to 2 of 3 on `krouter_learn`
+  and stayed at 3 of 3 on `krouter_correct`; the Codex check could not run (its usage limit was reached), so the change is
+  not verified on the host it was made for.
+
 ### Lessons that carry over to other tasks
 
 - **Experience that keeps coming back grows into a skill.** The nightly run drafts a skill (a Markdown page: a name,

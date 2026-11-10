@@ -1,0 +1,217 @@
+[
+ {
+  "id": "S31-K1",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "local development ports web app and API",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T13:02:22Z\nrequested_route: preference\nquery: local development ports web app and API\nretrieval_status: ranked-recall-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439f18d19b74e"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "The web app runs on port 4000 and the API on port 9090 in local development.",
+     "old": "The web app runs on port 3000 and the API on port 8080 in local development.",
+     "page": "Engineering/Local ports.md"
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜The web app runs on port.md\nsuperseded: Engineering/Local ports.md (page)\nrun: 20261110T050226\nundo: python3 <run> --vault '<run> --undo 20261110T050226"
+   }
+  ],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-K2",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "backup schedule and retention policy",
+     "route": "correction"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T13:02:23Z\nrequested_route: correction\nquery: backup schedule and retention policy\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/90 System/Agent memory/Corrections and replacements.md\nsource_status: active\nsource_sha256"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "Backups run nightly at 03:30 and are kept for 14 days.",
+     "old": "Backups run nightly at 02:00 and are kept for 30 days."
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜Backups run nightly at 0.md\nsuperseded: (none named) (recorded)\nrun: 20261110T050228\nundo: python3 <run> --vault '<run> --undo 20261110T050228"
+   }
+  ],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-K3",
+  "group": "correct",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "pull request approval merge requirements module owner",
+     "route": "search"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T13:02:24Z\nrequested_route: search\nquery: pull request approval merge requirements module owner\nretrieval_status: ranked-recall-complete\nsource: <run>\ncanonical_map: <run>/mem/90 System/canonical_sources.psv\ncanonical_map_sha256: 1dbbb"
+   },
+   {
+    "tool": "krouter_correct",
+    "server": "krouter",
+    "arguments": {
+     "new": "One approval is enough to merge; the module-owner requirement is dropped (from this week).",
+     "old": "Two approvals are required to merge, and one must be from the module owner.",
+     "page": "Engineering/Code review rule.md"
+    },
+    "status": "completed",
+    "result": "corrected: 05 Journal/Sessions/2026-11-10｜correction｜One approval is enough t.md\nsuperseded: Engineering/Code review rule.md (page)\nrun: 20261110T050228\nundo: python3 <run> --vault '<run> --undo 20261110T050228"
+   }
+  ],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-L1",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-L2",
+  "group": "learn",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "shell script line endings CRLF deploy.sh",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T13:02:17Z\nrequested_route: preference\nquery: shell script line endings CRLF deploy.sh\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256: 2d6c8ac56439"
+   }
+  ],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-L3",
+  "group": "learn",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_learn",
+    "server": "krouter",
+    "arguments": {
+     "situation": "add_tag in tags.py returned tags from earlier calls: calling add_tag(\"a\") then add_tag(\"b\") gave [\"a\", \"b\"] the second time.",
+     "action": "Found that the default value of the tags parameter was a list created once when the function was defined, so every call shared it; changed the default to None and made a fresh list inside the function when none was passed; ran the script again.",
+     "result": "The second call now returns [\"b\"] and the first [\"a\"].",
+     "subject": [
+      "Python",
+      "default argument",
+      "add_tag",
+      "tags.py"
+     ],
+     "lesson": "When something started fresh each time still carries over what an earlier run left behind, look for a value that is created once up front and shared, and give each run its own new copy.",
+     "title": "Carry-over between runs usually means a shared value created once up front"
+    },
+    "status": "completed",
+    "result": "learned: 02 经验与方法/经验卡/Lesson - Carry-over between runs usually means a shared value created.md\nrun: 20261110T050226\nundo: python3 <run> --vault '<run> --undo 20261110T050226"
+   }
+  ],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-N1",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-N2",
+  "group": "notcorrect",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-O1",
+  "group": "offer",
+  "rc": 0,
+  "calls": [
+   {
+    "tool": "krouter_ask",
+    "server": "krouter",
+    "arguments": {
+     "query": "renaming files, lowercase names, photos .jpeg to .jpg",
+     "route": "preference"
+    },
+    "status": "completed",
+    "result": "receipt_version: knowledge-route-v2\nobserved_at: 2026-11-10T13:02:10Z\nrequested_route: preference\nquery: renaming files, lowercase names, photos .jpeg to .jpg\nretrieval_status: bounded-literal-search-complete\nsource: <run>/mem/02 Methods/Agent/User preferences.md\nsource_status: active\nsource_sha256:"
+   }
+  ],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-O2",
+  "group": "offer",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "report.py now runs in about 0.24 s instead of about 40 s. A lesson from another task you could try: when the same slow step is redone from scratch every time, store its result and reuse it [C02].\n"
+  ]
+ },
+ {
+  "id": "S31-Q1",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ },
+ {
+  "id": "S31-Q2",
+  "group": "quiet",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "(final reply; no card id cited)\n"
+  ]
+ }
+]

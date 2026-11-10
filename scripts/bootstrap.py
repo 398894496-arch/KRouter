@@ -63,6 +63,8 @@ MSG = {
         "perm_other": "（不受限制：它以你的身份运行，能读写你账户里的任何文件）",
         "prefer_key": "更稳妥的是用 API key：它直接调用接口，不在本机运行任何 agent（把 key 贴到知识库的「自进化钥匙」页就行）。\n",
         "timer_off": "没有开启每晚自动整理。想开的时候运行：{cmd}",
+        "timer_failed": "夜间任务没有装上：这台机器上没有可用的定时器（Linux 要 systemd 用户会话或 crontab）。"
+        "没有装任何任务；需要时按 extras/host-daily-evolution/cron.example 手动配置，或在有定时器的机器上重跑 --timer。",
         "timer_skip_noninteractive": "不是在交互终端里运行，所以没有开启每晚自动整理（需要你明确同意）。想开的时候运行：{cmd}",
         "lookup_only": "装的是只查询的版本：不导入会话、不装夜间任务，没有任何内容离开这台机器。\n"
         "想让它开始记住你和 agent 定下的事（会先问你、先说清发出多少字），运行：{cmd}",
@@ -97,6 +99,7 @@ MSG = {
         "hooks_codex_trust": "Codex 只跑你信任过的钩子：下次打开 Codex 输入 /hooks，把 KRouter 的 4 个钩子标为信任；信任之前 Codex 不跑它们。",
         "hooks_codex_off": "你在 Codex 的 config.toml 里关了钩子（[features] hooks = false），KRouter 的钩子要等你打开才会跑。",
         "capture_how_nightly": "其他 agent 的会话，打开每晚任务后每晚导入前一天的（{ask}）",
+        "capture_how_timer": "其他 agent 的会话由每晚任务导入前一天的",
         "plugin_hint": "用 Claude Code 的话，装上插件还能在会话结束时自动记下、开会话时自动带上本项目的决定："
         "/plugin install krouter --marketplace 398894496-arch/KRouter",
         "cli": "命令行（给你和 agent）：{cli} doctor 一条命令给结论（正常，或缺什么、怎么补）；{cli} search \"问题\" 查询；"
@@ -139,6 +142,9 @@ MSG = {
         "perm_other": " (unconfined: it runs as you and can read and write any file in your account)",
         "prefer_key": "The safer choice is an API key: a direct API call, no agent runs on this machine (paste it on the vault's key page).\n",
         "timer_off": "Nightly upkeep is off. To turn it on later: {cmd}",
+        "timer_failed": "The nightly job was NOT installed: this machine has no usable scheduler (on Linux, a systemd user "
+        "session or crontab). Nothing was scheduled; set it up by hand from extras/host-daily-evolution/cron.example, or "
+        "re-run --timer on a machine that has one.",
         "timer_skip_noninteractive": "Not run from an interactive terminal, so the nightly upkeep was not turned on (it needs your yes). To turn it on: {cmd}",
         "lookup_only": "Installed for lookup only: no session import, no nightly job, nothing leaves this machine.\n"
         "To have it start remembering what you and your agents decide (it asks first and says how much it sends): {cmd}",
@@ -177,6 +183,7 @@ MSG = {
         "hooks_codex_trust": "Codex runs only hooks you have trusted: next time you open Codex, type /hooks and trust KRouter's 4 hooks; until then Codex skips them.",
         "hooks_codex_off": "Hooks are turned off in Codex's config.toml ([features] hooks = false); KRouter's hooks run once you turn them back on.",
         "capture_how_nightly": "other agents' sessions each night once the nightly job is on ({ask})",
+        "capture_how_timer": "other agents' sessions each night, by the nightly job",
         "plugin_hint": "On Claude Code, the plugin also records each session when it ends and brings this project's "
         "decisions when one starts: /plugin install krouter --marketplace 398894496-arch/KRouter",
         "cli": "Command line (for you and your agents): {cli} doctor gives one verdict (OK, or what is missing and how to "
@@ -1166,6 +1173,16 @@ def remembering_timer() -> bool:
     return bool(res and "# dsh-krouter-daily" in res.stdout)
 
 
+def timer_took(t: dict) -> bool:
+    """After `--timer` asked the installer for a nightly job: is one really there? A machine with no scheduler (a
+    container, a minimal server) gets no job, and the summary, the health page and `doctor` must not say it did.
+    KROUTER_SKIP_TIMER=1 is the tests' and CI's explicit "do not load it": trusted as before."""
+    if os.environ.get("KROUTER_SKIP_TIMER") == "1" or remembering_timer():
+        return True
+    print(t["timer_failed"])
+    return False
+
+
 def set_lamp(vault: Path, on: bool) -> None:
     """The health page says `lamp: running` only when a nightly job is installed; else `unused`, so `status`
     never shows a job running that is not there."""
@@ -1283,6 +1300,7 @@ def main() -> int:
         rc = install_windows(vault, False, True) if WINDOWS else install_posix(vault, False)
         if rc != 0:
             return rc
+        timer = timer_took(t)
     elif args.ask:
         cmd = f"{'python' if WINDOWS else 'python3'} \"{ROOT / 'scripts' / 'bootstrap.py'}\" --timer --vault \"{vault}\""
         print((t["timer_off"] if asked else t["timer_skip_noninteractive"]).format(cmd=cmd))
@@ -1308,7 +1326,7 @@ def main() -> int:
         py = "python" if WINDOWS else "python3"
         live = (["Claude Code"] if "claude-plugin" in mcp else []) + [a["name"] for a in HOOK_APPS if a["id"] in hooked]
         how = ([t["capture_how_live"].format(apps=(" / " if lang == "en" else "、").join(live))] if live else []) + (
-            [] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
+            [t["capture_how_timer"]] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
         print(t["capture_on"].format(how="；".join(how) if lang == "zh" else "; ".join(how),
                                      revoke=f'{py} "{IMPORT}" --revoke',
                                      ledger=zones.real(vault, "90 系统文件/自动化/记忆变更记录.md")))
@@ -1318,7 +1336,7 @@ def main() -> int:
         py = "python" if WINDOWS else "python3"
         live = (["Claude Code"] if "claude-plugin" in mcp else []) + [a["name"] for a in HOOK_APPS if a["id"] in hooked]
         how = ([t["capture_how_live"].format(apps=(" / " if lang == "en" else "、").join(live))] if live else []) + (
-            [] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
+            [t["capture_how_timer"]] if timer else [t["capture_how_nightly"].format(ask=f'{py} "{ROOT / "scripts" / "bootstrap.py"}" --ask')])
         print(t["capture_now"].format(how="；".join(how) if lang == "zh" else "; ".join(how),
                                       revoke=f'{py} "{IMPORT}" --revoke',
                                       cmd=f'{py} "{IMPORT}" --consent --vault "{vault}"'))
