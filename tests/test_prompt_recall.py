@@ -231,8 +231,13 @@ def test_the_standing_index_lists_live_topics_with_a_how_to_fetch_line(box):
 
 
 def test_the_standing_index_keeps_to_its_budget_and_says_how_many_are_left(box):
+    # 主题多于整行的预算：排在前面的给整行，其余的只列名字；名字也放不下了才说「还有几件没列出」
     text = compile_subconscious.standing_index(box["vault"], lines=2)
-    assert text.count("\n- ") == 2 and "没列出" in text
+    assert text.count("\n- ") == 2 and "也记着" in text and "没列出" not in text
+    names = text.split("也记着", 1)[1].split("\n", 1)[0]
+    assert sum(n in names for n in ("测试环境", "代码托管", "周会", "status page")) == 2
+    tight = compile_subconscious.standing_index(box["vault"], lines=1, chars=40)
+    assert "没列出" in tight and len(tight.split("用法：", 1)[0]) <= 40 + 60
 
 
 def test_session_start_hands_over_the_index_only_when_on(box):
