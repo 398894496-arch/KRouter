@@ -1,7 +1,7 @@
 # Memory honesty bench
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v2.0.0, 2026-11-10). Measured, and what is not.** One-line installs get
+> **Current status of `main` (version v2.0.0 in progress, not released; latest release v1.3.0, 2026-11-09). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
@@ -29,9 +29,10 @@
 > - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
 >   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
 >   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
-> - **Releases:** 2.0.0 (2026-11-10): lessons carry over between tasks, five pages with the ones the vault connects, a
->   change of mind holds with no key, a lighter install that is English end to end; the router moved to
->   `skill/krouter` (an older install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
+> - **Releases:** 1.3.0 (2026-11-09) is the latest. 2.0.0 is in progress on a branch, not released: lessons carry
+>   over between tasks, five pages with the ones the vault connects, a change of mind holds with no key, a lighter
+>   install that is English end to end; the router moves to `skill/krouter` (an older install's path is left as a
+>   link on upgrade). Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).

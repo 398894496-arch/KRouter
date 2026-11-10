@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 is in progress. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -13,9 +13,9 @@ notice, then the details.
 
 Nothing yet.
 
-## 2.0.0 — 2026-11-10
+## 2.0.0 — in progress (not released; `main` and the one-line install are still 1.3.0)
 
-What you will notice: a lesson from one task is offered on another in the same situation; a lookup gives five
+What you will notice so far (more lands before it is released): a lesson from one task is offered on another in the same situation; a lookup gives five
 pages, two of them ones the vault connects to the answer; a change of mind holds with no key; the default install
 is lighter, says what it changed and is English end to end on an English machine; the memory is a plain folder,
 Obsidian optional; Codex, Cursor and Claude Desktop were tested inside the apps. 2.0 because the receipt and the
