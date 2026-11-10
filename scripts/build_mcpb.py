@@ -76,7 +76,7 @@ def _rpc(proc: subprocess.Popen, msg: dict) -> dict | None:
     return json.loads(line) if line.strip() else None
 
 
-def round_trip(server: Path, vault_arg: str, env: dict) -> list[str]:
+def round_trip(server: Path, vault_arg: str, env: dict, declared: set[str] | None = None) -> list[str]:
     """Start the bundled server the way the manifest says and ask it something over stdio; problems found."""
     proc = subprocess.Popen([sys.executable, str(server), "--vault", vault_arg], stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
@@ -91,6 +91,8 @@ def round_trip(server: Path, vault_arg: str, env: dict) -> list[str]:
         names = {t["name"] for t in tools.get("result", {}).get("tools", [])}
         if not {"krouter_ask", "krouter_status"} <= names:
             problems.append(f"tools/list lacks krouter_ask / krouter_status: {sorted(names)}")
+        if declared is not None and names - declared:  # 清单里列的工具要跟服务真给的对得上
+            problems.append(f"the server offers tools the manifest does not list: {sorted(names - declared)}")
         ans = _rpc(proc, {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                           "params": {"name": "krouter_ask", "arguments": {"query": "home"}}}) or {}
         text = json.dumps(ans.get("result", {}), ensure_ascii=False)
@@ -176,7 +178,8 @@ def check(bundle: Path) -> list[str]:
         for k in ("KROUTER_VAULT", "OBSIDIAN_VAULT"):
             env.pop(k, None)
         server_py = work / "ext" / entry
-        problems += [f"with a folder picked: {p}" for p in round_trip(server_py, str(vault), env)]
+        problems += [f"with a folder picked: {p}" for p in round_trip(server_py, str(vault), env,
+                                                                         {t.get("name") for t in m.get("tools") or []})]
         (work / "recorded").write_text(str(vault) + "\n", encoding="utf-8")
         problems += [f"with nothing picked: {p}" for p in round_trip(server_py, "${user_config.memory_folder}", env)]
         problems += [f"with an empty choice: {p}" for p in round_trip(server_py, "", env)]

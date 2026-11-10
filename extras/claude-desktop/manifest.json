@@ -53,6 +53,14 @@
     {
       "name": "krouter_note",
       "description": "Write one line down (a decision, a correction, a fact) as a clue on today's notes page."
+    },
+    {
+      "name": "krouter_correct",
+      "description": "Make a correction hold now: the new decision supersedes the page that gave the old answer."
+    },
+    {
+      "name": "krouter_learn",
+      "description": "Record a lesson from this session as an experience card, offered later on tasks in the same situation."
     }
   ],
   "user_config": {
