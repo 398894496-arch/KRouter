@@ -1,0 +1,60 @@
+{"id": "7e5838ca89", "response": "CALL krouter_ask: 权限申请 临时权限\n口头找运维不算数。生产库读权限要走工单申请，由上级和系统负责人双人审批 [团队手册/权限申请.md]。"}
+{"id": "0e92cedf06", "response": "大文件 OOM 通常是 export 把整张结果集一次读进内存再序列化。改成流式：按页或游标读取，逐批写入响应或临时文件，内存里只留一批数据。先用一个大文件复现，确认内存峰值确实来自这一步。"}
+{"id": "8acdcdf7f0", "response": "在 webpack 配置里加 watchOptions 排除 node_modules：watchOptions: { ignored: /node_modules/ }。dev 配置里还要看 devtool 是否用了高成本的 source map，以及 watch 是否开了 poll，这两项也会拖慢风扇。改完后对比一下启动和重编译耗时。"}
+{"id": "b6315d5c8c", "response": "CALL krouter_ask: production access review owner this quarter\n记忆提示说生产库访问每季度复查一次，60 天未使用的权限会被移除 [Handbook/Access reviews.md]。这条没写本季度由谁负责，我先查清楚再告诉你该交给谁。"}
+{"id": "7bfcad44f8", "response": "报错是 list.js 第 44 行 renderRow 对 undefined 取了 .items，说明传进来的行数据为空或缺字段。在访问前加判空，并查上游为什么传了 undefined。WARN 那行只是 deprecation 检查的日志，不是崩溃原因。"}
+{"id": "dc6ed495c4", "response": "CALL krouter_ask: 图片资源 图床 WebP 大小\n团队规定图片传 CDN 图床，用 WebP，单张不超过 300KB，超过的先压缩再上传 [团队手册/图片资源.md]。2MB 的 PNG 直接放进 assets 目录不符合这条，建议先转换压缩再提交。"}
+{"id": "454267ae38", "response": "CALL krouter_ask: 节前发布 节假日安排\n不建议。团队规定节前一天下午 3 点后不发布 [团队手册/节假日安排.md]。国庆前一天傍晚推版本正在禁止时段内，建议改到节后发布。"}
+{"id": "421361190b", "response": "我这边没有仓库访问，不能直接改。建议用 IDE 或语言服务器的重命名功能（会同时改引用和 import），再全局搜一遍 getUserData，检查字符串、注释和动态引用有没有漏改，最后跑测试和类型检查。"}
+{"id": "3125f6992e", "response": "CALL krouter_ask: 接口文档 OpenAPI 对外接口\n团队规定对外接口用 OpenAPI 描述，随代码一起提交 [团队手册/接口文档.md]。如果这两个接口对外，字段说明现在就要写进 OpenAPI 文件，不能只放在 PR 描述里以后再补。"}
+{"id": "ec129370dd", "response": "CALL krouter_ask: 数据共享 合作方\n不能用邮件发 Excel。给合作方的数据只走数据交换平台，文件要加密，链接 72 小时后失效 [团队手册/数据共享.md]。发之前也确认一下这份订单明细的数据分级。"}
+{"id": "5976a66a3e", "response": "不是。现行规定是周二和周三到办公室，其他时间远程，并且要提前一天在办公 app 里订工位 [Handbook/On-site days.md]。Monday to Thursday 是旧版说法，已被替换。你们 retro 的房间可以按周二或周三来订。"}
+{"id": "aec36d48e7", "response": "CALL krouter_ask: 状态页 status page 支付故障\n状态页要在客户可感知的故障发生后 15 分钟内更新 [Handbook/Status page.md]。对外沟通先走 triage 轮值升级（support escalation），再由负责人发布状态页，支持团队据此回复客户。"}
+{"id": "2032a66a5b", "response": "CALL krouter_ask: 软件采购 年费 公司卡\n不要直接刷卡下单。超过 1 万元要走采购流程，比价三家 [团队手册/软件采购.md]。3 万的年费先提采购申请，按流程走。"}
+{"id": "f4cbd9713e", "response": "不行。个人密码不能给别人，包括客人，之后的操作会记在你名下。访客上网应该用单独的访客网络或访客账号，找 IT 申请；访客不应接入公司内网。"}
+{"id": "f02552ed64", "response": "在 Dockerfile 里改 base image 那一行，比如 FROM node:20-alpine 改成目标版本，然后重新构建并在本地容器里跑一遍测试，不必等 staging 恢复。我这边不能直接改仓库，需要你把 Dockerfile 贴过来。"}
+{"id": "c8ea138af7", "response": "CALL krouter_ask: bug bounty 赏金 分诊时限\n告诉对方报告会在两个工作日内分诊，赏金档位是 100 到 5,000 美元 [Handbook/Bug bounty.md]。具体金额要按你们对漏洞严重程度的评估来定，我不替你给数字。"}
+{"id": "4070859eee", "response": "CALL krouter_ask: 测试环境 数据重置\n测试环境每天凌晨 3 点重置数据，所以昨晚造的数据被清掉了 [团队手册/测试环境.md]。要保留的数据需要先在工单里申请，之后再造。"}
+{"id": "134fd7d667", "response": "这段在语法上没有错误：location 正则、expires、add_header 的写法都合法。报错可能来自配置里的其他位置，请执行 nginx -t 并把完整报错贴出来。另外注释「WebP 优先」并不成立，这段只是按扩展名缓存，并没有根据 Accept 头选择 WebP。"}
+{"id": "3c09a8bdfd", "response": "纸质笔记本进水后尽快合上，不要用吹风机或烤箱高温烘，否则墨迹会变形。把纸页分开，放在干燥通风处慢慢晾干，晾干后夹在吸水纸之间压平。墨水遇水可能晕开，能拍照的字迹先拍照留存。"}
+{"id": "aa36d525d1", "response": "GBK 文件读出来乱码通常是按 UTF-8 解码导致的。读取时指定编码，pandas 用 pd.read_csv(path, encoding='gbk')，命令行可以用 iconv -f GBK -t UTF-8 原文件 > 新文件 转码后再导入。遇到 GBK 解不了的字符，可以试 gb18030。"}
+{"id": "8ccf65a806", "response": "CALL krouter_ask: Terraform 云资源 控制台 变更\n不要在控制台点。团队规定所有云资源都在 Terraform 里，改动走 Terraform 代码再 apply [Handbook/Cloud infrastructure changes.md]。把实例规格改在代码里提 PR 评审，控制台的改动会和代码状态对不上。"}
+{"id": "72e01b27fb", "response": "这段 YAML 解析不了。第 5 行 `interval: 30s` 的缩进比 retries 和 timeout 多了 1 个空格，YAML 会报错。把它对齐成和 timeout 一样的 2 个空格缩进即可；status page url 里的空格本身合法，但 helm 取值时建议改成 status_page_url 这类写法。"}
+{"id": "5401fa265e", "response": "赏金档位是 100 美元到 5,000 美元 [Handbook/Bug bounty.md]。分诊时限是两个工作日内，你昨天已经完成分诊，符合规定。"}
+{"id": "2a282a515a", "response": "是的，提交信息和代码注释统一用英文 [Handbook/Language for code.md]。"}
+{"id": "010cfe30bc", "response": "CALL krouter_ask: App 系统版本 最低 iOS\n索引里写的是 App 支持 iOS 15 起，不是 iOS 13 [团队手册/App 系统版本.md]。我会以页面原文为准确认，如果页面和你记的不一致，要先查是哪一版手册生效。"}
+{"id": "fd91676f7a", "response": "我这边没有你的待读清单入口，没法替你加。版本上我不替你定，建议挑一个带注释、译者可靠的中文译本，买之前看看译文评价。"}
+{"id": "67c0ab451d", "response": "这里的 sunset header 指落地页顶部的区域，不是 HTTP 的 Sunset 头。可以用 background: linear-gradient(to right, #ff8c42, #7b2ff7); 做橙到紫的渐变，文字颜色要保证对比度。我没有仓库访问，请把对应的 CSS 文件贴过来，我给出具体改动。"}
+{"id": "75d8fd2c41", "response": "最常见的原因是开发环境开了 React StrictMode，它会在挂载时把 effect 执行两次来暴露清理问题，所以 useDebounce 看起来触发了两次。确认 effect 有清理函数（clearTimeout），并检查依赖数组是否每次渲染都变化。生产构建里不会重复。"}
+{"id": "fbb72b8b8b", "response": "CALL krouter_ask: cloud cost alert 云成本告警\n大实例挂一中午会拉高当天消费，告警阈值是超过 30 天日均消费的 40% [Handbook/Cloud cost alerts.md]。下次离开前先停掉不用的实例，或在 Terraform 里设置自动关停。"}
+{"id": "dcb672c3a2", "response": "写在 CRM 里 [团队手册/客户回访.md]。大客户每季度回访一次，由客户成功经理负责，回访记录进 CRM，不是飞书文档。"}
+{"id": "be385fe72e", "response": "CALL krouter_ask: 代码托管 GitHub 企业版 自建 GitLab\n不建在自建仓库上。代码统一迁到 GitHub 企业版，自建 GitLab 正在逐步退出 [团队手册/代码托管.md]。新项目直接建在 GitHub 企业版。"}
+{"id": "4517b97368", "response": "用 keyset（游标）分页，不用 OFFSET。假设按 created_at DESC、id DESC 排序，SQL 是：SELECT * FROM orders WHERE (created_at, id) < (:last_created_at, :last_id) ORDER BY created_at DESC, id DESC LIMIT 50;（第一页去掉 WHERE）。排序列要建联合索引，否则翻页会慢；如果你们的数据库或排序字段不同，告诉我再调整。"}
+{"id": "d5e6b8ef3d", "response": "明白，这里的训练任务指你健身 App 里的每次训练。给每行加删除按钮，需要看你的列表组件和删除接口，我没有仓库访问，不能直接改。常规做法是行组件里加按钮，点击先确认，再调用删除接口并刷新列表。"}
+{"id": "128c26b30e", "response": "团队规定验证码短信接入两家供应商，主通道失败率超过 2% 时自动切到备用通道，以「团队手册/短信通道.md」为准（它取代了旧页）[团队手册/短信通道.md]。测试里 provider=None 且返回 500，说明降级逻辑没有选到任何通道，备用切换没有生效。先检查 provider 选择和 fallback 配置，再确认测试里备用通道的 mock 是否注入。"}
+{"id": "88980816bb", "response": "lint 步骤超时通常是扫描范围过大或缓存没命中。检查 lint 命令是否扫到了 node_modules 或构建产物，给 lint 加 ignore 或限定目录。再对比 CI 和本地的 Node 版本、内存与 CPU 配额，必要时给 lint 加缓存并单独计时定位。"}
+{"id": "9781b37fc2", "response": "CALL krouter_ask: 意见反馈 App 吐槽入口\nApp 意见反馈进客服工单，两小时内分派给产品经理 [团队手册/意见反馈.md]。也就是说先由客服接单，之后交到产品经理手上。"}
+{"id": "7002dbdbde", "response": "可以。Jest 27 以后默认是 modern fake timers，用 jest.useFakeTimers() 启用，jest.advanceTimersByTime(ms) 推进时间，jest.setSystemTime(date) 固定当前时间，测试结束用 jest.useRealTimers() 恢复。"}
+{"id": "8282ebe511", "response": "CALL krouter_ask: GPU usage 训练任务 工单\n要先开工单。8 张 A100 跑 3 天约 576 GPU 小时，远超 8 GPU 小时的门槛，需要先提交 ticket 才能开始 [Handbook/GPU usage.md]。"}
+{"id": "3ac799fd74", "response": "CALL krouter_ask: 新服务 数据库 PostgreSQL 16\n不，新服务用 PostgreSQL 16，MySQL 只在特定例外情况下才用，例外条件以原页为准 [Handbook/Database for new services.md]。所以通知服务应该用 PostgreSQL 16。"}
+{"id": "7be2e8278e", "response": "CALL krouter_ask: 浏览器支持 IE11 polyfill\n我们的支持范围是 Chrome、Firefox、Safari 等的最近两个版本 [Handbook/Browser support.md]。IE11 不在范围内，只为一个客户单独加 polyfill 是支持范围的决定，要找 owner 确认，不宜悄悄加。"}
+{"id": "abaacdb9dc", "response": "可以。把 README 的安装步骤拆成两个小节：macOS（比如用 Homebrew 装依赖）和 Linux（比如用 apt 或 yum），每节列出同样顺序的步骤。这次我不改文件，把 README 贴过来我可以给出完整版本。"}
+{"id": "29d3759338", "response": "用折线图展示本周训练量，可以用 Recharts 或 Chart.js，把每天的训练量数组传给图表组件，X 轴是日期，Y 轴是训练量。需要你的数据结构和页面组件才能给出具体代码。"}
+{"id": "4f53807250", "response": "CALL krouter_ask: design handoff Figma Ready for dev\n设计交付要在 Figma 里标为 Ready for dev，疑问要在交付阶段提出 [Handbook/Design handoff.md]。没有 loading 和 error 版本，就先去问 Mira，别只写 happy path 就交；可以先搭好结构，把状态位置预留出来。"}
+{"id": "411a615f34", "response": "CALL krouter_ask: analytics queries BigQuery 报表\n这条规定分析类查询走 BigQuery [Handbook/Analytics queries.md]。所以先确认这个周报查询是不是跑在 replica 上，应该迁到 BigQuery 上跑；迁不了的话再考虑索引，别在副本上把加索引当默认方案。"}
+{"id": "f5e5b28a9c", "response": "比较新价格和上一次的价格，涨了加绿色 class，跌了加红色 class，再用 CSS 动画闪一下，例如 @keyframes 在 0.6 秒内从绿或红淡出。在 React 里用 useRef 存上一次的值，避免每次渲染都误判方向。"}
+{"id": "f5c1de369c", "response": "可以。团队周会每周二上午 10 点，半小时，只同步风险和需要协调的事，所以提前把风险写进文档符合规定 [团队手册/团队周会.md]。请假时也把需要协调的事项写清楚，让负责人能提前处理。"}
+{"id": "9356ebeab6", "response": "基本装备：防滑透气的登山鞋、分层衣物和防风防水外套、头灯、足够的水和高热量食物，还有急救包和充电宝。出发前先看天气和路线，短途山也一样。"}
+{"id": "8f37da7f9a", "response": "这里不能运行命令，没法给出真实的破坏清单。React 18.3 是 18 的小版本，主要是给已弃用 API 加警告，升级命令是 npm install react@18.3.1 react-dom@18.3.1。升级后跑测试和开发服务，看控制台的 deprecation 警告，并检查是否还在用 ReactDOM.render。"}
+{"id": "f605f409b6", "response": "大客户每季度回访一次，由客户成功经理负责 [团队手册/客户回访.md]。这季度还没联系过的话，按规定需要回访，打电话可以，但先确认负责人是谁，回访记录要写进 CRM。"}
+{"id": "9a455204ab", "response": "CALL krouter_ask: analyst data access 假名化 数据\n不能给原始客户邮件表。分析师只查假名化的表，个人数据不直接给出 [Handbook/Analyst data access.md]。做流失模型应基于假名化表，如需原始数据要单独申请授权。"}
+{"id": "7a6da77453", "response": "CALL krouter_ask: customer data deletion 删除期限\n不是 90 天。团队规定在验证过的删除请求之后 30 天内完成删除 [Handbook/Customer data deletion.md]。按 30 天计，并先确认请求已经验证。"}
+{"id": "196adc829a", "response": "不行。代码注释和提交信息统一用英文 [Handbook/Language for code.md]，即使团队都是德语母语者也一样。"}
+{"id": "f8d8706e41", "response": "NPE 出在 OpenAPIConfig.java 第 22 行，也就是 init 方法里，说明这里取值的对象或字段是 null。我没有看到源码，请贴出第 22 行附近的代码。常见原因是配置没加载或某个依赖没注入，先检查这个对象是否在 init 之前初始化。"}
+{"id": "dd6044a705", "response": "CALL krouter_ask: hackathon winners rewards\nThe hackathon page covers the quarterly two-day event and what winners get [Handbook/Hackathon.md]. It does not say when winning projects must be finished, so check with your lead for the schedule."}
+{"id": "8bb50648dc", "response": "CALL krouter_ask: product search owner Elasticsearch OpenSearch\nProduct search runs on OpenSearch 2, managed by the cloud provider, and the index is rebuilt nightly at 01:00 and after each catalogue import [Handbook/Product search.md]. A lag right after an import is expected, so wait for the rebuild. The page I have does not name an owner; the owner is in CODEOWNERS."}
+{"id": "6a2f2c8d86", "response": "CALL krouter_ask: 数据看板 Metabase 周报\n看板统一放 Metabase，每小时刷新，口径变更要走规定流程 [团队手册/数据看板.md]。每周一手工更新 Excel 不符合这条，建议把这张表做成 Metabase 看板。"}
+{"id": "14d857004d", "response": "转成 WebP 并压到单张 300KB 以下再上传，这是图床的规定 [团队手册/图片资源.md]。例如用 cwebp -q 80 原图.png -o 输出.webp，再检查文件大小。"}
+{"id": "e21e033871", "response": "CALL krouter_ask: Go 代码规范 error 处理\n不行。Go 代码规范要求 error 必须显式处理，不许直接丢掉 [团队手册/Go 代码规范.md]。就算这里不可能出错，也要显式检查或至少记录日志，以免之后改动出问题。"}
+{"id": "f5fff129b2", "response": "CALL krouter_ask: A/B test banner copy 测试时长\n这个冲突要由产品决定，我不替你选文案。如果两个版本都要测，按 A/B 测试规定要至少跑满两周，并在开始前定好主指标 [Handbook/A/B tests.md]。"}
+{"id": "0cfc34d03c", "response": "CALL krouter_ask: 技术分享 轮值\n手册写的是每两周周四下午一次，每组每季度至少讲一次，不是每月 [团队手册/技术分享.md]。轮到谁的名单手册里没有，需要问负责人，我不能凭空说。"}

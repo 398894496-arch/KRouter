@@ -235,10 +235,13 @@ def index_topics(vault: Path, today: date | None = None) -> list[dict]:
     import recollect
     import recall_index as ri
 
+    import os
+
     today = today or date.today()
     mp = map_for(vault)
-    if not mp.is_file():
-        return []
+    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
+    if not mp.is_file() or (mp.resolve() == sample.resolve() and not os.environ.get("KROUTER_MAP")):
+        return []  # 代码目录里那份是样例，不是这个库的知识：库里没有自己的别名表就不给索引
     try:
         rows = load_rows(mp)
     except ValueError:

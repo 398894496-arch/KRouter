@@ -130,7 +130,7 @@ Cursor were batch. Codex and Cursor both have documented lifecycle hooks now, so
 | `session_hook.py` | Claude Code (plugin) | Codex (`~/.codex/hooks.json`) | Cursor (`~/.cursor/hooks.json`) | What it does |
 |---|---|---|---|---|
 | `start` | `SessionStart` | `SessionStart` → `hookSpecificOutput.additionalContext` | `sessionStart` → `additional_context` | this repository's recorded decisions, corrections first, each with its page |
-| `prompt` | `UserPromptSubmit` | `UserPromptSubmit`; prints nothing unless a page is recalled (Codex adds any output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` (no recall: it cannot add context) | a typed correction becomes a candidate; with `KROUTER_RECALL_PROMPT=1`, a page the message names comes as `additionalContext` (§3d) |
+| `prompt` | `UserPromptSubmit` | `UserPromptSubmit`; prints nothing unless a page is recalled (Codex adds any output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` (no recall: it cannot add context) | a typed correction becomes a candidate; a page the message names comes as `additionalContext` (§3d) |
 | `turn` | `Stop` | `Stop` | `stop`, prints `{}` (a `followup_message` would be sent as your next question) | `import_sessions.py --file … --local` in the background |
 | `end` | `SessionEnd`, `PreCompact` | `SessionEnd` (Codex waits at most 3 s; the import is detached) | `sessionEnd` | the same import, distilled if you said yes to that |
 
@@ -171,10 +171,25 @@ cursor` by hand with Cursor's payload it is). The hook formats follow
 Cursor's hooks documentation and are covered by `tests/test_live_hooks.py`, which also runs the installed command line
 through a shell.
 
-## 3d. Mention it and it comes to mind (`recollect.py`, off by default)
+## 3d. Mention it and it comes to mind (`recollect.py` and the standing index, on by default)
 
-The lock answers when the agent asks. This makes the vault answer when you merely mention something it knows, in the
-hook that already sees every message.
+The lock answers when the agent asks. This makes the vault answer when you merely mention something it knows, in two
+layers: the prompt hook catches a page by its name, and the host, given a standing index of what the vault knows at
+session start, catches the mentions in other words and fetches the page itself.
+
+- **The standing index** (`compile_subconscious.standing_index`, printed by `session_hook.py start`;
+  `KROUTER_RECALL_INDEX=0` off): one line per live topic of the alias table, "name / one other name: what was decided
+  〔page〕", rule pages first, then the newest of last used (`recalled.jsonl`, `queries.jsonl`) and last updated; at
+  most 60 full lines and 5,400 characters; with more topics, every topic keeps its name in one "also known" line and
+  the first ones keep full lines. Then one usage line: when the message touches any of them, even in other words,
+  fetch the one page that bears on it most before answering, with `krouter_ask`, else the route command (absolute
+  path), else by reading the file (absolute path), and cite it; a word inside pasted code or logs is not a mention;
+  otherwise do nothing and do not mention the index. The whole session-start text stays under 9,400 characters.
+- **Learning from use** (`KROUTER_RECALL_LEARN=1`, off by default): the turn hook reads the end of the transcript; a
+  page a lookup returned (or a vault file read) that the agent's answer names, and that the prompt hook had not
+  brought, is a `learn` event in `recall-learn.jsonl`; the nightly `learn_mentions` step adds one distinctive phrase
+  of the message to `90 系统文件/自动化/下意识触发词-待验证.psv` (recall only), and drops a provisional phrase the
+  agent passed over for another page.
 
 - **What counts as a mention**, most sure first: a name from the alias table, with the lock's rules (the whole
   message is the name, or the name is inside it and carries it: four or more characters once spaces and punctuation
@@ -190,20 +205,22 @@ hook that already sees every message.
   not-yet-valid and secret pages never come.
 - **Quiet**: code fences and lines that read like pasted code, logs, stack traces, diffs, commands or config are not
   matched (blocks the app attached were already dropped); a page comes once per session unless its conclusion
-  changed; ten per session at most; nothing matched, nothing printed. `KROUTER_RECALL_PROMPT=1` on, `0` off, or a
-  list of routes; `KROUTER_INJECT=0` also off.
+  changed; ten per session at most; nothing matched, nothing printed. `KROUTER_RECALL_PROMPT=0` off, or a list of
+  routes; `KROUTER_INJECT=0` also off.
 - **Seen**: each page brought is one line in `~/.local/state/krouter/recalled.jsonl` (time, app, session id, the
   sentence the phrase was in, redacted and cut to 200 characters, the phrase, the route, the page, any older page);
   with `#不记` the sentence is left empty. Outside the vault, never sent.
 - **Fast**: it reads the recall index as it is and never builds it in the hook; a detached refresh runs at most every
   ten minutes. The phrase table is compiled once and kept next to the index, keyed by each file's size and time.
-- **Per app**: Claude Code and Codex, `hookSpecificOutput.additionalContext` (Codex's documentation: added as
+- **Per app**: the index goes out at session start in all three (Cursor's `sessionStart` takes `additional_context`).
+  The prompt hook's note: Claude Code and Codex, `hookSpecificOutput.additionalContext` (Codex's documentation: added as
   developer context; checked with codex-cli 0.155.0-alpha.9.2, a throwaway `CODEX_HOME`, a local mock of the
   Responses API and `--dangerously-bypass-hook-trust`: the note arrived as a developer message right after the user's
   message, and a message that named nothing sent none). Cursor: `beforeSubmitPrompt` can only allow or block (its
   documented output is `continue` and `user_message`), so this step is not available there and is not run.
-- **Measured** (sets 32–34 in `bench/memory_honesty/HELDOUT.md`; numbers in `docs/NUMBERS.md`): quiet enough, not
-  yet useful enough to be on by default.
+- **Measured** (sets 32–36 in `bench/memory_honesty/HELDOUT.md`; numbers in `docs/NUMBERS.md`): the hook alone is
+  quiet but finds 7 of 24 mentions; with the index both hosts remember 23–24 of 24 and stay quiet on 22–23 of 24, so
+  both layers are on by default. Learning from use missed its line by one and stays off.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 

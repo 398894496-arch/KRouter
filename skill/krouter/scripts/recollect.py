@@ -25,9 +25,12 @@ else ("a sunset header banner for my photography site") fails it. Recall reads t
 in the hook: `keep_index_fresh` updates it in a detached process at most every ten minutes, and until the first build
 finishes nothing is brought.
 
-The whole thing is off by default (`DEFAULT_ON`): on set 32's held-out half (`bench/memory_honesty/HELDOUT.md`) it
-stayed quiet (1 of 24 should-be-quiet messages brought a page, no wrong or superseded page) but brought the right
-page on only 7 of 24 mentions and 4 of 12 changed rules, under the registered line.
+On by default (`DEFAULT_ON`), together with the standing index the session-start hook hands over
+(`compile_subconscious.standing_index`). Alone, on set 32's held-out half (`bench/memory_honesty/HELDOUT.md`), it
+stayed quiet (1 of 24 should-be-quiet messages brought a page, no wrong or superseded page) but brought the right page
+on only 7 of 24 mentions: people mostly say a thing in other words. With the index in front of the host (set 35), the
+two together remembered 23 or 24 of 24 mentions and 12 of 12 changed rules on held-out, with 1 or 2 of 24 quiet
+messages moving either layer, for both Haiku 5.5 and Sonnet 5.5.
 
 Never brought: a page marked superseded (or retired, rejected, …), expired, not yet valid, or secret. A mention of an
 old page brings the page that replaced it (`superseded_by`) and says an earlier page said otherwise; a page that
@@ -38,8 +41,10 @@ Not matched: code fences, and lines that read like pasted code, logs, stack trac
 already drops blocks the app attached). A message over `PROSE_MAX` characters of prose is not matched at all.
 
 Quiet: a page already brought in this session is not brought again unless its conclusion changed; at most
-`PER_SESSION` pages per session. `KROUTER_RECALL_PROMPT=1` turns it on (`0` off; a comma list such as `alias,trigger`
-picks the routes); `KROUTER_INJECT=0` turns it off too; `KROUTER_RECALL_GATE=0` drops the second key (not advised).
+`PER_SESSION` pages per session. `KROUTER_RECALL_PROMPT=0` turns the prompt hook's lookup off (a comma list such as
+`alias,trigger` picks the routes), `KROUTER_RECALL_INDEX=0` the standing index, `KROUTER_INJECT=0` both;
+`KROUTER_RECALL_GATE=0` drops the second key (not advised). `KROUTER_RECALL_LEARN=1` turns on learning from what the
+agent fetched (`learn_mentions.py`; off by default, set 36).
 
 Every page brought is written to `~/.local/state/krouter/recalled.jsonl` (`KROUTER_STATE_DIR`): time, app and session,
 the sentence (redacted, cut to 200 characters), the phrase, the route, the page. That file is what `why` and the
@@ -66,7 +71,7 @@ from krouter_redact import is_secret_page, redact  # noqa: E402
 
 ROUTES = ("alias", "trigger", "recall")
 DEFAULT_ROUTES = ("alias", "trigger", "recall")
-DEFAULT_ON = False  # 第 32 套留出没过（想起 7/24、改过主意 4/12）：默认关，KROUTER_RECALL_PROMPT=1 打开
+DEFAULT_ON = True  # 第 32 套钩子单独没过（想起 7/24）；第 35 套钩子加下意识索引两个宿主都过线：两层默认打开
 PER_PROMPT = 2
 PER_SESSION = 10
 PROSE_MAX = 2000
@@ -615,10 +620,17 @@ def no_capture(agent: str, session: str, now: bool) -> bool:
     return f.exists()
 
 
+def learn_on() -> bool:
+    """Whether the turn hook notes what the agent fetched for the nightly `learn_mentions` step (`KROUTER_RECALL_LEARN=1`;
+    off by default: set 36 did not show it works, and it keeps the latest message's words in the state folder)."""
+    return bool(routes()) and os.environ.get("KROUTER_RECALL_LEARN", "") in ("1", "on", "true", "yes")
+
+
 def remember_turn(agent: str, session: str, text: str, hits: list[dict], quiet: bool = False) -> None:
     """What this message said (redacted prose, at most 300 characters; nothing under `#不记`) and what was brought for
-    it. Overwritten every message, so only the latest one is kept; the turn hook reads it when the turn ends."""
-    if not session:
+    it. Overwritten every message, so only the latest one is kept; the turn hook reads it when the turn ends. Only
+    with `learn_on()`."""
+    if not session or not learn_on():
         return
     f = _last_file(agent, session)
     try:

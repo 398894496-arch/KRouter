@@ -21,31 +21,43 @@ is lighter, says what it changed and is English end to end on an English machine
 Obsidian optional; Codex, Cursor and Claude Desktop were tested inside the apps. 2.0 because the receipt and the
 install path change (below).
 
-### Mention it and it comes to mind (built and measured; off by default)
+### Mention it and it comes to mind (on by default)
 
-- **The prompt hook can now look up every message you send** (`KROUTER_RECALL_PROMPT=1`). Until now the lock and
-  the trigger words ran only when the agent chose to call `krouter_ask`. `session_hook.py prompt` now checks each
-  message on this machine (`recollect.py`, no model call): a name from the alias table (the lock's rules, Latin names
-  as whole words), a trigger word or a learned question, and full-text recall only when one page leads by 2.5 × or
-  more. A name match also needs a second key: recall over the whole message must not refuse it, or the page must
-  match at least four of its content words, so "a sunset header banner for my photography site" does not bring the
-  API deprecation page. When something matches, the agent gets at most two pages in that turn's context, each with
-  its conclusion, its path and a mark that it is memory, not something you said; an old page brings the page that
-  replaced it and says an earlier page said otherwise; superseded, expired and secret pages never come. Code fences
-  and lines that read like pasted code, logs, diffs or command output are not matched; a page comes once per session
-  (again if its conclusion changed), at most ten per session. When nothing matches the hook prints nothing, exactly as
-  before. Every page brought is listed in `~/.local/state/krouter/recalled.jsonl` (the sentence, redacted, the phrase,
-  the route, the page) for `why` and the viewer. Claude Code and Codex get it as `additionalContext` (checked with the
-  real Codex CLI 0.155 against a local mock model: a developer message right after yours); Cursor's
-  `beforeSubmitPrompt` cannot add context, so it does not run there.
-- **Why it is off.** Set 32 (registered before the 120 cases were split; cases written blind by Sonnet 5.5): on the
-  held-out half it stayed quiet (1 of 24 should-be-quiet messages brought a page, 0 of 6 pasted logs, no wrong page,
-  no superseded page) but brought the right page for only 7 of 24 mentions (Chinese 6 / 12, English 1 / 12) and 4 of
-  12 changed rules, under the registered line (12 / 24, 5 per language, 6 / 12). People mostly mention a thing in
-  other words than its name, and a lookup by words cannot see that. Hosts given what it brought (set 33, Haiku 5.5
-  and Sonnet 5.5, 11 cases): used it and cited the page on 10–11 / 11, and were pulled off course by a page that did
-  not fit on 0 / 11. Speed (set 34): the whole hook process takes 83–126 ms at the median and at most 144 ms at
-  p95 warm, on 110 and on 10,000 pages (62 ms with the lookup off).
+- **Two layers, both on.** The session-start hook now hands the host a standing index: one line per live topic of
+  the alias table (its name, one other name, what was decided, the page; a replaced page's row counted under the page
+  that replaced it), rule pages first, then most recently used or updated, at most 60 full lines and 5,400 characters,
+  then one line on how to fetch a page: `krouter_ask`, or the route command, or the file path, since some hosts show
+  the model no tool list. With more topics than that, every topic keeps its name in one "also known" line and the
+  first ones keep full lines (300 topics: 16 full lines and all 300 names, about 2,500 tokens). And the prompt hook
+  looks up every message on this machine (`recollect.py`, no model call): a name from the alias table (the lock's
+  rules, Latin names as whole words), a trigger word or a learned question, and full-text recall only when one page
+  leads by 2.5 × or more; a name match also needs a second key (recall over the whole message must not refuse it, or
+  the page must match at least four of its content words). The hook brings at most two pages in that turn's context,
+  each with its conclusion, its path and a mark that it is memory, not something you said; an old page brings the
+  page that replaced it and says an earlier page said otherwise; superseded, expired and secret pages never come.
+  Code fences and lines that read like pasted code, logs, diffs or command output are not matched; a page comes once
+  per session (again if its conclusion changed), at most ten per session; nothing matched, nothing printed. Every page
+  brought is listed in `~/.local/state/krouter/recalled.jsonl` for `why` and the viewer. `KROUTER_RECALL_PROMPT=0`,
+  `KROUTER_RECALL_INDEX=0` or `KROUTER_INJECT=0` turn them off.
+- **Measured.** The hook alone (set 32, cases written blind by Sonnet 5.5): quiet (1 of 24 should-be-quiet messages
+  brought a page, no wrong or superseded page) but only 7 of 24 mentions, because people mostly say a thing in other
+  words. Both layers (set 35, 120 new cases, two thirds of the mentions without the page's names; held-out, run once
+  per host): **Sonnet 5.5 remembered 24 / 24 mentions and 12 / 12 changed rules, 1 of 24 quiet messages moved either
+  layer, no wrong page; Haiku 5.5 23 / 24, 12 / 12, 2 of 24, no wrong page.** The hook found 7 of the 24, the host
+  the rest from the index. With 240 unrelated topics in the index (development): Sonnet 23 / 24, Haiku 21 / 24, no
+  noisier. Hosts given a page the hook brought used it and cited it 10–11 of 11 times and were not pulled off course
+  by a page that did not fit (set 33). The whole prompt hook takes 83–126 ms at the median, at most 144 ms at p95
+  warm, on 110 and on 10,000 pages (62 ms with the lookup off). Claude Code and Codex get the hook's note as
+  `additionalContext` (checked with the real Codex CLI 0.155 against a local mock model: a developer message right
+  after yours); Cursor gets the index at session start but its `beforeSubmitPrompt` cannot add context, so the
+  prompt hook does not run there.
+- **Learning how you say things (experimental, off).** With `KROUTER_RECALL_LEARN=1` the turn hook notes a page the
+  agent fetched and used after the prompt hook said nothing, and the nightly `learn_mentions` step adds the message's
+  most distinctive phrase as a provisional trigger word (`下意识触发词-待验证.psv`, recall only; a phrase the agent
+  later passes over is dropped). Set 36: after learning, the hook alone brought the right page for 6 of 13 later
+  messages that reused a team expression (English 5 / 8, Chinese 1 / 5) and quiet messages were no louder (1 of 32
+  before and after); the line was 7 of 13, so it stays off. Chinese phrases are cut in the wrong places without word
+  segmentation.
 
 ### Lessons that carry over to other tasks
 

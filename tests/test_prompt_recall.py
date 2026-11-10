@@ -3,7 +3,7 @@
 The contract since 2.0: when the message names nothing in the vault the hook prints nothing at all (Claude Code and
 Codex add any output to the context, so silence is the default); when it names a page it prints one JSON object,
 `hookSpecificOutput.additionalContext`, holding at most two pages, each with its conclusion, its path and a mark that
-this is memory, not the user's words. Off by default (set 32 failed its registered line on recall)."""
+this is memory, not the user's words. On by default since set 35 (the hook plus the standing index passed with both hosts); `KROUTER_RECALL_PROMPT=0` off."""
 
 from __future__ import annotations
 
@@ -93,9 +93,10 @@ def test_nothing_named_prints_nothing(box):
     assert _say(box, "帮我把这个函数改成异步的，顺便加个超时") == ""
 
 
-def test_off_by_default_and_by_switch(box):
+def test_on_by_default_and_off_by_switch(box):
+    # 第 35 套两个宿主都过线：钩子和下意识索引默认打开；开关照样能关
     env = {k: v for k, v in box["env"].items() if k != "KROUTER_RECALL_PROMPT"}
-    assert _say(box, "测试环境的数据有没有办法留下来，我下周要演示", env=env) == ""
+    assert "团队手册/测试环境.md" in _note(_say(box, "测试环境的数据有没有办法留下来，我下周要演示", env=env, sid="d1"))
     assert _say(box, "测试环境的数据有没有办法留下来，我下周要演示", env={**env, "KROUTER_RECALL_PROMPT": "0"}) == ""
     assert _say(box, "测试环境的数据有没有办法留下来，我下周要演示", env={**box["env"], "KROUTER_INJECT": "0"}) == ""
 
@@ -266,6 +267,7 @@ def _transcript(path: Path, prompt_text: str, tool_result: str, answer: str) -> 
 
 
 def test_a_page_the_agent_fetched_and_used_after_the_hook_said_nothing_is_learned(box):
+    box["env"]["KROUTER_RECALL_LEARN"] = "1"  # 第 36 套没过线：默认关
     said = "演示前那台机器的数据会不会被清掉，老秦说夜里会洗一遍"
     assert _say(box, said, sid="L1") == ""  # 钩子没认出来
     t = box["tmp"] / "t.jsonl"
@@ -284,6 +286,7 @@ def test_a_page_the_agent_fetched_and_used_after_the_hook_said_nothing_is_learne
 
 
 def test_nothing_is_learned_when_the_agent_did_not_use_the_page(box):
+    box["env"]["KROUTER_RECALL_LEARN"] = "1"
     said = "演示前那台机器的数据会不会被清掉"
     _say(box, said, sid="L2")
     t = box["tmp"] / "t2.jsonl"
@@ -309,3 +312,9 @@ def test_learned_phrases_skip_everyday_words_and_other_pages_names(box):
     picks = learn_mentions.pick(box["vault"], "帮我把这个函数改成异步的，顺便看下 GitLab 那边", "团队手册/测试环境.md")
     assert all("GitLab" not in p for p in picks)  # 别的页的名字不能学给这一页
     assert learn_mentions.pick(box["vault"], "好的谢谢，那就这样吧", "团队手册/测试环境.md") == []
+
+
+def test_learning_is_off_by_default_and_keeps_no_words(box):
+    said = "演示前那台机器的数据会不会被清掉"
+    _say(box, said, sid="L3")
+    assert not list((box["state"] / "recalled").glob("*.last.json")) if (box["state"] / "recalled").exists() else True

@@ -27,6 +27,12 @@ experience card as one subject-free line, at most 30, and how to use them: the h
 from other tasks with their card id, only when the task's situation is the same, and says nothing otherwise. That
 needs no import consent (it only reads the vault).
 
+`start` also hands over the standing index (`compile_subconscious.standing_index`, on by default, `KROUTER_RECALL_INDEX=0`
+off): one line per live topic of the alias table, then how to fetch a page (with `krouter_ask`, the route command or the
+file path, since some hosts show the model no tool list). The host reads it and fetches the page itself when your
+message touches one of them in other words; the prompt hook (below) brings it when you use its name. The whole
+session-start text stays under 9,400 characters (Claude Code shows only a preview above 10,000).
+
 `session_hook.py prompt` (UserPromptSubmit): when what you just typed reads like a correction ("改成 B", "以后一律",
 "锁死", "from now on", "that's wrong"), it appends what you typed, redacted and cut to 300 characters, to the day's
 `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional; the next distill of that session settles it on its own (`corrections.py`). Local pattern match
@@ -34,8 +40,8 @@ only, no model call, nothing sent; a rhetorical question ("不是吗", "对不�
 before you said yes to importing, for a prompt over 1500 characters, under a KRouter model call (`KROUTER_IN_DISTILL`),
 or in a session marked `#不记`.
 
-With `KROUTER_RECALL_PROMPT=1` (off by default: set 32 in `bench/memory_honesty/HELDOUT.md`) `prompt` also looks the
-message up on this machine (`recollect.py`: the alias table, the trigger words, full-text recall only with a wide
+`prompt` also looks the message up on this machine (on by default since set 35 in `bench/memory_honesty/HELDOUT.md`;
+`KROUTER_RECALL_PROMPT=0` turns it off) (`recollect.py`: the alias table, the trigger words, full-text recall only with a wide
 margin; no model call) and, when it names a page, prints that page's conclusion and path as context marked as memory,
 at most two pages, each at most once per session. Nothing matched, nothing printed: exactly as before. Pasted code and
 logs are not matched; superseded pages never come; what was brought is listed in `recalled.jsonl` in the state folder.
@@ -434,7 +440,7 @@ def learn_from_turn(payload: dict, agent: str) -> None:
 
         transcript = str(payload.get("transcript_path") or "")
         raw = vault_path()
-        if os.environ.get("KROUTER_IN_DISTILL") or not recollect.routes() or not transcript or not raw:
+        if os.environ.get("KROUTER_IN_DISTILL") or not recollect.learn_on() or not transcript or not raw:
             return
         recollect.capture_turn(Path(raw).expanduser(), agent, str(payload.get("session_id") or ""), Path(transcript))
     except Exception as exc:  # noqa: BLE001
