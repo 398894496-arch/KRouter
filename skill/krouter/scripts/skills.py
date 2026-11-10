@@ -65,7 +65,7 @@ from krouter_redact import redact  # noqa: E402
 
 FOLDER = ri.SKILLS_DIR  # 02 经验与方法/技能
 TYPE = "krouter-skill"
-DEFAULT_ON = False  # 第 24、25 套过线后再打开；见 docs/SKILLS.md
+DEFAULT_ON = True  # 第 24、25 套留出部分过线（2026-11-10）：库里有技能就列出、给 krouter_skill、夜间起草；KROUTER_SKILLS=0 关
 
 # 门槛（转正、撤回在第 26 套开发部分上定，见 bench/skills/README.md）
 DRAFT_EVIDENCE = 3    # 一张卡被采纳 + 又遇到合计这么多次，就可以单独长成技能

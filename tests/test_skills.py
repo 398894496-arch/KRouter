@@ -383,3 +383,14 @@ def test_the_bench_scores_drafts_through_the_codes_own_checks(tmp_path):
         drafts, _ = skills.parse(reply, {c["id"]: c for c in pool}, {c["id"] for c in singles}, covered)
     assert drafts and set(drafts[0]["cards"]) == {ids["a"], ids["b"]} and not singles
     assert bench.called('CALL krouter_skill {"id": "Sca77"}') == "Sca77" and bench.called("好的，我们先看看") == ""
+
+
+def test_on_by_default_since_sets_24_and_25_and_off_with_either_switch(monkeypatch):
+    for k in ("KROUTER_SKILLS", "KROUTER_EXPERIENCE"):
+        monkeypatch.delenv(k, raising=False)
+    assert skills.DEFAULT_ON and skills.on()
+    monkeypatch.setenv("KROUTER_SKILLS", "0")
+    assert not skills.on()
+    monkeypatch.setenv("KROUTER_SKILLS", "1")
+    monkeypatch.setenv("KROUTER_EXPERIENCE", "0")
+    assert not skills.on()

@@ -23,6 +23,23 @@ install path change (below).
 
 ### Lessons that carry over to other tasks
 
+- **Experience that keeps coming back grows into a skill.** The nightly run drafts a skill (a Markdown page: a name,
+  when to use it, numbered steps, which cards and sessions it came from) from a card adopted or seen again 3 times, or
+  from several cards on the same kind of situation; one model call at most, through the host lane, and only when the
+  cards changed (no lane: skipped, and the nightly report says so). Drafts are listed at session start apart from the
+  facts and marked as drafts; a draft adopted twice becomes a skill, one offered 4 times or 45 days with no adoption is
+  withdrawn, each change one commit (`skills.py undo <run>`), and the nightly report lists what was drafted, promoted
+  and withdrawn with the counts. The host gets names and "when to use" only and fetches the steps with the new MCP tool
+  `krouter_skill`; nothing is written into any app's configuration, and `skills.py export --app claude|codex|cursor`
+  does that only when you run it. On by default when the vault has skills (`KROUTER_SKILLS=0` off). Held-out (sets
+  24–26, registered first, material by fresh Sonnet 5.5 subagents): **the right draft in 16 of 16 scenarios, all 16
+  judged faithful and subject-free, no draft in 16 that should get none; the right skill fetched and followed on 12 of
+  12 tasks it fits, nothing said on 12 it does not**; follow-ups recorded as adopted 4 of 5, falsely 0 of 13. The
+  adoption cues were widened on development to get there ("已经把…发给他了", "the fan is quiet again"), which also
+  applies to experience cards. `docs/SKILLS.md`, `bench/skills/`.
+- **An English vault's session pages say Q and A.** Imported session pages in an English vault now label turns
+  `**Q**` / `**A**` under `## Excerpt` instead of the Chinese 问 / 答 / 摘录; every parser reads both, so existing pages
+  and Chinese vaults are unchanged.
 - **Experience cards are on by default when your vault has some.** The digest at session start, the use records and
   `krouter_learn` now default on (`KROUTER_EXPERIENCE=0` turns them off; extraction through the model lane stays
   opt-in). Cards no longer carry `when` phrases; the agent names the session's subject and a lesson that still uses it
