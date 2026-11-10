@@ -812,3 +812,27 @@ no-lesson ≤ 1 / 8). Run once. If it passes, `experience.DEFAULT_ON` is set.
 |---|---|
 | 2026-11-10 | Registered (`0eea66c`). |
 | 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 1 of Sonnet's calls refused and rewritten once, none of Haiku's). **Both hosts together: lesson sessions with a card 15 / 16 (bar ≥ 12); of 15 cards on lesson sessions, judged faithful 15 = 100% (≥ 90%), judged subject-free 15 = 100% (≥ 90%); no-lesson sessions with a card 0 / 8 (≤ 1); duplicates written 2 / 8 (bar ≤ 1). Not passed**, on duplicates. Both duplicate cards are on one session (N09), written as a duplicate of C06 ("before an action you cannot undo, keep a copy you can restore"); both hosts drew a different lesson from it ("delete what a tool keeps a record of through that tool, so the record and the files stay in step"), and the code's same-lesson check, lexical, did not match them to C06. Read afterwards, not part of the score: whether that session's lesson is C06's is arguable. `experience.DEFAULT_ON` stays off. |
+
+## Set 23: a repeated lesson is recorded on the old card, not written again (registered 2026-11-10, before any host was run on it)
+
+**Why.** Set 21 missed only on duplicates (2 of 8 sessions got a new card), both on one session whose duplicate label
+was arguable. Changes since, made without a development run (calls are short): when the digest already has the lesson,
+the host names that line's id (`same_as`) and the old card gets an `again` record, which counts in the digest's order
+like an adoption; the code's lexical same-lesson check records `again` too, as a fallback; nightly lists near-duplicate
+cards to merge by hand.
+
+**Sessions.** 16 new ones by Sonnet 5.5 in a fresh subagent, same kinds and counts as set 21; for each duplicate the
+writer also says which stored lesson it repeats and why (`dup_reason`), and was asked to make each duplicate teach that
+lesson and nothing else worth recording. 7 to 8 turns each, shorter than the 8 to 14 asked for. Counts only read.
+`bench/transfer/set23_sessions.jsonl`, SHA-256 `2d7d4c15…c65c2ef`.
+
+**Duplicate labels reviewed, rule fixed now.** Haiku 5.5, not the writer, reads each duplicate session with the stored
+lesson and the writer's reason and answers whether the session's lesson is the same (yes / no / unclear;
+`extract.py review`). A duplicate session the reviewer does not answer "yes" for is reported on its own and left out of
+the duplicates denominator; nothing else is left out.
+
+**Run, judging and bar:** as set 21 (one retry of a refused call; the other host judges faithfulness and
+subject-freedom; lesson sessions with a card ≥ 12 / 16, judged faithful ≥ 90%, judged subject-free ≥ 90%, no-lesson
+sessions with a card ≤ 1 / 8), and duplicates: at most 1 new card over the confirmed duplicate sessions of both hosts.
+Also reported: how many duplicates were linked to the right card with `same_as`. Run once. If it passes,
+`experience.DEFAULT_ON` is set.
