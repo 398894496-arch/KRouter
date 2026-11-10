@@ -225,7 +225,8 @@ def score24(args) -> None:
                 src = "\n".join(f"- [{c}] " + skills._card_line(by_id[c], used, "en").split("] ", 1)[1] for c in d["cards"])
                 judge_rows.append({"id": jid, "prompt": JUDGE24.format(cards=src, name=d["name"], use_when=d["use_when"],
                                                                        steps="\n".join(f"{i}. {x}" for i, x in enumerate(d["steps"], 1)))})
-                if should and right:
+                is_right = any(len(set(d["cards"]) & g) >= min(2, len(g)) and set(d["cards"]) <= g for g in gold)
+                if should and is_right:  # 登记的是「对的草稿」：同一场景里另外带了别的卡的那份不算进来
                     tally["drafts_on_should"] += 1
                     v = verdicts.get(jid)
                     if v:
