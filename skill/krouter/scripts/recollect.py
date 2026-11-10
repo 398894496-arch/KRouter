@@ -219,11 +219,57 @@ def _trigger_files(vault: Path) -> list[Path]:
     return sorted(system.rglob(TRIGGER_GLOB)) if system.is_dir() else []
 
 
+def _sources(vault: Path) -> list[Path]:
+    mp = map_for(vault)
+    return ([mp] if mp.is_file() else []) + _trigger_files(vault)
+
+
+def _entries_cache(vault: Path) -> Path:
+    """Next to the recall index (`recall_index.cache_path`, same folder and key), without importing it."""
+    base = Path(os.environ.get("KROUTER_CACHE_DIR") or Path.home() / ".cache" / "krouter")
+    return base / f"mentions-{hashlib.sha1(str(vault.resolve()).encode('utf-8')).hexdigest()[:12]}.json"
+
+
 def entries(vault: Path) -> list[dict]:
-    """Every phrase that can bring a page: alias rows (with their anchor) and trigger lines. Parsed once per process."""
+    """Every phrase that can bring a page: alias rows (with their anchor) and trigger lines, normalised. Compiled once
+    and kept next to the recall index, keyed by each source file's size and modification time, so a message does not
+    re-read a 10,000-line trigger file."""
     key = str(vault)
     if key in _ENTRIES:
         return _ENTRIES[key]
+    files = _sources(vault)
+    stamp = []
+    for f in files:
+        try:
+            st = f.stat()
+            stamp.append([str(f), st.st_mtime_ns, st.st_size])
+        except OSError:
+            pass
+    cache = _entries_cache(vault)
+    try:
+        got = json.loads(cache.read_text(encoding="utf-8"))
+        if got.get("v") == ENTRIES_VERSION and got.get("stamp") == stamp:
+            _ENTRIES[key] = got["entries"]
+            return got["entries"]
+    except (OSError, ValueError, AttributeError):
+        pass
+    out = _compile(vault, files)
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        tmp = cache.with_name(cache.name + f".{os.getpid()}.tmp")
+        tmp.write_text(json.dumps({"v": ENTRIES_VERSION, "stamp": stamp, "entries": out}, ensure_ascii=False),
+                       encoding="utf-8")
+        os.replace(tmp, cache)
+    except OSError:
+        pass
+    _ENTRIES[key] = out
+    return out
+
+
+ENTRIES_VERSION = 1
+
+
+def _compile(vault: Path, files: list[Path]) -> list[dict]:
     out: list[dict] = []
     mp = map_for(vault)
     if mp.is_file():
@@ -236,7 +282,9 @@ def entries(vault: Path) -> list[dict]:
                 a = norm(alias)
                 if a:
                     out.append({"route": "alias", "a": a, "word": alias, "rel": source, "anchor": anchor, "id": case_id})
-    for f in _trigger_files(vault):
+    for f in files:
+        if f == mp:
+            continue
         learned = LEARNED_MARK in f.name
         try:
             lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -251,7 +299,6 @@ def entries(vault: Path) -> list[dict]:
                 if a and (not learned or len(a) >= 6):
                     out.append({"route": "trigger", "a": a, "word": w.strip(), "rel": rel, "anchor": "",
                                 "learned": learned})
-    _ENTRIES[key] = out
     return out
 
 
@@ -395,15 +442,10 @@ def recollect(vault: Path, text: str, use: tuple[str, ...] | None = None, today:
         return []
     found: list[dict] = []
     for e in entries(vault):
-        if e["route"] not in use:
+        if e["a"] not in s or e["route"] not in use or not (e.get("learned") or carries(e["a"], s)):
             continue
-        if e.get("learned"):
-            ok = e["a"] in s and spans(e["a"], s, cuts)
-        else:
-            ok = carries(e["a"], s) and spans(e["a"], s, cuts)
-        if ok:
-            for sp in spans(e["a"], s, cuts):
-                found.append({**e, "span": sp})
+        for sp in spans(e["a"], s, cuts):
+            found.append({**e, "span": sp})
     hits = _choose(vault, found, today)
     res = None
     if hits and GATE:

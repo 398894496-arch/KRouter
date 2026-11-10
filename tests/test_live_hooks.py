@@ -119,7 +119,8 @@ def test_codex_session_start_gets_the_projects_decisions_in_codex_format(box):
 
 
 def test_codex_prompt_hook_prints_nothing_and_notes_the_correction_as_codex(box):
-    # Codex 把 UserPromptSubmit 的纯文本输出加进上下文：这个钩子一个字都不能打
+    # Codex 把 UserPromptSubmit 的任何输出都加进上下文。2.0 起的约定：没提到库里的页（这里库里没有 pnpm 的页）
+    # 就一个字不打；提到了才打一段带标记的 JSON（hookSpecificOutput.additionalContext），见 tests/test_prompt_recall.py
     res = _hook(box["env"], "prompt", "codex", {"session_id": "019a7f00-aaaa", "cwd": str(box["work"]),
                                                 "prompt": "以后一律用 pnpm，不要再用 npm", "transcript_path": None})
     assert res.returncode == 0 and res.stdout == ""

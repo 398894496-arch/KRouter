@@ -37,7 +37,9 @@ def _say(box: dict, text: str, env: dict | None = None, transcript: Path | None 
     res = subprocess.run([sys.executable, str(HOOK), "prompt"], input=json.dumps(payload), env=env or box["env"],
                          capture_output=True, text=True, timeout=60)
     assert res.returncode == 0, res.stderr
-    assert res.stdout == ""  # UserPromptSubmit 的输出会进上下文：记纠正不该往会话里塞东西
+    # UserPromptSubmit 的输出会进上下文。2.0 起的约定：这句话没提到库里的页就一个字不输出（这里的库是空的，
+    # 想起来的东西也默认关着）；提到了才输出一段带标记的 JSON，见 tests/test_prompt_recall.py。记纠正本身从不输出
+    assert res.stdout == ""
     return res
 
 

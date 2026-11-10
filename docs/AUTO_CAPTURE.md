@@ -130,7 +130,7 @@ Cursor were batch. Codex and Cursor both have documented lifecycle hooks now, so
 | `session_hook.py` | Claude Code (plugin) | Codex (`~/.codex/hooks.json`) | Cursor (`~/.cursor/hooks.json`) | What it does |
 |---|---|---|---|---|
 | `start` | `SessionStart` | `SessionStart` → `hookSpecificOutput.additionalContext` | `sessionStart` → `additional_context` | this repository's recorded decisions, corrections first, each with its page |
-| `prompt` | `UserPromptSubmit` | `UserPromptSubmit`, prints nothing (Codex adds plain output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` | a typed correction becomes a candidate |
+| `prompt` | `UserPromptSubmit` | `UserPromptSubmit`; prints nothing unless a page is recalled (Codex adds any output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` (no recall: it cannot add context) | a typed correction becomes a candidate; with `KROUTER_RECALL_PROMPT=1`, a page the message names comes as `additionalContext` (§3d) |
 | `turn` | `Stop` | `Stop` | `stop`, prints `{}` (a `followup_message` would be sent as your next question) | `import_sessions.py --file … --local` in the background |
 | `end` | `SessionEnd`, `PreCompact` | `SessionEnd` (Codex waits at most 3 s; the import is detached) | `sessionEnd` | the same import, distilled if you said yes to that |
 
@@ -170,6 +170,40 @@ run; `beforeSubmitPrompt` did not run, so "以后一律用 pnpm" was not noted t
 cursor` by hand with Cursor's payload it is). The hook formats follow
 Cursor's hooks documentation and are covered by `tests/test_live_hooks.py`, which also runs the installed command line
 through a shell.
+
+## 3d. Mention it and it comes to mind (`recollect.py`, off by default)
+
+The lock answers when the agent asks. This makes the vault answer when you merely mention something it knows, in the
+hook that already sees every message.
+
+- **What counts as a mention**, most sure first: a name from the alias table, with the lock's rules (the whole
+  message is the name, or the name is inside it and carries it: four or more characters once spaces and punctuation
+  are dropped, or half the message; a Latin name only as whole words; a phrase two pages claim equally brings
+  neither); a trigger word from `下意识触发词*.psv`, or a question the nightly step learned, repeated; full-text recall
+  at `medium`/`high` confidence with the top page at least 2.5 × the second, never a log page. A name or trigger also
+  needs a second key from recall over the whole message (it does not refuse, or the page matches at least four
+  content words).
+- **What comes**: at most two pages, each with its conclusion (`how`, else the alias anchor, else the page's first
+  rule line), its path, the phrase and the route, under a line that says it is memory and not the user's words; up to
+  two linked pages as titles only. A replaced page brings the page that replaced it (`superseded_by`) and names the
+  old one; a page that `supersedes` another says so; a later "⚠ 已改" line is quoted. Superseded, retired, expired,
+  not-yet-valid and secret pages never come.
+- **Quiet**: code fences and lines that read like pasted code, logs, stack traces, diffs, commands or config are not
+  matched (blocks the app attached were already dropped); a page comes once per session unless its conclusion
+  changed; ten per session at most; nothing matched, nothing printed. `KROUTER_RECALL_PROMPT=1` on, `0` off, or a
+  list of routes; `KROUTER_INJECT=0` also off.
+- **Seen**: each page brought is one line in `~/.local/state/krouter/recalled.jsonl` (time, app, session id, the
+  sentence the phrase was in, redacted and cut to 200 characters, the phrase, the route, the page, any older page);
+  with `#不记` the sentence is left empty. Outside the vault, never sent.
+- **Fast**: it reads the recall index as it is and never builds it in the hook; a detached refresh runs at most every
+  ten minutes. The phrase table is compiled once and kept next to the index, keyed by each file's size and time.
+- **Per app**: Claude Code and Codex, `hookSpecificOutput.additionalContext` (Codex's documentation: added as
+  developer context; checked with codex-cli 0.155.0-alpha.9.2, a throwaway `CODEX_HOME`, a local mock of the
+  Responses API and `--dangerously-bypass-hook-trust`: the note arrived as a developer message right after the user's
+  message, and a message that named nothing sent none). Cursor: `beforeSubmitPrompt` can only allow or block (its
+  documented output is `continue` and `user_message`), so this step is not available there and is not run.
+- **Measured** (sets 32–34 in `bench/memory_honesty/HELDOUT.md`; numbers in `docs/NUMBERS.md`): quiet enough, not
+  yet useful enough to be on by default.
 
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 
@@ -249,7 +283,7 @@ put the old answer first. Now the agent makes it hold in its own turn, with the 
 - Refused when the old sentence is not on the named page, or the page is a system page, a secret page or outside the
   vault: nothing is superseded on a guess.
 - The MCP server's instructions ask the agent to call it in the turn the user corrects something. The prompt hook
-  still prints nothing (`tests/test_correction_capture.py`); the candidate it writes is settled either way.
+  prints nothing for a correction (`tests/test_correction_capture.py`; it prints only a recalled page, §3d); the candidate it writes is settled either way.
 
 Measured: `tests/test_correct_now.py` puts "本地开发数据库用 Postgres 16" on a page, asks "本地开发用什么数据库" (that
 page first), calls `krouter_correct`, and asks again: the old page is no longer first and the first page holds the new

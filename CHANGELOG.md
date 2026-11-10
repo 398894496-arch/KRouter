@@ -21,6 +21,31 @@ is lighter, says what it changed and is English end to end on an English machine
 Obsidian optional; Codex, Cursor and Claude Desktop were tested inside the apps. 2.0 because the receipt and the
 install path change (below).
 
+### Mention it and it comes to mind (built and measured; off by default)
+
+- **The prompt hook can now look up every message you send** (`KROUTER_RECALL_PROMPT=1`). Until now the lock and
+  the trigger words ran only when the agent chose to call `krouter_ask`. `session_hook.py prompt` now checks each
+  message on this machine (`recollect.py`, no model call): a name from the alias table (the lock's rules, Latin names
+  as whole words), a trigger word or a learned question, and full-text recall only when one page leads by 2.5 × or
+  more. A name match also needs a second key: recall over the whole message must not refuse it, or the page must
+  match at least four of its content words, so "a sunset header banner for my photography site" does not bring the
+  API deprecation page. When something matches, the agent gets at most two pages in that turn's context, each with
+  its conclusion, its path and a mark that it is memory, not something you said; an old page brings the page that
+  replaced it and says an earlier page said otherwise; superseded, expired and secret pages never come. Code fences
+  and lines that read like pasted code, logs, diffs or command output are not matched; a page comes once per session
+  (again if its conclusion changed), at most ten per session. When nothing matches the hook prints nothing, exactly as
+  before. Every page brought is listed in `~/.local/state/krouter/recalled.jsonl` (the sentence, redacted, the phrase,
+  the route, the page) for `why` and the viewer. Claude Code and Codex get it as `additionalContext` (checked with the
+  real Codex CLI 0.155 against a local mock model: a developer message right after yours); Cursor's
+  `beforeSubmitPrompt` cannot add context, so it does not run there.
+- **Why it is off.** Set 32 (registered before the 120 cases were split; cases written blind by Sonnet 5.5): on the
+  held-out half it stayed quiet (1 of 24 should-be-quiet messages brought a page, 0 of 6 pasted logs, no wrong page,
+  no superseded page) but brought the right page for only 7 of 24 mentions (Chinese 6 / 12, English 1 / 12) and 4 of
+  12 changed rules, under the registered line (12 / 24, 5 per language, 6 / 12). People mostly mention a thing in
+  other words than its name, and a lookup by words cannot see that. Hosts given what it brought (set 33, Haiku 5.5
+  and Sonnet 5.5, 11 cases): used it and cited the page on 10–11 / 11, and were pulled off course by a page that did
+  not fit on 0 / 11. Speed (set 34) in `docs/NUMBERS.md`.
+
 ### Lessons that carry over to other tasks
 
 - **Experience cards are on by default when your vault has some.** The digest at session start, the use records and
