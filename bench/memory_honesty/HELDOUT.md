@@ -529,6 +529,47 @@ unchanged), to use fewer agents. (3) One *nothing* judge agent wrote its verdict
 random (7 yes, 1 no) were read against the benchmark's answers afterwards and all eight stood: a spot check, not a
 second judge.
 
+## Set 13: can the refusal gate refuse more, without losing answers? (registered 2026-11-09, after the development analysis below and before any held-out half was opened)
+
+**Why.** The README's "refuses 3 of 30 LongMemEval questions that have no answer" is quoted as a gap. Two things in it
+are stale or mixed up: 3 of 30 is KRouter 1.1.1 (set 7); the gate shipped since the absent-name rule (`fix/named-absent`)
+refuses 9 of 30 (set 7's log), and set 11's retrieval was that 9. And it is a *retrieval* number (the cited-pages
+list is empty); the benchmark's own question is whether the *answer* says the information is not there, which
+set 11 and 12 measured: 29 of 30, for KRouter and for plain BM25 alike, and 30 of 30 when the reader is given nothing.
+This set asks the narrower product question: can the gate itself be made to refuse more of them, without refusing
+questions it can answer?
+
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 30 `_abs` questions stay a development set (set 7 amendment: they
+were read question by question and the gate was tuned on them once already, so no abstention number from them is a
+test). The 470 answerable questions are split by `lme.split_of` (seed 20261110, `random.Random.sample` of the sorted
+ids): 235 *dev*, 235 *held out*. Held-out unanswerable questions come from two places no rule is chosen on: (a) the
+*held-out half with its answer sessions removed* (`lme.make_ablated`: every page the authors label as an answer session
+is deleted from the question's vault, so nothing can answer it; labelled by the authors, no model; easier than the real
+`_abs`, whose topical sessions stay in the vault), and (b) LoCoMo category 5 (set 10; KRouter's 37 of 446 there was an
+aggregate seen once, nothing was tuned on it).
+
+**Pass bar, fixed before any rule is chosen.** A candidate rule ("also refuse when ...") is kept only if, on the dev half,
+it loses at most 1 point of the answerable questions' evidence-cited rate (at most 2 of 235) and refuses clearly more
+of the real `_abs` than the 9 of 30 now (a gain of 5 or more of the 21 that are answered). Only then is the held-out
+half run, once, for that one rule: held-out answerable evidence cited must not fall by more than 1 point (of 235) and
+refusals on the held-out ablated vaults and on LoCoMo category 5 must rise. If no rule passes on dev, the held-out
+half is not opened and the report says so. No model is called, as for the reader-free sets.
+
+**Development analysis, said as it happened (before this registration, on dev data only).** Features per question for
+the gate shipped at `9d73bd5`: top score, gap to the second page, strong-match count, the share of the question's idf
+mass found on the best page, question words that no page contains, and a few more (`bench/longmemeval/gate_study.py`).
+One- and two-signal rules over a threshold grid, scored on: the 30 `_abs`, the dev half's answers the gate now gets
+right (225 of 235), and the dev half with answer sessions removed. The held-out half was not read; the unchanged
+gate's refusal rate on all 470 ablated vaults was counted (the product is not changed by this set, so that count tunes
+nothing). The same script reproduces the numbers below.
+
+### Log, set 13
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Gate at `9d73bd5`, unchanged: 9 of 30 `_abs` refused, 14 of 470 answerable refused, evidence cited 437 of 470 (reproduces set 11's retrieval). On the answer-sessions-removed vaults: **220 of 470 refused** (dev 103 of 235, held-out 117 of 235). For the 30 `_abs`, the labelled "answer" sessions are in the vault and the best page is one of them for 22 of 30: these questions ask for a detail a related session does not give. |
+| 2026-11-09 | Dev search, 49 288 rules: **no rule passes.** Within the 1-point budget (at most 2 of 235 answers lost) the best rule refuses 2 more of the 21 real `_abs` that are answered (in-sample, so an upper bound); at 5 lost (2.1 points) it refuses 5 more. Share of the question's idf mass on the best page, refuse below 0.40: 11 of 30 `_abs`, 17 answers lost; below 0.55: 18 of 30, 53 lost. Signals that carry the near-miss (best-page coverage, missing words, gap to the second page) separate the real `_abs` from answerable questions no better than chance (AUC 0.46–0.54: coverage 0.54, missing words 0.53 and 0.46, among the 21 still answered and the 225 right); the ones that do separate them (top score 0.70, strong-match count 0.72, short questions 0.68; gap to the second page 0.62) are what the gate already uses. The held-out half and LoCoMo were not opened; nothing in the product changed. |
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
