@@ -279,7 +279,7 @@ def test_host_written_card_needs_no_model_and_reads_back_in_english(tmp_path):
     assert card["lesson"].startswith("When a change") and len(card["when"]) == 2
     d = experience.digest(vault)
     assert d.startswith("KRouter experience digest") and "How to use:" in d
-    assert f"- a change has no effect → first check that the system reads the copy you changed [{card['id']}]" in d
+    assert f"- When a change has no effect, first check that the system reads the copy you changed [{card['id']}]" in d
     assert experience.learn(vault, EN_CARD, "x") == (None, "not written: a card with the same lesson is already there")
     assert experience.learn(vault, {**EN_CARD, "result": ""}, "x")[0] is None
 

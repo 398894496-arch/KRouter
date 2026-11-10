@@ -146,7 +146,7 @@ HEAD = {
     "zh": ("KRouter 经验摘要：别的任务里攒下的经验，不是这个项目的事实，也不保证对。每行是「处境 → 做法〔编号〕」，"
            "卡片在「{folder}」，编号就是卡里的 card_id 或文件名。"),
     "en": ("KRouter experience digest: lessons collected on other tasks; not facts about this project, and not "
-           "guaranteed right. Each line is \"situation → what to do [id]\"; the cards are in \"{folder}\", and the id "
+           "guaranteed right. Each line is \"When <situation>, <what to do> [id]\"; the cards are in \"{folder}\", and the id "
            "is the card's card_id or file name."),
 }
 USE = {
@@ -171,10 +171,11 @@ def lang_of(cards: list[dict]) -> str:
 def digest_line(card: dict, lang: str = "zh") -> str:
     """One card as "situation → what to do〔id〕", subject-free (the lesson, split at its "…时，" / "When …,")."""
     lesson = re.sub(r"\s+", " ", card["lesson"] or card["title"]).strip().rstrip("。.")
-    m = (re.match(r"^(.{2,60}?)(?:时|的时候)[，,]\s*(.+)$", lesson) or
-         re.match(r"^(?:when|if|whenever)\s+(.{3,120}?),\s*(.+)$", lesson, re.I))
+    if lang != "zh":
+        return f"- {lesson} [{card['id']}]"  # 英文本来就写成 "When …, …"；里面的逗号不止一个，不拆
+    m = re.match(r"^(.{2,60}?)(?:时|的时候)[，,]\s*(.+)$", lesson)
     body = f"{m.group(1)} → {m.group(2)}" if m else lesson
-    return f"- {body}〔{card['id']}〕" if lang == "zh" else f"- {body} [{card['id']}]"
+    return f"- {body}〔{card['id']}〕"
 
 
 def rank_key(card: dict, used: dict) -> tuple:
@@ -478,8 +479,8 @@ def valid(item: dict, excerpt: str | None) -> dict | None:
         w = str(w).strip()
         if _short(w) and not (set(ri.tokens(w)) & subject) and w not in phrases:
             phrases.append(w)
-    # 词表外的短语（`发平`、`寡淡`）照留给人看，但词法匹配用不上它；至少要有一条用得上
-    if len(phrases) < 2 or not any(words(w) for w in phrases):
+    # 处境由宿主模型自己判断（第 15 套），不再要求短语里有词表里的词
+    if len(phrases) < 2:
         return None
     card["when"] = phrases[:6]
     return card

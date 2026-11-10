@@ -668,3 +668,52 @@ other characters, an upper-end figure).
 | 2026-11-09 | **Development, first and only wording** (the digest and usage line as committed with this log; 28 prompts per host, two batches of 14; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: 13 / 14, 0 / 14, 1** (it added C05 to C11 on one case and missed C09 on another). No reply cited more than two ids. The wording was not revised: frozen as is. Digest: 14 lines, 842 characters, about 690 tokens by the registered estimate. |
 | 2026-11-09 | **Held-out, run once per host** (wording as frozen in `a581b84`; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: recalled 11 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0.** No reply cited more than two ids. Both hosts pass the registered line (≥ 8, ≤ 1, ≤ 1). A mechanical check not in the registration, reported for what it is: no quiet-case reply on either split says 「可以试试」 or offers a lesson without an id (one development reply uses 经验 in its ordinary sense, "常见的经验是测试金字塔"); every transfer case that cited its card also used the 「别的任务里的经验」 wording. Limits as registered: up to 14 cases per agent, short replies asked for, writer saw the subject labels, Chinese only. |
 | 2026-11-09 | **Scale check, development only** (14 cards + 40 distractors, all 54 listed; about 1 906 characters, about 1 518 tokens by the estimate). **Sonnet 5.5: 14 / 14, 0 / 14, 0. Haiku 5.5: 13 / 14, 0 / 14, 0** (against 13 / 14, 0, 1 with 14 cards): no distractor id was cited, quiet cases stayed quiet. Found while preparing it: with the shipped cap of 30 lines, all 14 real cards would have been left out, because nothing yet writes `adopted_at` and the bench cards share one date, so ties fall to file-name order (`D…` before `C…`). The cap's ordering is only as good as the dates and adoption marks on the cards. Totals for the set: 168 host prompts (56 per run: development, scale, held-out) in 12 agents, plus the case writer. |
+
+## Set 16: set 15 in English (registered 2026-11-09, before any host was run on it or its usage wording was settled)
+
+**Why.** Set 15 was Chinese only. This set asks the same question on an English vault with English sessions.
+
+**Cards.** Set 13's 14 cards translated into English by the session that wrote the code (`bench/transfer/cards_en/`,
+same ids; SHA-256 of the concatenated files in name order `b27d45a3…59f03bc`), on the public English template.
+
+**Digest.** The English digest: each card's lesson as written ("When …, … [id]"), then an English usage line with the
+same rules as set 15's (genuinely the same situation, not a shared word or subject; at most two, as "A lesson from
+another task you could try: … [id]"; otherwise say nothing). Written once before this registration; it may be revised
+on development only and is frozen before held-out.
+
+**Cases.** 56, English, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh Claude Code subagent that saw only the
+14 English lessons, shuffled under neutral labels, each with its original subject named in a few words, and was told
+to read nothing else; same four kinds and counts as set 15 (28 transfer, 14 topic traps, 8 word traps, 6 unrelated).
+Not edited. Split at seed 20261116 as set 15 was. `bench/transfer/set16_dev.jsonl` (28); `bench/transfer/set16_heldout.jsonl.gz`
+(28; SHA-256 of the uncompressed text `d939c2ca…5b24ba8a`), run once per host.
+
+**Hosts, scoring and pass line:** as set 15 (`host.py --set 16`): Haiku 5.5 and Sonnet 5.5, 14 prompts per agent,
+ids cited; per host on held-out, recalled ≥ 8 / 14, quiet cases with a suggestion ≤ 1 / 14, wrong cards ≤ 1.
+
+**Known limits,** beyond set 15's: **the case writer is also one of the two hosts** (Sonnet 5.5), so Sonnet's number
+may read better than an outside writer's cases would give it; the cards are a translation.
+
+## Set 17: are the cards a host agent writes itself any good? (registered 2026-11-09, before any host was run on it)
+
+**Why.** The zero-key path has the agent that ran a session write the card (`krouter_learn` / `experience.py learn`);
+no model lane, no key. Sets 15 and 16 used hand-written cards. This is a small check of what the hosts write.
+
+**Sessions.** 12 synthetic sessions written for this check by the session that wrote the code, never a real one
+(`bench/transfer/set17_sessions.jsonl`, SHA-256 `7ccda464…c4ba2de`): 7 with a lesson (5 Chinese, 2 English), 3 whose
+lesson is already one of the 14 cards in another subject (2 Chinese, 1 English), 2 with no lesson (one each). Each
+has gold: the subject's words, and terms the action and the result must hold.
+
+**Run.** `bench/transfer/extract.py`: each host (Haiku 5.5, Sonnet 5.5; one agent each, 12 prompts) gets the
+session-start digest of the vault in that language, the session, and the tool's own description, and says with what
+arguments it would call `krouter_learn` at the end. Every proposed card goes through `experience.learn()` on a fresh
+copy of the vault, as the tool would. Run once; no development split.
+
+**Scored mechanically.** Lesson sessions with a card written; of cards written, subject-free (no subject word in
+title, lesson or `when`) and faithful (action and result each hold a gold term); duplicate sessions with a card
+written (and whether the host proposed one at all); cards written on sessions with no lesson.
+
+**Bar (fixed now), both hosts together:** lesson sessions with a card ≥ 10 / 14; subject-free ≥ 90% and faithful ≥ 90%
+of cards written; duplicates written ≤ 1 / 6; cards on no-lesson sessions ≤ 1 / 4.
+
+**Known limits.** Twelve sessions, written by the code's author, short and clean; whether a host calls the tool on its
+own at the end of a real session, unprompted, is not measured here.
