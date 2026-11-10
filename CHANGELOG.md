@@ -15,8 +15,9 @@ notice, then the details.
   0.155.0-alpha.9.2, a real model, a copy of the sample vault): the MCP tools were found, a question the vault answers was
   answered with its page, one it does not answer was refused; the hooks noted a typed correction and ran the turn-end and
   session-end imports. Claude Desktop 4.23118.1: the config entry was written and its command started the server and listed
-  the three tools outside the app; asking inside the app needs a restart of it, so that step is still open. Cursor 3.25.6:
-  not tested (its agent CLI is not installed, and the desktop app cannot be typed into by our test tooling). The README's
+  the three tools outside the app; asking inside the app needs a restart of it, so that step is still open. Cursor: the agent CLI 2026.11.05-86047df found the project-level
+  MCP entry and listed its three tools; asking and the hooks need a logged-in CLI and are still open; the desktop app
+  (3.25.6) is not tested, our test tooling cannot type into it. The README's
   Works-with table says exactly this. Also found: a Codex `hooks.json` with top-level event names is skipped whole
   (already documented); `krouter_ask` takes `query`, not `question`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
