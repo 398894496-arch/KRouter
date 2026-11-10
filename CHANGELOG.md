@@ -259,6 +259,19 @@ install path change (below).
   with their own stand-in models; CI runs each one (jobs `frameworks`, `vercel-ai-sdk`). Testing caught that
   google-adk 2.x needs its `mcp` extra (`pip install "google-adk[mcp]"`). The official MCP Python SDK is tested
   over stdio and Streamable HTTP (`tests/test_mcp_official_sdk.py`).
+- **LangGraph long-term memory, without MCP.** `krouter.integrations.langgraph.KRouterStore` is a LangGraph
+  `BaseStore` (sync and async): a namespace such as `("users", "ada")` is a folder, each item a Markdown page you can
+  edit, and a query search runs KRouter's recall on that namespace alone, with the page it came from (`item.page`)
+  and an empty list when the namespace does not know. Writing a key again keeps the old page in `.history/` marked
+  superseded (`supersedes`, `store.history()`); `delete` keeps it marked retired; `store.purge()` removes a key with
+  its history. Optional: `pip install "krouter[langgraph]"` once 2.0.0 is on PyPI (from a clone until then), which
+  adds only `langgraph>=1.0,<2`; the core package still has no dependencies. Tested in real graphs on langgraph 1.0.0
+  (langgraph-checkpoint 2.1.0) and 1.2.20 (4.3.1), no model called (`tests/test_langgraph_store.py`, CI job
+  `langgraph-store`); `python -m krouter.integrations.langgraph_demo` runs a two-turn graph with no key. With 300
+  users of 5 memories, 320 questions in one user's namespace gave the right page first for 100 of 129 answerable,
+  nothing for all 191 the user never answered, and no other user's page (`bench/scale/langgraph_store.py`).
+  Associations, the experience digest and corrections through `krouter_correct` are not on this path.
+  `docs/FRAMEWORKS.md#langgraph-store-long-term-memory`.
 - **Try it in your app.** `CONTRIBUTING.md` lists every app, framework and deployment still marked "not yet run by
   us", and a "Works in my app" issue form takes the report that moves it to tested.
 

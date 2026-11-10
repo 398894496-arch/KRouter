@@ -35,6 +35,7 @@ does not). It worked and it did not are both worth reporting. Open right now:
 | Claude Desktop, VS Code (Copilot), Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI | after the one-line install, restart the app and ask it something your memory holds |
 | Cursor | the session hooks: a new chat starts with this repository's decisions; a turn shows up in `05 时间日志/会话摘录/` |
 | An agent framework not in `docs/FRAMEWORKS.md` (Agno, Mastra, AutoGen, Haystack, …) | load the MCP server the way that framework loads one, and say what it took |
+| The LangGraph store (`KRouterStore`) | on Windows; in a LangGraph Platform deployment (`langgraph.json` store config); with langmem's memory tools |
 | The Kubernetes manifest, the systemd unit | `deploy/kubernetes/krouter.yaml`, `deploy/systemd/krouter.service` on a real cluster or host |
 | Any benchmark | rerun it on your machine (`bench/scale/serve_load.py`, `bench/memory_honesty/run.py`, `bench/longmemeval/`) and post your numbers next to ours |
 
