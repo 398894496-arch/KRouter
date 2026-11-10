@@ -995,3 +995,48 @@ Also reported: how many duplicates were linked to the right card with `same_as`.
 | 2026-11-10 | Registered (`8ea41c3`). |
 | 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
 | 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |
+
+## Set 27: ten people with their own agents on one team server, at three sizes (registered 2026-11-10, before the 10,000- and 50,000-page rows were run)
+
+**Why.** An outside reviewer playing the lead of a ten-person team chose another memory because nothing showed a team
+had run KRouter, and named what would change that: a CI-verified test of ten concurrent people with their own agents,
+with correction conflicts and per-user attribution. Not a recall bench: no question is scored for being right, so
+this set registers properties and how the numbers are taken, before they are taken.
+
+**Harness.** `bench/team/load.py` (the CI test `tests/test_team_concurrency.py` runs it on the template vault, 8 mixed
+operations per client, two seeds). One `mcp_server.py --http` on 127.0.0.1 with `--allow-write` and a users file of
+10 personal tokens, on a git copy of the vault seeded with a short page to contradict (`数据库选型`) and a long page
+(`团队约定`) with one line everyone corrects and three lines per client. Ten client threads, each with its own token
+and client name: four bursts where all ten do the same thing at once (ask, note, correct the shared line, correct the
+topic, always naming the original page), then a seeded mix (seed 20261110): 60 % asks, 20 % notes, 10 % own-line
+corrections, 5 % topic corrections, 5 % shared-line corrections, 40 operations per client. No model, no network.
+
+**Sizes.** The template (about 90 pages), and `bench/scale/gen.py 10000` and `50000` on top of it. Default server
+settings (4 resident lookup processes). Apple M2, 8 GB, server and clients on one machine.
+
+**Properties, all required, all checked from the vault, the journal, git and the replies:** every acknowledged write is
+in the journal with consecutive `seq` and a unique run; every acknowledged note is on its page exactly once with its
+author; every write's journal row, git commit author and page `author` are the token's person; no page is unreadable
+or has an open frontmatter, no temporary file is left, nothing is uncommitted, `git fsck` passes; for every contested
+thing exactly one correction is in force, the last to arrive, every earlier one is superseded by the next in arrival
+order, and each reply after the first names the one it replaced; every answer starts with `vault_label: team` and names
+a page or says `recall: none`; no write fails; no token appears in the server log. After the run, the first correction
+page a lookup on the topic lists is the one in force and its `how` gives the new decision (the first page overall may
+be the corrections log; reported).
+
+**Reported, not judged:** p50, p95, p99 for reads and writes, completions per second in the mixed phase, error rate.
+Run once per size. A failed property is reported as failed, with the numbers.
+
+## Set 28: thirty minutes of mixed load (registered 2026-11-10, before the run)
+
+**Run.** Set 27's harness on the 10,000-page vault, `--duration 1800 --write-share 0.2 --rss-every 30` (80 % asks), in
+the background, once. **Reported:** the set 27 properties at the end, errors, latency, and the server's resident memory
+(server and its lookup processes) sampled every 30 s: first sample after warm-up, highest, last. Memory "does not grow"
+only if the last sample is within 20 % of the sample at 5 minutes; otherwise the growth is reported with a cause if one
+is found. Longer runs are left as a command in `docs/TEAM.md`.
+
+### Log, sets 27 and 28
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered, with the template row already run during development (all properties held). |

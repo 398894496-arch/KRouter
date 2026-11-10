@@ -10,7 +10,8 @@ line on stdout:
 
 `out` and `err` are exactly what `route_knowledge.py <argv>` would print, so the answer is the same as a one-shot
 lookup. `env` applies to that request only. Under `KROUTER_REFRESH_EVERY` (the server sets it) a lookup re-checks the
-vault's files at most once in that many seconds; `"refresh": true` makes the next one re-check now (after a write).
+vault's files at most once in that many seconds; `"refresh": true` makes the next one re-check now (after a write),
+and `"touched": [absolute paths]` instead re-reads just the files the write changed, without walking the vault.
 The vault is the process's `OBSIDIAN_VAULT`, set once when the server starts it.
 """
 
@@ -33,7 +34,10 @@ import route_knowledge  # noqa: E402
 def handle(req: dict) -> dict:
     argv = [str(a) for a in req.get("argv") or []]
     env = {str(k): str(v) for k, v in (req.get("env") or {}).items()}
-    if req.get("refresh"):
+    touched = [str(t) for t in req.get("touched") or []]
+    if touched:
+        recall_index.note_touched(touched)  # 服务刚写了这几个文件：只重读它们，不走整库
+    elif req.get("refresh"):
         recall_index.forget_refresh()
     old = {k: os.environ.get(k) for k in env}
     os.environ.update(env)

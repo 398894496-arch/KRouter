@@ -46,6 +46,7 @@ from urllib.parse import urlsplit
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from krouter_home import vault_path  # noqa: E402
+import team  # noqa: E402
 
 VERSION = "2.0.0"
 PROTOCOLS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
@@ -148,11 +149,30 @@ CORRECT_TOOL = {
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }
+CHANGES_TOOL = {
+    "name": "krouter_changes",
+    "description": "Who changed what in this memory, and when: the team server's journal of every write (notes, "
+                   "corrections, lessons) with the person, their app, the pages and any conflict, newest first. "
+                   "Filter by page, by person, or by words of the note.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "page": {"type": "string", "description": "Vault-relative path (or the page's name) to ask about."},
+            "who": {"type": "string", "description": "Only this person's or agent's changes."},
+            "text": {"type": "string", "description": "Only changes whose text holds these words."},
+            "limit": {"type": "integer", "default": 20},
+        },
+    },
+    "annotations": {"readOnlyHint": True, "openWorldHint": False},
+}
 NOTES = "05 时间日志/会话摘录"
 NOTE_MAX = 500
 KINDS = {"decision": "决定", "correction": "纠正", "note": "备注"}
 WRITE = True               # stdio：本机的 agent 可以记一笔；HTTP 团队服务器默认只读（--allow-write 才开）
-CLIENT = ""                # initialize 里客户端报的名字，记在每条笔记后面
+CLIENT = ""                # initialize 里客户端报的名字，记在每条笔记后面（stdio；HTTP 按人记在 CLIENTS）
+CLIENTS: dict[str, str] = {}  # HTTP：每个人（令牌）最近一次 initialize 报的客户端名；请求之间不共享一个全局名字
+USERS: "team.Users | None" = None  # --users：按人发的令牌（只存哈希）
+HTTP = False               # 在跑 HTTP 团队服务：写入记进团队变更日志
 CLIENT_SAMPLING = False    # 客户端在 initialize 里声明了 sampling 没有（只记，不用）
 
 
@@ -171,6 +191,32 @@ def cur_label() -> str:
     return getattr(_ctx, "label", None) or LABEL
 
 
+def cur_who() -> str:
+    """The person (users-file name) this HTTP request came from; "" for a shared token, an open server, or stdio."""
+    return getattr(_ctx, "who", None) or ""
+
+
+def cur_auth() -> str:
+    return getattr(_ctx, "auth", None) or ("open" if HTTP else "local")
+
+
+def cur_client() -> str:
+    return (CLIENTS.get(cur_who()) or CLIENT) if HTTP else CLIENT
+
+
+def may_write() -> bool:
+    """Write tools: the server allows writes, and this caller's role is not `read`."""
+    return WRITE and getattr(_ctx, "role", None) != "read"
+
+
+def actor() -> str:
+    """Who to name on a page and in the ledger: the person, else what kind of access wrote it."""
+    who = cur_who()
+    if who:
+        return who
+    return {"shared-token": "共享令牌", "open": "未鉴权"}.get(cur_auth(), "")
+
+
 def labelled(text: str) -> str:
     return f"vault_label: {cur_label()}\n{text}" if cur_label() else text
 
@@ -186,6 +232,11 @@ class Metrics:
         self.hist: dict[str, list[int]] = {}
         self.sums: dict[str, float] = {}
         self.index_s: dict[str, float] = {}
+        self.conflicts: dict[str, int] = {}
+
+    def conflict(self, vault: str) -> None:
+        with self.lock:
+            self.conflicts[vault] = self.conflicts.get(vault, 0) + 1
 
     def observe(self, vault: str, tool: str, outcome: str, seconds: float, refused: bool) -> None:
         with self.lock:
@@ -220,6 +271,9 @@ class Metrics:
                     out.append(f'krouter_request_seconds_bucket{{vault="{esc(v)}",le="{b}"}} {acc}')
                 out += [f'krouter_request_seconds_sum{{vault="{esc(v)}"}} {round(self.sums[v], 4)}',
                         f'krouter_request_seconds_count{{vault="{esc(v)}"}} {acc}']
+            out += ["# HELP krouter_correction_conflicts_total Corrections that replaced a correction still in force.",
+                    "# TYPE krouter_correction_conflicts_total counter"]
+            out += [f'krouter_correction_conflicts_total{{vault="{esc(v)}"}} {n}' for v, n in sorted(self.conflicts.items())]
             out += ["# HELP krouter_lookup_workers Resident lookup processes running, by vault.",
                     "# TYPE krouter_lookup_workers gauge"]
             out += [f'krouter_lookup_workers{{vault="{esc(v)}"}} {n}' for v, n in sorted(self.workers().items())]
@@ -248,6 +302,7 @@ class Worker:
                                      encoding="utf-8", bufsize=1)
         self.replies: queue.Queue = queue.Queue()
         self.stale = False
+        self.touched: set[str] = set()
         threading.Thread(target=self._read, daemon=True).start()
 
     def _read(self) -> None:
@@ -259,8 +314,9 @@ class Worker:
         return self.proc.poll() is None
 
     def ask(self, argv: list[str], env: dict, timeout: float) -> dict:
-        req = {"argv": argv, "env": env, "refresh": self.stale}
+        req = {"argv": argv, "env": env, "refresh": self.stale, "touched": sorted(getattr(self, "touched", ()))}
         self.stale = False
+        self.touched = set()
         try:
             self.proc.stdin.write(json.dumps(req, ensure_ascii=False) + "\n")
             self.proc.stdin.flush()
@@ -313,10 +369,12 @@ class Pool:
         finally:
             self.idle.put(w if w is not None and w.alive() else None)
 
-    def mark_stale(self) -> None:
+    def mark_stale(self, paths: list[str] | None = None) -> None:
+        """A write just changed `paths` (absolute): each worker re-reads them before its next lookup."""
         with self.lock:
             for w in self.started:
                 w.stale = True
+                w.touched = getattr(w, "touched", set()) | set(paths or [])
 
     def count(self) -> int:
         with self.lock:
@@ -371,13 +429,13 @@ def learn_on() -> bool:
     try:
         import experience
 
-        return WRITE and experience.digest_on()
+        return may_write() and experience.digest_on()
     except Exception:  # noqa: BLE001
         return False
 
 
 def tools() -> list[dict]:
-    out = TOOLS + ([NOTE_TOOL, CORRECT_TOOL] if WRITE else [])
+    out = TOOLS + ([NOTE_TOOL, CORRECT_TOOL] if may_write() else []) + ([CHANGES_TOOL] if HTTP and (WRITE or USERS) else [])
     if learn_on():
         import experience
 
@@ -397,25 +455,44 @@ def correct(args: dict) -> tuple[str, bool]:
     if not raw:
         return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     vault = Path(raw).expanduser()
-    res = corrections.apply_now(vault, str(args.get("new") or ""), str(args.get("old") or ""),
-                                str(args.get("page") or ""), f"MCP（{CLIENT or 'unknown client'}）")
-    if "error" in res:
-        return (res["error"], True)
-    now = datetime.now()
-    rid = capture_ledger.run_id(now)
-    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
-    what = {"page": "旧页整页标为 superseded", "line": "旧页那一行下面加了「已改」", "recorded": "没有指出旧页"}[res["mode"]]
-    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
-                                          f"- 会话内纠正（MCP，{CLIENT or '未知客户端'}）：[[{res['written'].removesuffix('.md')}]]"
-                                          + (f"，取代 [[{res['superseded'].removesuffix('.md')}]]（{what}）" if res["superseded"] else "")
-                                          + (f"；判定当天的纠正候选 {res['settled']} 条" if res["settled"] else "") + "\n")
-    if str(raw) in POOLS:
-        POOLS[str(raw)].mark_stale()  # 下一次查询就要看到取代
-    sha = capture_ledger.commit(vault, rid, res["touched"], "会话内纠正 1 条")
-    if sha:
-        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
-    return (f"corrected: {res['written']}\nsuperseded: {res['superseded'] or '(none named)'} ({res['mode']})\nrun: {rid}"
-            + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; revert the pages by hand"), False)
+    client, who = cur_client(), actor()
+    with team.writing(vault):  # 一次只有一个写入：后到的纠正看得到先到的，按到达顺序生效
+        res = corrections.apply_now(vault, str(args.get("new") or ""), str(args.get("old") or ""),
+                                    str(args.get("page") or ""), f"MCP（{client or 'unknown client'}）", author=who)
+        if "error" in res:
+            return (res["error"], True)
+        now = datetime.now()
+        rid = team.unique_run(vault, now)
+        undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+        what = {"page": "旧页整页标为 superseded", "line": "旧页那一行下面加了「已改」", "recorded": "没有指出旧页"}[res["mode"]]
+        clash = "".join(f"；冲突：取代了 {c.get('author') or '未署名'} 在 {c.get('at') or '?'} 写的 [[{c['page'].removesuffix('.md')}]]"
+                        f"（{c['why']}{'，长页未整页作废' if c.get('left_active') else ''}）" for c in res["conflicts"])
+        ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
+                                              f"- 会话内纠正（{who + '，' if who else ''}MCP，{client or '未知客户端'}）：[[{res['written'].removesuffix('.md')}]]"
+                                              + (f"，取代 [[{res['superseded'].removesuffix('.md')}]]（{what}）" if res["superseded"] else "")
+                                              + clash
+                                              + (f"；判定当天的纠正候选 {res['settled']} 条" if res["settled"] else "") + "\n")
+        journal = _journal(vault, "krouter_correct", rid, [res["written"]], str(args.get("new") or ""),
+                           supersedes=[x for x in [res["superseded"], *(c["page"] for c in res["conflicts"])] if x],
+                           conflicts=res["conflicts"])
+        if str(raw) in POOLS:
+            POOLS[str(raw)].mark_stale([*(str(p) for p in res["touched"]), str(ledger)])  # 下一次查询就要看到取代
+        sha = capture_ledger.commit(vault, rid, res["touched"], "会话内纠正 1 条", author=cur_who())
+        if sha:
+            capture_ledger.commit(vault, rid, [ledger, *journal], f"变更记录 run {rid}", tagged=False, author=cur_who(),
+                                  need_sha=False)
+    if res["conflicts"]:
+        METRICS.conflict(cur_label() or "default")
+    lines = [f"corrected: {res['written']}", f"superseded: {res['superseded'] or '(none named)'} ({res['mode']})"]
+    for c in res["conflicts"]:
+        lines.append(f"conflict: {c['page']} by {c.get('author') or '(no author)'} at {c.get('at') or '?'} said "
+                     f"\"{c.get('said') or '?'}\"; {c['why']}. Rule: the later correction holds; that page is kept, marked "
+                     + ("superseded." if not c.get("left_active") else "still active (a long page): read both."))
+    lines.append(f"run: {rid}")
+    if who:
+        lines.append(f"by: {who}")
+    return ("\n".join(lines) + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; revert the pages by hand"),
+            False)
 
 
 def learn(args: dict) -> tuple[str, bool]:
@@ -433,34 +510,33 @@ def learn(args: dict) -> tuple[str, bool]:
     vault = Path(raw).expanduser()
     item = {k: (redact(v) if isinstance(v, str) else [redact(str(x)) for x in v] if isinstance(v, list) else v)
             for k, v in args.items()}
-    path, why = experience.learn(vault, item, f"MCP（{CLIENT or 'unknown client'}）")
-    if not path and why.startswith("again: "):
-        return (f"recorded: the lesson of {why[7:]} came up again (no new card)", False)
-    if not path:
-        return (why, True)
-    now = datetime.now()
-    rid = capture_ledger.run_id(now)
-    undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
-    rel = zones.canon(vault, str(path.relative_to(vault)).replace(os.sep, "/"))
-    ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
-                                          f"- 经验卡：[[{rel.removesuffix('.md')}]]（MCP，{CLIENT or '未知客户端'}）\n")
-    if str(raw) in POOLS:
-        POOLS[str(raw)].mark_stale()
-    sha = capture_ledger.commit(vault, rid, [path], "MCP 经验卡 1 张")
-    if sha:
-        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
+    client, who = cur_client(), actor()
+    with team.writing(vault):
+        path, why = experience.learn(vault, item, f"MCP（{who + '，' if who else ''}{client or 'unknown client'}）")
+        if not path and why.startswith("again: "):
+            return (f"recorded: the lesson of {why[7:]} came up again (no new card)", False)
+        if not path:
+            return (why, True)
+        now = datetime.now()
+        rid = team.unique_run(vault, now)
+        undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
+        rel = zones.canon(vault, str(path.relative_to(vault)).replace(os.sep, "/"))
+        ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n撤销这一轮：`{undo}`\n\n"
+                                              f"- 经验卡：[[{rel.removesuffix('.md')}]]（{who + '，' if who else ''}MCP，{client or '未知客户端'}）\n")
+        journal = _journal(vault, "krouter_learn", rid, [str(path.relative_to(vault)).replace(os.sep, "/")],
+                           str(args.get("lesson") or args.get("title") or ""))
+        if str(raw) in POOLS:
+            POOLS[str(raw)].mark_stale()  # 经验卡还会改别的文件（摘要）：整库重查
+        sha = capture_ledger.commit(vault, rid, [path], "MCP 经验卡 1 张", author=cur_who())
+        if sha:
+            capture_ledger.commit(vault, rid, [ledger, *journal], f"变更记录 run {rid}", tagged=False, author=cur_who(),
+                                  need_sha=False)
     return (f"learned: {rel}\nrun: {rid}" + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; "
                                                                           "delete the card by hand"), False)
 
 
 def note(args: dict) -> tuple[str, bool]:
     """One line on today's notes page, a ledger entry, and one commit (when the vault is a git repository)."""
-    from datetime import datetime
-
-    import capture_ledger
-    import zones
-    from krouter_redact import redact
-
     raw = cur_vault()
     if not raw:
         return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
@@ -473,6 +549,16 @@ def note(args: dict) -> tuple[str, bool]:
     if kind not in KINDS:
         return (f"kind must be one of {', '.join(KINDS)}", True)
     vault = Path(raw).expanduser()
+    client, who = cur_client(), actor()
+    with team.writing(vault):  # 同一页、变更记录和 git 一次只让一个人写：并发的笔记一条都不丢
+        return _note(vault, raw, text, kind, client, who)
+
+
+def _note(vault: Path, raw: str, text: str, kind: str, client: str, who: str) -> tuple[str, bool]:
+    import capture_ledger
+    import zones
+    from krouter_redact import redact
+
     now = datetime.now()
     page = zones.path(vault, NOTES) / f"{now.date().isoformat()}｜agent 记下.md"
     page.parent.mkdir(parents=True, exist_ok=True)
@@ -487,28 +573,62 @@ def note(args: dict) -> tuple[str, bool]:
                         f"# {now.date().isoformat()} agent 记下\n\n"
                         "你用的 AI 通过 MCP 记下的笔记（已脱敏）。这是线索，不是规则页；每条都在「记忆变更记录」里，"
                         "不对就按那里的命令撤销。\n\n", encoding="utf-8")
-    line = f"- （{now.strftime('%H:%M')}）[{KINDS[kind]}] {redact(text)} — 来自 MCP（{CLIENT or '未知客户端'}）"
+    src = f"{who}（MCP，{client or '未知客户端'}）" if who else f"MCP（{client or '未知客户端'}）"
+    line = f"- （{now.strftime('%H:%M')}）[{KINDS[kind]}] {redact(text)} — 来自 {src}"
     with page.open("a", encoding="utf-8") as fh:
         fh.write(line + "\n")
-    rid = capture_ledger.run_id(now)
+    rid = team.unique_run(vault, now)
     undo = f"python3 {HERE / 'import_sessions.py'} --vault '{vault}' --undo {rid}"
     ledger = capture_ledger.append(vault, f"## {now.strftime('%Y-%m-%d %H:%M')} · run {rid}\n\n"
-                                          f"撤销这一轮：`{undo}`\n\n- MCP 记下（{CLIENT or '未知客户端'}）：{line[2:]}\n")
+                                          f"撤销这一轮：`{undo}`\n\n- MCP 记下（{who + '，' if who else ''}{client or '未知客户端'}）：{line[2:]}\n")
+    real = str(page.relative_to(vault)).replace(os.sep, "/")
+    journal = _journal(vault, "krouter_note", rid, [real], redact(text), kind=kind)
     if str(raw) in POOLS:
-        POOLS[str(raw)].mark_stale()  # 刚写的这条，下一次查询就要查得到
-    sha = capture_ledger.commit(vault, rid, [page], "MCP 记下 1 条")
+        POOLS[str(raw)].mark_stale([str(page), str(ledger)])  # 刚写的这条，下一次查询就要查得到
+    sha = capture_ledger.commit(vault, rid, [page], "MCP 记下 1 条", author=cur_who())
     if sha:
-        capture_ledger.commit(vault, rid, [ledger], f"变更记录 run {rid}", tagged=False)
-    rel = zones.canon(vault, str(page.relative_to(vault)).replace(os.sep, "/"))
-    return (f"noted: {rel}\nrun: {rid}" + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; "
-                                                                        "delete the line by hand"), False)
+        capture_ledger.commit(vault, rid, [ledger, *journal], f"变更记录 run {rid}", tagged=False, author=cur_who(),
+                                  need_sha=False)
+    rel = zones.canon(vault, real)
+    return (f"noted: {rel}\nrun: {rid}" + (f"\nby: {cur_who()}" if cur_who() else "")
+            + (f"\nundo: {undo}" if sha else "\nundo: the vault is not a git repository; delete the line by hand"), False)
+
+
+def _journal(vault: Path, tool: str, rid: str, pages: list[str], text: str, **extra) -> list[Path]:
+    """One line in the team change journal (HTTP only; a personal vault over stdio gets none). Returns [its path]."""
+    if not HTTP:
+        return []
+    from krouter_redact import redact
+
+    text = " ".join(redact(text or "").split())
+    _row, path = team.record(vault, {"who": cur_who(), "via": cur_client(), "auth": cur_auth(), "tool": tool, "run": rid,
+                                     "pages": pages, "text": text[:200], **{k: v for k, v in extra.items() if v}})
+    return [path]
+
+
+def changes(args: dict) -> tuple[str, bool]:
+    raw = cur_vault()
+    if not raw:
+        return ("No vault configured.", True)
+    try:
+        limit = max(1, min(200, int(args.get("limit") or 20)))
+    except (TypeError, ValueError):
+        limit = 20
+    rows = team.changes(Path(raw).expanduser(), str(args.get("page") or ""), str(args.get("who") or ""),
+                        str(args.get("text") or ""), limit)
+    return (team.describe(rows), False)
 
 
 def call(name: str, args: dict) -> dict:
-    if name == "krouter_note" and WRITE:
+    if name == "krouter_note" and may_write():
         text, err = note(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
-    if name == "krouter_correct" and WRITE:
+    if name == "krouter_changes" and HTTP and (WRITE or USERS):
+        text, err = changes(args)
+        return {"content": [{"type": "text", "text": labelled(text)}], "isError": err}
+    if name in ("krouter_note", "krouter_correct", "krouter_learn") and WRITE and not may_write():
+        return {"content": [{"type": "text", "text": f"{name}: this token is read-only"}], "isError": True}
+    if name == "krouter_correct" and may_write():
         text, err = correct(args)
         return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_learn" and learn_on():
@@ -540,7 +660,11 @@ def handle(msg: dict) -> dict | None:
     if method == "initialize":
         global CLIENT
         info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
-        CLIENT = " ".join(str(info.get("name") or "").split())[:60]
+        name = " ".join(str(info.get("name") or "").split())[:60]
+        if HTTP:
+            CLIENTS[cur_who()] = name
+        else:
+            CLIENT = name
         caps = params.get("capabilities") if isinstance(params.get("capabilities"), dict) else {}
         # MCP sampling（服务端请客户端的模型来答）：只记客户端声明了没有，不用它（规范已弃用，Claude Code 不支持）
         global CLIENT_SAMPLING
@@ -550,7 +674,7 @@ def handle(msg: dict) -> dict | None:
                   "capabilities": {"tools": {"listChanged": False}},
                   "serverInfo": {"name": "krouter", "title": f"KRouter ({cur_label()})" if cur_label() else "KRouter",
                                  "version": VERSION},
-                  "instructions": INSTRUCTIONS + (CORRECT_INSTRUCTION if WRITE else "") + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
+                  "instructions": INSTRUCTIONS + (CORRECT_INSTRUCTION if may_write() else "") + (LEARN_INSTRUCTION if learn_on() else "") + (f" This server answers from the '{cur_label()}' vault "
                                                   "(`vault_label:` in each receipt); say which vault an answer "
                                                   "came from." if cur_label() else "")}
     elif method == "ping":
@@ -661,9 +785,34 @@ def make_handler(token: str, allowed_origins: list[str], started: float):
             got = self.headers.get("Authorization", "")
             return got.startswith("Bearer ") and hmac.compare_digest(got[7:].strip().encode(), need.encode())
 
-        def _metrics_ok(self) -> bool:  # 计数里没有问题原文；有 token 时，服务的或任一库的 token 都可以读
+        def _metrics_ok(self) -> bool:  # 计数里没有问题原文；有 token 时，服务的或任一库的 token、任一个人令牌都可以读
             tokens = [t for t in [token, *(b["token"] for b in BANKS.values())] if t]
-            return not tokens or any(self._authorized(t) for t in tokens)
+            if USERS is not None and self._user() is not None:
+                return True
+            return not tokens and USERS is None or any(self._authorized(t) for t in tokens)
+
+        def _bearer(self) -> str:
+            got = self.headers.get("Authorization", "")
+            return got[7:].strip() if got.startswith("Bearer ") else ""
+
+        def _user(self) -> dict | None:
+            bearer = self._bearer()
+            return USERS.match(bearer) if USERS is not None and bearer else None
+
+        def _identify(self, name: str, bank: dict | None):
+            """(who, role, auth) for this request, or an HTTP status to refuse it with. A personal token (users file)
+            names the person; the bank's or server's shared token still works and is recorded as `shared-token`."""
+            u = self._user()
+            if u is not None:
+                if BANKS and not team.Users.opens(u, name):
+                    return 403
+                return (u["name"], u["role"], "user")
+            need = bank["token"] if bank and bank["token"] else token
+            if need:
+                return (None, None, "shared-token") if self._authorized(need) else 401
+            if USERS is not None:  # 有名单、没有共享令牌：必须带个人令牌
+                return 401
+            return (None, None, "open")
 
         def _bank(self, path: str):
             """(name, settings) for /mcp/NAME when the server holds banks; ("", None) for /mcp; None for anything else."""
@@ -714,7 +863,11 @@ def make_handler(token: str, allowed_origins: list[str], started: float):
             if not _origin_ok(self.headers.get("Origin", ""), allowed_origins):
                 self._reject(403, {"error": "origin not allowed"})
                 return self._log(403, t0)
-            if not self._authorized(bank["token"] if bank and bank["token"] else None):
+            ident = self._identify(name, bank)
+            if ident == 403:
+                self._reject(403, {"error": "this token does not open this bank"})
+                return self._log(403, t0)
+            if not isinstance(ident, tuple):
                 self._reject(401, {"error": "missing or wrong bearer token"}, headers={"WWW-Authenticate": "Bearer"})
                 return self._log(401, t0)
             proto = self.headers.get("MCP-Protocol-Version", "")
@@ -740,13 +893,16 @@ def make_handler(token: str, allowed_origins: list[str], started: float):
                 return self._log(400, t0)
             batch = isinstance(msg, list)
             _ctx.vault, _ctx.label = (bank["vault"], name) if bank else (None, None)
+            _ctx.who, _ctx.role, _ctx.auth = ident
             try:
                 replies = [r for r in (handle(m) if isinstance(m, dict) else
                                        {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
                                        for m in (msg if batch else [msg])) if r is not None]
             finally:
-                _ctx.vault = _ctx.label = None
+                _ctx.vault = _ctx.label = _ctx.who = _ctx.role = _ctx.auth = None
             summary = _rpc_summary(msg[0] if batch and msg else msg)
+            if ident[0]:
+                summary["who"] = ident[0]  # 记名字，从不记令牌
             if summary.get("rpc") == "tools/call":
                 res = (replies[0].get("result") or {}) if replies else {}
                 text = "".join(c.get("text", "") for c in res.get("content") or [] if isinstance(c, dict))
@@ -785,8 +941,8 @@ def serve_http(addr: str, token_file: str, allowed_origins: list[str], log_queri
             return 2
         if os.name != "nt" and Path(token_file).expanduser().stat().st_mode & 0o077:
             print(f"warning: {token_file} is readable by other users (chmod 600 it)", file=sys.stderr)
-    open_banks = [n for n, b in BANKS.items() if not (b["token"] or token)]
-    if host not in LOOPBACK and (open_banks or (not BANKS and not token)):
+    open_banks = [] if USERS is not None else [n for n, b in BANKS.items() if not (b["token"] or token)]
+    if host not in LOOPBACK and (open_banks or (not BANKS and not token and USERS is None)):
         print(f"refusing to listen on {host}: anyone who can reach it could read "
               + (f"the vaults {', '.join(open_banks)}" if open_banks else "the vault")
               + ". Pass --token-file (or --bank-token NAME=FILE for each), or bind to 127.0.0.1.", file=sys.stderr)
@@ -807,7 +963,10 @@ def serve_http(addr: str, token_file: str, allowed_origins: list[str], log_queri
     base = f"http://{host}:{server.server_address[1]}"
     print(json.dumps({"listening": f"{base}/mcp", "label": LABEL or None,
                       **({"banks": {n: f"{base}/mcp/{n}" for n in BANKS}} if BANKS else {}),
-                      "auth": "bearer" if token or BANKS and not open_banks else "none (loopback only)"}),
+                      "auth": ("personal tokens" + (" + shared" if token or any(b["token"] for b in BANKS.values()) else "")
+                               if USERS is not None else
+                               "bearer" if token or BANKS and not open_banks else "none (loopback only)"),
+                      **({"users": len(USERS.entries)} if USERS is not None else {})}),
           file=sys.stderr, flush=True)
     try:
         server.serve_forever()
@@ -819,7 +978,7 @@ def serve_http(addr: str, token_file: str, allowed_origins: list[str], log_queri
 
 
 def main(argv: list[str] | None = None) -> int:
-    global LABEL, WRITE, WORKERS, REFRESH_EVERY
+    global LABEL, WRITE, WORKERS, REFRESH_EVERY, USERS, HTTP
     ap = argparse.ArgumentParser(description="KRouter MCP server: stdio by default, HTTP with --http.")
     ap.add_argument("--http", metavar="HOST:PORT", help="serve Streamable HTTP on this address instead of stdio")
     ap.add_argument("--token-file", default="", help="file holding the bearer token clients must send")
@@ -838,6 +997,9 @@ def main(argv: list[str] | None = None) -> int:
                          "its own label on every receipt)")
     ap.add_argument("--bank-token", action="append", default=[], metavar="NAME=FILE",
                     help="HTTP: the bearer token one bank needs (default: --token-file)")
+    ap.add_argument("--users", default="", metavar="FILE",
+                    help="HTTP: personal tokens, one person or agent a line (name|sha256:hash|write or read|banks; "
+                         "make one with team.py add-user): every write records who made it")
     args = ap.parse_args(argv)
     LABEL = args.label.strip()
     env_workers = os.environ.get("KROUTER_WORKERS", "")
@@ -869,6 +1031,24 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.vault:
         os.environ["OBSIDIAN_VAULT"] = str(Path(args.vault).expanduser().resolve())
+    HTTP = bool(args.http)
+    USERS = None
+    if args.users:
+        if not args.http:
+            print("--users needs --http", file=sys.stderr)
+            return 2
+        try:
+            USERS = team.Users(args.users)
+        except OSError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        for err in USERS.errors:
+            print(f"warning: {args.users} {err} (skipped)", file=sys.stderr)
+        if not USERS.entries:
+            print(f"{args.users} has no valid user line", file=sys.stderr)
+            return 2
+        if os.name != "nt" and Path(args.users).expanduser().stat().st_mode & 0o022:
+            print(f"warning: {args.users} is writable by other users: anyone who can edit it can add a token", file=sys.stderr)
     if args.http:
         return serve_http(args.http, args.token_file, args.allow_origin, args.log_queries)
     return serve_stdio()

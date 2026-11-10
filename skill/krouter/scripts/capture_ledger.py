@@ -10,6 +10,7 @@ entry is committed separately, so undoing a run keeps its record. `import_sessio
 
 from __future__ import annotations
 
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -29,11 +30,21 @@ def _git(vault: Path, *args: str) -> subprocess.CompletedProcess:
                           stdin=subprocess.DEVNULL)
 
 
+_REPOS: set[str] = set()  # 已确认是 git 仓库的库：团队服务每次写入不再多起一个 git 进程去问
+
+
 def is_repo(vault: Path) -> bool:
+    if not (vault / ".git").exists():
+        return False
+    if str(vault) in _REPOS:
+        return True
     try:
-        return (vault / ".git").exists() and _git(vault, "rev-parse", "--is-inside-work-tree").returncode == 0
+        ok = _git(vault, "rev-parse", "--is-inside-work-tree").returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
+    if ok:
+        _REPOS.add(str(vault))
+    return ok
 
 
 def _link(vault: Path, path: Path) -> str:
@@ -83,8 +94,10 @@ def append(vault: Path, text: str) -> Path:
     return path
 
 
-def commit(vault: Path, rid: str, paths: list[Path], summary: str, tagged: bool = True) -> str:
-    """Commit exactly `paths` (written or deleted by this run); other changes in the vault stay as they are."""
+def commit(vault: Path, rid: str, paths: list[Path], summary: str, tagged: bool = True, author: str = "",
+           need_sha: bool = True) -> str:
+    """Commit exactly `paths` (written or deleted by this run); other changes in the vault stay as they are. `author`
+    (a team server's user) is the commit's author, so `git log` says who; the committer stays krouter-capture."""
     if not is_repo(vault):
         return ""
     rels = sorted({str(p.relative_to(vault)) for p in paths})
@@ -93,13 +106,17 @@ def commit(vault: Path, rid: str, paths: list[Path], summary: str, tagged: bool 
         rels = [r for r in rels if (vault / r).exists() or _git(vault, "ls-files", "--", r).stdout.strip()]
         if not rels:
             return ""
-        _git(vault, "add", "-A", "--", *rels)
-        res = _git(vault, "-c", "user.name=krouter-capture", "-c", "user.email=krouter@local", "commit", "-q",
-                   "-m", f"KRouter 自动沉淀 {summary}" + (f"\n\n{TAG.format(rid)}" if tagged else ""), "--only", "--",
-                   *rels)
+        who = ["--author", f"{author} <{re.sub(r'[^A-Za-z0-9._-]', '-', author)}@krouter.invalid>"] if author else []
+        argv = ["-c", "user.name=krouter-capture", "-c", "user.email=krouter@local", "commit", "-q", *who,
+                "-m", f"KRouter 自动沉淀 {summary}" + (f"\n\n{TAG.format(rid)}" if tagged else ""), "--only", "--", *rels]
+        # 都是已跟踪、还在的文件时 commit --only 自己就收它们，省一次 git add；有新文件（git 不认得）会整个失败，再走老路
+        res = _git(vault, *argv) if all((vault / r).exists() for r in rels) else None
+        if res is None or res.returncode != 0:
+            _git(vault, "add", "-A", "--", *rels)
+            res = _git(vault, *argv)
         if res.returncode != 0:
             return ""
-        return _git(vault, "rev-parse", "HEAD").stdout.strip()
+        return _git(vault, "rev-parse", "HEAD").stdout.strip() if need_sha else "committed"
     except (OSError, subprocess.TimeoutExpired):
         return ""
 
