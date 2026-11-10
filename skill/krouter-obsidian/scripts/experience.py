@@ -401,6 +401,7 @@ PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段会话摘
 - "situation"：当时的处境，照摘录写，可以带题材（例：「红烧肉炖好了，咸是够了，但吃着发平」）
 - "action"：一句话，只写摘录里确实做了、或这个人确认做了的；只是被建议、计划过或中途放弃的不写
 - "result"：一句话，会话结束时的结果；中途被改正过的数字或原因，用改正后的；摘录没说的细节不加
+- 做法和结果里除非经验离不开，否则不写具体数字；卡里留下的每个数字都必须是摘录里原样有的，否则这张卡不要
 - "subject"：点出这段会话题材的 2–6 个词（工具、产品、东西、专业词），例：["红烧肉", "糖"]
 - "lesson"：去掉题材的通用说法，写成「……时，……」（例：「东西整体发平、缺一点层次时，加一点点与主调相反的元素」），
   里面不能出现 subject 里的词，也不能有别的专业词：要能原样用到完全不相干的领域，专门的词换成一般的说法
@@ -427,6 +428,8 @@ Each is a JSON object:
   suggested, planned or dropped along the way)
 - "result": one sentence, the outcome as the session ends (a figure or cause corrected later: the corrected one); no
   detail the excerpt does not state
+- leave specific numbers out of action and result unless the lesson cannot do without them; any number left in the
+  card must occur verbatim in the excerpt, or the card is dropped
 - "subject": the 2–6 words that name the session's subject (tools, products, objects, domain terms)
 - "lesson": "When …, …" with none of the subject words and no other domain term, so it reads unchanged for a task in
   an unrelated area ("the execution plan" → "how it actually runs"). Test it: would it make sense word for word to
@@ -454,8 +457,10 @@ LEARN_HELP = ("Record one lesson from this session as an experience card, so it 
               "writing a report and someone cooking? If it only fits this kind of thing, say it once more one level "
               "higher); title (optional, the lesson in one line, same rule). Skip it if the experience "
               "digest already has the same lesson. Write in the language of the session; no keys, names or private "
-              "details. Before calling, reread the session and check situation, action and result against it sentence by "
-              "sentence.")
+              "details. Leave specific numbers out of action and result unless the lesson cannot do without them; every "
+              "number that stays anywhere in the card must appear in quotes (the short verbatim snippets of the session "
+              "that state it), or the card is sent back. Before calling, reread the session and check situation, action "
+              "and result against it sentence by sentence.")
 
 
 def _json_array(text: str) -> list:
@@ -527,6 +532,28 @@ def names_subject(item: dict) -> str:
     return ""
 
 
+FIGURE = re.compile(r"\d+(?:[.:/×x]\d+)*")
+
+
+def _norm(text: str) -> str:
+    import unicodedata
+
+    text = unicodedata.normalize("NFKC", text or "")
+    return re.sub(r"(?<=\d)[,，\s](?=\d{3}\b)", "", text)  # 3,000 / 3 000 → 3000
+
+
+def unsupported_figures(item: dict, source: str) -> list[str]:
+    """The numbers in a card (situation, action, result, lesson, title) that do not occur in `source` as a whole number:
+    `20` must stand on its own there, not inside `2026`. A mechanical check, no model."""
+    text = _norm(" ".join(str(item.get(k) or "") for k in ("situation", "action", "result", "lesson", "title")))
+    src = _norm(source)
+    out = []
+    for fig in dict.fromkeys(FIGURE.findall(text)):
+        if not re.search(rf"(?<![\d.]){re.escape(fig)}(?![\d])", src):
+            out.append(fig)
+    return out
+
+
 def same_lesson(a: str, b: str) -> bool:
     wa, wb = set(words(a)), set(words(b))
     return bool(wa and wb) and len(wa & wb) / len(wa | wb) >= 0.5
@@ -577,6 +604,11 @@ def write_card(vault: Path, card: dict, source: str, day: str, writer: str = "kr
 def learn(vault: Path, item: dict, source: str, writer: str = "krouter-learn") -> tuple[Path | None, str]:
     """A card the host agent wrote itself (no model lane, no key). (path, "") when written, (None, why) when not."""
     named = names_subject(item) if isinstance(item, dict) else ""
+    quotes = item.get("quotes") if isinstance(item, dict) and isinstance(item.get("quotes"), list) else []
+    loose = unsupported_figures(item, "\n".join(str(q) for q in quotes)) if isinstance(item, dict) else []
+    if loose:
+        return None, (f"not written: these numbers are not in quotes: {', '.join(loose[:6])}. Quote the session line that "
+                      "states each one, or leave the number out (better, unless the lesson needs it)")
     if named:
         return None, (f"not written: the lesson or title still names the subject ({named}); rewrite it with a general "
                       "word so it reads the same on another subject")
@@ -603,7 +635,8 @@ def extract(e: dict, excerpt: str, vault: Path, source: str, dry: bool = False) 
     written: list[Path] = []
     day = e["day"].isoformat() if hasattr(e["day"], "isoformat") else str(date.today())
     for item in _json_array(redact(text))[:2]:
-        card = valid(item, excerpt) if isinstance(item, dict) and not names_subject(item) else None
+        ok = isinstance(item, dict) and not names_subject(item) and not unsupported_figures(item, excerpt)
+        card = valid(item, excerpt) if ok else None  # 模型通道手里有摘录：卡里的数字摘录里没有就不要
         path = write_card(vault, card, source, day) if card else None
         if path:
             written.append(path)

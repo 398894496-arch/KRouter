@@ -115,6 +115,8 @@ LEARN_TOOL = {
                         "description": "2–6 words naming this session's subject; the lesson must use none of them."},
             "lesson": {"type": "string", "description": "The lesson without the subject: \"When …, …\"."},
             "title": {"type": "string", "description": "Optional: the lesson in one line."},
+            "quotes": {"type": "array", "items": {"type": "string"},
+                       "description": "Short verbatim snippets of the session stating every number the card keeps."},
         },
         "required": ["situation", "action", "result", "subject", "lesson"],
     },
@@ -333,7 +335,7 @@ def route(name: str, query: str, extra_env: dict | None = None) -> tuple[str, bo
 def _route(name: str, query: str, extra_env: dict | None) -> tuple[str, bool]:
     vault = cur_vault()
     if not vault:
-        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     if WORKERS > 0:
         try:
             res = pool_for(vault).ask([name, query], extra_env or {})
@@ -386,7 +388,7 @@ def correct(args: dict) -> tuple[str, bool]:
 
     raw = cur_vault()
     if not raw:
-        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     vault = Path(raw).expanduser()
     res = corrections.apply_now(vault, str(args.get("new") or ""), str(args.get("old") or ""),
                                 str(args.get("page") or ""), f"MCP（{CLIENT or 'unknown client'}）")
@@ -420,7 +422,7 @@ def learn(args: dict) -> tuple[str, bool]:
 
     raw = cur_vault()
     if not raw:
-        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     vault = Path(raw).expanduser()
     item = {k: (redact(v) if isinstance(v, str) else [redact(str(x)) for x in v] if isinstance(v, list) else v)
             for k, v in args.items()}
@@ -452,7 +454,7 @@ def note(args: dict) -> tuple[str, bool]:
 
     raw = cur_vault()
     if not raw:
-        return ("No vault configured: run the KRouter one-line install, or set OBSIDIAN_VAULT for this server.", True)
+        return ("No vault configured: run the KRouter one-line install, or set KROUTER_VAULT (or the old name OBSIDIAN_VAULT) for this server.", True)
     text = " ".join(str(args.get("text") or "").split())
     kind = str(args.get("kind") or "note")
     if not text:

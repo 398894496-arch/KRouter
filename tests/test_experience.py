@@ -377,7 +377,8 @@ def test_extraction_scorer_counts_written_subject_free_and_duplicates():
     sessions = {s["id"]: s for s in extract.load()}
     good = [{"situation": "写正则匹配日期，改来改去总有漏的", "action": "先列 10 条该匹配和 10 条不该匹配的例子当测试",
              "result": "20 条全部通过", "lesson": "规则改来改去总有漏的时，先写一组正反例当测试，每改一次全跑一遍",
-             "when": ["改来改去总漏", "顾此失彼", "老是漏掉"]}]
+             "when": ["改来改去总漏", "顾此失彼", "老是漏掉"],
+             "quotes": ["10 条应该匹配的、10 条不该匹配的", "现在 20 条全部通过"]}]
     r = extract.score_one(sessions["S01"], json.dumps(good, ensure_ascii=False))
     assert [{k: w[k] for k in ("subject_free", "faithful")} for w in r["written"]] == [{"subject_free": True, "faithful": True}]
     leaky = [{**good[0], "lesson": "正则改来改去总有漏的时，先写正反例", "title": "写正则先写例子"}]
@@ -406,3 +407,15 @@ def test_a_lesson_that_still_names_its_own_subject_is_sent_back(tmp_path):
     assert path is None and "names the subject (nginx)" in why
     ok = {**EN_CARD, "subject": ["nginx", "server block"]}
     assert experience.learn(tmp_path, ok, "x")[0] is not None
+
+
+def test_numbers_in_a_card_must_come_from_the_session(tmp_path):
+    card = {**EN_CARD, "subject": ["nginx"], "result": "Deleting the stale file made all 24 reloads work"}
+    path, why = experience.learn(tmp_path, card, "x")
+    assert path is None and "not in quotes: 24" in why
+    quoted = {**card, "quotes": ["after that, all 24 reloads worked"]}
+    assert experience.learn(tmp_path, quoted, "x")[0] is not None
+    assert experience.unsupported_figures({"result": "20 of 24"}, "confirmed 20 batches in 2026") == ["24"]
+    assert experience.unsupported_figures({"result": "3,000 files"}, "renamed 3000 files") == []
+    assert experience.unsupported_figures({"result": "1.4 m"}, "it is 1.1 by 1.4") == []
+    assert experience.unsupported_figures({"result": "1.1 m"}, "width 21.1") == ["1.1"]
