@@ -23,3 +23,4 @@ os.environ["KROUTER_VAULT_FILE"] = str(_ISOLATED / "config/vault")
 os.environ["KROUTER_NO_MCP"] = "1"
 os.environ["KROUTER_NO_HOOKS"] = "1"  # 也不许往宿主的 ~/.codex/hooks.json、~/.cursor/hooks.json 里加钩子
 os.environ["KROUTER_CLAUDE_MEM_DB"] = str(_ISOLATED / "no-claude-mem.db")
+os.environ["KROUTER_CLAUDE_DESKTOP_RUNNING"] = "0"  # 本机开着的 Claude Desktop 不影响测试；要测"开着"的测试自己设 1

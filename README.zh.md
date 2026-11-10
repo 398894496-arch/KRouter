@@ -86,6 +86,7 @@ curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bo
 | `~/.codex/config.toml`（`codex mcp add`）、`~/.codex/hooks.json` | Codex |
 | `~/.cursor/mcp.json`、`~/.cursor/hooks.json`、`~/.cursor/rules/` | Cursor |
 | [下面表里](#能接哪些应用)其他应用各自的 MCP 设置文件 | 只动本机装了的；改过的文件旁边留一份 `*.krouter-bak` |
+| Claude Desktop 的 `claude_desktop_config.json` | 只在应用关着时写；开着时一个字不改：给你一个 `~/.config/krouter/KRouter.mcpb` 去双击，或者退出应用后跑安装最后打印的那条 `--connect claude-desktop` 命令 |
 | `~/.cache/krouter/`、`~/.local/state/krouter/` | 搜索缓存（可重建）和导入进度 |
 
 安装过程中除了下载本身，没有任何内容离开本机。装完：
@@ -126,7 +127,8 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 | Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
 | Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
-| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
+| Claude Desktop | 扩展包：双击 [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb)，点安装（不改设置文件、不用重启）。也可以让安装脚本写它的设置文件，但只在应用关着时写：Claude Desktop 开着的时候把设置留在内存里，退出时把整份文件写回去，开着时写进去的条目一重启就没了。安装脚本发现它在运行，就不碰那个文件，改为按你的记忆文件夹做一个扩展包 | 设置文件由测试检查过；扩展包按 MCPB 清单规范检查过，并从解开的包里真启动、走过一遍 MCP 查询；还没在应用里实际装过 |
+| VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
 | 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | 自带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | 都已对着服务实测，CI 也跑；其中三个连整个 agent 循环一起跑过 |
 | 其他能跑本地 MCP 服务的应用（Windsurf、opencode、Continue、Roo Code……） | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
 | 团队 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |

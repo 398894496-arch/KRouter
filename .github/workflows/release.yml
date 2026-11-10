@@ -53,10 +53,11 @@ jobs:
             dsh-krouter-*.tgz
             bootstrap.sh
             bootstrap.ps1
+            KRouter.mcpb
       - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dsh-krouter-*.tgz bootstrap.sh bootstrap.ps1 SHA256SUMS --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dsh-krouter-*.tgz bootstrap.sh bootstrap.ps1 KRouter.mcpb SHA256SUMS --clobber
 
   smoke:
     # 发出去之后，照 README 两种语言里的每条安装命令去真实地址取一遍：任何一条取不到、跑不起来就失败

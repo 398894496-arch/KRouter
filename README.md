@@ -118,6 +118,7 @@ the install itself lists each settings file it changed, and keeps a copy of it f
 | `~/.codex/config.toml` (`codex mcp add`), `~/.codex/hooks.json` | Codex |
 | `~/.cursor/mcp.json`, `~/.cursor/hooks.json`, `~/.cursor/rules/` | Cursor |
 | each other app's MCP settings file, [listed below](#works-with) | only for apps it finds; a copy of each changed file is kept as `*.krouter-bak` |
+| Claude Desktop's `claude_desktop_config.json` | only when the app is closed; while it runs, nothing: you get `~/.config/krouter/KRouter.mcpb` to double-click, or quit the app and run the `--connect claude-desktop` command the install prints |
 | `~/.cache/krouter/`, `~/.local/state/krouter/` | the search cache (rebuildable) and what the import has seen |
 
 Nothing leaves the machine during the install except the download itself. When it is done:
@@ -169,7 +170,8 @@ and `uninstall.sh` takes out only its own entries.
 | Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`) | MCP tested; hooks tested in codex-cli 0.155 |
 | Cursor | rule and skill, MCP (`~/.cursor/mcp.json`), and session hooks (`~/.cursor/hooks.json`) | rule and skill tested; MCP settings and hooks checked by tests against Cursor's documented format, not yet inside Cursor |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
-| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
+| Claude Desktop | an extension: double-click [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb) and press Install (no settings file, no restart). Or the installer writes its settings file, but only while the app is closed: Claude Desktop keeps its settings in memory and writes the whole file back when it quits, so an entry written while it is open is gone after a restart. Found running, the installer leaves the file alone and builds the extension for your memory folder instead | settings file checked by tests; the extension checked against the MCPB manifest spec and by a real MCP round trip from the unpacked bundle; not yet installed inside the app |
+| VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
 | Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever; the others through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | all tested against the server, in CI; three of them through their whole agent loop |
 | Any other app that runs a local MCP server (Windsurf, opencode, Continue, Roo Code, …) | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
 | A team | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |

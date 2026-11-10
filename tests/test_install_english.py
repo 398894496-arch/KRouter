@@ -321,3 +321,65 @@ def test_release_pack_attaches_what_the_readmes_link_and_what_a_release_install_
     assert res.returncode == 0 and "release assets OK" in res.stdout, res.stdout[-1500:] + res.stderr[-1500:]
     names = {p.name for p in (tmp_path / "out").iterdir()}
     assert {"bootstrap.sh", "bootstrap.ps1", "SHA256SUMS"} <= names and any(n.endswith(".tgz") for n in names)
+
+
+def _desktop_env(tmp: Path, running: str) -> dict:
+    env = _env(tmp)
+    env.pop("KROUTER_NO_MCP", None)
+    cfg = tmp / "home/Library/Application Support/Claude/claude_desktop_config.json"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text('{"mcpServers": {"other": {"command": "x"}}}\n', encoding="utf-8")
+    env.update({"KROUTER_CLAUDE_DESKTOP_CONFIG": str(cfg), "KROUTER_CLAUDE_DESKTOP_RUNNING": running,
+                "KROUTER_VAULT_FILE": str(tmp / "home/.config/krouter/vault")})
+    return env
+
+
+@POSIX
+def test_claude_desktop_running_is_left_alone_and_gets_an_extension_instead(tmp_path):
+    env = _desktop_env(tmp_path, "1")
+    cfg = Path(env["KROUTER_CLAUDE_DESKTOP_CONFIG"])
+    before = cfg.read_text(encoding="utf-8")
+    res, out = _boot(env, "--lang", "en", "--no-import")
+    assert res.returncode == 0, res.stdout[-1500:] + res.stderr[-1500:]
+    assert cfg.read_text(encoding="utf-8") == before  # written while running, it would be lost on quit
+    assert "claude-desktop" not in out["mcp"] and "Claude Desktop is running" in res.stdout
+    assert "--connect claude-desktop" in res.stdout
+    mcpb = Path(out["claude_desktop_extension"])
+    import build_mcpb
+
+    assert mcpb.is_file() and build_mcpb.check(mcpb) == []
+    import zipfile
+
+    m = json.loads(zipfile.ZipFile(mcpb).read("manifest.json"))
+    assert m["user_config"]["memory_folder"]["default"] == out["vault"]  # the folder the install recorded
+    env["KROUTER_CLAUDE_DESKTOP_RUNNING"] = "0"  # quit the app, then the one command the install printed
+    res = subprocess.run([sys.executable, str(BOOT), "--connect", "claude-desktop"], env=env, capture_output=True,
+                         text=True, timeout=120)
+    data = json.loads(cfg.read_text(encoding="utf-8"))
+    assert res.returncode == 0 and "mcp_server.py" in json.dumps(data["mcpServers"]["krouter"]), res.stdout
+    assert data["mcpServers"]["other"] == {"command": "x"} and (cfg.parent / (cfg.name + ".krouter-bak")).is_file()
+    env["KROUTER_CLAUDE_DESKTOP_RUNNING"] = "1"  # uninstall while it runs: left alone, and told why
+    res = subprocess.run([sys.executable, str(BOOT), "--unregister-mcp"], env=env, capture_output=True, text=True,
+                         timeout=120)
+    assert "krouter" in json.loads(cfg.read_text(encoding="utf-8"))["mcpServers"] and "Quit Claude Desktop" in res.stdout
+
+
+def test_claude_desktop_detection_tells_the_app_from_claude_code(monkeypatch):
+    import bootstrap as bs
+
+    monkeypatch.delenv("KROUTER_CLAUDE_DESKTOP_RUNNING", raising=False)
+    monkeypatch.setattr(bs.platform, "system", lambda: "Darwin")
+    ps = ("/Users/u/Library/Application Support/Claude/claude-code/2.1/x/claude.app/Contents/MacOS/claude\n"
+          "/Users/u/.local/bin/claude\n")
+    monkeypatch.setattr(bs.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, ps, ""))
+    assert not bs.claude_desktop_running()  # Claude Code alone is not the desktop app
+    ps += "/Applications/Claude.app/Contents/MacOS/Claude\n"
+    monkeypatch.setattr(bs.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, ps, ""))
+    assert bs.claude_desktop_running()
+
+
+def test_the_release_extension_passes_its_structure_check_and_answers(tmp_path):
+    import build_mcpb
+
+    bundle = build_mcpb.build(tmp_path / "KRouter.mcpb")
+    assert build_mcpb.check(bundle) == []

@@ -95,6 +95,36 @@ def _nightly_installed() -> bool:
     return False
 
 
+def _desktop_dir() -> Path:
+    home = Path.home()
+    if sys.platform == "darwin":
+        return home / "Library/Application Support/Claude"
+    if os.name == "nt":
+        return Path(os.environ.get("APPDATA", "")) / "Claude"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config") / "Claude"
+
+
+def _desktop_note(boot: str) -> tuple[str, str] | None:
+    """Claude Desktop is installed but KRouter is in neither its settings file nor its extensions. The usual cause:
+    the entry was written while the app was open, and the app wrote its old settings back when it quit."""
+    d = _desktop_dir()
+    cfg = Path(os.environ.get("KROUTER_CLAUDE_DESKTOP_CONFIG") or d / "claude_desktop_config.json")
+    if not d.is_dir() and not cfg.exists():
+        return None
+    if "krouter" in (_json(cfg).get("mcpServers") or {}):
+        return ("ok", f"Claude Desktop: connected through {cfg}")
+    for man in (d / "Claude Extensions").glob("*/manifest.json"):
+        if _json(man).get("name") == "krouter":
+            return ("ok", f"Claude Desktop: connected as an extension ({man.parent})")
+    vf = Path(os.environ.get("KROUTER_VAULT_FILE") or Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+              / "krouter" / "vault")
+    mcpb = vf.parent / "KRouter.mcpb"
+    return ("note", "Claude Desktop: installed, but KRouter is in neither its settings file nor its extensions (an "
+                    "entry written while the app is open is lost when it quits). Fix: quit Claude Desktop, then "
+                    f"{boot} --connect claude-desktop; or double-click "
+                    + (str(mcpb) if mcpb.is_file() else "KRouter.mcpb from the release") + " and press Install")
+
+
 def _bootstrap() -> str:
     """The installer to name in a fix: the downloaded release's, else this repository's."""
     for cand in (Path(os.environ.get("KROUTER_HOME") or Path.home() / ".dsh-krouter") / "current/scripts/bootstrap.py",
@@ -156,6 +186,9 @@ def run(vault_arg: str | None = None) -> int:
                                  f"{boot} --timer --vault \"{vault}\", or set lamp: unused on the health page"))
         else:
             rows.append(("note", f"nightly job: not installed (off by default). Turn on: {boot} --timer --vault \"{vault}\""))
+    desk = _desktop_note(boot)
+    if desk:
+        rows.append(desk)
     apps = _apps()
     rows.append(("ok", "connected: " + ", ".join(apps)) if apps else
                 ("note", f"connected: no app found. Fix: {boot} --apps claude,codex,cursor (or the MCP block in the README)"))

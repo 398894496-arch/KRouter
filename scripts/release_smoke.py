@@ -97,6 +97,12 @@ def main() -> int:
             pkgs = [n for n in table if n.startswith("dsh-krouter-") and n.endswith(".tgz")]
             check(len(pkgs) == 1 and (not want or pkgs[0] == f"dsh-krouter-{want}.tgz"),
                   f"SHA256SUMS names the package for {want or 'this release'}: {pkgs}")
+        if "KRouter.mcpb" in got:  # Claude Desktop 扩展包：结构按 MCPB 规范，解开后真能答
+            sys.path.insert(0, str(ROOT / "scripts"))
+            import build_mcpb
+
+            problems = build_mcpb.check(got["KRouter.mcpb"])
+            check(not problems, "KRouter.mcpb passes the MCPB structure check and answers over MCP", "\n".join(problems))
         # 2. 一行安装，按 README 的写法（先存成文件再 sh），只预演
         if "bootstrap.sh" in got:
             home = work / "home-oneline"

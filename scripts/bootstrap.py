@@ -99,6 +99,11 @@ MSG = {
         "cli": "命令行（给你和 agent）：{cli} doctor 一条命令给结论（正常，或缺什么、怎么补）；{cli} search \"问题\" 查询；"
         "卸载：sh {uninstall}",
         "minimal": "最小安装：只装查找。没有导入会话、没有夜间任务、没有插件和钩子；只接了你点名的应用：{apps}。",
+        "desktop_running": "Claude Desktop 正在运行，所以没有改它的配置文件：它开着的时候把设置留在内存里，退出时整份写回去，"
+        "现在写进去的条目一重启就没了。两条路任选：① 退出 Claude Desktop 后运行 {cmd}；② 不用退出，双击这个扩展包，在 Claude Desktop "
+        "里点安装（不改配置文件、不用重启）：{mcpb}",
+        "desktop_uninstall_running": "Claude Desktop 正在运行，没有改它的配置文件（它退出时会把旧内容写回去）。退出 Claude Desktop 后运行："
+        "{cmd}；如果是用扩展包装的，在 Claude Desktop 的「设置 → 扩展」里移除 KRouter。",
         "capture_now": "从现在起它自己记：{how}。只写进本机这个记忆文件夹，先脱敏，不调任何模型。某个会话不想记，在提问里写 #不记；"
         "整个停掉：{revoke}。以前的会话没有导入；要把近 7 天的导进来，一条命令：{cmd}",
         "changed": "改动的文件（每个改之前都在旁边留了一份 *.krouter-bak）：",
@@ -171,6 +176,13 @@ MSG = {
         "fix it); {cli} search \"question\" looks up. Uninstall: sh {uninstall}",
         "minimal": "Minimal install: lookup only. No session import, no nightly job, no plugin, no hooks; connected only "
         "the apps you named: {apps}.",
+        "desktop_running": "Claude Desktop is running, so its settings file was left alone: while it is open it keeps its "
+        "settings in memory and writes the whole file back when it quits, so an entry written now would be gone after a "
+        "restart. Either: (1) quit Claude Desktop, then run {cmd}; or (2) without quitting, double-click this extension "
+        "and press Install in Claude Desktop (no settings file, no restart): {mcpb}",
+        "desktop_uninstall_running": "Claude Desktop is running, so its settings file was left alone (it would write the old "
+        "contents back when it quits). Quit Claude Desktop, then run {cmd}; if KRouter was installed as an extension, "
+        "remove it in Claude Desktop under Settings → Extensions.",
         "capture_now": "From now on it keeps up by itself: {how}. Written only to this memory folder on this machine, redacted, "
         "no model called. To keep a session out, put #nocapture in a question; to stop it: {revoke}. Past sessions were not "
         "imported; to bring in the last 7 days, one command: {cmd}",
@@ -623,6 +635,47 @@ def app_config(app: dict) -> Path | None:
     return app["file"]() if app["dir"]().is_dir() else None
 
 
+def claude_desktop_running() -> bool:
+    """Claude Desktop is open right now. macOS: a process whose executable is `…/Claude.app/Contents/MacOS/Claude`
+    (case-sensitive, so Claude Code's own `claude` binaries do not count). Windows: a `Claude` process whose path is
+    under `AnthropicClaude` or the Store's `WindowsApps` (the desktop app, not the `claude.exe` CLI). Elsewhere there is
+    no desktop app. `KROUTER_CLAUDE_DESKTOP_RUNNING=1|0` overrides (tests)."""
+    forced = os.environ.get("KROUTER_CLAUDE_DESKTOP_RUNNING", "")
+    if forced in ("0", "1"):
+        return forced == "1"
+    try:
+        if platform.system() == "Darwin":
+            out = subprocess.run(["ps", "-axo", "comm="], capture_output=True, text=True, timeout=10).stdout
+            return any(ln.strip().endswith("/Claude.app/Contents/MacOS/Claude") for ln in out.splitlines())
+        if WINDOWS:
+            out = subprocess.run(["powershell", "-NoProfile", "-Command",
+                                  "Get-Process -Name Claude -ErrorAction SilentlyContinue | ForEach-Object { $_.Path }"],
+                                 capture_output=True, text=True, timeout=20).stdout
+            return any(("\\AnthropicClaude\\" in ln or "\\WindowsApps\\" in ln) for ln in out.splitlines())
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return False
+
+
+def desktop_extension(py: str) -> Path | None:
+    """A Claude Desktop extension for this machine: the memory folder the install recorded as its default, the
+    interpreter found here. Built next to the recorded-folder file; None when it cannot be built."""
+    builder = ROOT / "scripts" / "build_mcpb.py"
+    if not builder.is_file():
+        return None
+    sys.path.insert(0, str(builder.parent))
+    try:
+        import build_mcpb
+        from krouter_home import vault_file, vault_path
+
+        return build_mcpb.build(vault_file().parent / "KRouter.mcpb", vault_path(), py)
+    except Exception:  # noqa: BLE001 - 做不出扩展包就只给"退出后重跑"那条路
+        return None
+
+
+DESKTOP_DEFERRED: dict = {}  # Claude Desktop 开着、没写配置时：给用户的扩展包路径
+
+
 def claude_desktop_config() -> Path | None:
     """Claude Desktop's MCP settings file, when the app is installed (its settings folder exists); else None."""
     return app_config(MCP_APPS[0])
@@ -634,8 +687,17 @@ def register_app(app: dict, server: list[str], dry: bool, t: dict | None = None)
     cfg = app_config(app)
     if cfg is None:
         return False
+    running = app["id"] == "claude-desktop" and claude_desktop_running()
     if dry:
-        print(f"  {app['name']}: add {app['key']}.krouter to {cfg}")
+        print(f"  {app['name']}: " + ("running now, so its settings file would be left alone and an extension "
+                                     "(KRouter.mcpb) built instead" if running else f"add {app['key']}.krouter to {cfg}"))
+        return False
+    if running:
+        mcpb = desktop_extension(server[0])
+        DESKTOP_DEFERRED["mcpb"] = str(mcpb) if mcpb else ""
+        if t:
+            cmd = f'{"python" if WINDOWS else "python3"} "{ROOT / "scripts" / "bootstrap.py"}" --connect claude-desktop'
+            print(t["desktop_running"].format(cmd=cmd, mcpb=mcpb or "-"))
         return False
     try:
         text = cfg.read_text(encoding="utf-8") if cfg.exists() else ""
@@ -675,6 +737,10 @@ def unregister_apps(dry: bool) -> list[str]:
             continue
         servers = data.get(app["key"]) if isinstance(data, dict) else None
         if not isinstance(servers, dict) or "mcp_server.py" not in json.dumps(servers.get("krouter", "")):
+            continue
+        if app["id"] == "claude-desktop" and claude_desktop_running():
+            cmd = f'{"python" if WINDOWS else "python3"} "{ROOT / "scripts" / "bootstrap.py"}" --unregister-mcp'
+            print("HOST ACTION: " + MSG["en"]["desktop_uninstall_running"].format(cmd=cmd))
             continue
         if dry:
             print(f"would: remove {app['key']}.krouter from {cfg}")
@@ -1070,6 +1136,8 @@ def main() -> int:
                     help="ask before importing sessions, and about distilling and the nightly job (default: import locally without asking, no model, no nightly job)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--unregister-mcp", action="store_true", help=argparse.SUPPRESS)  # uninstall.sh 用
+    ap.add_argument("--connect", default="", metavar="APP",
+                    help="only connect this app's MCP settings (e.g. claude-desktop, after quitting it), then stop")
     args = ap.parse_args()
     if args.unregister_mcp:
         uninstall_plugin(args.dry_run)
@@ -1078,6 +1146,19 @@ def main() -> int:
         return 0
     lang = system_lang() if args.lang == "auto" else args.lang
     t = MSG[lang]
+    if args.connect:
+        app = next((a for a in MCP_APPS if a["id"] == args.connect), None)
+        if app is None:
+            print(f"unknown app {args.connect!r}: " + ", ".join(a["id"] for a in MCP_APPS))
+            return 2
+        py = sys.executable if WINDOWS else (shutil.which("python3") or sys.executable)
+        ok = register_app(app, [py, str(skill_home() / "scripts" / "mcp_server.py")], args.dry_run, t)
+        if ok:
+            print((t["mcp_desktop"] if app["id"] == "claude-desktop" else t["mcp_app"].format(app=app["name"], file=app_config(app)))
+                  + "".join(f"\n  {p}" for p in CHANGED))
+        elif app_config(app) is None:
+            print(f"{app['name']} is not installed here (no {app['dir']()}).")
+        return 0 if ok or args.dry_run else 1
     apps = {a.strip() for a in args.apps.split(",") if a.strip()} if args.apps is not None else (set() if args.minimal else None)
     if args.all:
         args.import_sessions = True
@@ -1205,7 +1286,7 @@ def main() -> int:
     print(json.dumps({"vault": str(vault), "lang": lang, "state": state, "added": len(added), "model": lane or None,
                       "timer": timer, "imported": imported.get("pages", 0), "distilled": imported.get("distilled", 0),
                       "claude_mem": cmem.get("sessions", 0),
-                      "mcp": mcp, "hooks": hooked},
+                      "mcp": mcp, "hooks": hooked, "claude_desktop_extension": DESKTOP_DEFERRED.get("mcpb")},
                      ensure_ascii=False))
     return 0
 

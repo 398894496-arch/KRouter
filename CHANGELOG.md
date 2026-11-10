@@ -11,6 +11,16 @@ notice, then the details.
 
 ## Unreleased
 
+- **Claude Desktop: no more entries lost on restart, and a one-click extension.** Claude Desktop keeps its settings in
+  memory while it runs and writes the whole `claude_desktop_config.json` back when it quits, so an entry the installer
+  wrote while the app was open disappeared after the next restart. The installer now checks whether the app is running
+  (macOS: a process whose executable is `…/Claude.app/Contents/MacOS/Claude`; Windows: a `Claude` process under
+  `AnthropicClaude` or `WindowsApps`) and, if so, leaves the file alone and offers two ways: quit the app and run
+  `bootstrap.py --connect claude-desktop`, or double-click `KRouter.mcpb`, built for your memory folder. Uninstall
+  leaves the file alone too while the app runs, and says so. `krouter doctor` reports when Claude Desktop is installed
+  but KRouter is in neither its settings file nor its extensions. The extension (`scripts/build_mcpb.py`, MCPB
+  manifest 0.3, Python server, the memory folder as a `directory` setting) is a release asset; `release_pack.sh` and
+  the release smoke check its structure and start it from the unpacked bundle for a real MCP round trip.
 - **The default install no longer imports past sessions.** It makes the memory folder, connects the apps it finds
   (each settings file it changes is copied to `*.krouter-bak` first, and every file it created or changed is listed
   at the end) and records sessions from then on. Its last line gives the one command that imports the last 7 days;

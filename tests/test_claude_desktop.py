@@ -69,7 +69,8 @@ def test_uninstall_takes_out_only_our_entry(cfg, tmp_path):
                    encoding="utf-8")
     env = {"HOME": str(tmp_path / "home"), "PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "LANG": "en_US.UTF-8",
            "KROUTER_CLAUDE_DESKTOP_CONFIG": str(cfg), "KROUTER_SKILL_HOME": str(tmp_path / "home/skill"),
-           "KROUTER_VAULT_FILE": str(tmp_path / "vf")}
+           "KROUTER_VAULT_FILE": str(tmp_path / "vf"),
+           "KROUTER_CLAUDE_DESKTOP_RUNNING": "0"}  # 本机开着的 Claude Desktop 不算：这里测的是它关着时
     (tmp_path / "home").mkdir()
     res = subprocess.run(["/bin/sh", str(REPO / "scripts/uninstall.sh")], env=env, capture_output=True, text=True,
                          timeout=120)
