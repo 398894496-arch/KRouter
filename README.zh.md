@@ -73,10 +73,11 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | 应用 | 怎么接 | 状态 |
 |---|---|---|
 | Claude Code | 插件（会话钩子）和 MCP，安装脚本都会装上 | 已实测 |
-| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
+| Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已通过命令行 agent（`codex exec`，codex-cli 0.155.0-alpha.9.2，2026-11-09）实测：能发现工具、有答案的问题带出处答对、库里没有的问题拒答；钩子在同一版本实测（提示词里的纠正被记下，每轮结束和会话结束的导入都跑了）。Codex 桌面应用：未测 |
 | Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
-| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
+| Claude Desktop 4.23118.1 | MCP：安装脚本写好 `claude_desktop_config.json`；重启一次应用 | 条目写好后，用这条条目里的命令在应用外把服务起起来，列出了它的三个工具（2026-11-09）；还没在应用里问过：Claude Desktop 只在启动时读设置 |
+| VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
 | 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | 自带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | 都已对着服务实测，CI 也跑；其中三个连整个 agent 循环一起跑过 |
 | 其他能跑本地 MCP 服务的应用（Windsurf、opencode、Continue、Roo Code……） | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
 | 团队 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |

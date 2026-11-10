@@ -107,10 +107,11 @@ and `uninstall.sh` takes out only its own entries.
 | App | How it connects | Status |
 |---|---|---|
 | Claude Code | plugin (session hooks) and MCP, both added by the installer | tested |
-| Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`) | MCP tested; hooks tested in codex-cli 0.155 |
+| Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`) | MCP tested through the command line agent (`codex exec`, codex-cli 0.155.0-alpha.9.2, 2026-11-09): tools found, an answer with its page, a refusal; hooks tested in the same version (the correction typed in a prompt was noted, the turn-end and session-end imports ran). The desktop Codex app: not tested |
 | Cursor | rule and skill, MCP (`~/.cursor/mcp.json`), and session hooks (`~/.cursor/hooks.json`) | rule and skill tested; MCP settings and hooks checked by tests against Cursor's documented format, not yet inside Cursor |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
-| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
+| Claude Desktop 4.23118.1 | MCP: the installer writes `claude_desktop_config.json`; restart the app once | the entry was written and the server started from that very entry, listing its three tools, outside the app (2026-11-09); not yet asked inside the app: Claude Desktop reads its settings only at launch |
+| VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
 | Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever; the others through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | all tested against the server, in CI; three of them through their whole agent loop |
 | Any other app that runs a local MCP server (Windsurf, opencode, Continue, Roo Code, …) | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
 | A team | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
