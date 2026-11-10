@@ -36,7 +36,7 @@ for the "flagship" of the agent's model; set `KROUTER_LEARN_MODEL` to change it.
 |---|---|---|---|---|
 | 1. In session (`krouter_correct`, `krouter_learn` over MCP) | **Connected for real** (Claude Code 2.1.295, isolated `CLAUDE_CONFIG_DIR`: `claude mcp list` → ✔ Connected, tools listed). The model calling the tools **not run**: the isolated config is not logged in, and KRouter does not log in for the user. Protocol and effect tested over stdio (`tests/test_correct_now.py`, `tests/test_experience.py`) | Not tested | Not tested | Not tested |
 | 2. MCP sampling | **Not available, measured:** Claude Code 2.1.295's `initialize` declares `roots` and `elicitation`, not `sampling` (also open issue #1785) | Not tested; no evidence of support found | Not tested; no evidence of support found | Not tested; not supported by Anthropic's account, not verified here |
-| 3. Official CLI | **Ran once for real, failed:** `/opt/homebrew/bin/claude --print` answered "OAuth session expired and could not be refreshed" on the author's machine (that binary's login had lapsed; the author's own `claude` is a wrapper alias). The call was recorded and the cap stopped a second one, as designed | Not tested (`codex exec`; used only when named or with `KROUTER_ALLOW_CODEX=1`, since it can read the whole account) | Not tested (`cursor-agent`; used only with `KROUTER_ALLOW_UNCONFINED=1`, since KRouter cannot confine it) | Not available (no CLI) |
+| 3. Official CLI | **Ran once for real, failed:** `/opt/homebrew/bin/claude --print` answered "OAuth session expired and could not be refreshed" on the author's machine (that binary's login had lapsed; the author's own `claude` is a wrapper alias). The call was recorded and the cap stopped a second one, as designed | **Ran for real, worked:** the whole nightly run with no key, in a throwaway vault and state directory, Codex found by detection (`KROUTER_ALLOW_CODEX=1`, nothing pinned): 6 calls (4 distilling two sessions, 2 for answer cards, then the cap of 6 stopped the rest), each on the record page; see below. Detection skips Codex unless named or `KROUTER_ALLOW_CODEX=1`, because it can read the whole account | Not tested (`cursor-agent`; used only with `KROUTER_ALLOW_UNCONFINED=1`, since KRouter cannot confine it) | Not available (no CLI) |
 | 4. API key | Not run this round (no key used, by rule); covered by the existing tests with stand-ins | same | same | same |
 
 Every test of levels 3 and 4 uses a shell-script stand-in (`tests/test_host_lane.py`); none spends a subscription.
@@ -46,3 +46,28 @@ not probed, so the call went out and failed on the lapsed login. Detection on it
 that binary as `claude:unauth` and would not have used it. So a lapsed login on an auto-detected CLI means "no lane";
 on a pinned one it is a failed step in the nightly report, recorded and counted against the day's cap, so it cannot
 loop. The fix is the user's: log that CLI in again (`claude` then `/login`), which KRouter does not do for them.
+
+## The no-key nightly run, for real (2026-11-09)
+
+A throwaway vault (the Chinese template, a git repository) and state directory; no `*_API_KEY` in the environment, a
+keys file that does not exist, nothing pinned; `KROUTER_ALLOW_CODEX=1`, `KROUTER_HOST_CLI_MAX=6`. Two Claude Code
+sessions of the day before: in the morning the local database was set to PostgreSQL 16, in the afternoon "改主意了：本地开发
+数据库以后改用 SQLite"; the prompt hook had written that sentence down as a correction candidate.
+
+- `nightly.py` picked `/Applications/ChatGPT.app/Contents/Resources/codex` by itself (`lane: cli codex`) and ran
+  every step. **6 calls**, all recorded on `订阅调用记录.md`: 4 distilling the two sessions (about 520 to 690
+  characters each way out, 16 to 44 back), 2 for answer cards; then the cap stopped the answer cards' check pass. Exit 0.
+- Distilled: "本地开发数据库用 PostgreSQL 16" and "本地开发数据库原来用 PostgreSQL → 改成 SQLite". The candidate was settled
+  成立 against that line, with no further call.
+- **Replay, as the run left it:** "本地开发现在用哪个数据库" still put the PostgreSQL page first (11.97 to 11.83), because
+  both pages were live. **Fixed since, without a model:** an import now marks a session page `superseded` when a later
+  change of mind replaced every decision on it (`import_sessions.supersede_replaced`, the rule session start already
+  used). Re-importing the same vault (no model call) marked the PostgreSQL page superseded, and both "本地开发现在用哪个
+  数据库" and "本地开发数据库用什么" put the SQLite page first. Which of two live pages comes first in general is a ranking
+  change made elsewhere (`recall_index.py`).
+
+**The default path.** A fresh install with no key: once the nightly job is on (the install asks), it uses the first
+logged-in CLI it may use with no further setting: `claude` or `grok` as they are; Codex only when named or with
+`KROUTER_ALLOW_CODEX=1` (it can read the whole account); the others only with `KROUTER_ALLOW_UNCONFINED=1`. The install's
+nightly question now says so in one sentence: it uses that CLI's subscription, at most 30 calls a day, each on the record
+page, `KROUTER_HOST_CLI=0` to turn it off. With no CLI and no key, the nightly report lists the steps that are off.

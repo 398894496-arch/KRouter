@@ -11,6 +11,20 @@ notice, then the details.
 
 ## Unreleased
 
+- **"Use SQLite from now on" holds at once, with no key.** The agent calls `krouter_correct` in the turn you correct
+  something (or `corrections.py apply`): a correction page that supersedes the old one, the old page marked
+  `superseded` (or its line annotated when it says other things too), the corrections page and the change ledger, one
+  commit. And the nightly distill now marks a session page `superseded` when a later change of mind replaced every
+  decision on it, so a lookup stops giving the old answer as current. "改用" now counts as a correction.
+  `docs/AUTO_CAPTURE.md` §4, `tests/test_correct_now.py`.
+- **The nightly run works with no key, on the agent you are logged in to.** Run for real in a throwaway vault: the
+  nightly job found the logged-in Codex CLI by itself, distilled two sessions and settled the correction candidate in 6
+  calls, each on the subscription record page, stopped at the cap. The install's nightly question says, in one
+  sentence, that it uses that CLI's subscription, the daily cap and how to turn it off. `docs/HOST-LANE.md`.
+- **Experience cards written by the agent: subject-free on held-out, faithful one card short.** Cards no longer carry
+  `when` phrases; the agent names the session's subject and a lesson that still uses it is sent back to be rewritten.
+  Set 20 (new sessions by another model, judged by the host that did not write the card): a card for 16 of 16 lesson
+  sessions, subject-free 94%, faithful 89% (16 of 18) against 90%: not passed, so the digest stays off by default.
 - **Experience cards: a lesson from one task offered on another task in the same situation, measured; off by
   default.** With `KROUTER_EXPERIENCE=1`, distilling a session also asks the model lane for at most two cards
   (situation, action, result, the lesson without the subject, source) in `02 经验与方法/经验卡/`, checked before they

@@ -343,6 +343,7 @@ SET16_HELDOUT_SHA = "d939c2cacc24c9ece6e7c104dd99bacd30d6bf246c4f1d71a9dee4745b2
 CARDS_EN_SHA = "b27d45a3fe439e86e99a8e9225c467eb4f57b89c27c0e693c4c25af0f59f03bc"
 SET17_SHA = "7ccda4641f7a2dd651708b68196cf0043c86bd174e405a2580bfea723c4ba2de"
 SET19_SHA = "b137cc968d0bb7cfe0ebf54f63ea4f774d9ea56daf17db64fe58cc9a07c85caf"
+SET20_SHA = "56ad0b0c0b2d2cc87f984a6a0ee856d1c2b935ba962e480b10acc1258aabb780"
 
 
 def test_sets_16_and_17_are_frozen():
@@ -354,6 +355,7 @@ def test_sets_16_and_17_are_frozen():
     assert hashlib.sha256(cards).hexdigest() == CARDS_EN_SHA
     assert hashlib.sha256((BENCH / "set17_sessions.jsonl").read_bytes()).hexdigest() == SET17_SHA
     assert hashlib.sha256((BENCH / "set19_sessions.jsonl").read_bytes()).hexdigest() == SET19_SHA
+    assert hashlib.sha256((BENCH / "set20_sessions.jsonl").read_bytes()).hexdigest() == SET20_SHA
     assert len(host.load("dev", "16")) == 28
 
 

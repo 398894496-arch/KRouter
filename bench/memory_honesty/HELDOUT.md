@@ -781,3 +781,10 @@ both hosts together: lesson sessions with a card ≥ 12 / 16; judged faithful �
 on lesson sessions; duplicates ≤ 1 / 8; no-lesson ≤ 1 / 8. Run once. If it passes, `experience.DEFAULT_ON` is set.
 
 **Known limits:** as set 19 (Sonnet wrote the sessions, is a host and judges Haiku's cards).
+
+### Log, set 20
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`79bafe3`). |
+| 2026-11-09 | **Run once** (frozen wording; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Sonnet's calls refused for naming the subject and rewritten once with the tool's reason, none of Haiku's). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); of 18 cards on lesson sessions, judged faithful 16 = 88.9% (bar ≥ 90%), judged subject-free 17 = 94.4% (≥ 90%); duplicates written 1 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on faithfulness. Haiku's cards: faithful 7 / 9, subject-free 9 / 9, one duplicate written. Sonnet's: faithful 9 / 9, subject-free 8 / 9. Both unfaithful cards are Haiku's and misstate a figure (a result claimed for all batches where the session confirmed 20 of 24; a gap given as height where the session gave width); the subject leak is a Sonnet title naming "图纸". `experience.DEFAULT_ON` stays off. The sessions are now spent. |

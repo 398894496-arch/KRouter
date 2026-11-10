@@ -12,7 +12,8 @@ anything on any of the 28 held-out tasks that should get nothing. Matching by sh
 14. Cards the host agent writes itself need no key; on a small check they did not yet reach their bar.
 
 **Status: off by default** (`KROUTER_EXPERIENCE=1` turns it on, `=0` off). The digest passed in both languages; the
-check of host-written cards (set 17) did not pass, so the "on when the vault has cards" default is not switched on
+checks of host-written cards did not pass (set 17; set 20, the held-out check after revising on set 19, by one card
+on faithfulness), so the "on when the vault has cards" default is not switched on
 (`experience.DEFAULT_ON`). What is missing is at the end.
 
 ## What it does when on
@@ -93,11 +94,35 @@ other words than the gold terms ("明显减少" for 少了, "唯一标识" for �
 `when` phrase each ("新人总来问", "no reply to my email"), while both cards' lessons, the only field the digest shows,
 are subject-free. Both hosts skipped every duplicate themselves; the code's lexical same-lesson check caught none.
 
+## Cards the host writes itself, round two (sets 19 and 20)
+
+Set 17 is spent, so set 19 wrote 16 longer sessions (8 to 10 turns, drift, changes of course) by another model, and
+judged each card by a model that did not write it. Then the card instructions were revised on set 19 and checked once
+on set 20's new sessions. Both hosts together:
+
+| | Set 19, first run | Set 19, round 5 (in-sample) | **Set 20, held-out** | Bar |
+|---|---|---|---|---|
+| Lesson sessions with a card | 16 / 16 | 14 / 16 | **16 / 16** | ≥ 12 |
+| Judged faithful | 14 / 16, 87.5% | 14 / 14 | **16 / 18, 88.9%** | ≥ 90% |
+| Judged subject-free | 14 / 16, 87.5% | 14 / 14 | **17 / 18, 94.4%** | ≥ 90% |
+| Duplicates written | 0 / 8 | 0 / 8 | **1 / 8** | ≤ 1 |
+| No-lesson sessions with a card | 0 / 8 | 0 / 8 | **0 / 8** | ≤ 1 |
+
+What changed between them: no `when` phrases; one plain sentence each for situation, action, result; action only for
+steps actually carried out, result as the session ends (corrected figures, nothing added); a `subject` list the host
+names, and the code refuses a lesson or title using one of those words and says why, so the agent rewrites it once
+(as the MCP tool returns its reason); record only when something did not work, a way out was tried and its outcome
+seen; a self-test that the lesson reads the same to someone fixing a bug, writing a report and cooking.
+
+**Subject-freedom is solved on held-out (94%); faithfulness is one card short (89%).** Both unfaithful cards are
+Haiku's and misstate a figure; Sonnet's 9 were all judged faithful. The digest shows only the lesson, so a wrong figure
+in a card's result does not change what is offered, but it is on the page a person reads, and the bar counts it.
+
 ## Not done, and the recommendation
 
-- **Default on is not switched.** It waits for a card-writing check that passes. Two changes would likely get there and
-  need a new registered set to show it: stop asking for `when` phrases (nothing uses them since set 13; both leaks were
-  there), and score faithfulness by a judge reading the session instead of fixed terms.
+- **Default on is not switched.** Set 20 missed by one card on faithfulness. The next step, needing a new registered
+  set: leave figures out of action and result unless the lesson depends on them (both misses were figures), or let the
+  model lane, which has the excerpt, check that every number in a card occurs in it.
 - **Whether a host calls `krouter_learn` on its own** at the end of a real session, unprompted, is not measured; set 17
   asked it directly.
 - **The no-key model lane** (the agent's own CLI on the user's subscription) is built with a daily cap, a visible record
