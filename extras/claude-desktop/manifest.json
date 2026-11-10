@@ -1,0 +1,75 @@
+{
+  "manifest_version": "0.3",
+  "name": "krouter",
+  "display_name": "KRouter",
+  "version": "__VERSION__",
+  "description": "Your AI remembers what you decided, and what you changed your mind about, from a folder of plain Markdown on this machine.",
+  "long_description": "Ask what you decided and the answer comes with the page it came from; a correction replaces the old answer; when the memory does not know, Claude is told so instead of being handed a guess. Lookups run on this machine with no model and no network. The memory folder is plain Markdown: open it in any editor, or in Obsidian. Needs Python 3.9 or newer.",
+  "author": {
+    "name": "KRouter contributors",
+    "url": "https://github.com/398894496-arch/KRouter"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/398894496-arch/KRouter"
+  },
+  "homepage": "https://github.com/398894496-arch/KRouter",
+  "documentation": "https://github.com/398894496-arch/KRouter#install",
+  "support": "https://github.com/398894496-arch/KRouter/issues",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "markdown",
+    "decisions",
+    "corrections",
+    "local"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "server/krouter_desktop.py",
+    "mcp_config": {
+      "command": "python3",
+      "args": [
+        "${__dirname}/server/krouter_desktop.py",
+        "--vault",
+        "${user_config.memory_folder}"
+      ],
+      "platform_overrides": {
+        "win32": {
+          "command": "python"
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "krouter_ask",
+      "description": "Look a question up in the memory: the answer, the page it came from, or 'not in the memory'."
+    },
+    {
+      "name": "krouter_status",
+      "description": "Health of the memory folder and what, if anything, needs doing."
+    },
+    {
+      "name": "krouter_note",
+      "description": "Write one line down (a decision, a correction, a fact) as a clue on today's notes page."
+    }
+  ],
+  "user_config": {
+    "memory_folder": {
+      "type": "directory",
+      "title": "Memory folder",
+      "description": "The KRouter memory folder (plain Markdown). Leave empty to use the one the KRouter install recorded.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
+    "runtimes": {
+      "python": ">=3.9"
+    }
+  }
+}

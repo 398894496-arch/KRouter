@@ -164,7 +164,7 @@ def test_run_py_matches_run_sh_contract(tmp_path):
     env = _nightly_env(tmp_path, tmp_path / "unused")
     env.pop("OBSIDIAN_VAULT")
     res = subprocess.run([sys.executable, str(run_py)], env=env, capture_output=True, text=True, timeout=60)
-    assert res.returncode == 0 and "OBSIDIAN_VAULT is not set" in res.stderr
+    assert res.returncode == 0 and "KROUTER_VAULT (or OBSIDIAN_VAULT) is not set" in res.stderr
     vault = tmp_path / "vault"
     shutil.copytree(REPO / "template", vault)
     before = {p.relative_to(vault).as_posix(): p.stat().st_mtime_ns for p in vault.rglob("*") if p.is_file()}

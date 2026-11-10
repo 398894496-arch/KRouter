@@ -86,7 +86,7 @@ def usage_counts(vault: Path, days: int) -> Counter:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
+    ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--map", default="", help="alias table (default: KROUTER_MAP, the vault's table, the sample)")
     ap.add_argument("--out", default=DEFAULT_OUT, help="vault-relative")
     ap.add_argument("--days", type=int, default=60)

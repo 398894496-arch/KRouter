@@ -385,9 +385,9 @@ def main() -> int:
         print(json.dumps({args.cmd: "ok", "archive": str(archive), **res}, ensure_ascii=False))
         return 0
 
-    vault = Path(args.vault or os.environ.get("OBSIDIAN_VAULT") or "").expanduser()
+    vault = Path(args.vault or os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT") or "").expanduser()
     if not vault.is_dir():
-        print(json.dumps({"backup": "failed", "reason": "no vault (--vault or OBSIDIAN_VAULT)"}))
+        print(json.dumps({"backup": "failed", "reason": "no memory folder (--vault, KROUTER_VAULT or OBSIDIAN_VAULT)"}))
         return 1
     st = load_state()
     results, errors = [], []

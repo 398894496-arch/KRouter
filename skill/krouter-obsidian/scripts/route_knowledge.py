@@ -144,9 +144,11 @@ def emit_backup() -> None:
         print(f"host_action: Backup: {st['host_action']}.")
 
 
-def emit_host_action(health: Path) -> None:
+def emit_host_action(health: Path, vault: Path | None = None) -> None:
     if not health.is_file():
         return
+    key_page = zones.real(vault, "90 系统文件/自动化/自进化钥匙.md")
+    report = zones.real(vault, "90 系统文件/自动化/夜间维护.md")
     meta = parse_frontmatter(health)
     lamp = meta.get("lamp") or "unset"
     key = meta.get("self_evolution_key") or "missing"
@@ -158,10 +160,10 @@ def emit_host_action(health: Path) -> None:
     if key != "present" or writer != "present":
         print(
             "host_action: Distill needs a callable model. Paste *_API_KEY on "
-            "90 系统文件/自动化/自进化钥匙.md (flagship is auto-locked), or log in "
+            f"{key_page} (flagship is auto-locked), or log in "
             "grok / claude (your subscription; Codex reads the whole account, so it needs KROUTER_ALLOW_CODEX=1); "
             "other CLIs (opencode, kimi, …) run unconfined and are used only with KROUTER_ALLOW_UNCONFINED=1 in the "
-            "keys file. Timer already on. "
+            "keys file. " + ("Timer already on. " if lamp == "running" else "No nightly job is installed. ") +
             "Do not print secrets."
         )
     nightly = meta.get("nightly") or ""
@@ -176,7 +178,7 @@ def emit_host_action(health: Path) -> None:
             pass
         if nightly in {"skipped", "failed"} or stale:
             why = "has not run for 3+ days" if stale and nightly not in {"skipped", "failed"} else nightly
-            print(f"host_action: Nightly upkeep {why}; see 90 系统文件/自动化/夜间维护.md for each step's reason. "
+            print(f"host_action: Nightly upkeep {why}; see {report} for each step's reason. "
                   "Model steps need the writer's lane (a *_API_KEY, or a logged-in grok / Codex / claude / …).")
 
 
@@ -439,7 +441,8 @@ def main() -> int:
     query = sys.argv[2] if len(sys.argv) > 2 else ""
     vault_raw = vault_path()
     if not vault_raw:
-        print("set OBSIDIAN_VAULT to your vault root (or run the one-line install, which records it)", file=sys.stderr)
+        print("set KROUTER_VAULT to your memory folder (OBSIDIAN_VAULT also works), or run the one-line install, which "
+              "records it", file=sys.stderr)
         return 2
     vault = Path(vault_raw)
     if not vault.is_dir():
@@ -467,14 +470,14 @@ def main() -> int:
         emit_receipt(canonical, "requested-fields-returned", route, query, vault, map_path)
         print("route: status")
         print("evidence_scope: selected-frontmatter-fields")
-        print("l0: how is on the lock receipt; do not ingest 下意识.md")
+        print(f"l0: how is on the lock receipt; do not ingest {Path(zones.real(vault, '90 系统文件/自动化/下意识.md')).name}")
         if canonical.is_file():
             meta = parse_frontmatter(canonical)
             for field in STATUS_FIELDS:
                 if field in meta:
                     print(f"{field}: {meta[field]}")
         emit_daily_seal(health)
-        emit_host_action(health)
+        emit_host_action(health, vault)
         emit_backup()
         return 0
     if route == "suggest":

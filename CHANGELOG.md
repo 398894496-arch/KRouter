@@ -11,6 +11,57 @@ notice, then the details.
 
 ## Unreleased
 
+- **Claude Desktop: no more entries lost on restart, and a one-click extension.** Claude Desktop keeps its settings in
+  memory while it runs and writes the whole `claude_desktop_config.json` back when it quits, so an entry the installer
+  wrote while the app was open disappeared after the next restart. The installer now checks whether the app is running
+  (macOS: a process whose executable is `…/Claude.app/Contents/MacOS/Claude`; Windows: a `Claude` process under
+  `AnthropicClaude` or `WindowsApps`) and, if so, leaves the file alone and offers two ways: quit the app and run
+  `bootstrap.py --connect claude-desktop`, or double-click `KRouter.mcpb`, built for your memory folder. Uninstall
+  leaves the file alone too while the app runs, and says so. `krouter doctor` reports when Claude Desktop is installed
+  but KRouter is in neither its settings file nor its extensions. The extension (`scripts/build_mcpb.py`, MCPB
+  manifest 0.3, Python server, the memory folder as a `directory` setting) is a release asset; `release_pack.sh` and
+  the release smoke check its structure and start it from the unpacked bundle for a real MCP round trip.
+  Tested inside the app (Claude Desktop 4.23118.1, macOS, 2026-11-10) with a test build pinned to a sample memory
+  folder: one press of Install, no restart, about 7 seconds of online checking with nothing on screen, then 3 tools
+  connected; in an ordinary chat one question was answered with its page (`02 Methods/Automation/Seal the day from the
+  log file.md`) and one refused (`recall: none`). The README says to press Install once and wait (a second press
+  removed it). The test build named the full Python path, as the installer's build does; the release file's plain
+  `python3` takes another launch path in the app and is not yet tested there.
+- **The default install no longer imports past sessions.** It makes the memory folder, connects the apps it finds
+  (each settings file it changes is copied to `*.krouter-bak` first, and every file it created or changed is listed
+  at the end) and records sessions from then on. Its last line gives the one command that imports the last 7 days;
+  `--all` does that up front, with claude-mem's memory (the old default). `--no-import` / `--minimal` stay lookup only.
+- **`KROUTER_VAULT`** is the memory folder's name. `OBSIDIAN_VAULT` still works for older installs; when both are set,
+  `KROUTER_VAULT` wins (an explicit `--vault` / `vault=` beats both). Messages and the README say "memory folder";
+  Obsidian is one optional way to open it.
+- **Release checks you can run before tagging:** `scripts/release_pack.sh` builds the assets exactly as the release
+  workflow does (the workflow now calls it) and fails when a README links an asset the release would not attach or the
+  package lacks what a release install runs. `scripts/release_smoke.py` runs every install command in both READMEs
+  against the real addresses (assets, the one-line install with its checksum, `uvx --from`, `pipx install`, the
+  Claude Code marketplace); a new `smoke` job runs it after each release. Against today's addresses it fails, as it
+  should: `releases/latest/download/bootstrap.sh` is a 404 and `main` has no `pyproject.toml` yet.
+- **An English install is English all the way through, and the install says what it changes.** A new English vault
+  gets English folder and file names (`Home.md`, `02 Methods/`, `90 System/Automation/Daily health.md`, …) from
+  `skill/krouter-obsidian/scripts/zones_en.psv`, recorded in the vault's `krouter-zones.psv`; `krouter demo`, `status`,
+  receipts' `how` lines, `first_run.sh` and the correction-candidates page (`YYYY-MM-DD｜Correction candidates.md`)
+  follow it. Vaults with the default (Chinese) names keep working unchanged; nothing is migrated. The language is
+  `--lang`, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's (an English terminal on a Mac set to Chinese
+  used to get the Chinese install).
+- **Install:** the README line saves the script to a file before running it, so a failed download exits non-zero
+  (`curl … | sh` exited 0 on a 404). `--minimal` installs lookup only (no session import, nightly job, Claude Code
+  plugin, hooks or Cursor rules) and connects only the apps named with `--apps`. Run with no terminal (by an agent),
+  the installer no longer opens Obsidian; `--open` forces it. `--dry-run` lists every vault file, the router, the
+  rules, the recorded path, the plugin and its marketplace. The install output and the README say what works without
+  a model and the consequence (a change of mind is not distilled, so the old answer can still rank first). The
+  health page's `lamp` is `running` only when a nightly job is installed. A `~/.codex` holding only `tmp/` (left by
+  probing the Codex app's login) no longer counts as a Codex install.
+- **`krouter doctor`** (and `scripts/krouter doctor` from a clone or `~/.dsh-krouter/current`, no pip needed): one
+  verdict, OK or what is missing with the command that fixes it. The installer prints where `krouter` is.
+- **Uninstall** also uninstalls the Claude Code plugin and removes its marketplace when it points at a folder on this
+  machine (its session hooks kept firing before); `--purge` also removes `~/.dsh-krouter`. The README's Install
+  section has the uninstall command. `first_run.sh` no longer requires ripgrep (the router already fell back to a
+  built-in search). The release package now carries `sdk/krouter`, `.claude-plugin/`, `hooks/` and `plugin/`, so a
+  release install gets the plugin and `krouter doctor` like a clone does.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three

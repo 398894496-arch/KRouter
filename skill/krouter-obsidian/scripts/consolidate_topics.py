@@ -194,7 +194,7 @@ def build(vault: Path, topic: dict, force: bool) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
+    ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--cli", default="", help="pick a CLI explicitly (goes before any API key)")
     ap.add_argument("--model", default="")
     ap.add_argument("--only", default="", help="comma-separated slugs")

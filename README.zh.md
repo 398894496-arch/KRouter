@@ -10,6 +10,8 @@
 
 ![周一定了 A，周三改成 B，周四 agent 答 B 并引用那条纠错；库里没有的问题直接拒答](docs/img/demo.gif)
 
+开始用不需要 key：查询、出处、拒答都不调模型。没有模型时改主意不会被提炼，旧答案不会被自动替换（[没有模型时哪些能用](#安装)）。
+
 **不用安装、不用 key，几秒钟亲眼看一遍**：同样的过程，在一个用完即删的临时记忆库上跑。
 
 ```bash
@@ -19,7 +21,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 | 我想…… | 从这里开始 |
 |---|---|
 | 装之前先看它怎么答、怎么被纠正、怎么拒答 | `krouter demo`（上面这行） |
-| 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个 |
+| 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个（`--minimal`：只装查询、只接你点名的） |
 | 看能接哪些应用 | [能接哪些应用](#能接哪些应用) |
 | 从自己的代码里调用 | [从你自己的代码里用](#从你自己的代码里用) |
 | 团队共用一份记忆，或者跑好几份 | [`docs/TEAM.md`](docs/TEAM.md) |
@@ -50,21 +52,70 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 ## 安装
 
 ```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
-Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（[版本要求和更新办法](docs/DETAILS.zh.md#claude-code-插件)）。
+先把脚本存成文件再运行：下载失败就停在这一步，退出码非零（`curl … | sh` 会拿空脚本跑一遍，还报成功）。Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex`
+· 只装 Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（[版本要求和更新办法](docs/DETAILS.zh.md#claude-code-插件)）。
+
+唯一的前提是 Python 3；装了 ripgrep 只是让大库的原文搜索快一点。两种装法都什么都不问，选一种（参数跟在脚本后面：`sh /tmp/krouter-install.sh --minimal --apps claude`）：
+
+| | 默认 | `--minimal`（最小安装） |
+|---|---|---|
+| 查询带出处、库里没有就直说 | 有 | 有 |
+| 接哪些应用 | [下面这张表](#能接哪些应用)里本机装了的全部 | 只接你用 `--apps claude,codex,cursor,…` 点名的（不点名就一个都不接） |
+| Claude Code 插件（会话钩子） | 找到 `claude` 就装 | 不装 |
+| Codex、Cursor 的会话钩子 | 找到应用就加 | 不加 |
+| Cursor 规则（`~/.cursor/rules/`） | 写 | 只在 `--apps cursor` 时写 |
+| 记会话 | 从现在起：每一轮结束就记下，只在本机、先脱敏、不调模型 | 不记 |
+| 导入以前的会话（近 7 天） | 不导：安装最后一行给出一条命令，想导再跑；或一开始就加 `--all` | 不导 |
+| 夜间任务、用你的模型提炼（会把文字发出去的两步） | 不开：`--ask` 先问你，`--timer` 直接开夜间任务 | 不开 |
+| 在 Obsidian 里打开新库 | 只在你从终端运行时打开（`--open` 总是打开，`--no-open` 从不）；agent 代跑时不打开 | 同左 |
+
+`--all` 做安装在不调模型时能做的全部事，也就是以前的默认：另外导入近 7 天的会话，有 claude-mem 的话把它的记忆也导进来。
+
+默认安装会建或改的全部文件（`--dry-run` 先按你这台机器列一遍，一处都不改；安装时会逐条列出改过的设置文件，改之前都先留了备份）：
+
+| 位置 | 是什么 |
+|---|---|
+| `~/Documents/第二大脑/`（或你用 `--vault` 指定的文件夹） | 记忆本身，纯 Markdown。已有的文件夹一个文件都不覆盖，只补缺的 |
+| `~/.dsh-krouter/<版本>/`、`~/.dsh-krouter/current` | 下载下来的发布包（从 clone 里装就用 clone 本身） |
+| `~/.agents/skills/krouter-obsidian/` | 路由器 |
+| `~/.config/krouter/vault` | 记着记忆在哪，给钩子和 MCP 服务用 |
+| `~/.claude.json`（`claude mcp add`）、`~/.claude/settings.json`（插件和它的市场） | Claude Code |
+| `~/.codex/config.toml`（`codex mcp add`）、`~/.codex/hooks.json` | Codex |
+| `~/.cursor/mcp.json`、`~/.cursor/hooks.json`、`~/.cursor/rules/` | Cursor |
+| [下面表里](#能接哪些应用)其他应用各自的 MCP 设置文件 | 只动本机装了的；改过的文件旁边留一份 `*.krouter-bak` |
+| Claude Desktop 的 `claude_desktop_config.json` | 只在应用关着时写（用扩展包的话：点安装后应用会先联网检查几秒，界面没有反应；只点一次、等它好，再点一次可能会把它卸掉）；开着时一个字不改：给你一个 `~/.config/krouter/KRouter.mcpb` 去双击，或者退出应用后跑安装最后打印的那条 `--connect claude-desktop` 命令 |
+| `~/.cache/krouter/`、`~/.local/state/krouter/` | 搜索缓存（可重建）和导入进度 |
+
+安装过程中除了下载本身，没有任何内容离开本机。装完：
+
+```bash
+~/.dsh-krouter/current/scripts/krouter doctor     # 一句结论：正常，或缺什么、用哪条命令补
+~/.dsh-krouter/current/scripts/krouter search "上周 X 最后定了什么？"
+```
+
+（在 clone 里用 `./scripts/krouter`；装了 Python 包、`krouter` 在 PATH 上，直接 `krouter`。）记忆文件夹就是纯 Markdown，用任何编辑器打开都行，喜欢的话也可以用 Obsidian。各个工具按这个顺序找它：`KROUTER_VAULT`，其次 `OBSIDIAN_VAULT`（旧名字，照样认；两个都设了以 `KROUTER_VAULT` 为准），最后是安装时记在 `~/.config/krouter/vault` 里的路径。
+
+**没有模型时**（没登录任何 AI 编程工具、也没有 API key）：查询、带出处的回答、库里没有就直说、本地导入会话、记下读起来像纠正的话，都照常；不工作的是提炼（每页开头的「定了什么、改了什么」）、夜间整理和这些纠正的判定。后果：你改了主意，旧答案不会被自动替换，查询时旧页可能仍排第一，要等接上模型、那段会话提炼过之后才换。安装输出和 `krouter doctor` 都会说你现在是哪种状态。
 
 想先看看再装？下面只有最后一行会改动你的机器：
 
 ```bash
 git clone https://github.com/398894496-arch/KRouter.git && cd KRouter
-./scripts/first_run.sh                      # 在自带的示例库上出一张回执
-python3 scripts/bootstrap.py --dry-run      # 列出安装会做的每一处改动，一处都不做
-python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的库，先不开夜间任务
+./scripts/first_run.sh                      # 在示例库的临时副本上出一张回执
+python3 scripts/bootstrap.py --dry-run      # 列出安装会改的每个文件和应用设置，一处都不改
+python3 scripts/bootstrap.py --minimal --apps claude --vault ~/notes   # 只装查询、只接 Claude Code、用你的文件夹
 ```
 
-唯一的前提是 Python 3，安装脚本什么都不问。它会建一个记忆文件夹（已有的用 `--vault` 指定，一个文件都不覆盖），把本机装了的、[下面这张表](#能接哪些应用)里的应用都接上，再把近 7 天的 agent 会话导成页面：只在本机做、先脱敏、不调模型，每一页都记在变更记录里，可以撤回。从这以后它自己记：Claude Code、Codex、Cursor 每一轮结束就记下，没有任何内容离开本机。`--no-import` 只装查询；`--ask` 会先问你，会把文字发出去的那两步（用你的模型提炼、夜间任务）也是在这里开。
+**卸载：**
+
+```bash
+sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/uninstall.sh；加 --dry-run 先列出来
+```
+
+它会停掉并删除夜间任务、路由器、规则、KRouter 的 MCP 条目和钩子、Claude Code 插件（插件市场指向本机文件夹时一并删）和记下的库路径；你的记忆文件夹和钥匙文件一律不动。`--purge` 另外删缓存、状态和 `~/.dsh-krouter`。
 
 ## 能接哪些应用
 
@@ -76,7 +127,8 @@ python3 scripts/bootstrap.py --vault ~/notes --no-timer   # 装到你自己的�
 | Codex | MCP，加上会话钩子（`~/.codex/hooks.json`；在 Codex 里输入 `/hooks` 信任一次） | MCP 已实测；钩子在 codex-cli 0.155 实测 |
 | Cursor | 规则和 skill、MCP（`~/.cursor/mcp.json`），加上会话钩子（`~/.cursor/hooks.json`） | 规则和 skill 已实测；MCP 设置和钩子由测试照 Cursor 文档的格式检查，还没在 Cursor 里实测 |
 | DeepSeek Harness | 插件（`dsh plugin --profile web add github:398894496-arch/KRouter`） | 已实测 |
-| Claude Desktop · VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
+| Claude Desktop | 扩展包：双击 [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb)，点一次安装（不改设置文件、不用重启；点完应用会先联网检查几秒，这期间界面没有反应）。也可以让安装脚本写它的设置文件，但只在应用关着时写：Claude Desktop 开着的时候把设置留在内存里，退出时把整份文件写回去，开着时写进去的条目一重启就没了。安装脚本发现它在运行，就不碰那个文件，改为按你的记忆文件夹做一个扩展包 | **扩展包已在应用里实测**（Claude Desktop 4.23118.1，macOS，2026-11-10）：点一次安装、不用重启就装好，3 个工具都连上；在普通聊天里，一个问题答出结论并给出出处页，一个库里没有的问题被拒答（`recall: none`）。实测用的包写的是 Python 的完整路径（和安装脚本生成的一样）；发布附件里写的是 `python3`，应用会走另一条启动路径，还没实测。设置文件由测试检查过 |
+| VS Code（Copilot）· GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好它的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过；还没在应用里实测 |
 | 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | 自带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | 都已对着服务实测，CI 也跑；其中三个连整个 agent 循环一起跑过 |
 | 其他能跑本地 MCP 服务的应用（Windsurf、opencode、Continue、Roo Code……） | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
 | 团队 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |
@@ -142,7 +194,7 @@ console.log(a.page, a.how, a.refused);
 ## 装完五分钟
 
 1. 问你的 AI：*「上周我们关于 X 是怎么定的？」* 它会从记忆里查，给出答案和出处页；记忆里没有，就直说没有。
-2. 打开记忆文件夹：导入的会话已经在里面了，每个会话一页，内容是你的提问和每轮最后的回答。
+2. 打开记忆文件夹：装好之后的每个会话都在里面，每个会话一页，内容是你的提问和每轮最后的回答（安装最后几行给了一条命令，想把近 7 天的也导进来就跑它）。
 3. **「要让模型提炼一下定了什么吗？」** 答应后，你已经在用的模型（登录好的 CLI 或 API key）会在最近几个会话的页面顶上写出「定了什么、改了什么」。发之前它会先告诉你要发多少字。
 
 ## 之后它自己跟上

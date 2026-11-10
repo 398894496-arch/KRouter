@@ -382,26 +382,36 @@ def prompt(payload: dict, agent: str = "claude") -> int:
     vault = Path(raw).expanduser()
     now = datetime.now()
     folder = zones.path(vault, CANDIDATES)
-    page = folder / f"{now.date().isoformat()}｜纠正候选.md"
+    en = zones.lang(vault) == "en"
+    page = folder / f"{now.date().isoformat()}｜{'Correction candidates' if en else '纠正候选'}.md"
     said = re.sub(r"\s+", " ", redact(text)).strip()
     if len(said) > CANDIDATE_MAX:
         said = said[:CANDIDATE_MAX].rstrip() + " …"
     cwd = str(payload.get("cwd") or "")
     project = Path(project_root(cwd)).name if cwd else ""
-    line = (f"- （{now.strftime('%H:%M')}）{said} — 项目 {project or '未知'}，会话 `{AGENTS.get(agent, 'claude')}:{sid[:8] or '?'}`，"
-            f"命中「{cue}」，待下次蒸馏判定\n")
+    sess = f"{AGENTS.get(agent, 'claude')}:{sid[:8] or '?'}"
+    if en:  # 同一行的英文写法，corrections.LINE_EN 认它
+        line = (f"- ({now.strftime('%H:%M')}) {said} — project {project or 'unknown'}, session `{sess}`, "
+                f"cue \"{cue}\", pending the next distill\n")
+    else:
+        line = (f"- （{now.strftime('%H:%M')}）{said} — 项目 {project or '未知'}，会话 `{sess}`，"
+                f"命中「{cue}」，待下次蒸馏判定\n")
     folder.mkdir(parents=True, exist_ok=True)
     if not page.exists():
+        name = "Correction candidates" if en else "纠正候选"
+        intro = ("What you said in a session that reads like a correction, noted on the spot by the hook (redacted). "
+                 "The next distill settles each one: one that holds goes into that session's digest, one that does not "
+                 "is marked here; both are listed in the memory changes page.\n\n") if en else (
+                 "你在会话里说过、读起来像纠正的话，hook 当场照录（已脱敏）。下一次增量蒸馏自动判定：成立的写进那个会话的提炼，"
+                 "不成立的就地标掉，两种都记进「记忆变更记录」。\n\n")
         page.write_text("---\n"
-                        f"title: \"{now.date().isoformat()} 纠正候选\"\n"
+                        f"title: \"{now.date().isoformat()} {name}\"\n"
                         "type: correction-candidates\n"
                         "status: provisional\n"
                         f"date: {now.date().isoformat()}\n"
                         "source: krouter-hook\n"
                         "---\n\n"
-                        f"# {now.date().isoformat()} 纠正候选\n\n"
-                        "你在会话里说过、读起来像纠正的话，hook 当场照录（已脱敏）。下一次增量蒸馏自动判定：成立的写进那个会话的提炼，"
-                        "不成立的就地标掉，两种都记进「记忆变更记录」。\n\n",
+                        f"# {now.date().isoformat()} {name}\n\n" + intro,
                         encoding="utf-8")
     with page.open("a", encoding="utf-8") as fh:
         fh.write(line)

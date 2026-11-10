@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -56,9 +57,10 @@ def test_page_and_how_come_from_recall_and_a_replaced_page_is_never_the_answer(c
 
     assert demo.run("en") == 0
     out = capsys.readouterr().out
-    assert "from: 02 经验与方法/Release day, changed.md" in out
-    assert "replaced, shown but not the answer: 02 经验与方法/Release day.md" in out
+    assert "from: 02 Methods/Release day, changed.md" in out
+    assert "replaced, shown but not the answer: 02 Methods/Release day.md" in out
     assert out.count("recall: none") == 1 and "Deleted the demo memory" in out
+    assert not re.search(r"[\u4e00-\u9fff]", out)  # the English demo has English folder names too
     assert demo.run("zh") == 0 and "出处：02 经验与方法/发版日（改）.md" in capsys.readouterr().out
 
 
@@ -69,7 +71,7 @@ def test_answer_fields_on_a_recall_hit(tmp_path, monkeypatch):
     monkeypatch.setenv("KROUTER_CACHE_DIR", str(tmp_path / "cache"))
     vault = demo.build(tmp_path, "en")
     a = krouter.ask("when do we ship releases", vault=vault)
-    assert a.page == "02 经验与方法/Release day, changed.md" and "Tuesday" in a.how and not a.refused
+    assert a.page == "02 Methods/Release day, changed.md" and "Tuesday" in a.how and not a.refused
     assert [h["status"] for h in a.hits][:2] == ["active", "superseded"]
     b = krouter.ask("what is our on-call rotation", vault=vault)
     assert b.refused and b.page == "" and b.how == "" and b.hits == []

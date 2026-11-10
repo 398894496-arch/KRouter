@@ -189,7 +189,7 @@ def accept(item: object, page_text: str, con=None) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT", ""))
+    ap.add_argument("--vault", default=os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", ""))
     ap.add_argument("--cli", default="", help="pick a CLI explicitly (goes before any API key)")
     ap.add_argument("--model", default="")
     ap.add_argument("--jobs", type=int, default=3)

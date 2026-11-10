@@ -191,7 +191,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="no model call, no write: list what would be sent")
     args = ap.parse_args()
     if not args.vault:
-        print("set OBSIDIAN_VAULT", file=sys.stderr)
+        print("set KROUTER_VAULT (or OBSIDIAN_VAULT) to your memory folder, or pass --vault", file=sys.stderr)
         return 2
     vault = Path(args.vault)
     extra = (["--cli", args.cli] if args.cli else []) + (["--model", args.model] if args.model else [])

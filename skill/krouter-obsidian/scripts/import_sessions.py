@@ -56,6 +56,7 @@ from krouter_home import project_root, vault_path  # noqa: E402
 from krouter_redact import redact  # noqa: E402
 
 FOLDER = "05 时间日志/会话摘录"
+PAGE_LANG = "zh"  # 库的语言（zones.lang）：英文库里召回给的 how 是英文；main() 里按库设
 MARK = "krouter-import"
 ASK_MAX = 600        # 每条提问最多保留的字数
 ANSWER_MAX = 900     # 每条回答最多保留的字数
@@ -570,7 +571,8 @@ def render(e: dict, digest: str = "", covers: int | None = None) -> str:
         first = re.sub(r"^[-*]\s*", "", digest.strip().splitlines()[0])
         meta.append(f"how: {first}")  # 召回命中这页时先给的那一句：这段会话定下来的第一件事
     else:
-        meta.append(f"how: 会话摘录（{len(turns)} 轮，还没提炼）：{title}")
+        meta.append(f"how: session excerpt ({len(turns)} turns, not distilled yet): {title}" if PAGE_LANG == "en"
+                    else f"how: 会话摘录（{len(turns)} 轮，还没提炼）：{title}")
     out = meta + ["---", "", f"# {title}", ""]
     if digest:
         out += [DIGEST_HEAD, "", digest.strip(), ""]
@@ -776,7 +778,7 @@ def main() -> int:
         print(json.dumps({"import": "revoked"}))
         return 0
     if not args.vault:
-        print("set OBSIDIAN_VAULT", file=sys.stderr)
+        print("set KROUTER_VAULT (or OBSIDIAN_VAULT) to your memory folder, or pass --vault", file=sys.stderr)
         return 2
     vault = Path(args.vault).expanduser()
     if args.undo:
@@ -814,6 +816,8 @@ def main() -> int:
     dropped: dict[str, str] = {}
     entries = collect(since, until, files or None, roots_out, dropped)
     folder = zones.path(vault, FOLDER)
+    global PAGE_LANG
+    PAGE_LANG = zones.lang(vault)
     entries, forked_pages, forks_dropped = dedupe_forks(entries, folder)
     overlap = args.overlap or st.get("overlap") or "link"
     ids, days = daily_coverage(vault)

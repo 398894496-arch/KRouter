@@ -27,7 +27,8 @@
 >   答 301 次，5 万页 54 ms、每秒 75 次（合成库，`bench/scale/serve_load.py`）。Kubernetes 清单和 systemd 服务由测试检查过，
 >   还没在真集群、真主机上跑过。
 > - **安装和自动记：** 一行安装什么都不问，把本机装了的应用都接上（Claude Code 连同插件、Codex、Cursor、Claude Desktop、
->   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed、Cline CLI），并在本机导入近 7 天的会话，不调模型；`--no-import` 只装查询。之后
+>   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed、Cline CLI），逐条列出改过的设置文件（每个都留了备份），不导入以前的会话
+>   （`--all` 在本机导入近 7 天、不调模型；`--minimal` 只装查询、只接你点名的应用）。从这以后
 >   Claude Code、Codex、Cursor 都通过会话钩子在每一轮结束时记下（只在本机、不调模型；Codex 要先在 `/hooks` 里信任；Cursor
 >   的照它的文档检查过，还没在 Cursor 里实测）。用模型提炼和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
@@ -45,7 +46,7 @@
 ## 安装 —— 一行，什么都不用懂
 
 ```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
 Windows（PowerShell，不需要管理员）：
@@ -54,7 +55,7 @@ Windows（PowerShell，不需要管理员）：
 irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex
 ```
 
-它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（系统语言是中文就用中文模板），装好路由器和 agent 规则，并在 Obsidian 里打开这座库。它还会把本机装了的应用都接上（首页那张表：各写进应用自己的 MCP 设置，Claude Code 另外从同一个发布包装插件），并把近 7 天的 agent 会话导成页面（只在本机、先脱敏、不调模型、每页记在变更记录里）。默认到此为止：什么都不问，没有内容离开本机；`--no-import` 不导入。加 `--ask` 会在导入前先问，并问要不要用你的模型提炼、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`… | KROUTER_TAG=v1.3.0 sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`… | sh -s -- --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
+它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（语言是中文就用中文模板：先看 `--lang`，再看 `LC_ALL` / `LC_MESSAGES` / `LANG`，最后才看系统语言；英文库的目录和文件名都是英文），装好路由器和 agent 规则；从终端运行时在 Obsidian 里打开这座库（`--open` 总是打开，`--no-open` 从不，agent 代跑时不打开）。`--minimal` 只装查询：不导入、不装插件和钩子、不写 Cursor 规则，只接 `--apps` 点名的应用。它还会把本机装了的应用都接上（首页那张表：各写进应用自己的 MCP 设置，Claude Code 另外从同一个发布包装插件），逐条列出改过的设置文件（每个都在旁边留了 `*.krouter-bak`），从这以后开始记会话，不导入以前的会话（`--all`，或安装最后几行给的那条命令，会把近 7 天的会话导成页面：只在本机、先脱敏、不调模型、每页记在变更记录里）。默认到此为止：什么都不问，没有内容离开本机；`--no-import` 不导入。加 `--ask` 会在导入前先问，并问要不要用你的模型提炼、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`KROUTER_TAG=v1.3.0 sh /tmp/krouter-install.sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`sh /tmp/krouter-install.sh --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
 
 ### Claude Code 插件
 

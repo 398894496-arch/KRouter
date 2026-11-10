@@ -126,7 +126,7 @@ class HttpTransport {
 export class KRouter {
   /** A local KRouter: starts its MCP server over stdio. `vault` defaults to the one the install recorded. */
   static local({ vault, python = process.platform === "win32" ? "python" : "python3", server = DEFAULT_SERVER } = {}) {
-    return new KRouter(new StdioTransport(python, [server], vault ? { OBSIDIAN_VAULT: String(vault) } : {}));
+    return new KRouter(new StdioTransport(python, [server], vault ? { KROUTER_VAULT: String(vault), OBSIDIAN_VAULT: String(vault) } : {}));
   }
 
   /** A team server over Streamable HTTP, e.g. https://krouter.example/mcp/team. */

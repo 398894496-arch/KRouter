@@ -8,8 +8,9 @@ ROOT=$(CDPATH= cd -- "$DIR/../.." && pwd)
 RESOLVE="$DIR/resolve.py"
 BUNDLED_ROUTER="$ROOT/skill/krouter-obsidian/scripts/route_knowledge.sh"
 
+if [ -n "${KROUTER_VAULT:-}" ]; then OBSIDIAN_VAULT=$KROUTER_VAULT; export OBSIDIAN_VAULT; unset KROUTER_VAULT; fi
 if [ -z "${OBSIDIAN_VAULT:-}" ]; then
-  printf '%s\n' "KRouter: OBSIDIAN_VAULT is not set. Timer on; distill skipped." >&2
+  printf '%s\n' "KRouter: KROUTER_VAULT (or OBSIDIAN_VAULT) is not set. Timer on; distill skipped." >&2
   exit 0
 fi
 

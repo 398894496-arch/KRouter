@@ -18,6 +18,9 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
 
+No key is needed to start: lookup, sources and refusals run with no model. Without one, a change of mind is
+not distilled, so the old answer is not replaced on its own ([what works without a model](#install)).
+
 **See it for yourself in a few seconds, with nothing installed and no key:** the same story on a throwaway memory,
 deleted afterwards.
 
@@ -28,7 +31,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 | I want to… | Start here |
 |---|---|
 | see it answer, correct itself and refuse, before installing anything | `krouter demo` (above) |
-| give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds |
+| give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds (`--minimal`: lookup only, the apps you name) |
 | check which apps it connects to | [Works with](#works-with) |
 | call it from my own code | [From your own code](#from-your-own-code) |
 | share a memory with my team, or run several | [`docs/TEAM.md`](docs/TEAM.md) |
@@ -77,26 +80,83 @@ page it came from, why that page, how sure), and a memory you can open and edit.
 ## Install
 
 ```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
-Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex` · Claude Code plugin: `/plugin install krouter --marketplace 398894496-arch/KRouter` ([versions, updating](docs/DETAILS.md#the-claude-code-plugin)).
+The script is saved to a file first, so a failed download stops right there with a non-zero exit (`curl … | sh`
+would run an empty script and report success). Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex`
+· Claude Code plugin only: `/plugin install krouter --marketplace 398894496-arch/KRouter` ([versions, updating](docs/DETAILS.md#the-claude-code-plugin)).
+
+Python 3 is the only requirement; ripgrep, when present, only makes literal search faster on a big vault. Neither way
+asks anything. Pick one (options go after the script: `sh /tmp/krouter-install.sh --minimal --apps claude`):
+
+| | Default | `--minimal` |
+|---|---|---|
+| Lookup with the source page, "not in the memory" instead of a guess | yes | yes |
+| Apps connected | every app on [the list below](#works-with) that it finds | only the ones you name with `--apps claude,codex,cursor,…` (none when you name none) |
+| Claude Code plugin (session hooks) | installed when `claude` is found | no |
+| Codex and Cursor session hooks | added when the app is found | no |
+| Cursor rules (`~/.cursor/rules/`) | yes | only with `--apps cursor` |
+| Records sessions | from now on: each turn as it ends, on this machine, redacted, no model call | no |
+| Imports past sessions (the last 7 days) | no: one command at the end of the install does it, or `--all` up front | no |
+| Nightly job, distilling with your model (the steps that send text out) | no: `--ask` asks, `--timer` turns the job on | no |
+| Opens the new memory in Obsidian | only when you run it from a terminal (`--open` always, `--no-open` never); run by an agent, no | same |
+
+`--all` does everything the install can do without a model, as the default used to: it also imports the last 7 days
+of sessions and claude-mem's memory, if you have one.
+
+Every file the default install creates or changes (`--dry-run` lists them for your machine first, changing nothing;
+the install itself lists each settings file it changed, and keeps a copy of it first):
+
+| Where | What |
+|---|---|
+| `~/Documents/Second Brain/` (or your folder, `--vault`) | the memory: plain Markdown. An existing folder keeps every file; only missing ones are added |
+| `~/.dsh-krouter/<version>/`, `~/.dsh-krouter/current` | the downloaded release (installing from a clone uses the clone) |
+| `~/.agents/skills/krouter-obsidian/` | the router |
+| `~/.config/krouter/vault` | where the memory is, for hooks and the MCP server |
+| `~/.claude.json` (`claude mcp add`), `~/.claude/settings.json` (plugin and its marketplace) | Claude Code |
+| `~/.codex/config.toml` (`codex mcp add`), `~/.codex/hooks.json` | Codex |
+| `~/.cursor/mcp.json`, `~/.cursor/hooks.json`, `~/.cursor/rules/` | Cursor |
+| each other app's MCP settings file, [listed below](#works-with) | only for apps it finds; a copy of each changed file is kept as `*.krouter-bak` |
+| Claude Desktop's `claude_desktop_config.json` | only when the app is closed (with the extension instead: after you press Install the app checks it online for a few seconds with nothing on screen; press once and wait, a second press can remove it again); while it runs, nothing: you get `~/.config/krouter/KRouter.mcpb` to double-click, or quit the app and run the `--connect claude-desktop` command the install prints |
+| `~/.cache/krouter/`, `~/.local/state/krouter/` | the search cache (rebuildable) and what the import has seen |
+
+Nothing leaves the machine during the install except the download itself. When it is done:
+
+```bash
+~/.dsh-krouter/current/scripts/krouter doctor     # OK, or what is missing and the command that fixes it
+~/.dsh-krouter/current/scripts/krouter search "what did we decide about X?"
+```
+
+(From a clone, `./scripts/krouter`; with the Python package on your PATH, just `krouter`.) The memory folder is plain
+Markdown: open it in any editor, or in Obsidian if you like. Tools find it through `KROUTER_VAULT`, else
+`OBSIDIAN_VAULT` (the older name, still read; `KROUTER_VAULT` wins when both are set), else the folder the install
+recorded in `~/.config/krouter/vault`.
+
+**Without a model** (no logged-in AI coding CLI, no API key), lookup, answers with their source page, refusals,
+the local session import and noting what reads like a correction all work. Distilling (each page's "what was
+decided, what changed"), the nightly upkeep and settling those corrections do not. The consequence: when you
+change your mind, the old answer is not replaced on its own, and the older page can still rank first until a model
+is connected and the session is distilled. The installer and `krouter doctor` both say which state you are in.
 
 Rather look first? Nothing below changes your machine until the last line:
 
 ```bash
 git clone https://github.com/398894496-arch/KRouter.git && cd KRouter
-./scripts/first_run.sh                      # a receipt on the bundled sample vault
-python3 scripts/bootstrap.py --dry-run      # every change the install would make, made nowhere
-python3 scripts/bootstrap.py --vault ~/notes --no-timer   # install against your vault, nightly job off
+./scripts/first_run.sh                      # a receipt on a throwaway copy of the sample memory
+python3 scripts/bootstrap.py --dry-run      # every file and app setting the install would change, changed nowhere
+python3 scripts/bootstrap.py --minimal --apps claude --vault ~/notes   # lookup only, Claude Code only, your folder
 ```
 
-Python 3 is the only requirement, and the installer asks nothing. It makes a memory folder (or uses yours with
-`--vault`, overwriting nothing), connects every app on [the list below](#works-with) that it finds, and imports the
-last 7 days of agent sessions as pages: locally, redacted, with no model call, each one listed in the change ledger
-and undoable. From then on it remembers by itself, turn by turn, in Claude Code, Codex and Cursor, and nothing leaves
-the machine. `--no-import` installs lookup only; `--ask` asks first, and is how you turn on the two steps that send
-text out: distilling with your model, and the nightly job.
+**Uninstall:**
+
+```bash
+sh ~/.dsh-krouter/current/scripts/uninstall.sh     # from a clone: sh scripts/uninstall.sh; --dry-run lists first
+```
+
+It stops and removes the nightly job, the router, the rules, KRouter's MCP entries and hooks, the Claude Code plugin
+(and its marketplace when it points at a folder on this machine) and the recorded path. It never touches your
+memory folder or your keys file. `--purge` also removes the cache, the state and `~/.dsh-krouter`.
 
 ## Works with
 
@@ -110,7 +170,8 @@ and `uninstall.sh` takes out only its own entries.
 | Codex | MCP, and session hooks in `~/.codex/hooks.json` (trust them once with `/hooks`) | MCP tested; hooks tested in codex-cli 0.155 |
 | Cursor | rule and skill, MCP (`~/.cursor/mcp.json`), and session hooks (`~/.cursor/hooks.json`) | rule and skill tested; MCP settings and hooks checked by tests against Cursor's documented format, not yet inside Cursor |
 | DeepSeek Harness | plugin (`dsh plugin --profile web add github:398894496-arch/KRouter`) | tested |
-| Claude Desktop · VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
+| Claude Desktop | an extension: double-click [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb) and press Install once (no settings file, no restart; the app checks the extension online for a few seconds before anything shows). Or the installer writes its settings file, but only while the app is closed: Claude Desktop keeps its settings in memory and writes the whole file back when it quits, so an entry written while it is open is gone after a restart. Found running, the installer leaves the file alone and builds the extension for your memory folder instead | **extension tested inside the app** (Claude Desktop 4.23118.1, macOS, 2026-11-10): installed with one press, no restart; its 3 tools connected; in an ordinary chat a question was answered with its source page and an unknown one refused (`recall: none`). Tested with a build that names the full Python path, as the installer's does; the release file's plain `python3` takes another launch path in the app, not yet tested. The settings file is checked by tests |
+| VS Code (Copilot) · GitHub Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP: the installer writes each app's settings file; restart the app once | settings checked by tests against each app's documented format; not yet tested inside the apps |
 | Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever; the others through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | all tested against the server, in CI; three of them through their whole agent loop |
 | Any other app that runs a local MCP server (Windsurf, opencode, Continue, Roo Code, …) | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
 | A team | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
@@ -181,7 +242,7 @@ Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
 ## Five minutes later
 
 1. Ask your AI: *"what did we decide about X last week?"* It answers from the memory, names the page, and says plainly when the memory has nothing on it.
-2. Open the memory folder: the imported sessions are already there, one page each, with your questions and each turn's closing answer.
+2. Open the memory folder: each session since the install is there, one page each, with your questions and each turn's closing answer (the install's last lines give the one command that brings in the last 7 days too).
 3. **"Have your model pull out what was decided?"** On a yes, the model you already use (a logged-in CLI or an API key) writes "what was decided, what changed" at the top of each recent session's page. The installer tells you how many characters that sends before it sends anything.
 
 ## It keeps up on its own

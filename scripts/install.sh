@@ -2,6 +2,8 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+# 记忆文件夹：KROUTER_VAULT（正式名字）优先，OBSIDIAN_VAULT（旧名字）照样认
+if [ -n "${KROUTER_VAULT:-}" ]; then OBSIDIAN_VAULT=$KROUTER_VAULT; export OBSIDIAN_VAULT; unset KROUTER_VAULT; fi
 FORCE=0
 WITH_HOOKS=0
 for arg in "$@"; do
@@ -16,7 +18,7 @@ for arg in "$@"; do
       printf '%s\n' "installs the nightly timer (KROUTER_NO_TIMER=1 skips it; the one-line install asks instead)"
       printf '%s\n' "KRouter writer: detect a logged-in Claudian-class CLI, or wire *_API_KEY"
       printf '%s\n' "does not replace an existing skill unless --upgrade (--force is the same)"
-      printf '%s\n' "never overwrites your alias table: it lives in the vault (90 系统文件/canonical_sources.psv)"
+      printf '%s\n' "never overwrites your alias table: it lives in the vault (90 System/ or 90 系统文件/canonical_sources.psv)"
       printf '%s\n' "undo with scripts/uninstall.sh"
       printf '%s\n' "does not enable hooks unless --with-hooks"
       exit 0
@@ -35,7 +37,7 @@ if [ -e "$SKILL_DST" ] && [ "$FORCE" -ne 1 ]; then
   exit 1
 fi
 
-mkdir -p "$(dirname "$SKILL_DST")" "$(dirname "$RULE_DST")" "$(dirname "$ASK_RULE_DST")"
+mkdir -p "$(dirname "$SKILL_DST")"
 # 升级只换代码：别名表、台账、锁文件先挪开，装完放回原处（软链原样保留）
 KEEP=$(mktemp -d "${TMPDIR:-/tmp}/krouter-keep.XXXXXX")
 if [ -d "$SKILL_DST/scripts" ]; then
@@ -56,12 +58,15 @@ done
 rmdir "$KEEP" 2>/dev/null || true
 chmod +x "$SKILL_DST/scripts/route_knowledge.sh" "$SKILL_DST/scripts/route_knowledge.py" \
   "$SKILL_DST/scripts/canonical_lookup.py" "$SKILL_DST/scripts/ask_product.py"
-cp "$ROOT/extras/cursor/krouter-obsidian.mdc" "$RULE_DST"
-cp "$ROOT/extras/cursor/ask-product.mdc" "$ASK_RULE_DST"
-
 printf '%s\n' "skill: $SKILL_DST"
-printf '%s\n' "cursor rule: $RULE_DST"
-printf '%s\n' "ask rule: $ASK_RULE_DST"
+# KROUTER_NO_CURSOR_RULES=1（最小安装、没点名 Cursor）：不往 ~/.cursor 写规则
+if [ "${KROUTER_NO_CURSOR_RULES:-}" != "1" ]; then
+  mkdir -p "$(dirname "$RULE_DST")" "$(dirname "$ASK_RULE_DST")"
+  cp "$ROOT/extras/cursor/krouter-obsidian.mdc" "$RULE_DST"
+  cp "$ROOT/extras/cursor/ask-product.mdc" "$ASK_RULE_DST"
+  printf '%s\n' "cursor rule: $RULE_DST"
+  printf '%s\n' "ask rule: $ASK_RULE_DST"
+fi
 printf '%s\n' "Codex snippet: $ROOT/extras/codex/AGENTS.snippet.md"
 printf '%s\n' "Claude Code snippet: $ROOT/extras/claude-code/CLAUDE.snippet.md"
 
@@ -78,7 +83,7 @@ if [ -z "$WRITER" ]; then
   fi
 fi
 printf '%s\n' "self-evolution writer: $RUN_SH"
-printf '%s\n' "keys file: $KEYS_ENV (chmod 600). never written into the vault."
+printf '%s\n' "keys file: $KEYS_ENV (chmod 600). never written into the memory folder."
 wire=$(python3 "$ROOT/extras/host-daily-evolution/wire_keys.py") || wire="missing path=$KEYS_ENV"
 printf '%s\n' "key wire: $wire"
 case "$wire" in
@@ -101,7 +106,7 @@ case "$wire" in
 esac
 printf '%s\n' "mounted agent runs status and must tell the host if host_action is present."
 if [ -z "${OBSIDIAN_VAULT:-}" ]; then
-  printf '%s\n' "timer not loaded: export OBSIDIAN_VAULT to YOUR vault (copy template/ there first), then re-run install.sh."
+  printf '%s\n' "timer not loaded: export KROUTER_VAULT to YOUR memory folder (copy template/ there first), then re-run install.sh."
   printf '%s\n' "do not point the timer at the clone template."
 else
   VAULT=$OBSIDIAN_VAULT
@@ -109,12 +114,14 @@ else
   VAULT_FILE="${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}"
   if [ ! -s "$VAULT_FILE" ]; then
     mkdir -p "$(dirname "$VAULT_FILE")" && printf '%s\n' "$VAULT" > "$VAULT_FILE" \
-      && printf '%s\n' "vault recorded for hooks and MCP: $VAULT_FILE"
+      && printf '%s\n' "memory folder recorded for hooks and MCP: $VAULT_FILE"
   fi
   # 别名表放进库：库里已有就不动；没有就把旧表（不是样例时）搬进去、原位置留软链；全新安装放一份样例
-  VAULT_MAP="$VAULT/90 系统文件/canonical_sources.psv"
+  # 路径按库自己的区名（krouter-zones.psv，英文库是 90 System/…）
+  ZONES="$ROOT/skill/krouter-obsidian/scripts/zones.py"
+  VAULT_MAP=$(python3 "$ZONES" real "$VAULT" "90 系统文件/canonical_sources.psv")
   OLD_MAP="$SKILL_DST/scripts/canonical_sources.psv"
-  if [ -d "$VAULT/90 系统文件" ] && [ ! -e "$VAULT_MAP" ]; then
+  if [ -d "$(dirname "$VAULT_MAP")" ] && [ ! -e "$VAULT_MAP" ]; then
     if [ -e "$OLD_MAP" ] && ! cmp -s "$OLD_MAP" "$SAMPLE_MAP"; then
       cp "$OLD_MAP" "$VAULT_MAP"
       if [ -L "$OLD_MAP" ]; then
@@ -132,7 +139,7 @@ else
   elif [ -e "$VAULT_MAP" ]; then
     printf '%s\n' "alias table: $VAULT_MAP (kept)"
   fi
-  HEALTH="$VAULT/90 系统文件/自动化/日更健康.md"
+  HEALTH=$(python3 "$ZONES" real "$VAULT" "90 系统文件/自动化/日更健康.md")
   if [ -f "$HEALTH" ]; then
     python3 "$ROOT/extras/host-daily-evolution/patch_health.py" "$HEALTH" self_evolution_key "$key_field" || true
     if [ -n "$WRITER" ]; then
@@ -198,7 +205,7 @@ else
   fi
   python3 "$ROOT/extras/host-daily-evolution/resolve.py" --sync-health --offline >/dev/null || true
 fi
-[ "${KROUTER_BOOTSTRAP:-}" = "1" ] || printf '%s\n' "next: run ./scripts/first_run.sh against the template, then point OBSIDIAN_VAULT at your vault."
+[ "${KROUTER_BOOTSTRAP:-}" = "1" ] || printf '%s\n' "next: run ./scripts/first_run.sh against the template, then point KROUTER_VAULT at your memory folder."
 
 if [ "$WITH_HOOKS" -eq 1 ]; then
   HOOK_DST="${KROUTER_HOOK_HOME:-$HOME/.cursor/hooks/krouter-exec-gate.py}"

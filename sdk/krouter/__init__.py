@@ -5,7 +5,8 @@
     a.page, a.how, a.refused        # the page it came from, the one-line answer, True when the memory does not know
     krouter.note("Releases are tagged from main only.", kind="decision")
 
-The memory is the vault the one-line install recorded (`~/.config/krouter/vault`), `OBSIDIAN_VAULT`, or `vault=`.
+The memory is `vault=`, else `KROUTER_VAULT` (`OBSIDIAN_VAULT`, the older name, also works), else the folder the
+one-line install recorded (`~/.config/krouter/vault`).
 Lookups run on this machine; nothing is sent anywhere.
 """
 
@@ -101,8 +102,8 @@ def _parse(text: str) -> dict:
 
 def _env(vault: str | os.PathLike | None) -> dict:
     env = dict(os.environ)
-    if vault:
-        env["OBSIDIAN_VAULT"] = str(Path(vault).expanduser())
+    if vault:  # 点名的文件夹优先：子进程里 KROUTER_VAULT 会盖过 OBSIDIAN_VAULT，所以两个都设成它
+        env["KROUTER_VAULT"] = env["OBSIDIAN_VAULT"] = str(Path(vault).expanduser())
     return env
 
 

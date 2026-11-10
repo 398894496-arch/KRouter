@@ -1,13 +1,15 @@
 #!/bin/sh
 set -eu
 
+# 记忆文件夹：KROUTER_VAULT（正式名字），其次 OBSIDIAN_VAULT（旧名字，照样认），都没有就用一键安装记下的路径
+if [ -n "${KROUTER_VAULT:-}" ]; then OBSIDIAN_VAULT=$KROUTER_VAULT; export OBSIDIAN_VAULT; unset KROUTER_VAULT; fi
 # 没设 OBSIDIAN_VAULT 时用一键安装记下的路径（~/.config/krouter/vault，同 krouter_home.py）
 if [ -z "${OBSIDIAN_VAULT:-}" ]; then
   _vf=${KROUTER_VAULT_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/krouter/vault}
   [ -f "$_vf" ] && OBSIDIAN_VAULT=$(head -n 1 "$_vf") && export OBSIDIAN_VAULT
 fi
 if [ -z "${OBSIDIAN_VAULT:-}" ]; then
-  printf '%s\n' "set OBSIDIAN_VAULT to your vault root (or run the one-line install, which records it)" >&2
+  printf '%s\n' "set KROUTER_VAULT to your memory folder (OBSIDIAN_VAULT also works), or run the one-line install, which records it" >&2
   exit 2
 fi
 VAULT=$OBSIDIAN_VAULT
@@ -42,6 +44,8 @@ zpath() {
   ' "$zf"
 }
 
+# 库里的相对路径（给人看的提示用）
+zrel() { _p=$(zpath "$1"); printf '%s\n' "${_p#"$VAULT"/}"; }
 CANONICAL=$(zpath "Agent第二大脑.md")
 PREFERENCES=$(zpath "02 经验与方法/Agent/用户偏好与工作约束.md")
 CORRECTIONS=$(zpath "90 系统文件/Agent记忆/纠错与取代记录.md")
@@ -125,7 +129,9 @@ emit_host_action() {
   printf 'self_evolution_key: %s\n' "${key:-missing}"
   printf 'krouter_writer: %s\n' "${writer:-missing}"
   if [ "${key:-missing}" != "present" ] || [ "${writer:-missing}" != "present" ]; then
-    printf '%s\n' "host_action: Distill needs a callable model. Paste *_API_KEY on 90 系统文件/自动化/自进化钥匙.md (flagship is auto-locked), or log in grok / official Codex / claude (your subscription). Timer already on. Do not print secrets."
+    timer_note="No nightly job is installed."
+    [ "${lamp:-}" = running ] && timer_note="Timer already on."
+    printf '%s\n' "host_action: Distill needs a callable model. Paste *_API_KEY on $(zrel "90 系统文件/自动化/自进化钥匙.md") (flagship is auto-locked), or log in grok / official Codex / claude (your subscription). $timer_note Do not print secrets."
   fi
   nightly=$(frontmatter_value "$HEALTH" nightly)
   if [ -n "$nightly" ]; then
@@ -139,7 +145,7 @@ except ValueError: print(0)' "$nightly_at" 2>/dev/null || printf 0)
     if [ "$nightly" = skipped ] || [ "$nightly" = failed ] || [ "$stale" = 1 ]; then
       why=$nightly
       [ "$nightly" != skipped ] && [ "$nightly" != failed ] && why="has not run for 3+ days"
-      printf '%s\n' "host_action: Nightly upkeep $why; see 90 系统文件/自动化/夜间维护.md for each step's reason. Model steps need the writer's lane (a *_API_KEY, or a logged-in grok / Codex / claude / …)."
+      printf '%s\n' "host_action: Nightly upkeep $why; see $(zrel "90 系统文件/自动化/夜间维护.md") for each step's reason. Model steps need the writer's lane (a *_API_KEY, or a logged-in grok / Codex / claude / …)."
     fi
   fi
 }
@@ -293,7 +299,7 @@ esac
 case "$ROUTE" in
   status)
     emit_receipt "$CANONICAL" requested-fields-returned
-    printf 'route: status\nevidence_scope: selected-frontmatter-fields\nl0: how is on the lock receipt; do not ingest 下意识.md\n'
+    printf 'route: status\nevidence_scope: selected-frontmatter-fields\nl0: how is on the lock receipt; do not ingest %s\n' "$(basename "$(zpath "90 系统文件/自动化/下意识.md")")"
     frontmatter_fields
     emit_daily_seal
     emit_host_action
