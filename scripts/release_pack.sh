@@ -44,7 +44,9 @@ for need in package/scripts/bootstrap.py package/scripts/install.sh package/scri
             package/skill/krouter/scripts/experience.py package/skill/krouter/scripts/llm.py \
             package/skill/krouter/scripts/skills.py \
             package/skill/krouter/scripts/corrections.py package/skill/krouter/scripts/capture_ledger.py \
-            package/skill/krouter/scripts/recollect.py \
+            package/skill/krouter/scripts/recollect.py package/skill/krouter/scripts/compile_subconscious.py \
+            package/skill/krouter/scripts/learn_mentions.py package/skill/krouter/scripts/session_hook.py \
+            package/sdk/krouter/integrations/langgraph.py \
             package/sdk/krouter/why.py package/sdk/krouter/view.py package/sdk/krouter/viewdata.py package/sdk/krouter/sample.py \
             package/sdk/krouter/view_ui/index.html package/sdk/krouter/view_ui/app.js package/sdk/krouter/view_ui/app.css \
             package/.claude-plugin/marketplace.json package/.claude-plugin/plugin.json package/hooks/hooks.json \
