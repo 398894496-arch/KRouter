@@ -433,6 +433,45 @@ of 3 weddings). Set 7's results were read before this run (see *Seen* above).
 Files: `bench/longmemeval/results/2026-11-09-sonnet-qa.jsonl` (each question's cited sessions, reply and verdict;
 `qa.py score --verdicts bench/longmemeval/results` recomputes the numbers) and `…score.json`.
 
+## Set 12: the same reader, given different things (registered 2026-11-09, before any run)
+
+**Why.** Set 11's 80.0% is one number from one reader (Claude Sonnet 5.5), and other projects' numbers come from other
+readers, so nobody can tell how much of it is KRouter and how much is the model. This set holds the reader and the
+judge fixed and changes only what the reader is given.
+
+**Data, reader, judge.** As set 11, unchanged: the same 500 questions, the same reader template and judge prompts,
+Claude Sonnet as Claude Code subagents with the same instructions to the agents (reader batches of up to 12 prompts
+or 200 000 characters, judge batches of 25; the *nothing* row's prompts are a few hundred characters each and go 50
+to a batch). Every agent's reported model is logged; a row is only compared with set 11 if its agents report the same
+model, and any that does not is said.
+
+**Rows** (what the reader is given for each question):
+
+1. *Nothing*: the template with `(no chat history was retrieved)`. What the reader scores from the question alone
+   (the 30 `_abs` questions are answered right by saying the information is not there).
+2. *Plain BM25, top three sessions*: Okapi BM25 over the question's own haystack, one document per session (all turns,
+   both speakers), lower-cased `[a-z0-9]+` tokens, no stemming, no stop list, k1 1.2, b 0.75, the three highest
+   scores, never a refusal (`qa.py baseline --kind bm25`, written before this registration and not changed after).
+3. *KRouter*: set 11's run as it stands (v1.3.0, up to three cited pages or a refusal). Not run again.
+4. *Answer sessions*: the sessions the benchmark labels as holding the answer (`answer_session_ids`), the
+   benchmark's own oracle setting. What this reader scores when retrieval is perfect.
+
+**Not run again.** Where a row gives the reader a prompt identical, character for character, to one set 11 already
+ran (the same sessions, or the same nothing), the reply and verdict from set 11 are copied, not produced again; the
+results files mark each such question (`from_set_11`) and the counts are reported.
+
+**Known before the run.** The whole set is seen (set 11's *Seen*), and set 11's replies were read. An exploratory
+count on 2026-10-18 found that plain BM25 cites an answer session about as often as KRouter on these haystacks, so
+rows 2 and 3 are expected to be close; that is the question this set puts a number on, not a result to steer.
+
+**Reported,** whatever it shows: each row over the 500, the 470 answerable, the 30 `_abs` and per question type, with
+95% bootstrap intervals; and, paired over the same questions, KRouter minus BM25 and answer-sessions minus KRouter
+(10 000 resamples, seed 20261109), with how many questions only one of the two got right (`qa.py compare`).
+
+**Not in this set.** The benchmark's full-history setting (all of a question's ~50 sessions, about 115 000 tokens per
+question) is not run: 500 such prompts through subagents is beyond what this run can spend. No other memory project
+is run here either; their published numbers use their own readers and are not put in the same table.
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
