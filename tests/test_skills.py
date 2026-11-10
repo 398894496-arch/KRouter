@@ -367,8 +367,11 @@ def test_sets_24_to_26_are_frozen():
 
 
 def test_the_bench_scores_drafts_through_the_codes_own_checks(tmp_path):
-    sys.path.insert(0, str(REPO / "bench/skills"))
-    import run as bench
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("skills_bench", REPO / "bench/skills/run.py")
+    bench = importlib.util.module_from_spec(spec)  # bench/transfer/run.py 也叫 run：按路径单独载入
+    spec.loader.exec_module(bench)
 
     s = {"id": "x", "kind": "group", "lang": "zh", "expect": [["a", "b"]], "cards": [
         {"key": "a", "situation": "网页加载慢", "action": "把图片缓存起来", "result": "快了", "lesson": "同一件慢事每次重做时，把结果存起来复用", "adopted": 0, "again": 0},
