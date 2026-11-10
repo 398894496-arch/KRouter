@@ -32,6 +32,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 | I want to… | Start here |
 |---|---|
 | see it answer, correct itself and refuse, before installing anything | `krouter demo` (above) |
+| see what it remembers, and why it answered the way it did | [`krouter view`, `krouter why`](#see-what-it-remembers) |
 | give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds (`--minimal`: lookup only, the apps you name) |
 | check which apps it connects to | [Works with](#works-with) |
 | call it from my own code | [From your own code](#from-your-own-code) |
@@ -285,6 +286,20 @@ undone. Of 8 corrections the maintainer also wrote down by hand, 5 were in the m
 missed 2, and 1 was about the agent's own tool use, which import does not see. On the public decision-capture bench
 (14 labelled decisions across 18 sessions, 4 of them with nothing decided; scored by rule) it found all 14 and wrote
 no false line. A small set: it shows the distill does not invent decisions, not that it never misses one.
+
+## See what it remembers
+
+Nothing is hidden, and there is a page to look at it with. Both commands only read.
+
+```bash
+krouter why "when do we ship releases"    # how that lookup came out, in words
+krouter view                              # a page on this machine only: prints http://127.0.0.1:<port>/, opens nothing
+krouter view --demo                       # the same page on a throwaway sample memory (add --open to open it in your browser)
+```
+
+![krouter view, "Try a sentence": two pages say different things about the billing database; the newer one is moved first and the conflict is named, with each page's matched words, score and tier](docs/img/view-why.png)
+
+`why` says which alias or words matched, why each page sits where it does, why the confidence is that one, which pages came along a connection and from which page, which page replaced which, and, when the memory does not know, which word it could not find. `view` adds the pages with search (it pages through tens of thousands), the connections around a page with why each one exists, the experience cards with how often each was offered and taken, what the last nights did, and a box that runs `why`. It listens on 127.0.0.1 only, answers GET only so nothing in it can change the memory, loads nothing from the internet, and works in English and Chinese, light and dark, on a phone-width screen. [How to read it](docs/DETAILS.md#see-what-it-remembers-krouter-why-and-krouter-view).
 
 ## Is it for you?
 

@@ -35,6 +35,7 @@ krouter_template = "template"
 krouter_template_zh = "template-zh"
 
 [tool.setuptools.package-data]
+krouter = ["view_ui/*"]  # krouter view: the page, hand-written, no external file
 krouter_router = ["*.sh", "*.txt", "*.psv"]
 krouter_template = ["**/*"]       # krouter demo 用的示例库
 krouter_template_zh = ["**/*"]

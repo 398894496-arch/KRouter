@@ -1,4 +1,4 @@
-"""`krouter ask|status|doctor|note|demo|mcp`: the same lookups from a terminal, a one-verdict check, and the MCP server."""
+"""`krouter ask|why|view|status|doctor|note|demo|mcp`: the same lookups from a terminal, an explanation of one, a read-only page about the memory, a one-verdict check, and the MCP server."""
 
 from __future__ import annotations
 
@@ -26,6 +26,18 @@ def main(argv: list[str] | None = None) -> int:
     a = sub.add_parser("ask", help="look a question up")
     a.add_argument("question")
     a.add_argument("--route", default="search", choices=ROUTES)
+    w = sub.add_parser("why", help="explain how a lookup came out: the alias or words that matched, why each page sits where it does, "
+                                   "why the confidence is that, what came along a connection, what replaced what (read only)")
+    w.add_argument("question")
+    w.add_argument("--lang", choices=("en", "zh"), default=None, help="language of the explanation (default: the memory's)")
+    w.add_argument("--json", action="store_true", help="the structured explanation instead of text")
+    v = sub.add_parser("view", help="a read-only page about the memory on this machine: pages, connections, experience cards, "
+                                    "what last night did, and a box that runs `why` (prints the address; add --open to open it)")
+    v.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: a free one)")
+    v.add_argument("--open", action="store_true", help="also open the address in the default browser (nothing opens without this)")
+    v.add_argument("--demo", action="store_true", help="show a throwaway sample memory instead of yours")
+    v.add_argument("--lang", choices=("en", "zh"), default=None, help="language of the --demo memory")
+    v.add_argument("--verbose", action="store_true", help="log each request to stderr")
     sub.add_parser("status", help="health of the memory and the nightly job (the raw receipt)")
     sub.add_parser("doctor", help="one verdict: OK, or what is missing and the command that fixes it")
     n = sub.add_parser("note", help="write one line into the memory")
@@ -41,6 +53,21 @@ def main(argv: list[str] | None = None) -> int:
         print(ask(args.question, args.route, args.vault))
     elif args.cmd == "status":
         print(status(args.vault))
+    elif args.cmd in ("why", "view"):
+        sys.path.insert(0, str(router_dir()))
+        from krouter_home import vault_path
+
+        vault = args.vault or vault_path()
+        if args.cmd == "why":
+            if not vault:
+                print("set KROUTER_VAULT to your memory folder, or pass --vault", file=sys.stderr)
+                return 2
+            from .why import run as why_run
+
+            return why_run(vault, args.question, args.lang, args.json)
+        from .view import run as view_run
+
+        return view_run(vault, args.port, args.open, args.demo, args.verbose, args.lang or env_lang())
     elif args.cmd == "doctor":
         from .doctor import run as doctor
 
