@@ -228,3 +228,24 @@ reported it covered. Now correction wording and times are left out of the compar
 distinctive term (a model, a number, a name) or at least three shared Chinese terms; and a candidate no digest line
 covers is written into the digest in the person's own words (`补记`) instead of being settled as not holding. Replayed
 on the same pages, the three missed corrections are now written in, and no candidate is tied to an unrelated line.
+
+## 4. A correction that holds in the same turn, with no key (2026-11-09)
+
+The gap: on a fresh install with no key, "use SQLite from now on" was written down as a correction candidate
+(`session_hook.py prompt`) to be settled by the next distill, and distilling needs a model, so the next lookup still
+put the old answer first. Now the agent makes it hold in its own turn, with the vault's existing supersede rule:
+
+- `krouter_correct(new, old, page)` over MCP (or `corrections.py apply --new … --old … --page …`): a correction page in
+  `05 时间日志/会话摘录/` (`type: correction`, `supersedes: [[old page]]`, the "原来 A → 改成 B" line); the old page
+  gets `status: superseded` and `superseded_by` when it is only that decision (≤ 12 lines of body), or a "⚠ 已改" line
+  under the old sentence when it says other things too (its status is left alone); one line in
+  `90 系统文件/Agent记忆/纠错与取代记录.md`; today's matching correction candidates settled as 成立; a ledger entry and
+  one commit, undone like any run.
+- Refused when the old sentence is not on the named page, or the page is a system page, a secret page or outside the
+  vault: nothing is superseded on a guess.
+- The MCP server's instructions ask the agent to call it in the turn the user corrects something. The prompt hook
+  still prints nothing (`tests/test_correction_capture.py`); the candidate it writes is settled either way.
+
+Measured: `tests/test_correct_now.py` puts "本地开发数据库用 Postgres 16" on a page, asks "本地开发用什么数据库" (that
+page first), calls `krouter_correct`, and asks again: the old page is no longer first and the first page holds the new
+answer. Ordering two live pages that disagree, newest first, is another session's change in `recall_index.py`.

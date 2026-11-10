@@ -111,10 +111,12 @@ LEARN_TOOL = {
             "situation": {"type": "string", "description": "What happened; may name the subject."},
             "action": {"type": "string", "description": "What was done."},
             "result": {"type": "string", "description": "How it turned out."},
+            "subject": {"type": "array", "items": {"type": "string"},
+                        "description": "2–6 words naming this session's subject; the lesson must use none of them."},
             "lesson": {"type": "string", "description": "The lesson without the subject: \"When …, …\"."},
             "title": {"type": "string", "description": "Optional: the lesson in one line."},
         },
-        "required": ["situation", "action", "result", "lesson"],
+        "required": ["situation", "action", "result", "subject", "lesson"],
     },
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False},
 }

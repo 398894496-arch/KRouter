@@ -50,6 +50,8 @@ MSG = {
         "perm_claude": "（只允许读写这个知识库、运行路由器，不能执行别的命令，也不能上网抓网页；但没有内核沙箱）",
         "perm_codex": "（在 Codex 沙箱里运行：只能写这个知识库，但读得到你账户里的文件，包括 key 文件）",
         "perm_key": "（直接调用 API，不在本机运行任何 agent）",
+        "sub_note": "这会用到你已登录的 {cli} 的订阅额度：每天最多 {n} 次调用，每次记在知识库的「订阅调用记录」页；"
+        "KROUTER_HOST_CLI=0 关掉。\n",
         "perm_other": "（不受限制：它以你的身份运行，能读写你账户里的任何文件）",
         "prefer_key": "更稳妥的是用 API key：它直接调用接口，不在本机运行任何 agent（把 key 贴到知识库的「自进化钥匙」页就行）。\n",
         "timer_off": "没有开启每晚自动整理。想开的时候运行：{cmd}",
@@ -104,6 +106,8 @@ MSG = {
         "perm_claude": " (allowed only to read and write this vault and run the router: no other command, no web fetch; but no kernel sandbox)",
         "perm_codex": " (in Codex's sandbox: it writes only this vault but can read files in your account, keys file included)",
         "perm_key": " (a direct API call; no agent runs on this machine)",
+        "sub_note": "This uses the subscription of the {cli} you are logged in to: at most {n} calls a day, each one "
+        "recorded on the vault's 订阅调用记录 page; KROUTER_HOST_CLI=0 turns it off.\n",
         "perm_other": " (unconfined: it runs as you and can read and write any file in your account)",
         "prefer_key": "The safer choice is an API key: a direct API call, no agent runs on this machine (paste it on the vault's key page).\n",
         "timer_off": "Nightly upkeep is off. To turn it on later: {cmd}",
@@ -333,7 +337,13 @@ def decide_timer(args: argparse.Namespace, vault: Path, t: dict) -> tuple[bool, 
     kind, cli, pages, tokens = nightly_preview(vault)
     lane = t["lane_cli"].format(cli=cli) if kind not in ("", "key") else (t["lane_key"] if kind == "key" else t["lane_none"])
     perm = t.get(f"perm_{kind}", t["perm_other"]) if kind else ""
-    prompt = (t["prefer_key"] if kind not in ("", "key") else "") + t["ask"].format(lane=lane, perm=perm, pages=pages, tokens=tokens)
+    sub = ""
+    if kind not in ("", "key"):
+        sys.path.insert(0, str(ROOT / "skill/krouter-obsidian/scripts"))
+        import llm
+
+        sub = t["sub_note"].format(cli=cli, n=llm.host_cli_max())  # 借订阅：先说清额度、上限、怎么关
+    prompt = (t["prefer_key"] if kind not in ("", "key") else "") + sub + t["ask"].format(lane=lane, perm=perm, pages=pages, tokens=tokens)
     answer = ask_tty(prompt)
     if answer is None:
         return False, False

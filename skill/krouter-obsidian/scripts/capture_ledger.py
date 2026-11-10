@@ -42,7 +42,7 @@ def _link(vault: Path, path: Path) -> str:
 
 
 def section(vault: Path, rid: str, pages: list[dict], verdicts: list[dict], removed: list[Path], undo: str,
-            sha: str = "") -> str:
+            sha: str = "", superseded: list | None = None) -> str:
     """One run's entry. `pages`: [{path, agent, session, added: [line]}]; `verdicts`: [{said, ok, line, why, link}]."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     where = f"提交 `{sha[:10]}`；" if sha else "库不是 git 仓库，没有提交可撤；"
@@ -64,6 +64,8 @@ def section(vault: Path, rid: str, pages: list[dict], verdicts: list[dict], remo
                 out.append(f"  - 成立：「{said}」→ {v['link']}：{v['line']}")
             else:
                 out.append(f"  - 不成立：「{said}」：{v['why'] or '模型判定不是改主意或新规则'}")
+    for path, by in superseded or []:
+        out.append(f"- 取代 {_link(vault, path)} → {by}（这一页定下的事都被后来的改主意改掉了，整页标为 superseded）")
     for path in removed:
         out.append(f"- 删除 `{path.name}`（标了 #不记、是无头调用，或被另一个会话完整包含）")
     return "\n".join(out) + "\n"

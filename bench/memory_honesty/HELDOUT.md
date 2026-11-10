@@ -759,3 +759,10 @@ cards (`experience.DEFAULT_ON`); if not, they stay off.
 **Known limits.** Sonnet wrote the sessions, is one of the two hosts, and judges Haiku's cards; Haiku is a weaker
 judge of Sonnet's. Sixteen synthetic sessions. Whether a host calls the tool unprompted at the end of a real session
 is still not measured.
+
+### Log, set 19
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`4fbb174`). |
+| 2026-11-09 | **Run once.** Cards: Haiku 5.5 8, Sonnet 5.5 8; judges: Sonnet 5.5 for Haiku's, Haiku 5.5 for Sonnet's (agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); judged faithful 14 / 16 = 87.5% (bar ≥ 90%); judged subject-free 14 / 16 = 87.5% (bar ≥ 90%); duplicates written 0 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on each of the two counts. Haiku's cards: faithful 6 / 8, subject-free 8 / 8 (mechanical 7 / 8). Sonnet's: faithful 8 / 8, subject-free 6 / 8 (mechanical 8 / 8). The four judged failures: a result claiming two restructures where the session shows one; an action stating a step the session only suggested; two lessons keeping a subject term ("大件东西 / 运得进", "执行计划"). Set 19 is now development: the card instructions are revised on it, and a new set of held-out sessions is registered before the revised wording is checked on them. |

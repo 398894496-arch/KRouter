@@ -46,8 +46,8 @@ PROMPT = {
 【工具 krouter_learn 的说明】
 {help}
 
-【评测说明，不是用户说的】这段会话现在要结束了。如果你会调用 krouter_learn，把每次调用的参数（situation、action、result、
-lesson、when、可选 title）写成一个 JSON 数组，0 到 2 个对象；不会调用就写 []。只输出这个 JSON 数组。""",
+【评测说明，不是用户说的】这段会话现在要结束了。如果你会调用 krouter_learn，把每次调用的参数（工具说明里列的那些字段）写成一个
+JSON 数组，0 到 2 个对象；不会调用就写 []。只输出这个 JSON 数组。""",
     "en": """[Context the system injected at session start]
 {digest}
 
@@ -58,8 +58,8 @@ lesson、when、可选 title）写成一个 JSON 数组，0 到 2 个对象；�
 {help}
 
 [Bench note, not from the user] This session is about to end. If you would call krouter_learn, write the arguments of
-each call (situation, action, result, lesson, when, optional title) as one JSON array of 0 to 2 objects; if you would
-not call it, write []. Output only that JSON array.""",
+each call (the fields the tool description lists) as one JSON array of 0 to 2 objects; if you would not call it,
+write []. Output only that JSON array.""",
 }
 
 
@@ -133,13 +133,25 @@ def has_any(text: str, terms: list[str]) -> bool:
     return any(t.lower() in low for t in terms)
 
 
-def score_one(s: dict, reply: str) -> dict:
+RETRY = {"zh": "\n\n【工具 krouter_learn 返回】{why}\n\n【评测说明，不是用户说的】按工具返回的原因改写这次调用，把改好的参数写成同样的 JSON 数组（不再调用就写 []）。只输出这个 JSON 数组。",
+         "en": "\n\n[Tool krouter_learn returned] {why}\n\n[Bench note, not from the user] Rewrite this call for the reason the tool gave and write the corrected arguments as the same JSON array ([] if you would not call it again). Output only that JSON array."}
+
+
+def score_one(s: dict, reply: str, retry: str | None = None) -> dict:
+    """One session's proposed cards through experience.learn(). As the MCP tool returns its reason to the agent, a
+    refused call may be retried once: `retry` is the host's answer to that reason, used in place of the refused call."""
     items = proposed(reply)
-    written, refused = [], []
+    written, refused, retried = [], [], False
     with tempfile.TemporaryDirectory() as tmp:
         vault = build_vault(Path(tmp), s["lang"])
-        for item in items[:2]:
+        queue = list(items[:2])
+        while queue:
+            item = queue.pop(0)
             path, why = experience.learn(vault, item, "[[set17]]", writer="bench")
+            if not path and retry is not None and not retried:
+                retried = True
+                queue = proposed(retry)[:1] + queue
+                continue
             if path:
                 card = next(c for c in experience.load_cards(vault) if c["rel"].endswith(path.name))
                 text = " ".join([card["title"], card["lesson"], " ".join(card["when"])])
@@ -150,7 +162,44 @@ def score_one(s: dict, reply: str) -> dict:
                                 | {"title": card["title"]}})
             else:
                 refused.append(why[:60])
-    return {"id": s["id"], "kind": s["kind"], "proposed": len(items), "written": written, "refused": refused}
+    return {"id": s["id"], "kind": s["kind"], "proposed": len(items), "written": written, "refused": refused,
+            "retried": retried}
+
+
+def first_refusal(s: dict, reply: str) -> str:
+    """The reason experience.learn() gives for the first proposed card it refuses, or ""."""
+    with tempfile.TemporaryDirectory() as tmp:
+        vault = build_vault(Path(tmp), s["lang"])
+        for item in proposed(reply)[:2]:
+            path, why = experience.learn(vault, item, "[[x]]", writer="bench")
+            if not path:
+                return why
+    return ""
+
+
+def read_replies(folder: str) -> dict[str, str]:
+    out = {}
+    for f in sorted(Path(folder).glob("*.jsonl")) if folder and Path(folder).is_dir() else []:
+        for line in f.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                out[str(r["id"])] = str(r.get("response") or "")
+    return out
+
+
+def retry_prompts(args) -> None:
+    """Prompts for the calls experience.learn() refused: the first prompt, the host's call, and the tool's reason."""
+    replies = read_replies(args.replies)
+    first = {r["id"]: r["prompt"] for r in (json.loads(x) for x in Path(args.prompts).read_text(encoding="utf-8").splitlines() if x.strip())}
+    rows = []
+    for s in load():
+        why = first_refusal(s, replies.get(s["id"], ""))
+        if why:
+            rows.append({"id": s["id"], "prompt": first[s["id"]] + "\n\n" + replies[s["id"]].strip() + RETRY[s["lang"]].format(why=why)})
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "batch_01.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+    print(json.dumps({"retry_prompts": len(rows)}))
 
 
 def score(args) -> None:
@@ -160,7 +209,8 @@ def score(args) -> None:
             if line.strip():
                 r = json.loads(line)
                 replies[str(r["id"])] = str(r.get("response") or "")
-    rows = [score_one(s, replies.get(s["id"], "")) for s in load()]
+    retries = read_replies(getattr(args, "retries", ""))
+    rows = [score_one(s, replies.get(s["id"], ""), retries.get(s["id"])) for s in load()]
     cards = [w for r in rows for w in r["written"]]
     by = {k: [r for r in rows if r["kind"] == k] for k in ("lesson", "duplicate", "none")}
     res = {"lesson_sessions_with_a_card": sum(1 for r in by["lesson"] if r["written"]),
@@ -171,7 +221,8 @@ def score(args) -> None:
            "duplicates_written": sum(1 for r in by["duplicate"] if r["written"]),
            "duplicate_sessions": len(by["duplicate"]),
            "none_written": sum(1 for r in by["none"] if r["written"]), "none_sessions": len(by["none"]),
-           "refused_by_checks": sum(len(r["refused"]) for r in rows), "missing_replies": sum(1 for s in load()
+           "refused_by_checks": sum(len(r["refused"]) for r in rows), "retried": sum(r["retried"] for r in rows),
+           "missing_replies": sum(1 for s in load()
                                                                                           if s["id"] not in replies)}
     if SET != "17":
         res.pop("faithful")  # 第 19 套：忠于原会话由判分模型定（judged），这里只给机械的去题材数
@@ -209,12 +260,14 @@ def judged(args) -> None:
                     verdicts[str(r["id"])] = json.loads(m.group(0)) if m else {}
                 except ValueError:
                     verdicts[str(r["id"])] = {}
-    rows = [score_one(s, replies.get(s["id"], "")) for s in load()]
+    retries = read_replies(getattr(args, "retries", ""))
+    rows = [score_one(s, replies.get(s["id"], ""), retries.get(s["id"])) for s in load()]
     ids = [f"{r['id']}#{n}" for r in rows if r["kind"] == "lesson" for n in range(len(r["written"]))]
     yes = lambda i, k: str(verdicts.get(i, {}).get(k, "")).lower().startswith("y")  # noqa: E731
     by = {k: [r for r in rows if r["kind"] == k] for k in ("lesson", "duplicate", "none")}
     print(json.dumps({"lesson_sessions_with_a_card": sum(1 for r in by["lesson"] if r["written"]),
                       "lesson_sessions": len(by["lesson"]), "cards_on_lesson_sessions": len(ids),
+                      "retried": sum(r["retried"] for r in rows),
                       "faithful": sum(yes(i, "faithful") for i in ids), "subject_free": sum(yes(i, "subject_free") for i in ids),
                       "unjudged": sum(1 for i in ids if i not in verdicts),
                       "duplicates_written": sum(1 for r in by["duplicate"] if r["written"]),
@@ -232,15 +285,21 @@ def main() -> int:
     s.add_argument("--replies", required=True)
     s.add_argument("--rows", action="store_true")
     s.add_argument("--judge-out", default="", help="set 19: write the judge prompts for the cards written here")
+    s.add_argument("--retries", default="", help="the hosts' answers to the refusals (`retry`)")
     j = sub.add_parser("judged")
     j.add_argument("--replies", required=True)
     j.add_argument("--verdicts", required=True)
-    for sp in (p, s, j):
-        sp.add_argument("--set", default="17", choices=("17", "19"))
+    j.add_argument("--retries", default="")
+    r = sub.add_parser("retry", help="prompts for refused calls, with the tool's reason, for one retry")
+    r.add_argument("--replies", required=True)
+    r.add_argument("--prompts", required=True, help="the batch file the replies answered")
+    r.add_argument("--out", required=True)
+    for sp in (p, s, j, r):
+        sp.add_argument("--set", default="17", choices=("17", "19", "20"))
     args = ap.parse_args()
     global SET
     SET = args.set
-    {"prepare": prepare, "score": score, "judged": judged}[args.cmd](args)
+    {"prepare": prepare, "score": score, "judged": judged, "retry": retry_prompts}[args.cmd](args)
     return 0
 
 

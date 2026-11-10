@@ -392,17 +392,21 @@ def render(found: list[dict], vault: Path | None = None) -> list[str]:
 
 PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段会话摘录（项目：{project}；只有提问和每轮最后的回答，已脱敏）。
 
-只做一件事：找出这段会话里**遇到一个问题、试了一个做法、摘录里看得到结果**的经验，最多 2 条；写成以后换一个题材、
-遇到同样处境时也用得上的经验卡。没有这样的经验（只是讨论、没有结果、只是照做一个步骤）就回 []。
+只做一件事：找出这段会话里**遇到一个问题（有东西不对、不行或出了错）、试了一个办法、摘录里看得到成没成**的经验，最多
+2 条；写成以后换一个题材、遇到同样处境时也用得上的经验卡。起草、润色、排版、比较方案、照着做一个步骤都不算；没有这样的
+经验，或者拿不准，就回 []。
 
 每条是一个 JSON 对象：
 - "title"：一句话经验，去掉题材，12–30 字（例：「整体发平、没有层次时，加一点点反差的东西」）
 - "situation"：当时的处境，照摘录写，可以带题材（例：「红烧肉炖好了，咸是够了，但吃着发平」）
-- "action"：当时怎么做的
-- "result"：结果怎样，只写摘录里看得到的
+- "action"：一句话，只写摘录里确实做了、或这个人确认做了的；只是被建议、计划过或中途放弃的不写
+- "result"：一句话，会话结束时的结果；中途被改正过的数字或原因，用改正后的；摘录没说的细节不加
+- "subject"：点出这段会话题材的 2–6 个词（工具、产品、东西、专业词），例：["红烧肉", "糖"]
 - "lesson"：去掉题材的通用说法，写成「……时，……」（例：「东西整体发平、缺一点层次时，加一点点与主调相反的元素」），
-  里面不能出现题材里的名词（不写「红烧肉」「nginx」）
-不写密钥、token、密码、人名和私人信息。只输出 JSON 数组。
+  里面不能出现 subject 里的词，也不能有别的专业词：要能原样用到完全不相干的领域，专门的词换成一般的说法
+  （「执行计划」→「实际怎么跑的」，「大件家具」→「东西」）。自测：这句话原样讲给修 bug 的人、写报告的人、做饭的人都说得通吗？
+  只适合这一类事，就再往上概括一层
+写之前回头逐句对照摘录核对 situation、action、result。不写密钥、token、密码、人名和私人信息。只输出 JSON 数组。
 
 摘录：
 
@@ -411,17 +415,24 @@ PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段会话摘
 PROMPT_EN = """Below is an excerpt of a session between a person and their coding agent on {day} (project: {project}; only the
 questions and each turn's closing answer, redacted).
 
-Do one thing: find where this session **hit a problem, tried something, and the excerpt shows how it turned out**, at
-most 2; write each as an experience card that would still help on a task with another subject in the same situation.
-If there is none (only discussion, no outcome, or just carrying out a step), reply [].
+Do one thing: find where this session **hit a problem (something did not work or went wrong), tried a way out, and the
+excerpt shows whether it worked**, at most 2; write each as an experience card that would still help on a task with
+another subject in the same situation. Drafting, polishing, formatting, comparing options or carrying out a step do not
+count; if there is none, or you are unsure, reply [].
 
 Each is a JSON object:
 - "title": the lesson in one line without the subject, 5–14 words
 - "situation": what the situation was, as in the excerpt; it may name the subject
-- "action": what was done
-- "result": how it turned out, only what the excerpt shows
-- "lesson": the lesson without the subject, written "When …, …", with no nouns from the subject
-Do not write keys, tokens, passwords, names or private details. Output only the JSON array.
+- "action": one sentence, only steps the excerpt shows were carried out or the person confirmed (not what was only
+  suggested, planned or dropped along the way)
+- "result": one sentence, the outcome as the session ends (a figure or cause corrected later: the corrected one); no
+  detail the excerpt does not state
+- "subject": the 2–6 words that name the session's subject (tools, products, objects, domain terms)
+- "lesson": "When …, …" with none of the subject words and no other domain term, so it reads unchanged for a task in
+  an unrelated area ("the execution plan" → "how it actually runs"). Test it: would it make sense word for word to
+  someone fixing a bug, writing a report and cooking? If it only fits this kind of thing, say it one level higher
+Before writing, check situation, action and result against the excerpt sentence by sentence. Do not write keys,
+tokens, passwords, names or private details. Output only the JSON array.
 
 Excerpt:
 
@@ -429,12 +440,22 @@ Excerpt:
 """
 # 宿主 agent 自己写卡（krouter_learn / `experience.py learn`）时看到的说明：和上面两段要的是同一张卡
 LEARN_HELP = ("Record one lesson from this session as an experience card, so it can be offered on later tasks with "
-              "another subject in the same situation. Only when the session hit a problem, tried something, and saw how "
-              "it turned out; not for plain discussion or a step carried out. Fields: situation (what happened, may "
-              "name the subject), action (what was done), result (how it turned out), lesson (the lesson without the "
-              "subject, \"When …, …\" / 「……时，……」, no nouns from the subject), title (optional, the lesson in one "
-              "line). Skip it if the experience digest "
-              "already has the same lesson. Write in the language of the session; no keys, names or private details.")
+              "another subject in the same situation. Only when the session hit a problem (something did not work or went "
+              "wrong), tried a way out, and saw whether it worked; not for drafting, polishing, formatting or comparing "
+              "options, nor for a step carried out as asked. When in doubt, do not record. Fields, one plain sentence each: situation "
+              "(what the problem was; may name the subject); action (only steps the session shows were actually carried "
+              "out, by the person or confirmed by them; leave out anything only suggested, planned or dropped along the "
+              "way); result (the outcome as the session ends: where a figure or a cause was corrected later in the "
+              "session, use the corrected one; add no detail the session does not state); subject (the 2–6 words that name this session's subject: tools, products, objects, domain terms, "
+              "e.g. [\"nginx\", \"server_name\"] or [\"红烧肉\", \"糖\"]); lesson (\"When …, …\" / 「……时，……」 with none of "
+              "the subject words and no other domain term, so that it reads unchanged for a task in an unrelated area: "
+              "replace each specific term with a general word, \"the execution plan\" → \"how it actually runs\", "
+              "「大件家具」→「东西」). Test it: would the lesson make sense word for word to someone fixing a bug, someone "
+              "writing a report and someone cooking? If it only fits this kind of thing, say it once more one level "
+              "higher); title (optional, the lesson in one line, same rule). Skip it if the experience "
+              "digest already has the same lesson. Write in the language of the session; no keys, names or private "
+              "details. Before calling, reread the session and check situation, action and result against it sentence by "
+              "sentence.")
 
 
 def _json_array(text: str) -> list:
@@ -495,6 +516,17 @@ def valid(item: dict, excerpt: str | None) -> dict | None:
     return card
 
 
+def names_subject(item: dict) -> str:
+    """The first of the card's own `subject` words that its lesson or title still uses, or ""."""
+    terms = item.get("subject") if isinstance(item.get("subject"), list) else []
+    text = (str(item.get("lesson") or "") + " " + str(item.get("title") or "")).lower()
+    for t in terms:
+        t = str(t).strip().lower()
+        if len(t) >= 2 and t in text:
+            return t
+    return ""
+
+
 def same_lesson(a: str, b: str) -> bool:
     wa, wb = set(words(a)), set(words(b))
     return bool(wa and wb) and len(wa & wb) / len(wa | wb) >= 0.5
@@ -544,6 +576,10 @@ def write_card(vault: Path, card: dict, source: str, day: str, writer: str = "kr
 
 def learn(vault: Path, item: dict, source: str, writer: str = "krouter-learn") -> tuple[Path | None, str]:
     """A card the host agent wrote itself (no model lane, no key). (path, "") when written, (None, why) when not."""
+    named = names_subject(item) if isinstance(item, dict) else ""
+    if named:
+        return None, (f"not written: the lesson or title still names the subject ({named}); rewrite it with a general "
+                      "word so it reads the same on another subject")
     card = valid(item, None)
     if not card:
         return None, "not written: fill situation, action, result and lesson; no key-shaped text"
@@ -567,7 +603,7 @@ def extract(e: dict, excerpt: str, vault: Path, source: str, dry: bool = False) 
     written: list[Path] = []
     day = e["day"].isoformat() if hasattr(e["day"], "isoformat") else str(date.today())
     for item in _json_array(redact(text))[:2]:
-        card = valid(item, excerpt)
+        card = valid(item, excerpt) if isinstance(item, dict) and not names_subject(item) else None
         path = write_card(vault, card, source, day) if card else None
         if path:
             written.append(path)

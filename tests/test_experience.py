@@ -396,3 +396,11 @@ def test_when_phrases_are_optional_and_subject_names_are_dropped(tmp_path, monke
     bare = {k: v for k, v in GOOD.items() if k != "when"}
     path, why = experience.learn(tmp_path / "v2", bare, "x") if (tmp_path / "v2").mkdir() is None else (None, "")
     assert path and "适用于" not in path.read_text(encoding="utf-8") and "when:" not in path.read_text(encoding="utf-8")
+
+
+def test_a_lesson_that_still_names_its_own_subject_is_sent_back(tmp_path):
+    item = {**EN_CARD, "subject": ["nginx", "server block"], "lesson": "When an nginx change has no effect, check the file"}
+    path, why = experience.learn(tmp_path, item, "x")
+    assert path is None and "names the subject (nginx)" in why
+    ok = {**EN_CARD, "subject": ["nginx", "server block"]}
+    assert experience.learn(tmp_path, ok, "x")[0] is not None

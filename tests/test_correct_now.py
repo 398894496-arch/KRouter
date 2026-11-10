@@ -106,3 +106,42 @@ def test_command_line_twin(tmp_path):
                          capture_output=True, text=True, timeout=60)
     assert res.returncode == 0, res.stderr
     assert json.loads(res.stdout)["mode"] == "page"
+
+
+def _session_page(folder: Path, name: str, root: str, lines: list[str], day: str) -> Path:
+    path = folder / f"{day}｜{name}.md"
+    path.write_text(f"---\ntype: session-excerpt\nsource: krouter-import\nstatus: imported\ndate: {day}\nproject: shop\n"
+                    f"project_root: {root}\nhow: {lines[0]}\n---\n\n# {name}\n\n## 定了什么、改了什么（模型提炼）\n\n"
+                    + "\n".join(f"- {ln}" for ln in lines) + "\n\n## 摘录\n\n- **问**：…\n", encoding="utf-8")
+    return path
+
+
+def test_distilled_change_of_mind_supersedes_the_page_it_replaced(tmp_path):
+    """The audit's case through the distill path: decided PostgreSQL, later changed to SQLite. The old session page
+    is marked superseded at import (no model), so the new answer comes first; a page with another live decision
+    is left alone."""
+    import import_sessions
+
+    vault = tmp_path / "vault"
+    shutil.copytree(REPO / "template-zh", vault)
+    folder = vault / "05 时间日志/会话摘录"
+    folder.mkdir(parents=True, exist_ok=True)
+    day = date.today().isoformat()
+    old = _session_page(folder, "本地开发数据库用什么？（aaaa0001）", "/work/shop", ["本地开发数据库用 PostgreSQL 16（10:20）"], day)
+    keep = _session_page(folder, "部署（cccc0003）", "/work/shop",
+                         ["本地开发数据库用 PostgreSQL 16（09:00）", "发版只从 main 打 tag（09:05）"], day)
+    _session_page(folder, "改主意（bbbb0002）", "/work/shop", ["本地开发数据库原来用 PostgreSQL → 改成 SQLite（16:05）"], day)
+    q = "本地开发数据库用什么"
+    assert "aaaa0001" in _ask(vault, tmp_path, q)
+    done = import_sessions.supersede_replaced(vault, {"/work/shop"})
+    assert [p.name for p, _ in done] == [old.name]
+    text = old.read_text(encoding="utf-8")
+    assert "status: superseded" in text and "superseded_by:" in text and "bbbb0002" in text
+    assert "status: imported" in keep.read_text(encoding="utf-8")  # 还有一条决定没被改掉：整页不动
+    env = {**os.environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_NO_QUERY_LOG": "1", "KROUTER_CACHE_DIR": str(tmp_path / "cache")}
+    out = subprocess.run([sys.executable, str(SCRIPTS / "route_knowledge.py"), "search", q], env=env,
+                         capture_output=True, text=True, timeout=120).stdout
+    hits = [ln for ln in out.split("recall:", 1)[1].splitlines() if ln.startswith("- ")]
+    assert any("aaaa0001" in h and "status=superseded" in h and "tier=dead" in h for h in hits)  # 回执里写明已被取代
+    assert any("bbbb0002" in h for h in hits)
+    # 新旧两页都还在时谁排第一，是 recall_index 的事（另一个会话在做「新页在前」的兜底），这里不断言顺序
