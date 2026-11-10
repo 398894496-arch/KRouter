@@ -44,7 +44,8 @@ install path change (below).
   12 changed rules, under the registered line (12 / 24, 5 per language, 6 / 12). People mostly mention a thing in
   other words than its name, and a lookup by words cannot see that. Hosts given what it brought (set 33, Haiku 5.5
   and Sonnet 5.5, 11 cases): used it and cited the page on 10–11 / 11, and were pulled off course by a page that did
-  not fit on 0 / 11. Speed (set 34) in `docs/NUMBERS.md`.
+  not fit on 0 / 11. Speed (set 34): the whole hook process takes 83–126 ms at the median and at most 144 ms at
+  p95 warm, on 110 and on 10,000 pages (62 ms with the lookup off).
 
 ### Lessons that carry over to other tasks
 

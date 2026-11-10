@@ -4,8 +4,9 @@
     python3 bench/subconscious/speed.py --vault V --hit "message that names a page" --miss "message that does not"
 
 Builds the recall index first (as the router, the MCP server or the hook's own detached refresh would have). Cold:
-the first run in a new state folder with an empty Python bytecode cache (as right after install); the OS file cache
-is not flushed (that needs root). Warm: the rest, each with a new session id so nothing is skipped as a repeat.
+the first run in a new state folder with the scripts' bytecode cache deleted (as right after install) and the phrase
+table not yet compiled; the OS file cache is not flushed (that needs root). Warm: the rest, each with a new session id
+so nothing is skipped as a repeat. (`PYTHONPYCACHEPREFIX` is not used: it adds about 90 ms to every run.)
 """
 
 from __future__ import annotations
@@ -54,11 +55,17 @@ def main() -> int:
     print(f"index build: {(time.perf_counter() - t):.1f} s")
     for name, text in (("hit", a.hit), ("miss", a.miss)):
         cold = []
+        import glob
+        import shutil
+
         for i in range(a.cold):
-            env = {**base, "KROUTER_STATE_DIR": str(tmp / f"cold-{name}-{i}"), "PYTHONPYCACHEPREFIX": str(tmp / f"pyc-{name}-{i}")}
+            shutil.rmtree(HOOK.parent / "__pycache__", ignore_errors=True)
+            for f in glob.glob(str(tmp / "cache" / "mentions-*")):
+                os.unlink(f)
+            env = {**base, "KROUTER_STATE_DIR": str(tmp / f"cold-{name}-{i}")}
             ms, out = once(env, text, f"c{i}")
             cold.append(ms)
-        env = {**base, "KROUTER_STATE_DIR": str(tmp / f"warm-{name}"), "PYTHONPYCACHEPREFIX": str(tmp / "pyc-warm")}
+        env = {**base, "KROUTER_STATE_DIR": str(tmp / f"warm-{name}")}
         once(env, text, "prime")
         warm, outs = [], set()
         for i in range(a.warm):
