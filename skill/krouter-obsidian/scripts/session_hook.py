@@ -22,7 +22,9 @@ active` plus corrections, as before 1.3, `KROUTER_INJECT=0` nothing. Nothing is 
 has none or the import was never turned on. In English unless the lines are Chinese. Reads only the vault; sends
 nothing; well under a second.
 
-`session_hook.py prompt` (UserPromptSubmit): when what you just typed reads like a correction ("改成 B", "以后一律",
+`session_hook.py prompt` (UserPromptSubmit), with `KROUTER_EXPERIENCE=1` (experimental, off by default): adds up to
+two experience cards whose situation the prompt reads like to the agent's context, worded as lessons from other
+tasks (`experience.py`; Claude Code and Codex). And when what you just typed reads like a correction ("改成 B", "以后一律",
 "锁死", "from now on", "that's wrong"), it appends what you typed, redacted and cut to 300 characters, to the day's
 `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md`, marked provisional; the next distill of that session settles it on its own (`corrections.py`). Local pattern match
 only, no model call, nothing sent; a rhetorical question ("不是吗", "对不对") is not a correction. It does nothing
@@ -366,10 +368,35 @@ def marked_out(transcript: Path, agent: str = "claude") -> bool:
     return False
 
 
+def suggest_context(text: str, agent: str) -> None:
+    """Experience cards whose situation this prompt reads like, added to the agent's context (experience.py). Off
+    unless `KROUTER_EXPERIENCE=1`; nothing when no card clears the quiet threshold. Read-only: no import consent
+    needed. Cursor's beforeSubmitPrompt cannot add context, so Cursor gets none."""
+    import experience
+
+    raw = vault_path()
+    if agent == "cursor" or not experience.enabled() or not raw or not Path(raw).is_dir():
+        return
+    lines = experience.render(experience.suggest(Path(raw), text), Path(raw))
+    if not lines:
+        return
+    ctx = "KRouter " + "\n".join(lines)
+    if agent == "codex":
+        print(ctx)  # Codex 把 UserPromptSubmit 的普通输出加进上下文
+    else:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": ctx}},
+                         ensure_ascii=False))
+
+
 def prompt(payload: dict, agent: str = "claude") -> int:
     text = own_words(str(payload.get("prompt") or ""))
-    if (not text.strip() or len(text) > PROMPT_MAX or os.environ.get("KROUTER_IN_DISTILL") or NO_CAPTURE.search(text)
-            or not consented()):
+    if not text.strip() or len(text) > PROMPT_MAX or os.environ.get("KROUTER_IN_DISTILL"):
+        return 0
+    try:
+        suggest_context(text, agent)
+    except Exception as exc:  # noqa: BLE001  建议出错不影响纠正候选
+        print(f"krouter hook: {str(exc)[:200]}", file=sys.stderr)
+    if NO_CAPTURE.search(text) or not consented():
         return 0
     cue = correction_cue(text)
     raw = vault_path()

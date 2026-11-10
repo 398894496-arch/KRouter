@@ -1,0 +1,335 @@
+#!/usr/bin/env python3
+"""Experience cards: a lesson from one task, offered as a suggestion on another task in the same situation.
+
+A fact page answers "what was decided about X". An experience card keeps something else: in situation S, doing D gave
+R, and the lesson without the subject ("the stew tasted flat; a spoonful of sugar fixed it" → "when something is
+flat as a whole, add a little of the opposite"). Cards are plain Markdown pages in `02 经验与方法/经验卡/`, one per
+lesson, which a person can read, fix or delete:
+
+    ---
+    title: "经验｜整体发平、没有层次时，加一点点反差的东西"
+    type: experience-card
+    status: provisional
+    when: 发平; 平淡; 没有层次; 寡淡; 缺点什么
+    source_ref: "[[05 时间日志/会话摘录/2026-01-01｜…]]"
+    ---
+    - 处境：… - 做法：… - 结果：… - 通用说法：… - 适用于：… - 出处：…
+
+**Writing.** `extract()` runs where a session is distilled (`import_sessions.py`, session end or nightly): one more
+model call through `llm.py` asks for at most two cards from the same excerpt, and only for a problem the session
+solved with a result it shows. A card is kept when its fields are filled, nothing in it looks like a key, its
+situation and action share words with the excerpt, and no card with the same lesson is on file. With no model lane
+(`llm.NoModel`) it does nothing and says nothing.
+
+**Suggesting.** `suggest()` matches the current task's words against each card's `when` phrases and the condition
+of its lesson ("…时"), lexically: the recall index's tokenizer (CJK bigrams, latin words), counting only bigrams in
+the bundled word list, so `道有` or `点平` across a word boundary never count. A card is suggested when one phrase is
+covered enough; at most two, each with its source, worded as a lesson from another task. Nothing else in the card
+(the situation, the subject) takes part, so a question about the card's own subject in another situation stays quiet.
+No embeddings and no model call. The router prints them under `experience_suggestions:`, after the recalled facts,
+and the prompt hook adds them to the agent's context (Claude Code, Codex). Cards never appear among the facts.
+
+**Switch.** `KROUTER_EXPERIENCE=1` turns both on; anything else (the default) leaves them off. Experimental: on the
+registered held-out set (`bench/memory_honesty/HELDOUT.md`, set 13) it did not reach its pass line; see
+`docs/EXPERIENCE.md` for the numbers.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import sys
+from datetime import date
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import recall_index as ri  # noqa: E402
+import zones  # noqa: E402
+from krouter_redact import redact  # noqa: E402
+
+FOLDER = ri.EXPERIENCE_DIR  # 02 经验与方法/经验卡
+TYPE = "experience-card"
+MAX_SUGGESTIONS = 2
+# 安静门槛（只在开发集上定，见 bench/transfer/run.py）：一条触发语的词要被当前任务覆盖这么多，且至少对上这么多个词
+MIN_COVER = 0.6
+MIN_WORDS = 2
+GENERIC_WEIGHT = 0.5  # 词表前 1000 的常用词（之后、以前、问题）分量减半
+FIELDS = ("处境", "做法", "结果", "通用说法", "适用于", "出处")
+SPLIT = re.compile(r"[;；,，、/|]")
+
+
+def enabled() -> bool:
+    return os.environ.get("KROUTER_EXPERIENCE", "").strip() == "1"
+
+
+# ---------- 读卡 ----------
+
+def _fields(body: str) -> dict[str, str]:
+    out = {}
+    for line in body.splitlines():
+        m = re.match(r"^\s*[-*]\s*(处境|做法|结果|通用说法|适用于|出处)\s*[:：]\s*(.+)$", line)
+        if m and m.group(1) not in out:
+            out[m.group(1)] = m.group(2).strip()
+    return out
+
+
+def load_cards(vault: Path) -> list[dict]:
+    """Every live card in the folder: [{rel, title, when: [phrase], lesson, source, …}]."""
+    folder = zones.path(vault, FOLDER)
+    if not folder.is_dir():
+        return []
+    cards = []
+    for page in sorted(folder.glob("*.md")):
+        try:
+            text = page.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        meta, body = ri.split_frontmatter(text)
+        if meta.get("type") != TYPE or (meta.get("status") or "").lower() in ri.DEAD_STATUS:
+            continue
+        f = _fields(body)
+        when = [p.strip() for p in SPLIT.split(meta.get("when") or f.get("适用于", "")) if p.strip()]
+        lesson = f.get("通用说法", "")
+        cards.append({
+            "rel": str(page.relative_to(vault)).replace(os.sep, "/"),
+            "title": (meta.get("title") or page.stem).removeprefix("经验｜"),
+            "when": when,
+            "lesson": lesson,
+            "condition": condition(lesson),
+            "source": meta.get("source_ref") or f.get("出处", ""),
+            "status": (meta.get("status") or "").lower(),
+        })
+    return cards
+
+
+def condition(lesson: str) -> str:
+    """The "when" half of a lesson: "改了东西却没有效果时，先确认…" → "改了东西却没有效果"."""
+    m = re.match(r"^(.{2,40}?)(时|的时候|之前|以后)[，,]", lesson)
+    return m.group(1) if m else ""
+
+
+# ---------- 匹配 ----------
+
+def words(text: str) -> dict[str, float]:
+    """{word: weight} of a phrase: latin words, and CJK bigrams that are words in the bundled list (the generic
+    thousand at half weight). Function bigrams (`什么`, `一下`) never count."""
+    content, generic = ri.lexicon()
+    out: dict[str, float] = {}
+    for t in ri.tokens(text):
+        if t in ri.QUERY_STOP or t in ri.EN_FUNCTION:
+            continue
+        if ri.is_cjk_bigram(t):
+            if set(t) & ri.FUNCTION_CHARS and t not in content:
+                continue
+            if t in content:
+                out[t] = 1.0
+            elif t in generic:
+                out[t] = GENERIC_WEIGHT
+        elif len(t) >= 2 and not t.isdigit():
+            out[t] = 1.0
+    return out
+
+
+def phrase_score(phrase: str, query_words: dict[str, float]) -> tuple[float, int]:
+    """(share of the phrase's word weight the query covers, how many of its words it has)."""
+    pw = words(phrase)
+    if not pw:
+        return 0.0, 0
+    hit = [t for t in pw if t in query_words]
+    return sum(pw[t] for t in hit) / sum(pw.values()), len(hit)
+
+
+def suggest(vault: Path, query: str, limit: int = MAX_SUGGESTIONS, min_cover: float = MIN_COVER,
+            min_words: int = MIN_WORDS, cards: list[dict] | None = None) -> list[dict]:
+    """Cards whose situation the query reads like, best first, at most `limit`; [] when none clears the threshold."""
+    cards = load_cards(vault) if cards is None else cards
+    qw = words(query)
+    if not cards or not qw:
+        return []
+    found = []
+    for c in cards:
+        best = (0.0, 0, "")
+        for phrase in c["when"] + ([c["condition"]] if c["condition"] else []):
+            cover, n = phrase_score(phrase, qw)
+            if (cover, n) > best[:2]:
+                best = (cover, n, phrase)
+        cover, n, phrase = best
+        if cover >= min_cover and n >= min_words:
+            found.append({**c, "score": round(cover + 0.01 * n, 3), "matched": phrase})
+    found.sort(key=lambda c: -c["score"])
+    return found[:limit]
+
+
+NOTE = {
+    "zh": "建议（别的任务里的经验，不是这个问题的事实；处境像的话可以试试，不像就忽略）：",
+    "en": "Suggestions (lessons from other tasks, not facts about this question; try one if the situation fits, "
+          "otherwise ignore):",
+}
+
+
+def render(found: list[dict], vault: Path | None = None) -> list[str]:
+    """Lines for the router's receipt / the hook's context."""
+    if not found:
+        return []
+    lang = "zh" if any(ri.CJK_RE.search(c["lesson"] or c["title"]) for c in found) else "en"
+    out = [NOTE[lang]]
+    for c in found:
+        rel = zones.canon(vault, c["rel"]) if vault else c["rel"]
+        src = f"；出处 {c['source']}" if c["source"] else ""
+        out.append(f"- {c['lesson'] or c['title']}〔{rel}{src}；对上「{c['matched']}」〕")
+    return [redact(x) for x in out]
+
+
+# ---------- 写卡 ----------
+
+PROMPT = """下面是一个人和他的编程 agent 在 {day} 的一段会话摘录（项目：{project}；只有提问和每轮最后的回答，已脱敏）。
+
+只做一件事：找出这段会话里**遇到一个问题、试了一个做法、摘录里看得到结果**的经验，最多 2 条；写成以后换一个题材、
+遇到同样处境时也用得上的经验卡。没有这样的经验（只是讨论、没有结果、只是照做一个步骤）就回 []。
+
+每条是一个 JSON 对象：
+- "title"：一句话经验，去掉题材，12–30 字（例：「整体发平、没有层次时，加一点点反差的东西」）
+- "situation"：当时的处境，照摘录写，可以带题材（例：「红烧肉炖好了，咸是够了，但吃着发平」）
+- "action"：当时怎么做的
+- "result"：结果怎样，只写摘录里看得到的
+- "lesson"：去掉题材的通用说法，写成「……时，……」（例：「东西整体发平、缺一点层次时，加一点点与主调相反的元素」）
+- "when"：3–5 个短语，2–10 字，是人遇到这个处境时会说的话，不能带题材里的名词
+  （例：["发平", "没有层次", "寡淡", "缺点什么"]，不写「红烧肉」）
+不写密钥、token、密码、人名和私人信息。只输出 JSON 数组。
+
+摘录：
+
+{text}
+"""
+
+
+def _json_array(text: str) -> list:
+    m = re.search(r"\[.*\]", text or "", re.S)
+    if not m:
+        return []
+    try:
+        data = json.loads(m.group(0))
+    except ValueError:
+        return []
+    return data if isinstance(data, list) else []
+
+
+def valid(item: dict, excerpt: str) -> dict | None:
+    """The card when it holds up, else None: every field filled, no key-shaped text, situation and action grounded
+    in the excerpt, 2–6 usable `when` phrases that do not name the subject's latin words."""
+    import answer_cards
+
+    if not isinstance(item, dict):
+        return None
+    card = {k: re.sub(r"\s+", " ", str(item.get(k) or "")).strip() for k in ("title", "situation", "action", "result",
+                                                                            "lesson")}
+    when = item.get("when") if isinstance(item.get("when"), list) else SPLIT.split(str(item.get("when") or ""))
+    if any(not v for v in card.values()) or len(card["title"]) > 40:
+        return None
+    if any(answer_cards.secret_like(v) for v in list(card.values()) + [str(w) for w in when]):
+        return None
+    seen = set(ri.tokens(excerpt))
+    grounded = set(ri.tokens(card["situation"] + " " + card["action"])) & seen
+    if len(grounded) < 2:
+        return None
+    subject = {t for t in ri.tokens(card["situation"]) if not ri.is_cjk_bigram(t)}
+    phrases = []
+    for w in when:
+        w = str(w).strip()
+        if 2 <= len(w) <= 12 and not (set(ri.tokens(w)) & subject) and w not in phrases:
+            phrases.append(w)
+    # 词表外的短语（`发平`、`寡淡`）照留给人看，但词法匹配用不上它；至少要有一条用得上
+    if len(phrases) < 2 or not any(words(w) for w in phrases):
+        return None
+    card["when"] = phrases[:6]
+    return card
+
+
+def same_lesson(a: str, b: str) -> bool:
+    wa, wb = set(words(a)), set(words(b))
+    return bool(wa and wb) and len(wa & wb) / len(wa | wb) >= 0.5
+
+
+def file_name(title: str) -> str:
+    safe = re.sub(r'[\\/:*?"<>|#^\[\]\n]', "", title).strip()[:40] or "经验"
+    return f"经验｜{safe}.md"
+
+
+def page_text(card: dict, source: str, day: str) -> str:
+    when = "; ".join(card["when"])
+    return ("---\n"
+            f"title: \"经验｜{card['title']}\"\n"
+            f"type: {TYPE}\n"
+            "status: provisional\n"
+            f"when: {when}\n"
+            f"source_ref: \"{source}\"\n"
+            f"date: {day}\n"
+            "source: krouter-capture\n"
+            "---\n\n"
+            f"# 经验｜{card['title']}\n\n"
+            f"- 处境：{card['situation']}\n"
+            f"- 做法：{card['action']}\n"
+            f"- 结果：{card['result']}\n"
+            f"- 通用说法：{card['lesson']}\n"
+            f"- 适用于：{'；'.join(card['when'])}\n"
+            f"- 出处：{source}（模型从会话里抽出，没人核对过；不对就改或删）\n")
+
+
+def extract(e: dict, excerpt: str, vault: Path, source: str, dry: bool = False) -> tuple[list[Path], int]:
+    """Write up to two experience cards from one session-day's excerpt. Returns (pages written, characters sent).
+    No model lane: ([], 0), quietly."""
+    prompt = PROMPT.format(day=e["day"].isoformat(), project=e.get("project") or "?", text=excerpt)
+    if dry:
+        return [], len(prompt)
+    import llm
+
+    try:
+        text = llm.complete(prompt, vault)
+    except llm.NoModel:
+        return [], 0
+    folder = zones.path(vault, FOLDER)
+    have = load_cards(vault)
+    written: list[Path] = []
+    for item in _json_array(redact(text))[:2]:
+        card = valid(item, excerpt)
+        if not card or any(same_lesson(card["lesson"], c["lesson"]) for c in have):
+            continue
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / file_name(card["title"])
+        if path.exists():
+            path = path.with_name(path.stem + "-" + hashlib.sha1(card["lesson"].encode()).hexdigest()[:6] + ".md")
+        path.write_text(page_text(card, source, e["day"].isoformat() if hasattr(e["day"], "isoformat")
+                                  else str(date.today())), encoding="utf-8")
+        written.append(path)
+        have.append({"lesson": card["lesson"]})
+    return written, len(prompt)
+
+
+def main() -> int:
+    import argparse
+
+    from krouter_home import vault_path
+
+    ap = argparse.ArgumentParser(description="Experience cards that match a task description (read-only).")
+    ap.add_argument("query")
+    ap.add_argument("--vault", default=vault_path())
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+    if not args.vault:
+        print("set OBSIDIAN_VAULT", file=sys.stderr)
+        return 2
+    vault = Path(args.vault).expanduser()
+    found = suggest(vault, args.query)
+    if args.json:
+        print(json.dumps([{k: c[k] for k in ("rel", "title", "lesson", "source", "matched", "score")} for c in found],
+                         ensure_ascii=False))
+    else:
+        print("\n".join(render(found, vault)) or "suggestions: none")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

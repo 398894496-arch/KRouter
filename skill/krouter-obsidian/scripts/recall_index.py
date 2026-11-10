@@ -43,6 +43,8 @@ RULE_PREFIXES = (
 RULE_FILES = {"AGENTS.md", "Agent第二大脑.md", "01 项目/项目.md"}
 DEAD_STATUS = {"superseded", "retired", "rejected", "deprecated", "archived"}
 HOW_MAX = 80
+# 经验卡（experience.py）：别的任务里的经验，只作为「建议」另行输出，不进事实召回
+EXPERIENCE_DIR = "02 经验与方法/经验卡"
 # 问句里的功能性双字，几乎每页都有，不参与召回
 QUERY_STOP = {
     "什么", "怎么", "怎样", "能不", "不能", "是不", "不是", "哪个", "哪些", "哪里", "应该",
@@ -423,9 +425,13 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     qset = set(raw)
     qname = compact(query)
     single = is_single_concept(query)
+    cards_dir = zones.real(vault, EXPERIENCE_DIR) + "/"
+    own_cards = bool(scope) and (scope + "/").startswith(cards_dir)
     for rid, rel, tier, status, how, title, name, s in rows:
         if scope and not (rel == scope or rel.startswith(scope + "/")):
             continue
+        if not own_cards and rel.startswith(cards_dir):
+            continue  # 经验卡只走建议通路（experience.py），不当事实出现在召回里
         boost = TIER_BOOST.get(tier, 1.0)
         if tier == "topic":
             # 点名的主题档案是这个主题的总入口，排在同名的零散规则页前面；没点名就大幅降权

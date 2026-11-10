@@ -837,6 +837,8 @@ def main() -> int:
     verdicts: list[dict] = []
     touched: list[Path] = []          # 这一轮写过或删过的文件，进同一个提交
     written, kept, sent, calls, failed, incremental = [], [], 0, 0, 0, 0
+    exp_cards = exp_failed = 0
+    import experience
     for e in entries:
         target = folder / file_name(e)
         if target.exists() and frontmatter(target).get("source") != MARK:
@@ -858,6 +860,21 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001  模型失败不影响本地摘录
                 failed += 1
                 print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
+            if (fresh or args.dry_run) and experience.enabled():
+                # 经验卡（实验，KROUTER_EXPERIENCE=1）：同一段摘录再问一次「遇到什么、怎么做、结果如何」；没有模型就安静跳过
+                link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
+                try:
+                    excerpt = from_turn(page.split("\n## 摘录", 1)[-1], done)[:DISTILL_MAX]
+                    cards, n = experience.extract(e, excerpt, vault, link, args.dry_run)
+                    sent += n
+                    for card in cards:
+                        touched.append(card)
+                        changed_pages.append({"path": card, "agent": e["agent"], "session": e["id"],
+                                              "added": ["经验卡：" + card.stem.removeprefix("经验｜")]})
+                    exp_cards += len(cards)
+                except Exception as exc:  # noqa: BLE001
+                    exp_failed += 1
+                    print(f"experience {target.name}: {str(exc)[:200]}", file=sys.stderr)
         mine = cands.pop((e["day"].isoformat(), e["id"][:8]), []) if fresh and not args.dry_run else []
         if mine:
             # 你当场说的纠正，提炼里有对应的行就挂上那一行；没有就用你的原话补记进提炼（提炼漏掉的往往正是这一句）
@@ -915,7 +932,8 @@ def main() -> int:
            "covered_by_daily_log": covered, "skipped_covered": skipped_covered, "fork_duplicates": forks_dropped,
            "kept_out": sum(1 for v in dropped.values() if v == "kept out"), "removed_kept_out": len(removed),
            "writes": written if len(written) <= 20 else written[:20] + [f"… {len(written) - 20} more"],
-           "kept_foreign": kept}
+           "kept_foreign": kept,
+           **({"experience_cards": exp_cards, "experience_failed": exp_failed} if experience.enabled() else {})}
     print(json.dumps(row, ensure_ascii=False))
     return 1 if failed and not calls else 0
 

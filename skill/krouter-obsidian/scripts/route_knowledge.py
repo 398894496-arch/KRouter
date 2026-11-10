@@ -361,6 +361,9 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
 
     hit = re.compile(r"^(.*?\.md)[:-]\d+[:-]")
     lines = [ln for ln in lines if not ((m := hit.match(ln)) and is_secret_page(m.group(1).rsplit("/", 1)[-1]))]
+    if vault is not None:  # 经验卡只走建议通路，字面搜索也不把它当事实打出来
+        cards = str(zones.path(vault, "02 经验与方法/经验卡")) + os.sep
+        lines = [ln for ln in lines if not ln.startswith(cards)]
     for i, line in enumerate(lines):
         if i >= max_lines:
             print("[truncated after 24 lines]")
@@ -386,6 +389,24 @@ def print_recall(res: dict, vault: Path, lines: int) -> None:
             print(f"  how: {h['how']}")
         for ln, text in best_lines(vault / h["rel"], res["query_tokens"], lines):
             print(f"  L{ln}: {text}")
+
+
+def emit_experience(query: str, vault: Path) -> None:
+    """Experience cards whose situation this question reads like, apart from the facts above (experience.py).
+    Off unless `KROUTER_EXPERIENCE=1`; prints nothing when no card clears the quiet threshold."""
+    try:
+        import experience
+
+        if not experience.enabled():
+            return
+        lines = experience.render(experience.suggest(vault, query), vault)
+    except Exception:  # noqa: BLE001  建议通路出错不影响事实召回
+        return
+    if lines:
+        print("experience_suggestions:")
+        print("experience_note: " + lines[0])
+        for line in lines[1:]:
+            print(line)
 
 
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
@@ -462,6 +483,7 @@ def main() -> int:
         "search": vault,
     }
     if route in scopes and query and canonical_lookup(query, vault, map_path, route):
+        emit_experience(query, vault)
         return 0
     if route == "status":
         emit_receipt(canonical, "requested-fields-returned", route, query, vault, map_path)
@@ -495,6 +517,7 @@ def main() -> int:
             )
             return 2
         bounded_search(scopes[route], vault, map_path, route, query)
+        emit_experience(query, vault)
         return 0
     return 2
 

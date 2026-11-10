@@ -11,6 +11,18 @@ notice, then the details.
 
 ## Unreleased
 
+- **Experience cards, experimental and off by default: measured, and the lexical version does not work.** A lesson
+  learned on one task ("the stew tasted flat; a little sugar fixed it") can now be written down as a card and offered
+  as a suggestion on a task with another subject in the same situation. With `KROUTER_EXPERIENCE=1`, distilling a
+  session also asks the model lane for at most two cards (situation, action, result, the lesson without the subject,
+  "when" phrases, source) in `02 经验与方法/经验卡/`, checked before they are written and recorded in the change
+  ledger; no model lane, nothing happens. `krouter_ask` and the prompt hook (Claude Code, Codex) then add up to two
+  matching cards under `experience_suggestions:`, after the facts and worded as lessons from other tasks; cards never
+  appear among the facts. Set 13 (`bench/memory_honesty/HELDOUT.md`, registered before the matcher was written; 14
+  hand-written cards, 56 cases): development 3 of 14 transfer cases recalled with no quiet case disturbed; **held-out,
+  run once, 0 of 14 recalled and 2 of 14 quiet cases given a suggestion**, against a pass line of 8 and at most 1. The
+  matcher is lexical and does stay quiet on a card's own subject, but two wordings of one situation rarely share a
+  word. So it stays off. Why, and what would be needed: `docs/EXPERIENCE.md`. Bench: `bench/transfer/`.
 - **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
   12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
   changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
