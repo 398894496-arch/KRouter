@@ -22,7 +22,7 @@
       night_off: "Not switched on, and why", night_hist: "Earlier nights", night_runs: "What the runs changed", night_corr: "Corrections made to hold", night_learned: "Learned triggers", night_learned_n: "{n} learned so far; newest first.",
       night_pending: "{n} correction candidate(s) wait to be judged at the next distill.", night_nogit: "The memory folder is not a git repository, so earlier reports are not kept.", night_added: "added", night_superseded: "replaced", night_removed: "removed",
       why_ph: "Ask a question the way you would ask the agent", why_go: "Explain", why_hint: "Shows what `krouter why` shows: how the answer came out, page by page. Nothing is written and nothing is logged.", why_empty: "Type a sentence above.",
-      theme: "Theme", ok: "ok", state: "state", lane: "lane", lock: "alias lock", sample: "sample memory", demo_note: "(demo, deleted when you stop it)",
+      theme: "Theme", ok: "ok", state: "state", lane: "lane", lock: "alias lock", sample: "sample memory", ev_offered: "offered", ev_adopted: "adopted", ev_again: "met again", demo_note: "(demo, deleted when you stop it)",
     },
     zh: {
       readonly: "只读", tab_memory: "记忆", tab_graph: "关联", tab_experience: "经验", tab_nightly: "昨晚", tab_why: "试一句",
@@ -43,7 +43,7 @@
       night_off: "没开的功能，和原因", night_hist: "之前几晚", night_runs: "各轮改了什么", night_corr: "当场落实的纠正", night_learned: "学到的触发词", night_learned_n: "已学到 {n} 条，新的在前。",
       night_pending: "有 {n} 条纠正候选等下次提炼时判定。", night_nogit: "记忆文件夹不是 git 仓库，所以没有保留更早的报告。", night_added: "新增", night_superseded: "取代", night_removed: "删除",
       why_ph: "像问 agent 那样问一句", why_go: "解释", why_hint: "显示和 `krouter why` 一样的内容：答案是怎么来的，一页一页讲。不写入任何东西，也不记查询日志。", why_empty: "在上面输入一句话。",
-      theme: "主题", ok: "正常", state: "状态", lane: "通道", lock: "别名锁", sample: "示例记忆库", demo_note: "（演示，停掉就删）",
+      theme: "主题", ok: "正常", state: "状态", lane: "通道", lock: "别名锁", sample: "示例记忆库", ev_offered: "被提出", ev_adopted: "被采纳", ev_again: "又遇到", demo_note: "（演示，停掉就删）",
     },
   };
 
@@ -232,7 +232,7 @@
             (c.when.length ? '<div class="muted small">' + esc(c.when.join(" · ")) + "</div>" : "") + '</td><td class="num">' + c.offered + '</td><td class="num">' + c.adopted + '</td><td class="num">' + c.again + "</td><td class=\"small muted\">" + esc(last || "") + "</td></tr>";
         }).join("") + "</tbody></table></div>" + '<p class="muted small">' + esc(t("exp_rank", { n: x.digest_max })) + "</p>"
         : '<p class="empty">' + esc(t("exp_none")) + "</p>";
-      var ev = x.events.length ? "<h2>" + esc(t("exp_events")) + '</h2><div class="card scroll"><table><tbody>' + x.events.slice(0, 12).map(function (e) { return "<tr><td class=\"small muted\">" + esc(e.at) + "</td><td>" + esc(e.card) + "</td><td>" + chip(e.kind, e.kind === "adopted" ? "ok" : "off") + '</td><td class="small muted">' + esc(e.why) + "</td></tr>"; }).join("") + "</tbody></table></div>" : "";
+      var ev = x.events.length ? "<h2>" + esc(t("exp_events")) + '</h2><div class="card scroll"><table><tbody>' + x.events.slice(0, 12).map(function (e) { return "<tr><td class=\"small muted\">" + esc(e.at) + "</td><td>" + esc(e.card) + "</td><td>" + chip(t("ev_" + e.kind), e.kind === "adopted" ? "ok" : "off") + '</td><td class="small muted">' + esc(e.why) + "</td></tr>"; }).join("") + "</tbody></table></div>" : "";
       var sk = function (label, arr) { return arr.length ? "<h3>" + esc(label) + "</h3><ul>" + arr.map(function (a) { return '<li><a href="' + esc(pageHref(a.rel)) + '">' + esc(a.title) + '</a> <span class="path">' + esc(a.rel) + "</span> " + chip(a.status || "draft") + "</li>"; }).join("") + "</ul>" : ""; };
       var skills = (x.drafts.length || x.skills.length) ? sk(t("exp_drafts"), x.drafts) + sk(t("exp_skills"), x.skills) : '<p class="muted small">' + esc(t("exp_skills_none")) + "</p>";
       setHTML("<h1>" + esc(t("exp_cards")) + "</h1>" + (x.on ? "" : '<p class="muted">' + esc(t("exp_off")) + "</p>") + cards + ev + '<h2>' + esc(t("exp_skills")) + '</h2><div class="card">' + skills + "</div>");

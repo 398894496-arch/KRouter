@@ -223,6 +223,7 @@ def test_experience_cards_with_how_often_they_were_offered_and_adopted(srv):
     assert (cards["C02"]["offered"], cards["C02"]["adopted"]) == (2, 0) and cards["C03"]["offered"] == 0
     assert x["cards"][0]["id"] == "C01"  # adopted first, as the session-start digest lists them
     assert x["drafts"] == [] and x["skills"] == [] and x["events"]
+    assert [e["at"] for e in x["events"]] == sorted((e["at"] for e in x["events"]), reverse=True)  # newest first
 
 
 def test_skills_are_listed_when_they_exist_and_their_absence_is_not_an_error(env, tmp_path):

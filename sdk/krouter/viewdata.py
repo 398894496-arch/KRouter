@@ -401,7 +401,7 @@ class Store:
                     continue
                 rows.append({"at": str(d.get("at", ""))[:19], "card": str(d.get("card", "")), "kind": d.get("kind", ""),
                              "why": self.m.redact.redact(str(d.get("why", ""))), "session": str(d.get("session", ""))[:40]})
-            out["events"] = rows[-30:][::-1]
+            out["events"] = sorted(rows, key=lambda r: r["at"], reverse=True)[:30]
         # Skills grown from cards live in another work package; read them if they exist: any page whose frontmatter has
         # `type: skill…`, a draft while its status is not active.
         with self.con() as con:
