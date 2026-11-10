@@ -788,3 +788,20 @@ on lesson sessions; duplicates ≤ 1 / 8; no-lesson ≤ 1 / 8. Run once. If it p
 |---|---|
 | 2026-11-09 | Registered (`79bafe3`). |
 | 2026-11-09 | **Run once** (frozen wording; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Sonnet's calls refused for naming the subject and rewritten once with the tool's reason, none of Haiku's). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); of 18 cards on lesson sessions, judged faithful 16 = 88.9% (bar ≥ 90%), judged subject-free 17 = 94.4% (≥ 90%); duplicates written 1 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on faithfulness. Haiku's cards: faithful 7 / 9, subject-free 9 / 9, one duplicate written. Sonnet's: faithful 9 / 9, subject-free 8 / 9. Both unfaithful cards are Haiku's and misstate a figure (a result claimed for all batches where the session confirmed 20 of 24; a gap given as height where the session gave width); the subject leak is a Sonnet title naming "图纸". `experience.DEFAULT_ON` stays off. The sessions are now spent. |
+
+## Set 21: set 20's check again, with numbers held to the session (registered 2026-11-10, before any host was run on it)
+
+**Why.** Set 20 missed by one card on faithfulness, and both misses were figures. One change since, made without a
+development run to save calls (said as such): every number left in a card must be in the session, mechanically
+(`experience.unsupported_figures`); for a card the host writes, the session snippets it gives in `quotes`, since the
+MCP server does not see the session; for the model lane, the excerpt. A card with an unquoted number is sent back with
+the numbers named, and the instructions now say to leave numbers out of action and result unless the lesson needs
+them. Offline, both of set 20's unfaithful cards would have been sent back.
+
+**Sessions.** 16 new ones by Sonnet 5.5 in a fresh subagent with set 20's instructions, plus "numbers appear naturally,
+and some are corrected later"; same kinds and counts. Counts only read. `bench/transfer/set21_sessions.jsonl`, SHA-256
+`d1d77769…3d52744`.
+
+**Run, judging and bar:** exactly as set 20 (one retry of a refused call with the tool's reason; the other host
+judges; lesson sessions with a card ≥ 12 / 16, judged faithful ≥ 90%, judged subject-free ≥ 90%, duplicates ≤ 1 / 8,
+no-lesson ≤ 1 / 8). Run once. If it passes, `experience.DEFAULT_ON` is set.

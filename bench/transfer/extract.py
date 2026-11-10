@@ -295,7 +295,7 @@ def main() -> int:
     r.add_argument("--prompts", required=True, help="the batch file the replies answered")
     r.add_argument("--out", required=True)
     for sp in (p, s, j, r):
-        sp.add_argument("--set", default="17", choices=("17", "19", "20"))
+        sp.add_argument("--set", default="17", choices=("17", "19", "20", "21"))
     args = ap.parse_args()
     global SET
     SET = args.set
