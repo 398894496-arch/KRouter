@@ -37,32 +37,29 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 
 ## Measured, not claimed
 
-**Answer accuracy, the number other projects publish.** On LongMemEval (ICLR 2025; 500 questions, each over about 50
-chat sessions), a model given only the pages KRouter cites answered **400 of 500 right (80.0%, 95% interval
-76.4–83.4)**. Reader and judge are Claude Sonnet 5.5 with the benchmark's own prompts; most published numbers use
-GPT-4o, so they cannot be set side by side. What can be compared is the same reader given something else:
+**Finding the whole answer, five pages per question.** A lookup now gives five pages: three that match the question,
+then up to two the memory connects to them (a link, a replacement, the same session, rare words they share, being
+cited together). On LongMemEval (ICLR 2025; 500 questions, each over about 50 chat sessions), scored from the
+benchmark authors' own labels with no model, on the 235 questions held out while those connections were tuned on the
+other half, **KRouter's five pages hold every session the answer needs for 210 questions; plain keyword search (BM25)
+given five sessions, for 198** (12 more, paired 95% interval +3 to +21). On questions whose answer is spread over
+several sessions: **40 of 47 against 31**. These are retrieval numbers: what the pages hold, not what a model answers
+from them ([set 18](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)).
 
-| The reader is given | Right, of 500 | Of the 470 answerable |
-|---|---|---|
-| nothing | 30 (6.0%) | 0 |
-| plain keyword search (BM25), its top three sessions | 405 (81.0%, 77.4–84.4) | 376 |
-| the pages KRouter cites, three at most | 400 (80.0%, 76.4–83.4) | 371 |
-| the benchmark's own answer sessions: perfect retrieval | 492 (98.4%, 97.2–99.4) | 462 |
+**Answer accuracy for the five-page version has not been measured.** The run with a reader and a judge is registered
+([set 22](bench/memory_honesty/HELDOUT.md#set-22-the-same-reader-five-pages-each--keyword-search-against-krouter-with-its-associative-path-registered-2026-11-10-before-any-reader-or-judge-call)) and was not run. The answer accuracy that was measured is the previous version's, which gave three
+pages (KRouter 1.3.0: 400 of 500 right with Claude Sonnet 5.5 as reader and judge, level with BM25's three); that
+table, with its version and page count, is in [`docs/NUMBERS.md`](docs/NUMBERS.md#the-same-reader-three-pages-krouter-130).
 
-Three things follow. The reader knows none of the answers by itself, so the 80% comes from what was retrieved.
-**KRouter's lookup is level with plain keyword search, not ahead**: −1.0 points (paired interval −2.8 to +0.8). And
-**the 18 points still missing are lost in retrieval, not by the reader** (+18.4 with perfect retrieval, 15.0 to
-21.8), mostly on questions that add up several sessions (69 → 117 of 121) or reason about dates (97 → 125 of 127),
-where three pages miss a session ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run), [set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run); every reply and verdict in
-[`bench/longmemeval/results/`](bench/longmemeval/results/)).
-
-**Finding the page**, scored from the benchmark authors' own labels with no model judge. LongMemEval: an answer
+**Finding the page** (earlier three-page versions), scored the same way. LongMemEval (KRouter 1.1.1): an answer
 session is among the cited pages for 439 of 470 answerable questions (BM25: 447), and for 70 of 72 questions whose
 fact changed later the newest one is cited. LoCoMo (ACL 2024; 1,986 questions over 10 long conversations): the first
 page cited holds the evidence for 991 of 1,540 answerable questions (BM25: 968).
 
 **Where it is weak:** a question about a near neighbour of something the memory does mention still gets an answer.
-It refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo trick questions.
+It refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo trick questions. On LoCoMo's
+short conversations the two connected pages cost more than they bring: the five pages hold every evidence session for
+1,185 of 1,536 questions, five pages of direct matches would for 1,204.
 
 **On our own 200 held-out questions** (English and Chinese, never tuned on, written by Claude Opus in separate
 sessions): KRouter cites a wrong page 26% of the time; claude-mem 64%, basic-memory 78%. Of 80 questions the memory
@@ -70,8 +67,9 @@ cannot answer, it refuses 47; the other two refuse none. Of 60 about a decision 
 right; they get 34 and 16. Part of that gap is by construction: plain full-text search given KRouter's two rules
 (leave replaced pages out, refuse a weak match) is level with it.
 
-**So what KRouter adds is not a better ranker.** It is those two rules on by default, a receipt with each answer (the
-page it came from, why that page, how sure), and a memory you can open and edit.
+**So what KRouter adds** is a lookup that follows the memory's own connections (the lead above, at five pages; on
+the first page cited it is level with plain search given the two rules), those two rules on by default, a receipt with
+each answer (the page it came from, why that page, how sure), and a memory you can open and edit.
 [Every number and its method](#honest-numbers) · [rerun them](#check-it-yourself) · [words used here](#words-used-here)
 
 ## Install
@@ -278,8 +276,8 @@ Every number on this page, with its set, version, baseline and the result that d
 
 | Measured | Result |
 |---|---|
-| Answer accuracy by question type ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)) | single-session 61 / 64 (user) and 55 / 56 (assistant), knowledge update 69 / 72, temporal 97 / 127, preference 20 / 30, multi-session 69 / 121. A second judge agreed on 100 of 100 re-judged verdicts |
-| Where the 93 questions lost to perfect retrieval went ([set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)) | KRouter had cited some but not all of the answer sessions for 58, none for 32, all for 3; 24 need more than three sessions |
+| Answer accuracy by question type, KRouter 1.3.0 at three pages ([set 11](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)) | single-session 61 / 64 (user) and 55 / 56 (assistant), knowledge update 69 / 72, temporal 97 / 127, preference 20 / 30, multi-session 69 / 121. A second judge agreed on 100 of 100 re-judged verdicts |
+| Where the 93 questions lost to perfect retrieval went, three pages ([set 12](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)) | KRouter had cited some but not all of the answer sessions for 58, none for 32, all for 3; 24 need more than three sessions |
 | Off-topic questions (public benches, CI) | refused 12 / 12 (English) and 6 / 6 (Chinese) |
 | Against a careful baseline ([200 held-out questions](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)) | plain search given the same two rules cites 42 wrong pages to KRouter's 36 and gets 96 right to 102; neither difference is significant |
 | One lookup in its own process ([scale](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)) | 0.13 s at 10,000 pages, 0.35 s at 50,000 |

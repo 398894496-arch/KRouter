@@ -40,6 +40,12 @@ notice, then the details.
   ms at 10,000 pages; building the cache for 10,000 pages 3.6 s → 6.0 s, 29 → 38 MB (50,000 pages: 25 → 32 s, 150
   → 193 MB, measured with other jobs running). `recall(..., assoc=False)` gives the direct ranking alone (the nightly
   checkup and reconsolidation use it). Offline count, no model: `bench/longmemeval/assoc.py`.
+- **README: "level with keyword search" replaced by what was measured since, and said at which layer.** The main
+  line is now the retrieval result at five pages (set 18's held-out half: every needed session handed over for 210 of
+  235 questions against BM25's 198, multi-session 40 of 47 against 31). The same-reader table (6.0 / 81.0 / 80.0 /
+  98.4%) measured the three-page 1.3.0 and moved to `docs/NUMBERS.md` with its version and page count; the README
+  says the five-page answer accuracy has not been rerun (set 22, registered, not run). LoCoMo's 19 fewer than five
+  direct hits is in `docs/NUMBERS.md` and the README's weak spots. `README.zh.md` matches.
 - **Pages a confident lookup returned together get a stronger edge, overnight.** The router's query log now records
   the direct hits each lookup returned (`pages`; never the associated ones, so the path cannot feed itself), and a
   new nightly step, `cocite` (after `checkup`, no model, writes only a file in the state directory), adds one to the

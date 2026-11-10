@@ -638,6 +638,7 @@ KRouter 23 shared with BM25 and 17 copied from sets 11 and 12, so 195 to run; **
 |---|---|
 | 2026-11-10 | Registered. Not run (waiting for the maintainer, for cost). |
 | 2026-11-10 | Amended as above, before any reader or judge call: held-out half only, batches of 400 000 characters, the bar for "ahead" fixed, cost recounted (about 96 subagent runs instead of about 410). Not run. |
+| 2026-11-10 | **Registered, not run: the maintainer decided not to spend the quota on it.** No reader or judge call was made and there is no result at the answer level for five pages. The registration (as amended) stands; it can be run as written later. |
 
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 

@@ -28,24 +28,17 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 ## 用数字说话
 
-**答案准确率，也就是别家公布的那个数。** 在 LongMemEval（ICLR 2025；500 道题，每道题配约 50 段聊天）上，模型只看 KRouter 引用的页面作答，**500 道答对 400 道（80.0%，95% 区间 76.4–83.4）**。作答和评判都用 Claude Sonnet 5.5，提示词是这个基准自带的原版；别家公布的数字大多用 GPT-4o，没法直接放在一起比。能比的是：同一个作答模型，换一样东西给它看。
+**每道题交 5 页，能不能把答案要的会话交齐。** 现在一次查询交 5 页：3 页是直接对上问题的，后面最多 2 页是记忆库里和它们连着的（链接、取代关系、同一段会话、共有的少见词、以前一起被引用过）。在 LongMemEval（ICLR 2025；500 道题，每道题配约 50 段聊天）上，按出题方自己的标注机械评分、不用模型，看调这些连接时没碰过的那一半 235 道题：**KRouter 交的 5 页把答案要的会话全部交齐的有 210 道，同样交 5 段的纯关键词检索（BM25）是 198 道**（多 12 道，配对 95% 区间 +3 到 +21）。答案分散在好几段聊天里的题：**47 道里 40 对 31**。这些是检索层的数字：交出去的页里有没有答案，不是模型据此答对了多少（[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。
 
-| 给作答模型看什么 | 500 道答对 | 470 道可答题答对 |
-|---|---|---|
-| 什么都不给 | 30（6.0%） | 0 |
-| 纯关键词检索（BM25）排前三的聊天 | 405（81.0%，77.4–84.4） | 376 |
-| KRouter 引用的页面，最多三页 | 400（80.0%，76.4–83.4） | 371 |
-| 基准标注的答案所在聊天，也就是检索满分 | 492（98.4%，97.2–99.4） | 462 |
+**5 页版本的答题正确率没有重跑。** 带作答和评判模型的那一轮已经登记（[第 22 套](bench/memory_honesty/HELDOUT.md#set-22-the-same-reader-five-pages-each--keyword-search-against-krouter-with-its-associative-path-registered-2026-11-10-before-any-reader-or-judge-call)），没有跑。测过的答题正确率是上一个版本的，那时只交 3 页（KRouter 1.3.0：作答和评判都用 Claude Sonnet 5.5，500 道答对 400 道，和 BM25 交 3 段持平）；那张表连同版本和页数放在 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md#同一个作答模型只交-3-页krouter-130)。
 
-从这张表能读出三件事。不给材料时，模型一道可答题都答不出，所以这 80% 靠的是查回来的内容。**KRouter 的检索和纯关键词检索持平，不是领先**：差 −1.0 个百分点（配对区间 −2.8 到 +0.8）。**还差的 18 个百分点丢在检索上，不在作答模型上**（检索满分时 +18.4，区间 15.0 到 21.8）：主要是要把好几段聊天加起来的题（121 道里 69 → 117 道）和要推算时间的题（127 道里 97 → 125 道），只取三页常常漏掉一段（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)、[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)，每道题的回答和判定都在 [`bench/longmemeval/results/`](bench/longmemeval/results/)）。
+**找没找对页**（更早的 3 页版本），同样机械评分。LongMemEval（KRouter 1.1.1）：470 道能答的题里，439 道 KRouter 引用的页面里有答案所在的那段（BM25 是 447 道）；72 道「事实后来变了」的题里，70 道引到了最新那次。LoCoMo（ACL 2024；10 段长对话，1 986 道题）：1 540 道能答的题里，991 道第一条引用就是证据所在的那段（BM25 是 968 道）。
 
-**找没找对页**，按出题方自己的标注机械评分，不用模型当裁判。LongMemEval：470 道能答的题里，439 道 KRouter 引用的页面里有答案所在的那段（BM25 是 447 道）；72 道「事实后来变了」的题里，70 道引到了最新那次。LoCoMo（ACL 2024；10 段长对话，1 986 道题）：1 540 道能答的题里，991 道第一条引用就是证据所在的那段（BM25 是 968 道）。
-
-**弱点**：如果问的是记忆里某件事的「近邻」，它还是会作答。LongMemEval 里 30 道没有答案的题只拒了 3 道，LoCoMo 446 道陷阱题只拒了 37 道。
+**弱点**：如果问的是记忆里某件事的「近邻」，它还是会作答。LongMemEval 里 30 道没有答案的题只拒了 3 道，LoCoMo 446 道陷阱题只拒了 37 道。在 LoCoMo 那种短对话上，连着的那 2 页得不偿失：5 页把证据会话交齐的是 1 536 道里 1 185 道，5 页全给直接命中是 1 204 道。
 
 **我们自己的 200 道留出题**（中英文，从没拿来调过分，由 Claude Opus 在单独会话里出题）：KRouter 引错 26%，claude-mem 64%，basic-memory 78%。80 道记忆里答不了的题，KRouter 拒答 47 道，另外两个一道都不拒。60 道「决定后来改过」的题，KRouter 答对 50 道，它们是 34 和 16 道。这个差距有一部分是结构决定的：给纯全文检索加上 KRouter 那两条规则（跳过已被取代的旧页、匹配太弱就拒答），它就和 KRouter 打平。
 
-**所以 KRouter 多出来的不是排序更准。** 多的是这两条规则默认就开着，每条答案带一张回执（出自哪一页、为什么是这页、有多大把握），还有一个你能直接打开、编辑的记忆库。[每个数字和测法](#老实的数字) · [自己复现](#自己复现) · [这页用到的词](#这页用到的词)
+**所以 KRouter 多出来的**，是顺着记忆库自己的连接去找（上面那个领先，交 5 页时；只看引用的第一页，它和加了两条规则的纯检索持平），这两条规则默认就开着，每条答案带一张回执（出自哪一页、为什么是这页、有多大把握），还有一个你能直接打开、编辑的记忆库。[每个数字和测法](#老实的数字) · [自己复现](#自己复现) · [这页用到的词](#这页用到的词)
 
 ## 安装
 
@@ -215,8 +208,8 @@ console.log(a.page, a.how, a.refused);
 
 | 测了什么 | 结果 |
 |---|---|
-| 答案准确率按题型分（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)） | 单段聊天 61/64（用户说的）和 55/56（助手说的），知识更新 69/72，时间推理 97/127，偏好 20/30，跨多段聊天 69/121。另一个评判实例重判 100 道，100 道一致 |
-| 输给满分检索的 93 道题丢在哪（[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)） | KRouter 引到一部分答案聊天但没引全的 58 道，一段都没引到的 32 道，全引到的 3 道；有 24 道的答案分散在三段以上 |
+| 答案准确率按题型分，KRouter 1.3.0 交 3 页（[第 11 套](bench/memory_honesty/HELDOUT.md#set-11-longmemeval-answer-accuracy-scored-the-way-other-projects-report-it-registered-2026-11-09-before-any-run)） | 单段聊天 61/64（用户说的）和 55/56（助手说的），知识更新 69/72，时间推理 97/127，偏好 20/30，跨多段聊天 69/121。另一个评判实例重判 100 道，100 道一致 |
+| 输给满分检索的 93 道题丢在哪，交 3 页（[第 12 套](bench/memory_honesty/HELDOUT.md#set-12-the-same-reader-given-different-things-registered-2026-11-09-before-any-run)） | KRouter 引到一部分答案聊天但没引全的 58 道，一段都没引到的 32 道，全引到的 3 道；有 24 道的答案分散在三段以上 |
 | 离题问题（公开测试集，CI 跑） | 英文 12/12、中文 6/6 拒答 |
 | 和认真做的基线比（[200 道留出题](docs/BENCHMARK.md#third-bench-200-held-out-questions-on-a-vault-nobody-tunes-on-2026-10-13)） | 给纯全文检索加上同样的两条规则，它引错 42 页、KRouter 36 页，答对 96 道对 102 道；两项差距都不显著 |
 | 单独一个进程查一次（[规模](docs/BENCHMARK.md#scale-how-big-a-vault-can-get-2026-11-09)） | 1 万页 0.13 秒，5 万页 0.35 秒 |
