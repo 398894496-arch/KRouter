@@ -230,7 +230,17 @@ ADOPT = re.compile(r"(就?(按|照)(你说的|这个|这条|这样|你的)|就�
                    r"\b(that|it) worked\b|\bgood (idea|call|tip|catch)\b|\blet'?s (try|do) (that|it|this)\b|"
                    r"\btried (it|that|this)\b.{0,30}\b(works?|worked|fixed|helped)\b|\bthat fixed it\b|\byou were right\b)",
                    re.I)
-REJECT = re.compile(r"(不用|不对|没用|不行|不管用|算了|不是这个|不相关|没关系|别提|"
+# 第 26 套开发部分补的（2026-11-10）：照做了、问题没了这类直说结果的话；先前只认「按你说的」「管用」一类，开发集 5 句只认出 1 句
+ADOPT_MORE = re.compile(r"(好主意|好办法|这办法(好|行)|(已经|这就|马上就?)(按|照|把|去|改|发|列|试|做|装|换|回退|加|删)|"
+                        r"(就|都|终于|真的|现在)(好了|正常了|没事了|可以了|行了)|(真的|总算|终于)(不|没)再?[\u4e00-\u9fff]{1,3}了|"
+                        r"原来就是|问题解决|"
+                        r"\b(works?|working|fine|quiet|normal|fixed|gone) (again|now)\b|\bso it was\b|\bback to normal\b|"
+                        r"\bi(?:'ve| have)? (did|done|tried|rolled|followed|switched|added|made|sent|put|reset)\b.{0,40}"
+                        r"\b(works?|worked|fixed|again|now)\b)", re.I)
+# 只做了一半、还拿不准的：不算采纳（「前两步我做了，第三步没太懂」）
+UNSURE = re.compile(r"(不确定|没太懂|没懂|不懂|还没|再想想|可能吧|不太|拿不准|"
+                    r"\bnot sure\b|\bmaybe\b|\bhmm+\b|\bdon'?t (get|understand)\b|\bnot yet\b)", re.I)
+REJECT = re.compile(r"(不用|不对|没用|不行|不管用|算了|不是这个|不相关|没关系|别提|没帮上|帮不上|没必要|对不上|不适用|"
                     r"\b(didn'?t|doesn'?t|does not|did not) (work|help|apply)\b|\bnot (it|that|relevant)\b|\bnope\b|"
                     r"\bno thanks\b|\birrelevant\b)", re.I)
 
@@ -258,8 +268,8 @@ def uses_in(turns: list[dict], ids: set[str]) -> list[dict]:
             continue
         named = cited(nxt, ids) or [c for c in got if re.search(rf"(?<![A-Za-z0-9]){c}(?![A-Za-z0-9])", nxt)]
         target = named[:1] or (got if len(got) == 1 else [])
-        cue = ADOPT.search(nxt)
-        if target and cue and not REJECT.search(nxt):
+        cue = ADOPT.search(nxt) or ADOPT_MORE.search(nxt)
+        if target and cue and not REJECT.search(nxt) and not UNSURE.search(nxt):
             out.append({"card": target[0], "kind": "adopted", "turn": t.get("ts", ""),
                         "why": f"下一句说「{cue.group(0)[:20]}」"})
     return out

@@ -70,10 +70,10 @@ DEFAULT_ON = False  # 第 24、25 套过线后再打开；见 docs/SKILLS.md
 # 门槛（转正、撤回在第 26 套开发部分上定，见 bench/skills/README.md）
 DRAFT_EVIDENCE = 3    # 一张卡被采纳 + 又遇到合计这么多次，就可以单独长成技能
 GROUP_MIN = 2         # 几张卡说的是同一类处境：至少这么多张
-PROMOTE_ADOPTED = 2   # 草稿被采纳这么多次：转正
+PROMOTE_ADOPTED = 2   # 第 26 套开发部分定；草稿被采纳这么多次：转正
 WITHDRAW_DAYS = 45    # 草稿起草这么多天一次没被采纳：撤回
-WITHDRAW_OFFERED = 6  # 草稿被提出这么多次一次没被采纳：撤回
-SINK_OFFERED = 3      # 草稿被提出这么多次一次没被采纳：排到最后
+WITHDRAW_OFFERED = 4  # 第 26 套开发部分按登记的规则定（W=4, k=2）；草稿被提出这么多次一次没被采纳：撤回
+SINK_OFFERED = 2      # W 的一半；草稿被提出这么多次一次没被采纳：排到最后
 MAX_DRAFTS = 3        # 一晚最多起草这么多份
 LIST_ACTIVE = 15      # 摘要里最多列这么多个转正的技能
 LIST_DRAFTS = 5       # 和这么多份草稿
