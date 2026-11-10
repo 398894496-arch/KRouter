@@ -293,6 +293,17 @@ HEAD = {
 TAIL = {"zh": "其他问题先用 krouter_ask 查库；库里没有（recall: none）就直说，不要猜。",
         "en": "For anything else, ask the vault with krouter_ask first; if it says recall: none, say so instead of guessing."}
 MARK_UNCONFIRMED = {"zh": "（待确认）", "en": " (unconfirmed)"}
+# Some hosts (Codex 0.155 in set 30) show the model no krouter tool and no server instructions, only this hook's text:
+# without a line naming the two write tools, nothing in its context says they exist (set 30: 0 of 4 and 0 of 4).
+TOOLS = {
+    "zh": ("KRouter 工具（MCP 服务 krouter，工具列表里没有就按名字查）：问以前定过什么用 krouter_ask；用户改了一个决定、或说"
+           "「以后改成……」时，当轮就调用 krouter_correct（库里查不到旧决定也调用，不填 old）；这次会话遇到报错或错误结果、并找到原因修好了，最终回复前调用 "
+           "krouter_learn 记一条经验。"),
+    "en": ("KRouter tools (MCP server krouter; look them up by name if your tool list does not show them): krouter_ask "
+           "for what was decided before; when the user changes a decision or says to do something differently from now on, call krouter_correct in that same turn "
+           "(also when krouter_ask finds nothing about the old one: leave old out); when this session met an error or a "
+           "wrong result and you found the cause and fixed it, call krouter_learn before your final reply."),
+}
 
 
 def normalize(payload: dict, agent: str) -> dict:
@@ -349,6 +360,8 @@ def start(payload: dict, agent: str = "claude") -> int:
     if not parts:
         return 0
     text = "\n\n".join(parts)
+    english = "How to use:" in text or text.startswith("KRouter: decisions recorded")  # folder names are Chinese on an English vault too
+    text += "\n\n" + TOOLS["en" if english else "zh"]
     if agent == "cursor":
         print(json.dumps({"additional_context": text}, ensure_ascii=False))
     else:
