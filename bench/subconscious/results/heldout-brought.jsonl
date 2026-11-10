@@ -1,0 +1,60 @@
+{"id": "en-changed-01", "brought": [], "note": ""}
+{"id": "en-changed-04", "brought": [], "note": ""}
+{"id": "en-changed-06", "brought": [], "note": ""}
+{"id": "en-changed-08", "brought": [], "note": ""}
+{"id": "en-changed-11", "brought": ["Handbook/Product search.md"], "note": "KRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"Elasticsearch\" → Product search runs on OpenSearch 2, managed by our cloud provider. The index is rebuilt every night at 01:00 and after each catalogue import. Changed when Ela… [Handbook/Product search.md, trigger]\n  an earlier page said otherwise (Handbook/Product search (old).md); this one holds\nIf you use it, cite the page."}
+{"id": "en-changed-12", "brought": ["Handbook/Third-party scripts.md"], "note": "KRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"tag manager\" → Security review and load only after cookie consent; tag manager limited to five approved vendors [Handbook/Third-party scripts.md, alias]\n  an earlier page said otherwise (Handbook/Third-party scripts (old).md); this one holds\nIf you use it, cite the page."}
+{"id": "en-quiet-03", "brought": [], "note": ""}
+{"id": "en-quiet-04", "brought": [], "note": ""}
+{"id": "en-quiet-05", "brought": [], "note": ""}
+{"id": "en-quiet-07", "brought": [], "note": ""}
+{"id": "en-quiet-09", "brought": [], "note": ""}
+{"id": "en-quiet-10", "brought": [], "note": ""}
+{"id": "en-quiet-13", "brought": [], "note": ""}
+{"id": "en-quiet-15", "brought": [], "note": ""}
+{"id": "en-quiet-17", "brought": [], "note": ""}
+{"id": "en-quiet-19", "brought": [], "note": ""}
+{"id": "en-quiet-20", "brought": [], "note": ""}
+{"id": "en-quiet-21", "brought": [], "note": ""}
+{"id": "en-recall-01", "brought": [], "note": ""}
+{"id": "en-recall-04", "brought": [], "note": ""}
+{"id": "en-recall-07", "brought": [], "note": ""}
+{"id": "en-recall-08", "brought": [], "note": ""}
+{"id": "en-recall-09", "brought": [], "note": ""}
+{"id": "en-recall-11", "brought": [], "note": ""}
+{"id": "en-recall-12", "brought": [], "note": ""}
+{"id": "en-recall-13", "brought": [], "note": ""}
+{"id": "en-recall-16", "brought": [], "note": ""}
+{"id": "en-recall-19", "brought": [], "note": ""}
+{"id": "en-recall-20", "brought": ["Handbook/Cloud cost alerts.md"], "note": "KRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"alert spend 60 average\" → A cost alert fires when a project's daily cloud spend exceeds its 30-day average by 40%. The owning team replies in #cost within one day. [Handbook/Cloud cost alerts.md, full-text recall]\nIf you use it, cite the page."}
+{"id": "en-recall-22", "brought": [], "note": ""}
+{"id": "zh-changed-01", "brought": [], "note": ""}
+{"id": "zh-changed-02", "brought": ["团队手册/代码托管.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「GitLab」 → 代码统一迁到 GitHub 企业版，自建 GitLab 只读到明年三月，新仓库默认私有 〔团队手册/代码托管.md，别名〕\n  更早的一页说法不同（团队手册/代码托管（旧）.md），以这页为准\n用到就注明出处页。"}
+{"id": "zh-changed-04", "brought": [], "note": ""}
+{"id": "zh-changed-06", "brought": ["团队手册/技术分享.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「技术分享」 → 每两周周四下午一次，每组每季度至少讲一次，录像进知识库 〔团队手册/技术分享.md，别名〕\n  更早的一页说法不同（团队手册/技术分享（旧）.md），以这页为准\n用到就注明出处页。"}
+{"id": "zh-changed-07", "brought": [], "note": ""}
+{"id": "zh-changed-08", "brought": [], "note": ""}
+{"id": "zh-quiet-01", "brought": [], "note": ""}
+{"id": "zh-quiet-05", "brought": [], "note": ""}
+{"id": "zh-quiet-06", "brought": [], "note": ""}
+{"id": "zh-quiet-07", "brought": [], "note": ""}
+{"id": "zh-quiet-10", "brought": [], "note": ""}
+{"id": "zh-quiet-11", "brought": ["团队手册/权限申请.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「权限申请」 → 工单申请，上级和系统负责人双人审批；临时权限最长 7 天自动收回 〔团队手册/权限申请.md，别名〕\n  更早的一页说法不同（团队手册/权限申请（旧）.md），以这页为准\n用到就注明出处页。"}
+{"id": "zh-quiet-13", "brought": [], "note": ""}
+{"id": "zh-quiet-14", "brought": [], "note": ""}
+{"id": "zh-quiet-17", "brought": [], "note": ""}
+{"id": "zh-quiet-19", "brought": [], "note": ""}
+{"id": "zh-quiet-22", "brought": [], "note": ""}
+{"id": "zh-quiet-24", "brought": [], "note": ""}
+{"id": "zh-recall-02", "brought": [], "note": ""}
+{"id": "zh-recall-07", "brought": ["团队手册/意见反馈.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「意见反馈」 → App 意见反馈进客服工单，两小时内分派给产品经理 〔团队手册/意见反馈.md，别名〕\n用到就注明出处页。"}
+{"id": "zh-recall-09", "brought": ["团队手册/接口文档.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「接口文档」 → 对外接口用 OpenAPI 描述，随代码提交，流水线生成文档站 〔团队手册/接口文档.md，别名〕\n用到就注明出处页。"}
+{"id": "zh-recall-10", "brought": [], "note": ""}
+{"id": "zh-recall-12", "brought": ["团队手册/节假日安排.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「国庆 庆前 前一 一天」 → 法定节假日前一天下午 3 点之后不发布；节假日期间每条业务线留一名值守人员。 〔团队手册/节假日安排.md，全文召回〕\n用到就注明出处页。"}
+{"id": "zh-recall-14", "brought": [], "note": ""}
+{"id": "zh-recall-15", "brought": [], "note": ""}
+{"id": "zh-recall-18", "brought": ["团队手册/团队周会.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「周二 下午 上午」 → 团队周会在每周二上午 10 点，半小时，只同步风险和需要协调的事，不念进度。 〔团队手册/团队周会.md，全文召回〕\n用到就注明出处页。"}
+{"id": "zh-recall-19", "brought": [], "note": ""}
+{"id": "zh-recall-20", "brought": [], "note": ""}
+{"id": "zh-recall-22", "brought": ["团队手册/测试环境.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「测试环境」 → 测试环境每天凌晨 3 点重置数据；要保留先在工单申请快照 〔团队手册/测试环境.md，别名〕\n用到就注明出处页。"}
+{"id": "zh-recall-23", "brought": ["团队手册/技术方案模板.md"], "note": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「方案 评审 审意 意见」 → 技术方案文档使用统一模板，必须写背景、方案对比、风险和回滚办法；评审意见直接在文档里批注。 〔团队手册/技术方案模板.md，全文召回〕\n用到就注明出处页。"}
