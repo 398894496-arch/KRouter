@@ -1,4 +1,0 @@
-runs: 0 of 12; missing ['S31-K1', 'S31-K2', 'S31-K3', 'S31-L1', 'S31-L2', 'S31-L3', 'S31-N1', 'S31-N2', 'S31-O1', 'S31-O2', 'S31-Q1', 'S31-Q2']
-offer    should: 0 / 0 (its own card: 0 / 0)   should not: 0 / 0
-learn    should: 0 / 0   should not: 0 / 0
-correct  should: 0 / 0   should not: 0 / 0
