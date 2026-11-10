@@ -21,10 +21,12 @@ notice, then the details.
   nightly job found the logged-in Codex CLI by itself, distilled two sessions and settled the correction candidate in 6
   calls, each on the subscription record page, stopped at the cap. The install's nightly question says, in one
   sentence, that it uses that CLI's subscription, the daily cap and how to turn it off. `docs/HOST-LANE.md`.
-- **Experience cards written by the agent: subject-free on held-out, faithful one card short.** Cards no longer carry
-  `when` phrases; the agent names the session's subject and a lesson that still uses it is sent back to be rewritten.
-  Set 20 (new sessions by another model, judged by the host that did not write the card): a card for 16 of 16 lesson
-  sessions, subject-free 94%, faithful 89% (16 of 18) against 90%: not passed, so the digest stays off by default.
+- **Experience cards written by the agent: faithful and subject-free on held-out, one duplicate too many.** Cards no
+  longer carry `when` phrases; the agent names the session's subject, and a lesson that still uses it is sent back;
+  every number left in a card must be in the session (the agent's `quotes`, or the excerpt), or it is sent back too.
+  Set 21 (new sessions by another model, judged by the host that did not write the card): faithful 15 of 15,
+  subject-free 15 of 15, but 2 of 8 duplicate sessions got a card against a bar of 1, so the digest stays off by
+  default.
 - **Experience cards: a lesson from one task offered on another task in the same situation, measured; off by
   default.** With `KROUTER_EXPERIENCE=1`, distilling a session also asks the model lane for at most two cards
   (situation, action, result, the lesson without the subject, source) in `02 经验与方法/经验卡/`, checked before they

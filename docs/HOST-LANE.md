@@ -71,3 +71,11 @@ logged-in CLI it may use with no further setting: `claude` or `grok` as they are
 `KROUTER_ALLOW_CODEX=1` (it can read the whole account); the others only with `KROUTER_ALLOW_UNCONFINED=1`. The install's
 nightly question now says so in one sentence: it uses that CLI's subscription, at most 30 calls a day, each on the record
 page, `KROUTER_HOST_CLI=0` to turn it off. With no CLI and no key, the nightly report lists the steps that are off.
+
+**Run again after the fix, end to end (2026-11-10).** A fresh throwaway vault and state directory, the same two
+sessions moved to the day before, the same correction candidate, no key, nothing pinned, `KROUTER_ALLOW_CODEX=1`,
+cap 4. `nightly.py` picked Codex by itself and made **4 calls**, all distilling (520 to 690 characters out each),
+each on the record page; the cap then skipped the answer cards ("today's 4 calls … are used up"), as designed, so the
+run reports `skipped`. In the same run, the candidate was settled 成立, the PostgreSQL page was marked `superseded`
+(`superseded_by` the SQLite page, one ledger line, one commit), and both "本地开发现在用哪个数据库" and "本地开发数据库用
+什么" put the SQLite page first.

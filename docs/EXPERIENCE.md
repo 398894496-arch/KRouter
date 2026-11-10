@@ -100,13 +100,13 @@ Set 17 is spent, so set 19 wrote 16 longer sessions (8 to 10 turns, drift, chang
 judged each card by a model that did not write it. Then the card instructions were revised on set 19 and checked once
 on set 20's new sessions. Both hosts together:
 
-| | Set 19, first run | Set 19, round 5 (in-sample) | **Set 20, held-out** | Bar |
-|---|---|---|---|---|
-| Lesson sessions with a card | 16 / 16 | 14 / 16 | **16 / 16** | ≥ 12 |
-| Judged faithful | 14 / 16, 87.5% | 14 / 14 | **16 / 18, 88.9%** | ≥ 90% |
-| Judged subject-free | 14 / 16, 87.5% | 14 / 14 | **17 / 18, 94.4%** | ≥ 90% |
-| Duplicates written | 0 / 8 | 0 / 8 | **1 / 8** | ≤ 1 |
-| No-lesson sessions with a card | 0 / 8 | 0 / 8 | **0 / 8** | ≤ 1 |
+| | Set 19, first run | Set 19, round 5 (in-sample) | Set 20, held-out | **Set 21, held-out, numbers checked** | Bar |
+|---|---|---|---|---|---|
+| Lesson sessions with a card | 16 / 16 | 14 / 16 | 16 / 16 | **15 / 16** | ≥ 12 |
+| Judged faithful | 14 / 16, 87.5% | 14 / 14 | 16 / 18, 88.9% | **15 / 15, 100%** | ≥ 90% |
+| Judged subject-free | 14 / 16, 87.5% | 14 / 14 | 17 / 18, 94.4% | **15 / 15, 100%** | ≥ 90% |
+| Duplicates written | 0 / 8 | 0 / 8 | 1 / 8 | **2 / 8** | ≤ 1 |
+| No-lesson sessions with a card | 0 / 8 | 0 / 8 | 0 / 8 | **0 / 8** | ≤ 1 |
 
 What changed between them: no `when` phrases; one plain sentence each for situation, action, result; action only for
 steps actually carried out, result as the session ends (corrected figures, nothing added); a `subject` list the host
@@ -114,15 +114,16 @@ names, and the code refuses a lesson or title using one of those words and says 
 (as the MCP tool returns its reason); record only when something did not work, a way out was tried and its outcome
 seen; a self-test that the lesson reads the same to someone fixing a bug, writing a report and cooking.
 
-**Subject-freedom is solved on held-out (94%); faithfulness is one card short (89%).** Both unfaithful cards are
+**Set 21 added a mechanical check: every number left in a card must be in the session** (the host's `quotes` for a card it writes, since the MCP server does not see the session; the excerpt in the model lane), and the advice to leave numbers out of action and result. On new held-out sessions faithfulness and subject-freedom were then 100%, but two cards were written on a session meant as a duplicate of a stored lesson (both hosts drew a different lesson from it, arguably a new one), so set 21 missed on duplicates. Before that, on set 20: subject-freedom 94%, faithfulness one card short (89%). Both unfaithful cards are
 Haiku's and misstate a figure; Sonnet's 9 were all judged faithful. The digest shows only the lesson, so a wrong figure
 in a card's result does not change what is offered, but it is on the page a person reads, and the bar counts it.
 
 ## Not done, and the recommendation
 
-- **Default on is not switched.** Set 20 missed by one card on faithfulness. The next step, needing a new registered
-  set: leave figures out of action and result unless the lesson depends on them (both misses were figures), or let the
-  model lane, which has the excerpt, check that every number in a card occurs in it.
+- **Default on is not switched.** Set 21 met faithfulness and subject-freedom (100% each) and missed on duplicates
+  (2 / 8, both on one session whose lesson is arguably new). What it would take: a duplicate check that is not lexical
+  (the host is told to skip a lesson the digest already has, and the code's check compares words), or a decision that
+  a card for a near-duplicate is acceptable, and a new registered set either way.
 - **Whether a host calls `krouter_learn` on its own** at the end of a real session, unprompted, is not measured; set 17
   asked it directly.
 - **The no-key model lane** (the agent's own CLI on the user's subscription) is built with a daily cap, a visible record
