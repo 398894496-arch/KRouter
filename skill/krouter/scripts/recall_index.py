@@ -261,10 +261,30 @@ def connect(db: Path) -> sqlite3.Connection:
     return con
 
 
-def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
+def _only_rels(vault: Path, paths) -> list[str]:
+    """Vault-relative posix paths of the Markdown files among `paths` (absolute) that a full walk would index."""
+    base = os.path.abspath(str(vault))
+    key = os.path.normcase(base) + os.sep
+    out = []
+    for full in paths:
+        full = os.path.abspath(str(full))
+        if not os.path.normcase(full).startswith(key) or not full.endswith(".md"):
+            continue
+        rel = full[len(base) + 1:].replace(os.sep, "/")
+        if any(part in SKIP_PARTS or part.startswith(".") for part in rel.split("/")[:-1]):
+            continue
+        out.append(rel)
+    return out
+
+
+def refresh(vault: Path, con: sqlite3.Connection, only=None) -> dict[str, int]:
+    """Bring the index up to the vault's files. `only` (absolute paths a writer just changed): re-check just those,
+    with no walk over the vault; the next full refresh still catches anything else (a git pull)."""
     secret_how = "(secret page: path only, never quoted)" if zones.lang(vault) == "en" else "（机密页：只给路径，不引用原文）"
     seen: dict[str, tuple[int, int, Path]] = {}
-    for full, rel in walk_md(vault):
+    rels = None if only is None else _only_rels(vault, only)
+    base = str(vault).rstrip("/")
+    for full, rel in (walk_md(vault) if rels is None else ((f"{base}/{r}", r) for r in rels)):
         try:
             st = os.stat(full)
         except OSError:
@@ -272,12 +292,21 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         seen[rel] = (st.st_mtime_ns, st.st_size, full)
 
     def indexed() -> tuple[dict, str]:
-        rows = {rel: (m, s, rid) for rel, m, s, rid in con.execute("SELECT rel, mtime_ns, size, rid FROM files")}
+        if rels is None:
+            rows = {rel: (m, s, rid) for rel, m, s, rid in con.execute("SELECT rel, mtime_ns, size, rid FROM files")}
+        else:
+            marks = ",".join("?" * len(rels))
+            rows = {rel: (m, s, rid) for rel, m, s, rid in
+                    con.execute(f"SELECT rel, mtime_ns, size, rid FROM files WHERE rel IN ({marks})", rels)} if rels else {}
         return rows, (con.execute("SELECT v FROM meta WHERE k='map_sha'").fetchone() or [""])[0]
 
     known, old_sha = indexed()
     aliases, map_sha = alias_map(vault)
-    if map_sha == old_sha and known.keys() == seen.keys() and all(known[r][:2] == seen[r][:2] for r in seen):
+    if rels is not None and map_sha != old_sha:
+        return refresh(vault, con)  # 别名变了要全部重建：交给整库的那条路
+    if rels is not None and known.keys() == seen.keys() and all(known[r][:2] == seen[r][:2] for r in seen):
+        return {"added": 0, "changed": 0, "removed": 0, "docs": -1}
+    if rels is None and map_sha == old_sha and known.keys() == seen.keys() and all(known[r][:2] == seen[r][:2] for r in seen):
         if associate.cocite_changed(con, vault):  # 只有"一起被引用"的记录变了：只重读它
             con.execute("BEGIN IMMEDIATE")
             associate.load_cocite(con, vault)
@@ -351,9 +380,10 @@ def refresh(vault: Path, con: sqlite3.Connection) -> dict[str, int]:
         con.execute("INSERT OR REPLACE INTO fm VALUES(?,?)", (rel, head[:end + 4].lower() if end >= 0 else ""))
     if changed or added or removed:
         con.execute("INSERT OR REPLACE INTO meta VALUES('built_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%S"),))
-    associate.load_cocite(con, vault)
+    if rels is None:
+        associate.load_cocite(con, vault)
     con.commit()
-    return {"added": added, "changed": changed, "removed": removed, "docs": len(seen)}
+    return {"added": added, "changed": changed, "removed": removed, "docs": len(seen) if rels is None else -1}
 
 
 TIER_BOOST = {"rule": 1.6, "topic": 1.4, "project": 1.0, "other": 0.9, "log": 0.8, "dead": 0.25}
@@ -400,6 +430,14 @@ def forget_refresh() -> None:
     _REFRESHED.clear()
 
 
+_TOUCHED: set[str] = set()
+
+
+def note_touched(paths) -> None:
+    """A writer changed exactly these files (absolute paths): the next lookup re-reads them, without walking the vault."""
+    _TOUCHED.update(str(p) for p in paths)
+
+
 PAGES = 5         # 一次查询交给 agent 的页数：前 3 页是直接命中，后 2 页留给联想（没有就给后面的直接命中）
 DIRECT_FIRST = 3
 
@@ -426,6 +464,11 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     if refresh_first and refresh_due(vault):
         stats = refresh(vault, con)
         mark_refreshed(vault)
+        _TOUCHED.clear()
+    elif refresh_first and _TOUCHED:
+        only = sorted(_TOUCHED)
+        _TOUCHED.clear()
+        stats = refresh(vault, con, only=only)
     raw: list[str] = []
     for t in tokens(query):
         if len(t) == 1 and CJK_RE.fullmatch(t):

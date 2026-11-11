@@ -1095,6 +1095,56 @@ users answer in their own ways.
 | 2026-11-10 | **Set 25, held-out, run once, complete** (phase 2 and judging; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). **Both hosts together: right skill fetched 12 / 12 (bar ≥ 10); judged as following 12 / 12 = 100% (≥ 90%); wrong skill fetched 0 (≤ 1); quiet cases with a skill fetched or cited 0 / 12 (≤ 1). Passed.** No quiet case cited an experience card either. |
 | 2026-11-10 | **Set 24, held-out, drafting run once** (frozen wording of `88e6f51`; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). Mechanical, both hosts together: **right drafts 16 / 16 (bar ≥ 13); drafts on *none* / *trap* 0 / 16 (≤ 2); wrong-card drafts 2 (≤ 2)**, one per host, each a second draft beside a right one. Found while scoring, before any held-out verdict was read: the scorer sent every draft of a scenario with a right draft to the judge, where the registration says right drafts; fixed to count right drafts only (a wrong-card draft is still judged, not counted). |
 | 2026-11-10 | **Set 24, held-out, judged** (Haiku's drafts by Sonnet, Sonnet's by Haiku; agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: right drafts 16 / 16 (bar ≥ 13); of 16 right drafts, judged faithful 16 = 100% (≥ 90%), judged subject-free 16 = 100% (≥ 90%); drafts on *none* / *trap* 0 / 16 (≤ 2); wrong-card drafts 2 (≤ 2). Passed.** With set 25 passed, as registered, `skills.DEFAULT_ON` is set. Model calls for sets 24–26: 3 writer agents, 20 host and judge agents (about 330 prompts). Limits as registered, and: the wording was revised three times on 16 development scenarios; Haiku is the weaker judge of Sonnet's drafts; the wrong-card bar was met exactly. |
+## Set 27: ten people with their own agents on one team server, at three sizes (registered 2026-11-10, before the 10,000- and 50,000-page rows were run)
+
+**Why.** An outside reviewer playing the lead of a ten-person team chose another memory because nothing showed a team
+had run KRouter, and named what would change that: a CI-verified test of ten concurrent people with their own agents,
+with correction conflicts and per-user attribution. Not a recall bench: no question is scored for being right, so
+this set registers properties and how the numbers are taken, before they are taken.
+
+**Harness.** `bench/team/load.py` (the CI test `tests/test_team_concurrency.py` runs it on the template vault, 8 mixed
+operations per client, two seeds). One `mcp_server.py --http` on 127.0.0.1 with `--allow-write` and a users file of
+10 personal tokens, on a git copy of the vault seeded with a short page to contradict (`数据库选型`) and a long page
+(`团队约定`) with one line everyone corrects and three lines per client. Ten client threads, each with its own token
+and client name: four bursts where all ten do the same thing at once (ask, note, correct the shared line, correct the
+topic, always naming the original page), then a seeded mix (seed 20261110): 60 % asks, 20 % notes, 10 % own-line
+corrections, 5 % topic corrections, 5 % shared-line corrections, 40 operations per client. No model, no network.
+
+**Sizes.** The template (about 90 pages), and `bench/scale/gen.py 10000` and `50000` on top of it. Default server
+settings (4 resident lookup processes). Apple M2, 8 GB, server and clients on one machine.
+
+**Properties, all required, all checked from the vault, the journal, git and the replies:** every acknowledged write is
+in the journal with consecutive `seq` and a unique run; every acknowledged note is on its page exactly once with its
+author; every write's journal row, git commit author and page `author` are the token's person; no page is unreadable
+or has an open frontmatter, no temporary file is left, nothing is uncommitted, `git fsck` passes; for every contested
+thing exactly one correction is in force, the last to arrive, every earlier one is superseded by the next in arrival
+order, and each reply after the first names the one it replaced; every answer starts with `vault_label: team` and names
+a page or says `recall: none`; no write fails; no token appears in the server log. After the run, the first correction
+page a lookup on the topic lists is the one in force and its `how` gives the new decision (the first page overall may
+be the corrections log; reported).
+
+**Reported, not judged:** p50, p95, p99 for reads and writes, completions per second in the mixed phase, error rate.
+Run once per size. A failed property is reported as failed, with the numbers.
+
+## Set 28: thirty minutes of mixed load (registered 2026-11-10, before the run)
+
+**Run.** Set 27's harness on the 10,000-page vault, `--duration 1800 --write-share 0.2 --rss-every 30` (80 % asks), in
+the background, once. **Reported:** the set 27 properties at the end, errors, latency, and the server's resident memory
+(server and its lookup processes) sampled every 30 s: first sample after warm-up, highest, last. Memory "does not grow"
+only if the last sample is within 20 % of the sample at 5 minutes; otherwise the growth is reported with a cause if one
+is found. Longer runs are left as a command in `docs/TEAM.md`.
+
+### Log, sets 27 and 28
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`51337a2`), with the template row already run during development (all properties held). |
+| 2026-11-10 | **Set 27, run once per size** (`51337a2`, machine busy with other test runs, load average 8 to 11): all properties held at 136, 10,136 and 50,136 pages, 0 errors in 440 calls each. Reads p50 / p95 / p99 47 / 160 / 297 ms, 124 / 361 / 1,611 ms, 755 / 4,033 / 6,294 ms; writes 0.95 / 1.26 / 1.41 s, 1.67 / 2.46 / 4.94 s, 2.70 / 4.18 / 4.43 s; 21.1, 10.9, 5.3 calls/s in the mix. |
+| 2026-11-10 | **Set 28, first run: failed.** 11,976 calls in 30 min, 0 errors, memory 262 MB at 5 min and 265 MB at the end (peak 357 MB), but `conflicts_converge` failed: the contested decision had 213 of its 312 corrections in force at the end. Cause: the supersede-chain walk stopped at 100 steps, so from the 101st correction of one decision on, each correction superseded nothing and said no conflict. Reads also slowed over the run (p50 1.03 s, p95 5.6 s, max 21 s against 124 / 361 ms in the 3-minute run): every write re-indexed the change ledger, by then 1.6 MB (945 ms with the index locked). Fixed in `7f3ed38` (the walk goes to the end and flags a broken chain; the ledger moves to an archive page past 256 KB); both have tests. Rerun below; this run's numbers stay reported as failed. |
+| 2026-11-10 | **Set 28, second run** (`7f3ed38`, load average 5 to 8): 21,798 calls in 30 min (17,431 reads, 4,367 writes), 0 errors, no token in the log; every property held (all 4,367 writes in the journal and attributed, 2,179 notes once each, 32 contested things with 2,188 corrections converged, 2,156 conflict replies each naming the right page) **except the final lookup**: after 544 corrections of one decision, "数据库选型现在用什么" returned `recall: none`, because the 80 full-text candidates were all replaced corrections carrying the old page's title. Memory 179 MB at 5 min, 209 MB at the end (+17 %), peak 227 MB. Reads p50 / p95 / p99 651 ms / 2.7 s / 4.3 s, max 9.3 s; writes 298 ms / 1.5 s / 2.0 s; 12.1 calls/s. Fixed in `c255760` (a replaced correction drops the replaced page's title words; on this run's vault the lookup then lists the correction in force first among corrections). Run again below. |
+| 2026-11-10 | **Set 27 again on the final code** (`c255760`, after set 28's fixes; load average 5 to 14): all properties held at every size, 0 errors in 440 calls each. Reads p50 / p95 / p99 39 / 129 / 234 ms, 102 / 284 / 396 ms, 446 / 2,010 / 2,885 ms; writes 1.09 / 1.38 / 1.46 s, 1.52 / 2.01 / 2.15 s, 2.99 / 4.35 / 4.65 s; 18.4, 12.7, 5.8 calls/s in the mix. These are the numbers in `docs/TEAM.md`. |
+| 2026-11-10 | **Set 28, third run** (`c255760`, load average 9 to 14): **passed.** 21,218 calls in 30 min (16,956 reads, 4,262 writes), 0 errors, no token in the log, every property held, the final lookup included (the correction in force is the first correction page, `how: 现在：…`); 32 contested things, 2,132 corrections, 2,100 conflict replies. Memory 195 MB at 5 min, 205 MB at the end (+5 %), peak 230 MB: no growth by the registered rule. Reads p50 / p95 / p99 717 ms / 2.7 s / 4.1 s, max 8.2 s; writes 291 ms / 1.6 s / 1.9 s; 11.7 calls/s. Reads slower than in set 27: by the end each correction re-indexed the corrections log (589 KB, 0.39 s) and the shared page (0.15 s), each note the notes page (0.12 s). Three runs were made where one was registered; all three are reported. |
+
 ## Set 30: does a host agent do it by itself, in a real session? (registered 2026-11-10, before any scenario was run)
 
 **Why.** Everything measured about experience cards and corrections so far asked the host directly ("here is the digest,

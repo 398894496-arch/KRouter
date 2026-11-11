@@ -378,6 +378,53 @@ install path change (below).
 
 ### Team server
 
+- **A token per person, and every write says who made it.** `--users FILE` takes one line per person or agent
+  (`name|sha256:<hash>|write or read|banks`; only the hash is kept; `team.py add-user` writes a new token to a file of
+  its own, mode 600, and `remove-user` stops it at once; the file is re-read without a restart). The shared tokens
+  (`--token-file`, `--bank-token`) keep working beside it; their writes are recorded as the shared token's. A `read`
+  token is not offered the write tools; a token limited to some banks gets 403 on the others. Every note, correction
+  and lesson names its person on the page (`— 来自 alice（MCP，claude-code）`, `author:`, `superseded_by_author:`), in
+  the change ledger, in a new journal (`90 系统文件/自动化/团队变更.jsonl`: order, time, person, app, pages, conflicts)
+  and as the git commit's author. `krouter_changes` (and `team.py changes`) answers who changed a page and when. The
+  access log names the person; no token is written anywhere. The app name a client gives at `initialize` is kept per
+  person, not in one global shared by every caller.
+- **Two corrections of the same thing: the later one holds, the earlier one is kept.** Writes to one memory now run
+  one at a time (a lock in the server and a file lock), pages are replaced in one step, and two writes in one second
+  get different run ids. A correction that names a page someone has already corrected replaces the correction now in
+  force at the end of the `superseded_by` chain, instead of leaving two corrections in force; one on a line that
+  already has a `⚠ 已改` note replaces the corrections those notes point to. The reply names each replaced correction,
+  its author and time (`conflict: … Rule: the later correction holds`), as do the journal and
+  `krouter_correction_conflicts_total`. Before, the second correction overwrote the old page's `superseded_by` and left
+  the first one active, and two corrections with the same words in the same second could overwrite each other's page.
+- **Ten people at once, measured and in CI.** `bench/team/load.py`: 10 clients with their own tokens ask, note,
+  correct one shared page and contradict one decision at once, then check from the vault, the journal, git and every
+  reply that nothing acknowledged is missing, no page is broken, every write is attributed to its token, each
+  contested decision ends with the last correction in force, and every answer names a page ([set 27](bench/memory_honesty/HELDOUT.md)).
+  All held at 136, 10,136 and 50,136 pages; reads p50 / p95 39 / 129 ms, 102 / 284 ms, 446 / 2,010 ms; about 8, 5
+  and 2.5 writes a second (git commits are most of a write); no errors (`docs/TEAM.md` §5). `tests/test_team_concurrency.py`
+  runs a smaller version on every platform in CI. Thirty minutes at 10,000 pages (21,218 calls): 0 errors, memory
+  195 MB at 5 minutes and 205 MB at the end, every property held, on the third run; the first two failed and are kept
+  in set 28's log.
+- **Long-running fixes the 30-minute run found** (set 28's first run failed on both): a correction now follows the
+  supersede chain to its end (it stopped after 100 steps, so from the 101st correction of one decision on, each new
+  one superseded nothing and two or more stood in force), and a chain that is broken or goes round is reported in the
+  reply (`unresolved`) instead of passing silently; the change ledger moves whole to
+  `90 系统文件/自动化/记忆变更记录/<time>.md` once it passes 256 KB, with a link from the new page and in the same
+  commit, because every write re-indexed all of it (at 1.6 MB, 945 ms with the index locked, so lookups queued
+  behind writes and slowed as the server ran).
+- **A replaced correction stops answering the old page's questions.** When a correction page is itself replaced, the
+  title words it took from the page it replaced are cleared (correction pages only). After 544 corrections of one
+  decision, the 80 full-text candidates a lookup starts from were all replaced corrections and the answer was
+  `recall: none`; now the correction in force is found. A question worded like the corrections themselves can still
+  miss once more than about 80 nearly identical corrections of one thing exist (the candidate limit; not changed).
+- **A write no longer makes every lookup re-walk the vault.** After a note or correction, each resident lookup
+  process re-reads just the files that write changed, instead of every file's modification time (the full re-check
+  every 2 s stays, for changes from a `git pull`). Each write also starts fewer git processes (5 instead of 8 for a
+  note): 176 ms → 86 ms per note on the template on our laptop.
+- **A correction page answers with the new decision.** Its `how:` is now `现在：<new>` (before, the receipt's `how`
+  was the page's first line, `原来：<old>`), and it carries the title of the page it replaces in `topic_terms`, so a
+  question worded like the old page finds the correction too (at 10,000 pages it did not before).
+
 - **The team server is 15–25 times faster and holds up under load.** At 10,000 pages a lookup over HTTP takes 13 ms
   instead of 210 ms and the server answers 301 questions a second with 32 callers instead of 15; at 50,000 pages,
   54 ms and 75/s instead of 980 ms and 3/s (`bench/scale/serve_load.py`, new; the table is in the README's new

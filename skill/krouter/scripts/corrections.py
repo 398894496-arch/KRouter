@@ -160,11 +160,114 @@ def _grounded(old: str, text: str) -> int:
     return at if best >= 0.6 else -1
 
 
-def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str = "") -> dict:
+WIKI = re.compile(r"\[\[([^\]|#]+)")
+
+
+def _write(path: Path, text: str) -> None:
+    """Replace the page in one step: a lookup reading it meanwhile sees the old page or the new one, never half."""
+    import os
+    import threading
+
+    import time
+
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    tmp.write_text(text, encoding="utf-8")
+    for attempt in range(100):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:  # Windows：别的进程（一次查询）正开着这一页，稍等再换
+            if attempt == 99:
+                tmp.unlink(missing_ok=True)
+                raise
+            time.sleep(0.02)
+
+
+def _meta(text: str) -> dict[str, str]:
+    text = text.replace("\r\n", "\n")
+    if not text.startswith("---\n") or "\n---" not in text[4:]:
+        return {}
+    out = {}
+    for line in text[4:text.index("\n---", 4)].splitlines():
+        if ":" in line and not line.startswith((" ", "-", "\t")):
+            k, _, v = line.partition(":")
+            out[k.strip()] = v.strip().strip('"').strip("'")
+    return out
+
+
+def _small(text: str) -> bool:
+    body = text.split("\n---", 1)[-1] if text.startswith("---") else text
+    return len([ln for ln in body.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]) <= SMALL_PAGE
+
+
+def _rel(vault: Path, p: Path) -> str:
+    return str(p.relative_to(vault)).replace("\\", "/")
+
+
+def _link_path(vault: Path, link: str) -> Path | None:
+    import zones
+
+    link = link.strip().removesuffix(".md")
+    for cand in (vault / (link + ".md"), zones.path(vault, zones.canon(vault, link + ".md"))):
+        if cand.is_file():
+            return cand
+    return None
+
+
+CHAIN_MAX = 100_000  # 取代链最长走这么多步；只防环和坏链，不是上限（2026-11-10：原来 100 步，30 分钟压测里第 101 条纠正起就悄悄并存）
+
+
+def _head(vault: Path, page: Path | None, memo: dict | None = None) -> Path | None:
+    """The page in force at the end of `page`'s `superseded_by` chain (itself when it is not superseded); None when
+    the chain ends nowhere (a link to a page that is gone) or goes round. `memo` (page → head) is shared by the walks
+    of one correction, so many `⚠ 已改` notes on one line cost one walk, not one each."""
+    memo = {} if memo is None else memo
+    seen: list[Path] = []
+    head = None
+    while page is not None and len(seen) < CHAIN_MAX:
+        if page in memo:
+            head = memo[page]
+            break
+        if page in seen:
+            break
+        seen.append(page)
+        meta = _meta(page.read_text(encoding="utf-8"))
+        if meta.get("status", "").lower() != "superseded":
+            head = page
+            break
+        links = WIKI.findall(meta.get("superseded_by", ""))
+        page = _link_path(vault, links[-1]) if links else None
+    for p in seen:
+        memo[p] = head
+    return head
+
+
+def _unfind(meta: dict) -> dict:
+    """A correction page that is replaced stops answering the old page's questions: its `topic_terms` (the replaced
+    page's title, given when it was written) is cleared, so hundreds of replaced corrections of one decision do not
+    crowd the one in force out of a lookup's candidates. Only correction pages; a page of yours keeps its fields."""
+    return {"topic_terms": '""'} if meta.get("type") == "correction" and meta.get("topic_terms") else {}
+
+
+def _now_line(text: str) -> str:
+    for ln in text.splitlines():
+        if ln.startswith(("- 现在：", "- Now: ")):
+            return ln.split("：", 1)[-1].split(": ", 1)[-1].strip()[:200]
+    return ""
+
+
+def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str = "", author: str = "") -> dict:
     """Make a correction hold now, with the vault's own supersede rule: a new correction page that `supersedes` the
     old one, and the old page marked `status: superseded` when it is only that decision (≤ SMALL_PAGE lines), or the
     old line annotated when the page says other things too. Plus a line in 纠错与取代记录 and today's matching
-    pending candidates settled. Returns {written, superseded, mode, touched, settled} or {error}."""
+    pending candidates settled. Returns {written, superseded, mode, touched, settled, conflicts} or {error}.
+
+    Two corrections of the same thing (two people, or one person twice) never leave two answers in force, and neither
+    is lost: the later one holds. When the named page was already superseded, the correction replaces the page now in
+    force at the end of its `superseded_by` chain instead; when the old line already carries a `⚠ 已改` note, the
+    correction pages those notes point to are replaced too. Each replaced page stays, marked superseded, and is listed
+    in `conflicts` (who wrote it, when, why). `author` (a team server's user) goes on the new page and on each page it
+    marks superseded."""
     from datetime import datetime
 
     import zones
@@ -196,8 +299,12 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
     slug = re.sub(r'[\\/:*?"<>|#^\[\]\n]', "", new)[:24].strip() or "纠正"
     rel_new = f"{NOTES}/{day}｜{'纠正' if zh else 'correction'}｜{slug}.md"
     new_path = zones.path(vault, rel_new)
-    if new_path.exists():
-        new_path = new_path.with_name(new_path.stem + f"-{now.strftime('%H%M%S')}.md")
+    if new_path.exists():  # 同一句纠正同一天又来一次（或两个人同一秒）：编号，不覆盖前一页
+        stem, n = new_path.stem + f"-{now.strftime('%H%M%S')}", 1
+        new_path = new_path.with_name(stem + ".md")
+        while new_path.exists():
+            n += 1
+            new_path = new_path.with_name(f"{stem}-{n}.md")
         rel_new = zones.canon(vault, str(new_path.relative_to(vault)).replace("\\", "/"))
     # 链接和回报用这个库自己的路径（英文库是 05 Journal/Sessions/…），不用默认布局的逻辑路径
     real_new, real_old = zones.real(vault, rel_new), zones.real(vault, rel_old) if rel_old else ""
@@ -206,36 +313,99 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
     if zh:
         body = (f"# 纠正：{new}\n\n" + (f"- 原来：{old}\n" if old else "") + f"- 现在：{new}\n"
                 + (f"- 原来 {old} → 改成 {new}（{hm}）\n" if old else "")
-                + f"- 出处：会话内由 agent 当轮落实（{source or '未知'}），没等夜间提炼；"
+                + f"- 出处：会话内由 agent 当轮落实（{source or '未知'}{'，' + author if author else ''}），没等夜间提炼；"
                 + (f"取代 {link_old}" if link_old else "没有指出旧页") + "。不对就按「记忆变更记录」里的命令撤销。\n")
     else:
         body = (f"# Correction: {new}\n\n" + (f"- Was: {old}\n" if old else "") + f"- Now: {new}\n"
                 + (f"- was {old} → now {new} ({hm})\n" if old else "")
-                + f"- Source: made to hold in session by the agent ({source or 'unknown'}), not waiting for the nightly "
+                + f"- Source: made to hold in session by the agent ({source or 'unknown'}{', ' + author if author else ''}), not waiting for the nightly "
                 + (f"distill; supersedes {link_old}" if link_old else "distill; no old page named")
                 + ". Undo it with the command in the change ledger.\n")
     fm = {"title": f"\"{'纠正：' if zh else 'Correction: '}{new[:40]}\"", "type": "correction", "status": "active",
           "date": day, "source": "krouter-correct"}
-    if link_old:
-        fm["supersedes"] = f"\"{link_old}\""
-    new_path.parent.mkdir(parents=True, exist_ok=True)
-    new_path.write_text(_frontmatter_set("", fm).rstrip("\n") + "\n\n" + body, encoding="utf-8")
-    touched, mode = [new_path], "recorded"
+    # how 给现在的说法：正文第一条是「原来」，不写的话回执的 how 会把作废的那句当答案
+    fm["how"] = "\"" + (f"现在：{new}" if zh else f"Now: {new}").replace('"', "'") + "\""
+    if target is not None:  # 取代哪一页，就用那一页的标题词也能找到这一页：问旧页那件事的人看得到新说法
+        tm = _meta(target.read_text(encoding="utf-8"))
+        topic = " ".join(x for x in (tm.get("title") or target.stem, tm.get("topic_terms", "")) if x)
+        fm["topic_terms"] = "\"" + topic.replace('"', "'")[:120] + "\""
+    if author:
+        fm["author"] = author
+    fm["written_at"] = now.astimezone().isoformat(timespec="milliseconds")
+    # 先找出眼下对这件事生效的旧纠正：命名的页已被别人取代，或那一行下面已有「已改」
+    prior: list[tuple[Path, str]] = []
+    already = False
+    overrides: dict | None = None
+    unresolved: dict | None = None
+    memo: dict = {}
     if target is not None:
+        meta_old = _meta(target.read_text(encoding="utf-8"))
+        if meta_old.get("status", "").lower() == "superseded":
+            already = True
+            head = _head(vault, target, memo)
+            if head is not None and head != target:
+                prior.append((head, "stale: the page named was already superseded"))
+            elif head is None:  # 链断了或绕回来了：照样写下，但说清楚，不让两条纠正悄悄并存
+                unresolved = {"page": _rel(vault, target), "author": meta_old.get("superseded_by_author", ""),
+                              "at": meta_old.get("superseded_at", ""), "said": "",
+                              "why": "unresolved: the page named is superseded, but its superseded_by chain is broken "
+                                     "or goes round, so the correction in force could not be found",
+                              "left_active": True}
+        else:
+            if meta_old.get("type") == "correction" and meta_old.get("author") and meta_old.get("author") != author:
+                overrides = {"page": _rel(vault, target), "author": meta_old.get("author", ""),
+                             "at": meta_old.get("written_at") or meta_old.get("date", ""),
+                             "said": _now_line(target.read_text(encoding="utf-8")),
+                             "why": "overrides: the page named is another person's correction"}
+            lines_old = target.read_text(encoding="utf-8").splitlines()
+            j = line_no + 1
+            while j < len(lines_old) and lines_old[j].lstrip().startswith(("- ⚠ 已改", "- ⚠ changed")):
+                for link in WIKI.findall(lines_old[j]):
+                    head = _head(vault, _link_path(vault, link), memo)
+                    if head is not None and all(head != p for p, _ in prior):
+                        prior.append((head, "same line: an earlier correction of this line was in force"))
+                j += 1
+    links_prior = [f"[[{zones.real(vault, zones.canon(vault, _rel(vault, p))).removesuffix('.md')}]]" for p, _ in prior]
+    sup = [link_old] if link_old else []
+    sup += [lk for lk in links_prior if lk not in sup]
+    if sup:
+        fm["supersedes"] = "\"" + " ".join(sup) + "\""
+    if prior:
+        body += ("- 取代仍在生效的旧纠正（后到的生效）：" if zh else "- Replaces the corrections still in force (the later one holds): ") \
+            + "、".join(links_prior) + "\n"
+    new_path.parent.mkdir(parents=True, exist_ok=True)
+    _write(new_path, _frontmatter_set("", fm).rstrip("\n") + "\n\n" + body)
+    touched, mode, conflicts = [new_path], "recorded", [x for x in (overrides, unresolved) if x]
+    stamp = {"superseded_by": f"\"{link_new}\"", "superseded_at": day,
+             **({"superseded_by_author": author} if author else {})}
+    for p, why in prior:
+        ptext = p.read_text(encoding="utf-8")
+        pm = _meta(ptext)
+        entry = {"page": _rel(vault, p), "author": pm.get("author", ""), "at": pm.get("written_at") or pm.get("date", ""),
+                 "said": _now_line(ptext), "why": why}
+        if _small(ptext):
+            _write(p, _frontmatter_set(ptext, {"status": "superseded", **stamp, **_unfind(pm)}))
+            touched.append(p)
+        else:
+            entry["left_active"] = True  # 长页不整页作废：两页都还在，回执里说清
+        conflicts.append(entry)
+    if target is not None and already:
+        mode = "page"  # 命名的页本来就作废了；它的 superseded_by 链不改，新页接在链尾
+    elif target is not None:
         text = target.read_text(encoding="utf-8")
-        body_old = text.split("\n---", 1)[-1] if text.startswith("---") else text
-        content = [ln for ln in body_old.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
-        if len(content) <= SMALL_PAGE:
-            text = _frontmatter_set(text, {"status": "superseded", "superseded_by": f"\"{link_new}\"",
-                                           "superseded_at": day})
+        if _small(text):
+            text = _frontmatter_set(text, {"status": "superseded", **stamp, **_unfind(_meta(text))})
             mode = "page"
         else:
             lines = text.splitlines()
             note = (f"  - ⚠ 已改（{day}）：{new} → {link_new}" if zh else f"  - ⚠ changed ({day}): {new} → {link_new}")
-            lines.insert(line_no + 1, note)
+            at = line_no + 1
+            while at < len(lines) and lines[at].lstrip().startswith(("- ⚠ 已改", "- ⚠ changed")):
+                at += 1  # 接在这一行已有的「已改」后面：从上往下按时间
+            lines.insert(at, note)
             text = "\n".join(lines) + "\n"
             mode = "line"
-        target.write_text(text, encoding="utf-8")
+        _write(target, text)
         touched.append(target)
     log = zones.path(vault, LOG_PAGE)
     if log.is_file():
@@ -253,7 +423,8 @@ def apply_now(vault: Path, new: str, old: str = "", page: str = "", source: str 
         hits = [r for r in settle(today, [new]) if r["ok"]]
         settled = [{**r, "link": link_new} for r in hits]
         touched += mark(settled)
-    return {"written": real_new, "superseded": real_old, "mode": mode, "touched": touched, "settled": len(settled)}
+    return {"written": real_new, "superseded": real_old, "mode": mode, "touched": touched, "settled": len(settled),
+            "conflicts": conflicts}
 
 
 def main() -> int:
