@@ -526,6 +526,20 @@ install path change (below).
 
 ### Fixes
 
+- **Fixed: a question you had asked before came back as its own answer.** With sessions recorded, asking the vault
+  about something it does not hold left an excerpt page whose only matching line was your question; asked again, that
+  page came back `medium`. An undistilled excerpt where the question's words match only your own questions (and no
+  answer has them, or every answer that does says the vault has nothing) is no longer evidence: it is left out of the
+  ranking, and when what is left is weak the receipt says `recall: none` and `recall_note: you asked this before (…),
+  but no answer was recorded`. A line where you stated something, and any answer with the content, still count.
+  Found on the maintainer's own vault, not in a registered set; the six memory-honesty sets and set 18 are unchanged.
+  `tests/test_asked_before.py` (English and Chinese).
+- **Fixed: what a machine put into your turn was taken as your words.** A message from another agent session
+  (`<\~cross-session-message …>`) was noted as a correction candidate; the same would have been imported as one of
+  your turns. The prompt hook, the turn record and the session import now skip messages from other sessions,
+  background task notices, system reminders, sub-session and CI events and text a KRouter hook injected (the blocks
+  are taken out of a message; a message made only of them is not a turn). Found on the maintainer's own vault, not in
+  a registered set. `tests/test_machine_input.py`.
 - **A nightly job that did not install is no longer reported as installed.** On a machine with no systemd user session
   and no crontab (a container, a minimal server) `--timer` printed "HOST ACTION: no systemd … and no crontab" and then
   went on to say, in its summary line and on the health page, that the job was running, and `krouter doctor` failed

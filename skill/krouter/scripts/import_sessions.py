@@ -53,7 +53,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import zones  # noqa: E402
 from krouter_home import project_root, vault_path  # noqa: E402
-from krouter_redact import redact  # noqa: E402
+from krouter_redact import human_words, redact  # noqa: E402
 
 FOLDER = "05 时间日志/会话摘录"
 PAGE_LANG = "zh"  # 库的语言（zones.lang）：英文库里召回给的 how 是英文；main() 里按库设
@@ -169,7 +169,7 @@ def read_claude(path: Path) -> dict:
         s["cwd"] = d.get("cwd") or s["cwd"]
         msg = d.get("message") or {}
         if d.get("type") == "user":
-            asks = [t for t in _texts(msg.get("content"), ("text",)) if t.strip() and not NOISE.match(t)]
+            asks = [h for t in _texts(msg.get("content"), ("text",)) if t.strip() and not NOISE.match(t) for h in [human_words(t)] if h]
             if asks:
                 s["turns"].append({"ts": d.get("timestamp", ""), "ask": "\n".join(asks), "answer": ""})
         elif d.get("type") == "assistant" and s["turns"]:
@@ -197,7 +197,7 @@ def read_codex(path: Path) -> dict:
         if d.get("type") != "response_item" or p.get("type") != "message":
             continue
         if p.get("role") == "user":
-            asks = [t for t in _texts(p.get("content"), ("input_text",)) if t.strip() and not NOISE.match(t)]
+            asks = [h for t in _texts(p.get("content"), ("input_text",)) if t.strip() and not NOISE.match(t) for h in [human_words(t)] if h]
             if asks:
                 s["turns"].append({"ts": d.get("timestamp", ""), "ask": "\n".join(asks), "answer": ""})
         elif p.get("role") == "assistant" and s["turns"]:
@@ -267,7 +267,8 @@ def read_cursor(path: Path) -> dict:
             raw = "\n".join(t for t in _texts(msg.get("content"), ("text",)) if t.strip())
             qs = CURSOR_QUERY.findall(raw)
             ask = "\n".join(q.strip() for q in qs) if qs else CURSOR_WRAP.sub("", raw).strip()
-            if ask and not NOISE.match(ask):
+            ask = human_words(ask) if ask and not NOISE.match(ask) else ""  # 跨会话消息、通知、注入的内容不算你的一轮
+            if ask:
                 # 没有 <timestamp> 的提问记在文件最后修改的时刻上
                 s["turns"].append({"ts": _cursor_ts(raw) or mtime, "ask": ask, "answer": ""})
         elif d.get("role") == "assistant" and s["turns"]:

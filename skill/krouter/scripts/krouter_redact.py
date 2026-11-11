@@ -108,3 +108,24 @@ if __name__ == "__main__":  # filter: `… | python3 krouter_redact.py` (the she
         if m and is_secret_page(m.group(1).rsplit("/", 1)[-1]):
             continue  # 机密页：只字不引
         sys.stdout.write(redact(line))
+
+
+# ---------- 不是人说的话 ----------
+# 应用、别的会话、后台任务塞进"用户这一轮"的东西：跨会话消息、后台任务通知、系统提醒、子会话事件、CI 监视事件，
+# 以及 KRouter 钩子自己注入的内容。transcript 里的写法可能带转义（`<\~cross-session-message`），所以 `<` 后允许 `\` 和 `~`。
+MACHINE_TAGS = ("cross-session-message", "task-notification", "system-reminder", "side-sessions-event",
+                "ci-monitor-event")
+_TAG = r"<\\?~?(?:" + "|".join(MACHINE_TAGS) + r")\b"
+MACHINE_BLOCK = re.compile(_TAG + r"[^>]*>.*?(?:</\\?~?(?:" + "|".join(MACHINE_TAGS) + r")>|\Z)", re.S | re.I)
+HOOK_TEXT = re.compile(r"^\s*(?:KRouter (?:memory note|standing index|tools|'s two write tools)|KRouter 记忆提示|"
+                       r"KRouter 下意识索引|KRouter 工具|KRouter 的两个写入工具|KRouter: decisions recorded|KRouter：这个仓库|"
+                       r"\[SYSTEM NOTIFICATION)", re.I)
+
+
+def human_words(text: str) -> str:
+    """What a person said in a message: machine blocks taken out; "" when the message is machine-made (it starts
+    with such a block or with text a KRouter hook injected)."""
+    raw = text or ""
+    if re.match(r"^\s*" + _TAG, raw, re.I) or HOOK_TEXT.match(raw):
+        return ""
+    return MACHINE_BLOCK.sub(" ", raw).strip()

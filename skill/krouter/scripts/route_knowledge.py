@@ -306,7 +306,8 @@ def literal_candidates(needle: str, scope: Path, vault: Path) -> list[str] | Non
     return sorted(str(vault / rel) for rel in rels if rel.startswith(base))
 
 
-def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 24, vault: Path | None = None) -> None:
+def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 24, vault: Path | None = None,
+              skip: list[str] | tuple = ()) -> None:
     rg = shutil.which("rg")
     # 先用索引挑出可能原样含这句话的页，只读这几页：五万页的库里，答不上来的问题不再把每个文件读一遍
     cand = literal_candidates(needle, scope, vault) if vault is not None else None
@@ -373,6 +374,9 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
 
         skills = str(vault / recall_index.skills_rel(vault)) + os.sep  # 技能同理（skills.py）
         lines = [ln for ln in lines if not ln.startswith((cards, skills))]
+        if skip:  # 召回判成「只对上你以前的提问」的会话摘录：字面搜索也不再把那句提问当结果打出来
+            drop = tuple(str(vault / r) for r in skip)
+            lines = [ln for ln in lines if not ln.startswith(drop)]
     for i, line in enumerate(lines):
         if i >= max_lines:
             print("[truncated after 24 lines]")
@@ -439,9 +443,13 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     print(f"route: {route}")
     print(f"scope: {scope}")
     if res is not None:
+        if res.get("asked"):
+            import recall_index as _ri
+
+            print(_ri.ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
     # 索引这次没用上（recall 抛了错）就别拿它挑候选页：它可能缺页或过期，整个范围照老办法扫
-    md_search(query, scope, vault=vault if res is not None else None)
+    md_search(query, scope, vault=vault if res is not None else None, skip=(res or {}).get("asked") or [])
 
 
 def main() -> int:

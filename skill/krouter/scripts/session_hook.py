@@ -83,7 +83,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import zones  # noqa: E402
 from krouter_home import project_root, vault_path  # noqa: E402
-from krouter_redact import redact  # noqa: E402
+from krouter_redact import human_words, redact  # noqa: E402
 
 DAYS = 30
 MAX_LINES = 8
@@ -550,7 +550,8 @@ def marked_out(transcript: Path, agent: str = "claude") -> bool:
 
 
 def prompt(payload: dict, agent: str = "claude") -> int:
-    text = own_words(str(payload.get("prompt") or ""))
+    # 跨会话消息、后台通知、系统提醒、钩子自己注入的内容不是你说的：不记纠正候选，也不拿去想起
+    text = own_words(human_words(str(payload.get("prompt") or "")))
     if not text.strip() or os.environ.get("KROUTER_IN_DISTILL"):
         return 0
     try:

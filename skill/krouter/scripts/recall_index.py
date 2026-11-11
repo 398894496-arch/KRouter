@@ -517,10 +517,18 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         hits.append({"rid": rid, "rel": rel, "tier": tier, "status": status, "how": how,
                      "score": round(-s * boost, 3)})
     hits.sort(key=lambda h: -h["score"])
+    # 自己以前问过、那次没有记下答案的会话摘录：对上的只是你自己的提问，不是知识，不当证据（真实库里发现）
+    asked = []
+    for h in hits[:ASKED_CHECK]:
+        if h["status"] == "imported" and asked_only(vault, h["rel"], qset):
+            asked.append(h["rel"])
+    if asked:
+        hits = [h for h in hits if h["rel"] not in asked]
     ranked = hits
     hits = hits[:limit]
     if not hits:
-        return {"hits": [], "stats": stats, "query_tokens": qtok, "confidence": "none", "margin": 0.0}
+        return {"hits": [], "stats": stats, "query_tokens": qtok, "confidence": "none", "margin": 0.0,
+                **({"asked": asked} if asked else {})}
     n_docs = con.execute("SELECT count(*) FROM files").fetchone()[0] or 1
     strong = strong_matches(con, hits[0]["rid"], present, df, titled, small=n_docs < SMALL_VAULT, known=named)
     top = hits[0]["score"]
@@ -560,6 +568,8 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     clipped = conf != "none" and all_clippings(con, hits[:DIRECT_FIRST])
     if clipped:
         conf = "none" if gate and absent_stems(con, raw, df) else "low"
+    if asked and gate and conf == "low":
+        conf = "none"  # 排在前面的只是你以前的提问，剩下的又只是弱匹配：库里没有
     found = None
     picks: list[dict] = []
     if conf != "none":
@@ -589,7 +599,56 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         out["assoc"] = picks
     if found:
         out["conflict"] = found
+    if asked:
+        out["asked"] = asked
     return out
+
+
+# ---------- 只对上了你自己以前的提问 ----------
+
+ASKED_CHECK = 10  # 只看排在前面的这么多页（读文件的只有还没提炼的会话摘录）
+UNDISTILLED = re.compile(r"还没提炼|not distilled yet")
+ASK_LINE = re.compile(r"^- \*\*(?:问|Q)\*\*[^：:]*[：:]\s?(.*)$")
+ANSWER_LINE = re.compile(r"^\s+\*\*(?:答|A)\*\*[：:]\s?(.*)$")
+QUESTION_CUE = re.compile(r"[?？]|^\s*(what|which|how|when|where|who|why|whose|is|are|do|does|did|can|could|should|"
+                          r"would|will)\b|吗|什么|怎么|怎样|哪|是否|多少|有没有|几|为何|为什么|查一下|查查|look (it )?up", re.I)
+REFUSED = re.compile(r"recall:\s*none|not in (the |your |this )?(vault|memory|notes)|no record|nothing (about|on) (it|this|that)|"
+                     r"does(n't| not) (have|cover|say|know)|库里没有|没有(这方面的)?记录|没有记下|查不到|没找到|没有找到|找不到|不知道", re.I)
+ASKED_NOTE = ("recall_note: you asked this before ({pages}), but no answer was recorded then; that page holds only your "
+              "question, so it is not evidence. The vault does not know: say so.")
+
+
+def asked_only(vault: Path, rel: str, qset: set[str]) -> bool:
+    """An undistilled session excerpt where the question's words match only your own questions, and no answer
+    shares them (or every answer that does says the vault has nothing). A line where you stated something (no
+    question) counts as evidence, as does any answer with the question's words in it."""
+    try:
+        body = (vault / rel).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    head = body.split("\n---", 1)[0] if body.startswith("---") else ""
+    if "type: session-excerpt" not in head or not UNDISTILLED.search(head):
+        return False  # 只看还没提炼的会话摘录；提炼过的、别的页都不管（机密页的 how 被换掉了，所以读页头）
+    turns: list[list[str]] = []
+    for line in body.splitlines():
+        m = ASK_LINE.match(line)
+        if m:
+            turns.append([m.group(1), ""])
+            continue
+        a = ANSWER_LINE.match(line)
+        if a and turns:
+            turns[-1][1] = a.group(1)
+        elif turns and line.startswith("  ") and line.strip():
+            turns[-1][1 if turns[-1][1] else 0] += " " + line.strip()
+    seen = False
+    for ask, answer in turns:
+        if qset & set(tokens(answer)) and not REFUSED.search(answer):
+            return False  # 回答里有这件事：是知识
+        if qset & set(tokens(ask)):
+            if not QUESTION_CUE.search(ask):
+                return False  # 你自己说的一句话（"以后都用 SQLite"）：是知识
+            seen = True
+    return seen
 
 
 CLIP_PATH = re.compile(r"(^|/)[^/]*(剪藏|clippings?|web ?clips?)[^/]*/", re.I)
@@ -1056,6 +1115,8 @@ def main() -> int:
     if res.get("partial"):
         print(PARTIAL_NOTE)
     if not res["hits"] or res.get("confidence") == "none":
+        if res.get("asked"):
+            print(ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
         return 0
     print_extras(res, "conflict")
