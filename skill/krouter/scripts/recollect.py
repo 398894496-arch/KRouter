@@ -546,7 +546,10 @@ def _ranked(vault: Path, said: str) -> dict | None:
 
 
 def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> list[dict]:
-    if not res or not res.get("hits") or res.get("partial") or res.get("confidence") not in RECALL_CONF:
+    import recall_index as ri
+
+    allowed = ("high",) if ri.strict_on(vault) else RECALL_CONF  # 严格模式：全文召回只递有直接依据的页
+    if not res or not res.get("hits") or res.get("partial") or res.get("confidence") not in allowed:
         return []
     top = res["hits"][0]
     if top.get("tier") in ("log", "dead") or (res.get("margin") or 0) < RECALL_MARGIN:

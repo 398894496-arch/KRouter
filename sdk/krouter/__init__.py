@@ -89,6 +89,16 @@ class Answer:
         return out
 
     @property
+    def state(self) -> str:
+        """The receipt's first line, as one word: `direct` (an alias lock or `high`: answer from the page), `related`
+        (only related pages: answer only if one of them states it outright), `none` (the memory does not have it;
+        also `related` under strict mode)."""
+        import re
+
+        m = re.match(r"[a-z]+", self.fields.get("memory", ""))
+        return m.group(0) if m else ""
+
+    @property
     def memory_none(self) -> bool:
         """True when your memory has nothing on the question and only the knowledge base matched."""
         return self.fields.get("memory", "").startswith("none")

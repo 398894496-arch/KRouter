@@ -56,7 +56,9 @@ ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 INSTRUCTIONS = (
     "KRouter answers from the user's own Obsidian vault: decisions, rules, corrections and past sessions. "
     "Call krouter_ask before answering a question about how this user does things, what was decided before, or what "
-    "was corrected. Answer from the `how` line and cite the page path; open the page only when `how` does not close "
+    "was corrected. The receipt's first line says what the memory has: `memory: direct` (answer from the page and cite "
+    "it), `memory: related` (no direct answer, only related pages. Answer only if one of the pages below has a sentence that answers the question outright: quote that sentence and its page. If none does, tell the user the memory does not have it.), `memory: none` (say the memory "
+    "does not have it). Answer from the `how` line and cite the page path; open the page only when `how` does not close "
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
     "instead of guessing; `recall_note:` means only part of the question matched: say that too. When it says the top "
     "page does not mention some of the question's words, read the page for them: unless it states the answer outright, "
@@ -79,7 +81,9 @@ LEARN_INSTRUCTION = (" When this session ran into an error or a wrong result and
 TOOLS = [
     {
         "name": "krouter_ask",
-        "description": "Look up the user's vault for one question. Returns the best page with a one-line answer "
+        "description": "Look up the user's vault for one question. The first line is `memory: direct`, `memory: "
+                       "related` or `memory: none`; for `related`: Answer only if one of the pages below has a sentence that answers the question outright: quote that sentence and its page. If none does, tell the user the memory does not have it. "
+                       "Returns the best page with a one-line answer "
                        "(`how`), the matching lines and a receipt, or `recall: none` when the vault has nothing on it. A "
                        "`recall_note:` naming words the top page does not mention means: unless the page states the "
                        "answer outright, treat the question as not covered. Pages under `knowledge_base:` are "

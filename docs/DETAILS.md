@@ -40,7 +40,9 @@
 >   they match, the receipt starts `memory: none` (tests, and set 37's synthetic set). `krouter kb add / suggest /
 >   import` (PDF, Word, HTML with a converter already on the machine). A rule to refuse more near misses was studied
 >   on development data (set 37) and **not shipped**: none of 216 candidates refused 10 more within a 1-point loss
->   (the best: 3), so the refusal numbers above are unchanged. Also: the README's team section and two-layer refusal
+>   (the best: 3), so the refusal numbers above are unchanged. Instead the receipt's first line says `memory: direct`,
+>   `related` (only related pages) or `none` (LongMemEval's 30: 0 / 21 / 9); an optional strict mode treats `related`
+>   as `none` and on session-only memories answers almost nothing (set 38). Also: the README's team section and two-layer refusal
 >   numbers, and a `recall_note:` naming question words the top page never uses (its effect **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
@@ -194,6 +196,22 @@ Explains how a lookup came out, in seven short sections. It asks the same code `
 7. **Experience cards.** Cards are not matched to a question (the agent gets the whole digest at session start and
    judges the situation), so this says how many there are and names the ones whose situation shares words with the
    question, or that were taken from one of the pages shown.
+
+### Three states, and strict mode
+
+The receipt's first line says what the memory has on the question: `memory: direct` (an alias lock, or confidence
+`high`: answer from the page and cite it), `memory: related` (`medium` or `low`: no direct answer, only related pages;
+answer only if one of them has a sentence that answers the question outright, quoting it and its page, else tell the
+user the memory does not have it; the `recall_note:` naming words the top page does not mention says where to look),
+or `memory: none`. Nothing else changes: the same pages, the same confidence. The Python `Answer` has it as `.state`.
+
+**Strict mode** hands `related` to the host as `memory: none`, the pages named on one `related_pages:` line instead of
+listed as evidence, and keeps the prompt hook to `high` pages. Switch it on with `KROUTER_STRICT=1` (`0` turns it off
+and wins over the file), or with a line `strict|on` in `krouter-settings.psv` at the memory folder's root. It is **off
+by default**, and it suits a memory you have organised, with rule pages and aliases: `high` needs a rule or topic page
+leading the next by 1.5×, so on a folder of session records almost nothing is `direct` and strict mode answers almost
+nothing (set 38: 0 of 235 LongMemEval and 0 of 768 LoCoMo answers handed over; on a synthetic memory with rule pages
+39 of 51).
 
 ### Clipped pages and other people's writing
 

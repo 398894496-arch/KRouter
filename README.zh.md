@@ -64,7 +64,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 每个回答都注明出自哪一页；你的记忆里没有的，回执直接写「没有」，只对上相近内容时写明有多大把握，不拿一条差不多的冒充答案，你存的参考资料也不会被当成你定过的事；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
 
-**拒答分两层，只有第一层是 KRouter 的。** LongMemEval 的 30 道不可答题，只看 KRouter 自己的回执，9 道直接写 `recall: none`；再加上读题模型，30 道里 29 道回答「没提到」，但什么都不给读题模型时，30 道它也全答「没提到」，所以第二个数主要是模型的功劳。KRouter 做的是：库里完全没有对上的内容时直接写没有；对上的只是相近内容时，把依据和把握等级交给模型，不把一条差不多的当答案。这不是没有例外的保证：这 30 道里有 22 道，排第一的页是一段和所问的事相近的真实会话。你声明成[知识库](#它也是你的知识库)的参考资料不算记忆的答案：只有它们对得上时，回执第一行就是 `memory: none`。我们在开发数据上找过一条能多拒近似题的规则（第 37 套），没有一条够好，所以上面的数字不变。方法和其他测试见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
+**拒答分两层，只有第一层是 KRouter 的。** LongMemEval 的 30 道不可答题，只看 KRouter 自己的回执，9 道直接写 `recall: none`；再加上读题模型，30 道里 29 道回答「没提到」，但什么都不给读题模型时，30 道它也全答「没提到」，所以第二个数主要是模型的功劳。KRouter 做的是：库里完全没有对上的内容时直接写没有；对上的只是相近内容时，把依据和把握等级交给模型，不把一条差不多的当答案。这不是没有例外的保证：这 30 道里有 22 道，排第一的页是一段和所问的事相近的真实会话。你声明成[知识库](#它也是你的知识库)的参考资料不算记忆的答案：只有它们对得上时，回执第一行就是 `memory: none`。我们在开发数据上找过一条能多拒近似题的规则（第 37 套），没有一条够好，所以上面的数字不变。改为在回执第一行写明是哪一种：`memory: direct`、`memory: related`（只有相关的页：只有某一页里有一句话直接回答了问题才作答，否则说记忆里没有）或 `memory: none`；那 30 道是 0 / 21 / 9。严格模式（`KROUTER_STRICT=1`，默认关）把 `related` 当 `none`；在只有会话页的记忆上，这意味着它几乎什么都不答（第 38 套）。方法和其他测试见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
 
 ### 它不会做什么
 
@@ -81,7 +81,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 **工程事实**，每一条现在就能核对：项目创建于 2026-08，目前一个维护者（[`MAINTAINERS.md`](MAINTAINERS.md)）。
 
-- 每次推送都在 Linux、macOS、Windows 上跑全量测试（2.1.0 时 680 个；`python3 -m pytest -q`），另有一个容器冒烟测试（[`ci.yml`](.github/workflows/ci.yml)）。
+- 每次推送都在 Linux、macOS、Windows 上跑全量测试（2.1.0 时 687 个；`python3 -m pytest -q`），另有一个容器冒烟测试（[`ci.yml`](.github/workflows/ci.yml)）。
 - 每个发布版带 SHA-256 校验和与 GitHub 构建来源证明（`gh attestation verify <安装包> --repo 398894496-arch/KRouter`）；一行安装只用 tag、从不拉 `main`，运行任何东西之前先核对校验和。
 - 发布之后，有一个任务把本页给出的每条安装命令对着线上地址实跑一遍（[`release_smoke.py`](scripts/release_smoke.py)、[`release.yml`](.github/workflows/release.yml)）；容器镜像是 `ghcr.io/398894496-arch/krouter`。
 - 已登记在官方 MCP Registry，名字是 `io.github.398894496-arch/krouter`。
@@ -173,7 +173,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | 不问也想起 | 每句话都在本机查一遍，不调模型，约 90 毫秒；会话开始还有一份索引 | 插件在「任务开始前」「每次 agent 运行前」召回 | 给 coding agent 的包在 agent「开始工作时」注入记忆 |
 | 结论带出处 | 每个回答都带，附回执 | 页面上没有说明 | observation 保留原话引文和证据数 |
 | 知识库 | Markdown 资料可声明为知识库，单独列出，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
-| 敢说不知道 | 回执层 30 道拒 9 道；加读题模型 29 / 30，但不给材料时也是 30 / 30 | 页面上没有数字 | 页面上没有数字 |
+| 敢说不知道 | 回执层 30 道：9 道 `none`、21 道 `related`（只有相关的页）、0 道 `direct`；加读题模型 29 / 30，但不给材料时也是 30 / 30 | 页面上没有数字 | 页面上没有数字 |
 | 标准评测 | 只测检索，按作者标注评分；还没参加同台评测 | 自报（OmniMemEval）：LongMemEval 89.20、LoCoMo 88.83 | LongMemEval 最好成绩（厂商图表，2026-01），部分由别人复现 |
 | 规模（GitHub，2026-11-11） | 49 星，一个维护者 | 12 352 星 | 60 340 星；有托管，承诺 99.9% 可用 |
 

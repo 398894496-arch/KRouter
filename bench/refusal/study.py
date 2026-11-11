@@ -10,6 +10,7 @@ A candidate rule ("also refuse when ...") can only turn an answer into a refusal
     python3 bench/refusal/study.py rules            # every registered candidate on development data
     python3 bench/refusal/study.py heldout RULE     # the held-out halves, once, for the one rule chosen on dev
     python3 bench/refusal/study.py synthetic        # (A): the synthetic set, the knowledge-base layer as shipped
+    python3 bench/refusal/study.py states           # set 38: the three states and strict mode, counted
 
 Development data: LongMemEval's 30 `_abs` questions (seen in sets 7 and 14), the LongMemEval dev half (set 14's
 split) and the same half with its answer sessions removed, LoCoMo's dev half (seed 20261110 over question ids,
@@ -335,8 +336,67 @@ def synthetic_report(tag: str = "synthetic") -> dict:
     return out
 
 
+# ---------- set 38: the three-state receipt and strict mode, counted ----------
+
+STATE_SOURCES = {
+    "lme_abs": lambda: lme_items("abs"),
+    "locomo_heldout": lambda: locomo_items("heldout"),
+    "lme_heldout": lambda: lme_items("heldout"),
+    "mh_dev": lambda: mh_items("dev"), "mh_dev2": lambda: mh_items("dev2"), "mh_dev3": lambda: mh_items("dev3"),
+    "mh_heldout": lambda: mh_items("heldout"), "mh_heldout2": lambda: mh_items("heldout2"),
+    "mh_heldout3": lambda: mh_items("heldout3"),
+    "synthetic": synthetic_items,
+}
+
+
+def _locked(vault: str, q: str) -> bool:
+    """An alias lock, as the router takes it, when the vault has its own alias table (not the sample one)."""
+    import canonical_lookup as cl
+    import zones
+
+    mp = zones.path(Path(vault), "90 系统文件/canonical_sources.psv")
+    if not mp.is_file():
+        return False
+    try:
+        return cl.lookup(q, cl.load_rows(mp), vault=Path(vault)) is not None
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def states() -> dict:
+    """Set 38: per source, unanswerable and answerable questions by state, default and strict."""
+    out: dict = {}
+    for name, make in STATE_SOURCES.items():
+        items = make()
+        if name == "synthetic":  # 只数「记忆这一边」：近似题、库外题、知识库里的资料题算不可答；记忆题和资料在记忆里的算可答
+            items = [it for it in items]
+        recs = run_items(items, name)
+        sys.path.insert(0, str(SCRIPTS))
+        import recall_index as ri
+
+        row = {"unanswerable": {"n": 0, "direct": 0, "related": 0, "none": 0},
+               "answerable": {"n": 0, "direct": 0, "related": 0, "none": 0, "page_default": 0, "page_strict": 0}}
+        for it, r in zip(items, recs):
+            res = {"hits": [{"rel": c} for c in r["cited"]], "confidence": r["conf"]}
+            st = ri.answer_state(res, locked=_locked(it["vault"], it["q"]))
+            side = row["answerable" if r["answerable"] else "unanswerable"]
+            side["n"] += 1
+            side[st] += 1
+            if r["answerable"]:
+                found = st != "none" and bool(set(r["cited"]) & set(r["gold"]))
+                side["page_default"] += found
+                side["page_strict"] += found and st == "direct"
+        out[name] = row
+        print(json.dumps({name: row}), file=sys.stderr)
+    (STATE / "states.result.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return out
+
+
 def main(argv: list[str]) -> int:
     sys.path.insert(0, str(HERE))
+    if argv and argv[0] == "states":
+        print(json.dumps(states(), ensure_ascii=False, indent=1))
+        return 0
     if argv and argv[0] == "synthetic":
         print(json.dumps(synthetic_report(argv[1] if len(argv) > 1 else "synthetic"), ensure_ascii=False, indent=1))
         return 0

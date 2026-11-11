@@ -97,7 +97,10 @@ and a confidence level instead of passing a near match off as the answer. Not a 
 those 30 the best page is a real session about something near what was asked. Reference material you declare as
 your [knowledge base](#it-is-also-your-knowledge-base) never counts as the memory's answer: when only it matches, the
 receipt's first line is `memory: none`. A rule to refuse more near matches was looked for on development data (set 37)
-and none was good enough, so the numbers above stand. Method and the other benches: [`docs/NUMBERS.md`](docs/NUMBERS.md).
+and none was good enough, so the numbers above stand. Instead the receipt's first line says which case it is:
+`memory: direct`, `memory: related` (only related pages: answer only from a sentence that states it outright, else
+say the memory does not have it) or `memory: none`; for the 30, 0 / 21 / 9. Strict mode (`KROUTER_STRICT=1`, off by
+default) treats `related` as `none`; on a memory of session pages that means it answers almost nothing (set 38). Method and the other benches: [`docs/NUMBERS.md`](docs/NUMBERS.md).
 
 ### What it does not do
 
@@ -117,7 +120,7 @@ and none was good enough, so the numbers above stand. Method and the other bench
 
 **Engineering facts**, each one checkable now: created 2026-08, one maintainer so far ([`MAINTAINERS.md`](MAINTAINERS.md)).
 
-- Every push runs the full suite (680 tests as of 2.1.0; `python3 -m pytest -q`) on Linux, macOS and Windows, and a container smoke test ([`ci.yml`](.github/workflows/ci.yml)).
+- Every push runs the full suite (687 tests as of 2.1.0; `python3 -m pytest -q`) on Linux, macOS and Windows, and a container smoke test ([`ci.yml`](.github/workflows/ci.yml)).
 - Each release carries SHA-256 sums and a GitHub build-provenance attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`); the one-line install uses a tag, never `main`, and checks the sum before running anything.
 - After a release, a job runs every install command this README gives against the published addresses ([`release_smoke.py`](scripts/release_smoke.py), [`release.yml`](.github/workflows/release.yml)); the container image is `ghcr.io/398894496-arch/krouter`.
 - In the official MCP Registry as `io.github.398894496-arch/krouter`.
@@ -236,7 +239,7 @@ never on a rule page, as one git commit you can revert.
 | Recalls without being asked | every message looked up on the machine, no model call, about 90 ms; an index at session start | plugins recall "before a task" / "before each agent run" | the coding-agent package injects memory "as it starts working" |
 | Answers name their source | every answer, with a receipt | not stated on its page | observations keep quotes and a proof count |
 | Knowledge base | Markdown folders declared as reference, listed apart, importable from PDF / Word / HTML; no vector search | "Multi-Cube Knowledge Base Management" | not stated as a separate layer |
-| Says it does not know | receipt 9 / 30; with a reader 29 / 30, but 30 / 30 given nothing | no figure on its page | no figure on its page |
+| Says it does not know | receipt: 9 / 30 `none`, 21 `related` (only related pages), 0 `direct`; with a reader 29 / 30, but 30 / 30 given nothing | no figure on its page | no figure on its page |
 | Benchmarks | retrieval, scored from the authors' labels; not yet in a side-by-side run | self-reported (OmniMemEval): LongMemEval 89.20, LoCoMo 88.83 | LongMemEval state of the art (vendor chart, January 2026), partly reproduced by others |
 | Size (GitHub, 2026-11-11) | 49 stars, one maintainer | 12,352 stars | 60,340 stars; hosted, 99.9% SLA |
 

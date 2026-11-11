@@ -859,6 +859,75 @@ MEMORY_NONE = {
 }
 
 
+# ---------- 三态回执：记忆里有直接依据 / 只有相关的页 / 没有 ----------
+# 只是把置信度说成一句话放在回执第一行，不改排序、不改交哪些页、不改置信度怎么算。
+# direct：别名锁命中，或置信度 high；related：medium 或 low；none：拒答。
+SETTINGS_FILE = "krouter-settings.psv"  # 记忆文件夹根目录，一行一个 `key|value`；目前只有 `strict|on`
+RELATED_USE = {
+    "en": ("Answer only if one of the pages below has a sentence that answers the question outright: quote that sentence "
+           "and its page. If none does, tell the user the memory does not have it."),
+    "zh": "只有当下面某一页里有一句话直接回答了问题时才作答，并引出那一句和出处；引不出这样一句，就告诉用户记忆里没有。",
+}
+STATE_LINE = {
+    "en": {
+        "direct": "memory: direct (your memory states this: answer from the page below and cite it)",
+        "related": "memory: related (your memory has no direct answer to this, only related pages. " + RELATED_USE["en"] + ")",
+        "none": "memory: none (your memory has nothing on this: say so instead of guessing)",
+        "strict": ("memory: none (strict mode: your memory has no direct answer to this; the related pages are named on "
+                   "one line below, not as evidence)"),
+    },
+    "zh": {
+        "direct": "memory: direct（你的记忆里有直接依据：按下面这一页回答，并注明出处）",
+        "related": "memory: related（你的记忆里没有这件事的直接答案，只有相关的页。" + RELATED_USE["zh"] + "）",
+        "none": "memory: none（你的记忆里没有这件事：直说，不要猜）",
+        "strict": "memory: none（严格模式：你的记忆里没有这件事的直接答案；相关的页在下面一行点名，不作为依据）",
+    },
+}
+RELATED_PAGES = {"en": "related_pages: {pages} (strict mode: not evidence; say the memory does not have it)",
+                 "zh": "related_pages: {pages}（严格模式：不作为依据；告诉用户记忆里没有）"}
+
+
+def answer_state(res: dict | None, locked: bool = False) -> str:
+    """`direct` (an alias lock, or confidence `high`), `related` (`medium` or `low`) or `none` (refused)."""
+    if locked:
+        return "direct"
+    if not res or not res.get("hits") or res.get("confidence") in (None, "none"):
+        return "none"
+    return "direct" if res.get("confidence") == "high" else "related"
+
+
+def strict_on(vault: Path | None) -> bool:
+    """Strict mode: only a direct answer counts; `related` goes to the host as `none`. `KROUTER_STRICT` (1/on/true or
+    0/off/false) wins; else a `strict|on` line in the memory folder's `krouter-settings.psv`; else off."""
+    env = (os.environ.get("KROUTER_STRICT") or "").strip().lower()
+    if env in ("1", "on", "true", "yes"):
+        return True
+    if env in ("0", "off", "false", "no"):
+        return False
+    if vault is None:
+        return False
+    try:
+        text = (Path(vault) / SETTINGS_FILE).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    for line in text.splitlines():
+        key, _, val = line.partition("|")
+        if key.strip().lower() == "strict" and not line.lstrip().startswith("#"):
+            return val.strip().lower() in ("on", "1", "true", "yes")
+    return False
+
+
+def state_line(vault: Path, res: dict | None, query: str, locked: bool = False, strict: bool = False) -> str:
+    """The receipt's first line: what the memory has on the question, in the vault's language."""
+    lang = _note_lang(vault, query)
+    state = answer_state(res, locked)
+    if state == "none":
+        return MEMORY_NONE[lang] if kb_only(res) else STATE_LINE[lang]["none"]
+    if state == "related" and strict:
+        return STATE_LINE[lang]["strict"]
+    return STATE_LINE[lang][state]
+
+
 def kb_only(res: dict | None) -> bool:
     """Your memory refused, and the knowledge base has pages for the question."""
     return bool(res and res.get("kb") and (not res.get("hits") or res.get("confidence") == "none"))
@@ -1367,8 +1436,9 @@ def main() -> int:
     if args.json:
         print(json.dumps(res, ensure_ascii=False))
         return 0
-    if kb_only(res):
-        print(MEMORY_NONE[_note_lang(vault, args.query)])
+    strict = strict_on(vault)
+    folded = strict and answer_state(res) == "related"
+    print(state_line(vault, res, args.query, strict=strict))
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
@@ -1376,6 +1446,11 @@ def main() -> int:
         print(PARTIAL_NOTE)
     if res["hits"] and (note := unseen_note(vault, res, args.query)):
         print(note)
+    if folded:
+        print("recall: none (no page covers enough of the question; do not guess)")
+        print(RELATED_PAGES[_note_lang(vault, args.query)].format(pages="; ".join(page_list(res))))
+        print_kb(vault, res, args.query, 2)
+        return 0
     if not res["hits"] or res.get("confidence") == "none":
         if res.get("asked"):
             print(ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))

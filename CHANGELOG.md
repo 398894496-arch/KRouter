@@ -51,6 +51,12 @@ refused 3 more), so the held-out halves were not opened and the gate is unchange
   English). The agent table names DeepSeek Harness, Hermes and OpenClaw with what was tried in each: Hermes's MCP
   connection and tool list in a separate config folder (no question asked); OpenClaw run in real use as a skill
   (1.2.x; 2.x not yet). How to connect both: `docs/INSTALL.md`.
+- **Three states on the receipt's first line** (set 38): `memory: direct` (an alias lock or `high`), `memory: related`
+  (only related pages: answer only from a sentence that states it outright, else say the memory does not have it),
+  `memory: none`; the same pages and confidence as before. **Strict mode** (`KROUTER_STRICT=1` or `strict|on` in
+  `krouter-settings.psv`, off by default) hands `related` over as `none`; on memories of session pages it answers
+  almost nothing (LongMemEval held-out: 0 of 235 answers handed over), so it is for curated memories with rule pages.
+  `docs/NUMBERS.md` adds the cost curve of refusing more, from set 37's development data.
 - [`docs/COMPARE.md`](docs/COMPARE.md) / `COMPARE.zh.md` (new): KRouter next to MemOS and Hindsight on ten rows,
   KRouter's cells from the registered numbers, theirs only from their own READMEs (read 2026-11-11), with how to
   read it (the three were never measured under the same conditions); a five-row version in the README.

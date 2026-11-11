@@ -37,7 +37,9 @@
 >   they match, the receipt starts `memory: none` (tests, and set 37's synthetic set). `krouter kb add / suggest /
 >   import` (PDF, Word, HTML with a converter already on the machine). A rule to refuse more near misses was studied
 >   on development data (set 37) and **not shipped**: none of 216 candidates refused 10 more within a 1-point loss
->   (the best: 3), so the refusal numbers above are unchanged. Also: the README's team section and two-layer refusal
+>   (the best: 3), so the refusal numbers above are unchanged. Instead the receipt's first line says `memory: direct`,
+>   `related` (only related pages) or `none` (LongMemEval's 30: 0 / 21 / 9); an optional strict mode treats `related`
+>   as `none` and on session-only memories answers almost nothing (set 38). Also: the README's team section and two-layer refusal
 >   numbers, and a `recall_note:` naming question words the top page never uses (its effect **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup

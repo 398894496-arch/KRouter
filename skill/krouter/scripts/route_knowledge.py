@@ -252,6 +252,12 @@ def canonical_lookup(query: str, vault: Path, map_path: Path, route: str) -> boo
     if not source.is_file():
         print(f"Canonical source missing: {source}", file=sys.stderr)
         return False
+    try:
+        import recall_index as _ri
+
+        print(_ri.state_line(vault, None, query, locked=True))  # 别名锁命中：记忆里有直接依据
+    except Exception:  # noqa: BLE001
+        pass
     emit_receipt(source, "canonical-match", route, query, vault, map_path)
     log_query(route, query, "canonical-match", relative, "lock")
     print("route: canonical")
@@ -450,7 +456,15 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
             pass
     if res is not None and not res.get("kb") and wide and wide.get("kb"):
         res = {**res, "kb": wide["kb"], "kb_confidence": wide.get("kb_confidence")}  # 记忆里没有：资料从全库找
-    if res and res["hits"] and res.get("confidence") != "none":
+    try:
+        import recall_index as _ri
+    except Exception:  # noqa: BLE001 - 召回不可用：照老办法只做字面检索
+        _ri = None
+    strict = _ri is not None and _ri.strict_on(vault)
+    # 严格模式：只有直接依据算答案；「只有相关的页」按记忆里没有交给宿主，相关页折成一行
+    folded = strict and _ri.answer_state(res) == "related"
+    if res and res["hits"] and res.get("confidence") != "none" and not folded:
+        print(_ri.state_line(vault, res, query))
         emit_receipt(scope, "ranked-recall-complete", route, query, vault, map_path)
         log_query(route, query, "ranked-recall-complete" + ("+widened" if widened else ""), res["hits"][0]["rel"],
                   res.get("confidence", ""), [h["rel"] for h in res["hits"][:3]])
@@ -462,12 +476,9 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         print_recall(res, vault, 4 if (scope.is_file() and not widened) else 1, query)
         print("open_page: only the top recall hit, and only if its how does not close the question")
         return
-    try:
-        import recall_index as _ri
-    except Exception:  # noqa: BLE001 - 召回不可用：照老办法只做字面检索
-        _ri = None
-    if _ri is not None and _ri.kb_only(res):
-        print(_ri.MEMORY_NONE[_ri._note_lang(vault, query)])  # 只有知识库对得上：回执第一行先说记忆里没有
+    if _ri is not None:
+        # 记忆里没有（只有知识库对得上时这一行这样说）；严格模式下「只有相关的页」也走这里
+        print(_ri.state_line(vault, res, query, strict=strict))
     emit_receipt(scope, "bounded-literal-search-complete", route, query, vault, map_path)
     log_query(route, query, "bounded-literal-search-complete")
     emit_suggestions(query, vault, map_path)
@@ -477,7 +488,11 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         if res.get("asked"):
             print(_ri.ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
+        if folded:
+            print(_ri.RELATED_PAGES[_ri._note_lang(vault, query)].format(pages="; ".join(_ri.page_list(res))))
         _ri.print_kb(vault, res, query, 2)
+    if folded:
+        return  # 相关页已经点名，不再把字面检索的原文行当结果打出来
     # 索引这次没用上（recall 抛了错）就别拿它挑候选页：它可能缺页或过期，整个范围照老办法扫
     md_search(query, scope, vault=vault if res is not None else None, skip=(res or {}).get("asked") or [])
 
