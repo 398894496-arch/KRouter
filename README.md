@@ -61,11 +61,10 @@ recall:
 open_page: only the top recall hit, and only if its how does not close the question
 ```
 
-That is all KRouter does: it hands over the rule, the page it is on and how sure it is. What your agent says next is its
-own call. To use your own vault: add `--vault ~/MyVault` to the install below (Claude Desktop: the installer writes its
-settings file while the app is closed, or builds a double-click extension for your folder). It keeps every file already
-in the folder and adds only what is missing, writes the MCP settings of each AI app it finds with a copy of every file
-it changes (`*.krouter-bak`), plus its own folders under your home: [every file, listed](docs/INSTALL.md).
+KRouter hands over the rule, its page and how sure it is; what your agent says next is its own call. For your own
+vault, add `--vault ~/MyVault` to the install below (Claude Desktop: its settings file while the app is closed, else a
+double-click extension). Files already in the folder are kept, only missing ones added; each AI app's MCP settings are
+written with a `*.krouter-bak` copy, plus the install's own folders under your home: [every file](docs/INSTALL.md).
 
 ### Mention it and it comes to mind
 
@@ -116,18 +115,21 @@ those 30 the best page is a real session about something near what was asked. Me
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
-Tests run on Linux, macOS and Windows on every push. The one-line install downloads the latest release (a tag, never
-`main`) and checks its SHA-256 before running anything; each release also carries a GitHub build-provenance
-attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). What you ask never leaves your machine.
+**Engineering facts**, each one checkable now: created 2026-08, one maintainer so far ([`MAINTAINERS.md`](MAINTAINERS.md)).
+
+- Every push runs the full suite (656 tests as of 2.0.1; `python3 -m pytest -q`) on Linux, macOS and Windows, and a container smoke test ([`ci.yml`](.github/workflows/ci.yml)).
+- Each release carries SHA-256 sums and a GitHub build-provenance attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`); the one-line install uses a tag, never `main`, and checks the sum before running anything.
+- After a release, a job runs every install command this README gives against the published addresses ([`release_smoke.py`](scripts/release_smoke.py), [`release.yml`](.github/workflows/release.yml)); the container image is `ghcr.io/398894496-arch/krouter`.
+- In the official MCP Registry as `io.github.398894496-arch/krouter`.
+- Evaluations are registered before they are run (rows that were not say so in [`NUMBERS.md`](docs/NUMBERS.md)); question sets and scripts are in the repo ([`HELDOUT.md`](bench/memory_honesty/HELDOUT.md), [rerun them](#check-it-yourself)).
+- [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), `./scripts/install.sh --upgrade`, `./scripts/uninstall.sh`, and any earlier release with `KROUTER_TAG=` ([`DETAILS.md`](docs/DETAILS.md)). What you ask never leaves your machine.
 
 ![Monday we decide A, Wednesday we change it to B, Thursday the agent answers B and cites the correction; a question the vault cannot answer is refused](docs/img/demo.gif)
 
-No key is needed to start: lookup, sources and refusals run with no model, and a change of mind still wins: the
-newer page is listed first and flagged, and your agent can make a correction hold in the same turn
-([what works without a model](docs/INSTALL.md#without-an-api-key)).
+No key is needed to start: lookup, sources and refusals run with no model, and the newer page of a changed decision is
+listed first and flagged ([what works without a model](docs/INSTALL.md#without-an-api-key)).
 
-**See it for yourself in a few seconds, with nothing installed and no key:** the same story on a throwaway memory,
-deleted afterwards.
+**See it in a few seconds, nothing installed, no key:** the same story on a throwaway memory, deleted afterwards.
 
 ```bash
 uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or, in a clone: PYTHONPATH=sdk python3 -m krouter.cli demo
@@ -139,6 +141,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 | see what it remembers, and why it answered the way it did | [`krouter view`, `krouter why`](#see-what-it-remembers) |
 | give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds (`--minimal`: lookup only, the apps you name) |
 | check which apps it connects to | [Works with](#works-with) |
+| have it read the notes and documents I already have | [Your knowledge base](#it-is-also-your-knowledge-base) |
 | run one memory for my team: a token each, who changed what | [For a team](#for-a-team) |
 | call it from my own code | [From your own code](#from-your-own-code) |
 | check the numbers myself | [Check it yourself](#check-it-yourself) |
@@ -158,9 +161,9 @@ works without a key, and uninstalling: [`docs/INSTALL.md`](docs/INSTALL.md).
 
 ## Day one: bring in your past sessions
 
-Once, if you like, let your agent bring in your past sessions, so on day one it knows what you settled before. The first
-two steps never call a model and nothing leaves the machine; the third uses your agent's subscription (at least one call
-per session, the newest 40 by default, not your whole history in one go): [`docs/INSTALL.md`](docs/INSTALL.md#bring-in-your-past-sessions).
+Once, if you like, bring in your past sessions, so on day one your agent knows what you settled before. The first two
+steps never call a model and nothing leaves the machine; the third uses your agent's subscription (at least one call per
+session, the newest 40 by default): [`docs/INSTALL.md`](docs/INSTALL.md#bring-in-your-past-sessions).
 
 ```bash
 python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --dry-run --distill        # how many; writes nothing
@@ -177,6 +180,15 @@ is kept as replaced, named in the reply. Ten people's agents on one laptop (set 
 three sizes, all 204 writes per size under the right person's name, none lost; 30 minutes at 10,136 pages: 21,218
 calls, 0 errors. **Tested on one machine only: no real team has used it over weeks.** Deployment, tokens, TLS and the
 numbers: [`docs/TEAM.md`](docs/TEAM.md#5-ten-people-at-once).
+
+## It is also your knowledge base
+
+Point KRouter at a folder of Markdown you already have (an Obsidian vault, a docs repository, a notes directory) and
+every page in it can be found with the page it came from. Other people's writing (web clippings, research material) can
+be marked as reference, so it is not taken for something you decided: a folder named with `Clippings` or a page tagged
+`clippings` is treated that way ([how](docs/DETAILS.md#clipped-pages-and-other-peoples-writing)). **What it does not do:**
+it reads Markdown only; a PDF, a Word file or a web page has to be converted to Markdown first (with a converter such as
+pandoc or markitdown, not part of KRouter), and there is no vector search ([measured, not shipped](docs/DENSE-OPTIN.md)).
 
 ## From your own code
 
@@ -408,6 +420,7 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 - [`docs/TEAM.md`](docs/TEAM.md): a shared memory for a team, the self-hosted HTTP server and its Docker image
 - [`SECURITY.md`](SECURITY.md): what each model lane can see and do
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md): facts for an agent deciding whether KRouter fits its user
+- [`ROADMAP.md`](ROADMAP.md): what is planned next, with no dates
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md): good first issues are labeled
 
 **Maintenance.** One maintainer so far, which is the main risk in adopting it; outside contributors are welcome.

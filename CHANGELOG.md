@@ -24,6 +24,9 @@ measured** ([`docs/NUMBERS.md`](docs/NUMBERS.md)).
 
 - Added `docs/examples/writer-vault` and `writer-vault-zh` (three notes each) and `tests/test_readme_example.py`, which
   checks that the receipt printed in each README is what the sample vault gives.
+- README (en/zh): a section on using KRouter as a knowledge base over an existing Markdown folder (Markdown only, no
+  vector search, how to mark reference material), an "Engineering facts" list of things that can be checked now, and a
+  link to the new [`ROADMAP.md`](ROADMAP.md) / `ROADMAP.zh.md`.
 - `server.json` (the registry entry) still names v2.0.0 and its `KRouter.mcpb` hash until 2.0.1 is released; the two
   version tests now allow that while the top changelog section is unreleased.
 - `krouter_ask`'s tool description, the server instructions and `SKILL.md` say how to read the new line.

@@ -80,7 +80,14 @@ KRouter 做的就是这些：把规则、它在哪一页、有多大把握递出
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 
-每次提交都在 Linux、macOS、Windows 上跑测试。一行安装下载的是最新发布版（只用 tag，从不拉 `main`），运行任何东西之前先核对 SHA-256；每个发布版还带 GitHub 构建来源证明（`gh attestation verify <安装包> --repo 398894496-arch/KRouter`）。你问的问题从不离开本机。
+**工程事实**，每一条现在就能核对：项目创建于 2026-08，目前一个维护者（[`MAINTAINERS.md`](MAINTAINERS.md)）。
+
+- 每次推送都在 Linux、macOS、Windows 上跑全量测试（2.0.1 时 656 个；`python3 -m pytest -q`），另有一个容器冒烟测试（[`ci.yml`](.github/workflows/ci.yml)）。
+- 每个发布版带 SHA-256 校验和与 GitHub 构建来源证明（`gh attestation verify <安装包> --repo 398894496-arch/KRouter`）；一行安装只用 tag、从不拉 `main`，运行任何东西之前先核对校验和。
+- 发布之后，有一个任务把本页给出的每条安装命令对着线上地址实跑一遍（[`release_smoke.py`](scripts/release_smoke.py)、[`release.yml`](.github/workflows/release.yml)）；容器镜像是 `ghcr.io/398894496-arch/krouter`。
+- 已登记在官方 MCP Registry，名字是 `io.github.398894496-arch/krouter`。
+- 评测先登记再跑（没这样做的行，[`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md) 里都写明了）；题集和脚本都在仓库里（[`HELDOUT.md`](bench/memory_honesty/HELDOUT.md)、[自己复现](#自己复现)）。
+- [`SECURITY.md`](SECURITY.md)、[`CHANGELOG.md`](CHANGELOG.md)，升级 `./scripts/install.sh --upgrade`，卸载 `./scripts/uninstall.sh`，回到更早的版本用 `KROUTER_TAG=`（[`DETAILS.zh.md`](docs/DETAILS.zh.md)）。你问的问题从不离开本机。
 
 ![周一定了 A，周三改成 B，周四 agent 答 B 并引用那条纠错；库里没有的问题直接拒答](docs/img/demo.gif)
 
@@ -98,6 +105,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 | 看它记了什么、为什么这样答 | [`krouter view`、`krouter why`](#看得见它记了什么) |
 | 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个（`--minimal`：只装查询、只接你点名的） |
 | 看能接哪些应用 | [能接哪些应用](#能接哪些应用) |
+| 让它读我已有的笔记和文档 | [它也是你的知识库](#它也是你的知识库) |
 | 给团队共用一份记忆：每人一个令牌，谁改了什么查得到 | [给团队用](#给团队用) |
 | 从自己的代码里调用 | [从你自己的代码里用](#从你自己的代码里用) |
 | 自己复现这些数字 | [自己复现](#自己复现) |
@@ -126,6 +134,10 @@ python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distil
 ## 给团队用
 
 一个服务装下你们团队的一份记忆：放在 git 仓库里的一个 Markdown 文件夹，自己部署（没有 KRouter 云服务）。每个人一个令牌，每次写入都记在写的人名下，「这条是谁在什么时候改的」查得到（`krouter_changes`）；两个人对同一个决定给出相反的纠正时，后到的生效，先到的保留为被取代，回执里点名。十个人的 agent 在一台笔记本上同时读写（第 27 套）：三种规模下各 440 次调用 0 次出错，每种规模的 204 次写入都记到了对的人名下、一条不丢；1 万页连跑 30 分钟：21,218 次调用 0 错误。**只在单机上测过，没有真实团队长期使用的记录。** 部署、令牌、TLS 和这些数字：见 [`docs/TEAM.zh.md`](docs/TEAM.zh.md)。
+
+## 它也是你的知识库
+
+把 KRouter 指向你已有的 Markdown 文件夹（Obsidian 库、文档仓库、笔记目录），里面每一页都能被查到，并带出处。别人写的资料（网页剪藏、研究材料）可以标成参考资料，这样它们不会被当成你定过的事：文件夹名字里带 `剪藏`、`Clippings`，或页头标了 `clippings` 标签，就按这个处理（[做法](docs/DETAILS.zh.md#剪藏和别人写的材料)）。**它不做的：** 只认 Markdown；PDF、Word、网页要先转成 Markdown 再放进来（可以用 pandoc、markitdown 这类转换工具，不是 KRouter 自带的）；没有向量检索（[测过，没有上线](docs/DENSE-OPTIN.md)）。
 
 ## 从你自己的代码里用
 
@@ -296,6 +308,7 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 - [`docs/TEAM.zh.md`](docs/TEAM.zh.md)（完整的英文说明在 [`docs/TEAM.md`](docs/TEAM.md)）：团队共用一份记忆、自己部署的 HTTP 服务和它的 Docker 镜像
 - [`SECURITY.md`](SECURITY.md)：每条模型通道能看到什么、能做什么
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md)：给 agent 判断 KRouter 适不适合它的用户时参考的事实
+- [`ROADMAP.zh.md`](ROADMAP.zh.md)：下一步打算做什么，不写日期
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md)：适合新人的 issue 都打了标签
 
 **维护。** 目前只有一个维护者，这是采用它最大的风险，欢迎外部贡献。项目停了你还剩什么、没有作者时怎么继续：[`MAINTAINERS.md`](MAINTAINERS.md)。小版本每周最多一个，补丁随时发；`KROUTER_TAG=v2.0.0`（换成任何 tag）可以固定版本。哪些算稳定接口：[`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions)。问题和 bug 提 [issue](https://github.com/398894496-arch/KRouter/issues)；安全问题见 [`SECURITY.md`](SECURITY.md)。
