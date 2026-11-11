@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -9,7 +9,11 @@ Minor releases (new features) at most once a week; patch releases (fixes, docs, 
 semantic versioning; what counts as the stable surface is listed in [`docs/DETAILS.md`](docs/DETAILS.md#stability-and-versions). Each entry starts with what you will
 notice, then the details.
 
-## 2.1.0 — unreleased
+## Unreleased
+
+Nothing yet.
+
+## 2.1.0 — 2026-11-11
 
 **Windows: the commands the install prints now run as printed ([#74](https://github.com/398894496-arch/KRouter/issues/74)).** The closing lines used to print `set "PYTHONPATH=…" && python -m krouter.cli doctor`, which failed in PowerShell 5.1 (`&&`) and PowerShell 7 (`set` does not set an environment variable, so the module could not be imported), and `… search "question"`, which the Python command line rejects (its command is `ask`). They now print `python "<…>\scripts\krouter_run.py" doctor` and `… ask "question"`: one command, no `&&`, no variable to set. The same `ask` replaces `search` in the lines printed on macOS and Linux. Tests check the printed line and that the command line's own argument parser accepts the printed arguments; **a real PowerShell 5.1, PowerShell 7 and cmd have not run it yet** (that waits for CI's Windows machine after the push).
 
@@ -34,7 +38,7 @@ came from (KRouter's own folders and frontmatter, alias-table targets and `krout
 then page by page by how they read (a source or byline line, an article's title and shape, another language, the
 folder's majority; decision structure and your own annotations count against). Labelled synthetic vaults, held out and
 run once: 30 of 32 outside pages recognised, 0 of 43 of your own pages taken for reference material; on by default
-(`KROUTER_KB_AUTO=0` or `kb_auto|off` turns it off). `krouter kb mine` / `unmine` mark a page or folder as yours;
+(`KROUTER_KB_AUTO=0` or `kb_auto|off` turns it off). On one real vault (1,473 pages, read once, read-only, declarations removed) it found 74 of 84 research pages, but about 80 of the owner's own pages (about 5.8%, an estimate; 12 sampled, all own) were taken for reference material, above the 2% line; `krouter kb mine PAGE` corrects a wrong call, and `kb_auto|off` turns it off. `krouter kb mine` / `unmine` mark a page or folder as yours;
 `krouter why` and `krouter view` say why a page is reference material; the nightly report counts the pages recognised
 and lists the new ones. On set 37's synthetic set with nothing declared, of the 6 questions only an article answers, the
 memory now refuses 5 (was 2) and the article is listed for 5 (was 3); the 15 memory questions stay 15 of 15.

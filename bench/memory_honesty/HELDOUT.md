@@ -1746,3 +1746,5 @@ same judge prompt as the post-hoc check of the first two readers; (2) of the C r
 answerable judge prompt. The main columns stay the registered rule's; the side columns are listed next to them, and a pass or fail is decided on the main ones.
 
 **Reported, whatever it shows:** the three counts for A, B and C, by receipt state, the two side columns, who labelled how many, and the three readers side by side.
+
+**Status: not run when 2.1.0 was released (2026-11-11).** No Opus reply exists, and no Opus number appears anywhere in the docs.

@@ -23,7 +23,7 @@ under [What it does not do](README.md#what-it-does-not-do).
 
 ## Done
 
-- **The knowledge base as a named layer** (2.1.0, unreleased): `krouter kb add` declares a folder of reference
+- **The knowledge base as a named layer** (2.1.0): `krouter kb add` declares a folder of reference
   material; the receipt lists it apart under `knowledge_base:`, it sets no confidence, and when only it matches the
   first line is `memory: none`; `krouter kb suggest` proposes folders, `krouter kb import` brings in PDF, Word and HTML
   ([`CHANGELOG.md`](CHANGELOG.md)).

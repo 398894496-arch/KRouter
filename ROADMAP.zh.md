@@ -15,4 +15,4 @@ English: [`ROADMAP.md`](ROADMAP.md) · 回到 [README](README.zh.md)
 
 ## 已完成
 
-- **把知识库做成明确的一层**（2.1.0，未发布）：`krouter kb add` 声明参考资料文件夹，回执单列 `knowledge_base:`、不影响置信度，只有资料对得上时第一行写 `memory: none`；`krouter kb suggest` 建议，`krouter kb import` 导入 PDF、Word、HTML（[`CHANGELOG.md`](CHANGELOG.md)）。
+- **把知识库做成明确的一层**（2.1.0）：`krouter kb add` 声明参考资料文件夹，回执单列 `knowledge_base:`、不影响置信度，只有资料对得上时第一行写 `memory: none`；`krouter kb suggest` 建议，`krouter kb import` 导入 PDF、Word、HTML（[`CHANGELOG.md`](CHANGELOG.md)）。

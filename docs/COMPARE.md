@@ -6,8 +6,7 @@ Ten projects side by side (page-quoted, no ranking): [`COMPARE-ALL.md`](COMPARE-
 
 Agents asked to compare agent memories tend to build this table themselves from whatever number is most visible on
 each page. This is the same table with every cell sourced. **KRouter's cells** come from this repository's registered
-numbers ([`NUMBERS.md`](NUMBERS.md), [`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md)) for 2.1.0, which is not
-released yet. **MemOS's and Hindsight's cells** say only what their own README says, read on 2026-11-11
+numbers ([`NUMBERS.md`](NUMBERS.md), [`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md)) for 2.1.0. **MemOS's and Hindsight's cells** say only what their own README says, read on 2026-11-11
 ([`MemTensor/MemOS`](https://github.com/MemTensor/MemOS), [`vectorize-io/hindsight`](https://github.com/vectorize-io/hindsight)),
 with star and fork counts from the GitHub API the same day. Their documentation sites may say more; "not stated" means
 not stated on that page. Their benchmark numbers are their own reports, quoted as given.
