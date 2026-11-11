@@ -9,7 +9,7 @@
 KRouter is a local Markdown memory for coding agents (Claude Code, Codex, Cursor, DeepSeek Harness, Hermes, OpenClaw)
 and for any app that speaks MCP, Claude Desktop for one. When something you mention was settled before, the agent
 recalls it, with what is connected to it; a lesson from one task is offered on another; a change of mind replaces the
-old answer; every answer names the page it came from. No API key, no server.
+old answer; every answer names the page it came from. For one person it needs no API key and no server; a team server and model distilling are optional (below).
 
 > **You:** Going to move the clippings originals into the archive folder this afternoon.
 >
@@ -147,12 +147,12 @@ listed first and flagged ([what works without a model](docs/INSTALL.md#without-a
 
 ## For a team
 
-One server holds your team's memory: a folder of Markdown in a git repository, run by you (there is no KRouter cloud).
+**Tested on one machine only; no real team has used it over weeks.** One server holds your team's memory: a folder of Markdown in a git repository, run by you (there is no KRouter cloud).
 Each person gets their own token, every write is recorded under the writer's name, and "who changed this, and when" can be
 asked (`krouter_changes`); when two people correct the same decision, the last to arrive is in force and the earlier one
 is kept as replaced, named in the reply. Ten people's agents on one laptop (set 27): 0 errors in 440 calls at each of
 three sizes, all 204 writes per size under the right person's name, none lost; 30 minutes at 10,136 pages: 21,218
-calls, 0 errors. **Tested on one machine only: no real team has used it over weeks.** Deployment, tokens, TLS and the
+calls, 0 errors. Deployment, tokens, TLS and the
 numbers: [`docs/TEAM.md`](docs/TEAM.md#5-ten-people-at-once).
 
 ## It is also your knowledge base
@@ -236,7 +236,7 @@ never on a rule page, as one git commit you can revert.
 | | KRouter | MemOS | Hindsight |
 |---|---|---|---|
 | Runs as | a Markdown folder and a local index; standard-library Python, one install line, no server, no key | cloud (API key), self-hosted (Neo4j + Qdrant) or a local plugin (Node.js) | a server on PostgreSQL + pgvector with an LLM key, or Hindsight Cloud |
-| Recalls without being asked | every message looked up on the machine, no model call, about 90 ms; an index at session start | plugins recall "before a task" / "before each agent run" | the coding-agent package injects memory "as it starts working" |
+| Recalls without being asked | every message looked up on the machine where the host has a per-message hook (not Cursor, see Works with), no model call, 83–87 ms warm median on the 110-page test vault, 116–126 ms at 10,000 pages (whole hook process, p95 up to 144 ms; set 34, before 2.1.0; the 2.1.0 prompt hook's warm p95 at 10,000 pages is 129–131 ms, set 39); an index at session start | plugins recall "before a task" / "before each agent run" | the coding-agent package injects memory "as it starts working" |
 | Answers name their source | every answer, with a receipt | not stated on its page | observations keep quotes and a proof count |
 | Knowledge base | reference pages recognised by themselves (or declared), listed apart, importable from PDF / Word / HTML; no vector search | "Multi-Cube Knowledge Base Management" | not stated as a separate layer |
 | Says it does not know | **whole chain (set 41, 2026-11-11, Haiku 5.5 and Sonnet 5.5 as readers): of 30 LongMemEval unanswerable questions 29 / 28 said the memory does not have it; of 60 LoCoMo adversarial ones 55 / 38; on 40 answerable controls 11 / 7 wrongly refused; the bar set beforehand was not met; the same Haiku given nothing said it for 39 of 40.** Retrieval layer: receipt 9 / 30 `none`, 21 `related` (only related pages), 0 `direct`; with a reader 29 / 30 earlier, but 30 / 30 given nothing | no figure on its page | no figure on its page |
@@ -257,7 +257,7 @@ Ten open-source memory projects, each cell only what that project's own GitHub p
 | **cognee** | pip install; Docker; cloud | Local quickstart: none; a key only for generated answers | Not stated (Claude Code and Codex plugins listed) | "Can inspect the retrieved evidence" | Self-reported BEAM: 0.79 (100K, 20 questions), 0.67 (10M, exploratory) | 33,232 |
 | **graphiti** | Python framework; bring your own graph DB (Neo4j, FalkorDB, Neptune) and LLM | OpenAI by default; `OPENAI_API_KEY` | Not stated | Each fact traces to its source episode | No numbers (paper link) | 32,727 |
 | **Hindsight** | Server (Docker, pip, Helm), Python embedded, cloud | Quick start needs an LLM key; page says local models work | Coding-agent package injects at start; LLM wrapper stores and retrieves each call | Observations keep exact quotes and a proof count | Chart only (LongMemEval, 2026-01); says reproduced by others; no numbers | 60,340 |
-| **KRouter** | A folder of Markdown + SQLite; one install line; no server | Lookup needs none; only optional distilling uses a model | Every message looked up locally, no model, about 90 ms | Every answer names its page, with a receipt | Self-reported: LongMemEval held-out half 210/235 (BM25 198, retrieval only); LoCoMo 991/1,540 | 49 |
+| **KRouter** | A folder of Markdown + SQLite; one install line; no server | Lookup needs none; only optional distilling uses a model | Every message looked up locally where the host has a per-message hook (not Cursor, see Works with), no model; 83–87 ms warm median on the 110-page test vault, 116–126 ms at 10,000 pages (whole hook process, p95 up to 144 ms; set 34, before 2.1.0; the 2.1.0 prompt hook's warm p95 at 10,000 pages is 129–131 ms, set 39) | Every answer names its page, with a receipt | Self-reported: LongMemEval held-out half 210/235 (BM25 198, retrieval only); LoCoMo 991/1,540 | 49 |
 | **Letta** | npm install of a terminal tool; `letta server`; cloud | Not stated | Not stated | Not stated | No numbers | 25,413 |
 | **mem0** | Library (pip/npm), self-hosted (docker compose), cloud | Needs an LLM (OpenAI by default); cloud needs a key | Not stated (example searches by hand in code) | Not stated | Self-reported (managed platform): LoCoMo 92.5, LongMemEval 94.4, BEAM 64.1/48.6 | 68,777 |
 | **MemOS** | Four entry points: cloud API, self-host (Neo4j+Qdrant), cloud plugin, local plugin (Node.js, SQLite) | Cloud: key; self-host: keys in .env; local plugin: not stated | DeepSeek Harness plugin: automatic recall; OpenClaw cloud plugin: recalls before each run | Not stated | Self-reported (OmniMemEval): LoCoMo 88.83, LongMemEval 89.20 and eight more | 12,352 |
@@ -293,7 +293,7 @@ krouter view --demo                       # the same page on a throwaway sample 
 
 ## What leaves your machine
 
-Queries never do: lookup is a local SQLite full-text index, about 110 ms. Session import is local. Text goes to a
+Queries never do: lookup is a local SQLite full-text index (83–87 ms warm median on the 110-page test vault, 116–126 ms at 10,000 pages (whole hook process, p95 up to 144 ms; set 34, before 2.1.0; the 2.1.0 prompt hook's warm p95 at 10,000 pages is 129–131 ms, set 39)). Session import is local. Text goes to a
 model only for the two steps you said yes to (distilling sessions, nightly upkeep), to the CLI or API key you already
 use, and `--dry-run` shows the size first. Keys and pages marked secret are never sent or quoted. What each model
 lane can read: [`SECURITY.md`](SECURITY.md).

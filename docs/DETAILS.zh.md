@@ -74,7 +74,7 @@ krouter 里选 Enable auto-update。
 
 ## 什么会离开本机，要花多少
 
-- **查询从不外发。** 查找全在本地：一个 SQLite 全文缓存加 Python 标准库，每次约 110 ms。
+- **查询从不外发。** 查找全在本地：一个 SQLite 全文缓存加 Python 标准库；热启动中位数：110 页的测试库 83–87 ms，1 万页库 116–126 ms（整个钩子进程，p95 最高 144 ms；第 34 套，2.1.0 之前测的；2.1.0 的提问钩子在 1 万页库上热启动 p95 是 129–131 ms，第 39 套）。
 - **夜间任务会把库里的文字发给一个模型**——你登录的那个 AI 编程工具（花你的订阅额度），或你给的 API key。发出去的是：昨天的日志（用来蒸馏）、规则页和主题页（用来预先算答案）、和各个主题相关的片段、路由器没答好的问题。`extras/host-daily-evolution/run.sh --dry-run` 会先列出要发什么、多少 token，什么都不发。`KROUTER_NIGHTLY=0` 关掉夜间步骤。
 - **夜间写手受限运行；API key 通道在本机什么都不运行。** grok 在内核沙箱里跑（只能碰知识库和路由器）；claude 的工具被限定为读写知识库、运行路由器；Codex 能读你的账户，其他 CLI 什么都能碰——安装时的提示会说清你选的是哪种。细节：[`SECURITY.md`](../SECURITY.md)。
 - **key 从不放在库里，也从不外发、从不打印。** 贴在钥匙页上的 key 下次运行会挪进 `~/.dsh-krouter-keys.env`（权限 600）。名字或标记表明是机密的页（凭据、密钥、credential、secret、password，或 `secret: true`）从不外发、从不引用；其他地方像 key 的文字一律显示为 `<redacted>`。
@@ -203,7 +203,7 @@ flowchart LR
 | L2 蒸馏 | 蒸馏。摘要不能代替原文 | 自动写成 `active` |
 | L3 晋升 | 五道门过了 → **当天自动 `provisional`**。下次同类先问。采纳且该次验收 → `active` | 自动写成 `active`。门过了还不写准经验 |
 | L4 整合 | 夜间：反复出现的主题 → 一页带出处的主题档案；每个规则页/主题页 3–5 张问答卡；从路由器自己没答好的问题里学触发词；体检页列出失效项 | 照抄权威页、页面改了还用旧卡、编造说法、改动来源页 |
-| L5 锁 + 召回 | 短名词 → 那一页 + 双 SHA。未命中 → 在可重建的 FTS5 缓存上排序召回，附 `answer (generated):`；覆盖不足 → `recall: none`。进程内约 30 ms，每次命令行调用约 110 ms（`python3`，只用标准库） | 向量回退、引用隔壁、猜 |
+| L5 锁 + 召回 | 短名词 → 那一页 + 双 SHA。未命中 → 在可重建的 FTS5 缓存上排序召回，附 `answer (generated):`；覆盖不足 → `recall: none`。进程内约 30 ms；命令行每次调用还要加上 Python 的启动时间（登记过的整个钩子耗时见 NUMBERS）| 向量回退、引用隔壁、猜 |
 
 完整规则：[`PROTOCOL.md`](../PROTOCOL.md) · [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · [`docs/VERIFY.md`](VERIFY.md)
 
