@@ -400,6 +400,69 @@ PARTIAL_NOTE = ("recall_note: only one word of the question matched these pages;
                 "Say what they say and that the vault may not cover the question; do not give it as the answer.")
 
 
+UNSEEN_MAX = 6
+# 口语里的虚词：不是「问的东西」，不拿来说「这一页没提到」
+UNSEEN_SKIP = set("going wanted wants think thinking today tomorrow yesterday now maybe really actually".split())
+UNSEEN_NOTE = {
+    "en": ("recall_note: the top page does not mention {words}. Unless that page states the answer outright, "
+           "treat the question as not covered by the memory."),
+    "zh": "recall_note: 排在第一的这一页没有提到{words}。除非页面明确写了答案，否则按库里没有处理。",
+}
+
+
+def unseen_words(vault: Path, res: dict, query: str) -> list[str]:
+    """Content words of the question that the top page never uses, when the confidence is not `high`. Only a hint
+    for the receipt: it changes no ranking, no confidence and no refusal. Latin words of 3+ letters (not function
+    words) count as seen when the page has the word, its plural / singular, or a word that starts the same way
+    (`move` ~ `moved`); Chinese words are the two-character words the lookup itself kept (`query_tokens`)."""
+    if res.get("confidence") in (None, "none", "high") or not res.get("hits"):
+        return []
+    try:
+        body = (vault / res["hits"][0]["rel"]).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    page = set(tokens(body))
+    page_latin = [w for w in page if not is_cjk_bigram(w)]
+    kept = set(res.get("query_tokens") or [])
+    out: list[str] = []
+    for t in tokens(query):
+        if t in out:
+            continue
+        if is_cjk_bigram(t):
+            if t in kept and t not in page:
+                out.append(t)
+            continue
+        if len(t) < 3 or t in EN_FUNCTION or t in UNSEEN_SKIP or t.isdigit():
+            continue
+        stem = t[: max(4, len(t) - 2)]
+        if t in page or any(f in page for f in latin_forms(t)) or any(w.startswith(stem) for w in page_latin):
+            continue
+        out.append(t)
+    return out[:UNSEEN_MAX]
+
+
+def _note_lang(vault: Path, query: str) -> str:
+    """The vault's own language when its zones file says (`@lang|en` / `@lang|zh`); otherwise the question's: Chinese
+    characters in it mean `zh`, else `en`."""
+    try:
+        declared = "@lang|" in zones._file(vault).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        declared = False
+    if declared:
+        return zones.lang(vault)
+    return "zh" if CJK_RE.search(query or "") else "en"
+
+
+def unseen_note(vault: Path, res: dict, query: str) -> str:
+    """The receipt line for `unseen_words`, in the vault's language; empty when there is nothing to say."""
+    words = unseen_words(vault, res, query)
+    if not words:
+        return ""
+    lang = _note_lang(vault, query)
+    joined = "".join(f"「{w}」" for w in words) if lang == "zh" else ", ".join(f"`{w}`" for w in words)
+    return UNSEEN_NOTE[lang].format(words=joined)
+
+
 _REFRESHED: dict[str, float] = {}
 
 
@@ -1114,6 +1177,8 @@ def main() -> int:
     print(f"recall_strong_terms: {res.get('strong', 0)}")
     if res.get("partial"):
         print(PARTIAL_NOTE)
+    if res["hits"] and (note := unseen_note(vault, res, args.query)):
+        print(note)
     if not res["hits"] or res.get("confidence") == "none":
         if res.get("asked"):
             print(ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))

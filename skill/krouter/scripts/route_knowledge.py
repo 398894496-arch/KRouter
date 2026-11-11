@@ -384,14 +384,16 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
         print(redact(line))  # 字面搜索打出来的原文行也不能带出密钥；机密页的行整行不出
 
 
-def print_recall(res: dict, vault: Path, lines: int) -> None:
-    from recall_index import PARTIAL_NOTE, best_lines, print_extras
+def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
+    from recall_index import PARTIAL_NOTE, best_lines, print_extras, unseen_note
 
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
     if res.get("partial"):
         print(PARTIAL_NOTE)
+    if query and (note := unseen_note(vault, res, query)):
+        print(note)
     print_extras(res, "conflict")
     print("recall:")
     for h in res["hits"]:
@@ -434,7 +436,7 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         print(f"scope: {scope}")
         if widened:
             print("scope_widened: vault (the route scope had no page covering this question)")
-        print_recall(res, vault, 4 if (scope.is_file() and not widened) else 1)
+        print_recall(res, vault, 4 if (scope.is_file() and not widened) else 1, query)
         print("open_page: only the top recall hit, and only if its how does not close the question")
         return
     emit_receipt(scope, "bounded-literal-search-complete", route, query, vault, map_path)

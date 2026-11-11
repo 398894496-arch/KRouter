@@ -9,7 +9,22 @@ Minor releases (new features) at most once a week; patch releases (fixes, docs, 
 semantic versioning; what counts as the stable surface is listed in [`docs/DETAILS.md`](docs/DETAILS.md#stability-and-versions). Each entry starts with what you will
 notice, then the details.
 
-## Unreleased
+## 2.0.1 — unreleased
+
+What you will notice: the README puts the team server and its ten-people test back on the first page, keeps the
+install to its shortest path (importing past sessions is its own section), says plainly that KRouter is also for any
+app that speaks MCP (a Claude Desktop + Obsidian example, with a receipt actually run on a sample vault), and states
+the refusal numbers in two layers: of LongMemEval's 30 unanswerable questions KRouter's receipt refuses 9; the reader
+model answers "not mentioned" for 29, but also for all 30 when given nothing, so that layer is mostly the model's.
+One small code change: when the confidence is not `high` and a content word of the question never appears on the top
+page, the receipt adds a `recall_note:` naming those words and saying that, unless the page states the answer
+outright, the question is not covered (in the vault's language). Ranking, confidence and the refusal gate are
+unchanged: the memory-honesty questions run against their three vaults (1,215 lookups) give results byte-identical to `main` before the change; only the printed receipt gains the line. **Its effect on a reader's refusal rate is not
+measured** ([`docs/NUMBERS.md`](docs/NUMBERS.md)).
+
+- Added `docs/examples/writer-vault` and `writer-vault-zh` (three notes each) and `tests/test_readme_example.py`, which
+  checks that the receipt printed in each README is what the sample vault gives.
+- `krouter_ask`'s tool description, the server instructions and `SKILL.md` say how to read the new line.
 
 - KRouter 2.0.0 is in the official MCP Registry as `io.github.398894496-arch/krouter`; `server.json` names the
   release's `KRouter.mcpb` (with its SHA-256) instead of a PyPI package, since KRouter is not on PyPI.

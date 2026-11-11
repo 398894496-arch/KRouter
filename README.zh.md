@@ -2,7 +2,9 @@
 
 **让 agent 拥有下意识：提到就想起，联想到相关的一片，还能举一反三。**
 
-KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Markdown 记忆：你提到以前定过的事，agent 就想起来，相关的也一起带出；一件事里的经验能换个任务用；改了主意会替换旧答案；每个回答都注明出自哪一页。不用 API key，不用服务器。
+*「下意识」是个比喻，说的是不用你开口问就自动想起：在你本机查一下，不调模型，什么都不发出去。*
+
+KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent，以及任何接了 MCP 的应用（比如 Claude Desktop）用的本地 Markdown 记忆：你提到以前定过的事，agent 就想起来，相关的也一起带出；一件事里的经验能换个任务用；改了主意会替换旧答案；每个回答都注明出自哪一页。不用 API key，不用服务器。
 
 > **你：** 下午我要把剪藏原件挪到归档文件夹里。
 >
@@ -12,7 +14,7 @@ KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Mar
 >
 > **agent：** 这确实烦人。需要我帮你写条报修消息，或者查查该找谁处理吗？
 
-你只是顺口提了一句，没有问；KRouter 在你的话里认出了一件定过的事，把它和出处页一起交给 agent。第二句和库里的事都无关，它什么都没加，agent 照常回话。两句 agent 的回复是真实跑出来的：Claude Sonnet 5.5（Claude Code 的子代理，不带工具），2026-11-10，看到的就是下面折叠块里的那段内容，原样照抄；换一个 agent，怎么回由它决定。「下意识」是个比喻，说的是不用你开口问就自动想起：在你本机查一下，不调模型，什么都不发出去。
+你只是顺口提了一句，没有问；KRouter 在你的话里认出了一件定过的事，把它和出处页一起交给 agent。第二句和库里的事都无关，它什么都没加，agent 照常回话。两句 agent 的回复是真实跑出来的：Claude Sonnet 5.5（Claude Code 的子代理，不带工具），2026-11-10，看到的就是下面折叠块里的那段内容，原样照抄；换一个 agent，怎么回由它决定。
 
 <details>
 <summary>实际递给 agent 的内容（提问钩子在中文样例库上的原始输出）</summary>
@@ -28,6 +30,27 @@ KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Mar
 
 </details>
 
+**不只是写代码。** 在 Claude Desktop 里写东西、记忆文件夹就是你自己已有的 Obsidian 库，也一样（这里用的是一个三篇笔记的样例库，[`docs/examples/writer-vault-zh`](docs/examples/writer-vault-zh)）。你在写周报，说了一句：*「这周的周报我想用提问开头。」* 下面是 `krouter_ask` 工具递回去的内容（路由器在这个库上给出的回执，原样照抄；版本、时间、文件路径这几行记账用的省略了）：
+
+```text
+recall_confidence: medium
+recall_margin: 9.9
+recall_strong_terms: 3
+recall:
+- 周报/开头怎么写.md tier=other status=active score=4.416
+  how: 周报不要用提问开头，先写这一周发生的一件事。
+  L8: 周报不要用提问开头，先写这一周发生的一件事。
+- 周报/发布时间.md tier=other status=active score=0.0
+  how: 周五早上 8 点发。周四晚上定稿，之后只改错别字。
+  L2: title: 周报发布时间
+- 周报/排版.md tier=other status=active score=0.0
+  how: 标题用平实的句子，不加感叹号。每段最多放一个链接，赞助商那一行放最后。
+  L2: title: 周报排版
+open_page: only the top recall hit, and only if its how does not close the question
+```
+
+KRouter 做的就是这些：把规则、它在哪一页、有多大把握递出去。你的 agent 接下来怎么说，由它自己决定。想用你自己的库：安装时加 `--vault ~/我的库`（Claude Desktop：安装脚本只在应用关着时写它的设置文件，否则按你的文件夹做一个双击安装的扩展包）。文件夹里已有的文件一个不改，只补缺的；它会写每个找到的 AI 应用的 MCP 设置（改动的文件都留一份 `*.krouter-bak`），另外在你的用户目录下放它自己的文件夹：[逐个文件列出](docs/INSTALL.zh.md)。
+
 ### 提到就想起
 
 每一句话都在本机查一遍，会话开始时还先给一份「定过的事」的索引，所以换了说法也接得住。留出集 24 次提及（三分之二没说页面上的名字）：**Sonnet 5.5 想起 24 / 24，Haiku 5.5 23 / 24**；本该什么都不变的话，分别有 1 / 24 和 2 / 24 让它出了声（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）。
@@ -42,7 +65,9 @@ KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Mar
 
 ### 托底：你能核对的那一层
 
-每个回答都注明出自哪一页；查不到时，回执直接写「没有」，不拿一条差不多的凑数（实测见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)）；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
+每个回答都注明出自哪一页；查不到时，回执直接写「没有」，不拿一条差不多的凑数；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
+
+**拒答分两层，只有第一层是 KRouter 的。** LongMemEval 的 30 道不可答题，只看 KRouter 自己的回执，9 道直接写 `recall: none`；再加上读题模型，30 道里 29 道回答「没提到」，但什么都不给读题模型时，30 道它也全答「没提到」，所以第二个数主要是模型的功劳。KRouter 做的是：库里完全没有对上的内容时直接写没有；对上的只是相近内容时，把依据和把握等级交给模型，不把一条差不多的当答案。这不是没有例外的保证：这 30 道里有 22 道，排第一的页是一段和所问的事相近的真实会话。方法和其他测试见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
 
 ### 它不会做什么
 
@@ -73,6 +98,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 | 看它记了什么、为什么这样答 | [`krouter view`、`krouter why`](#看得见它记了什么) |
 | 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个（`--minimal`：只装查询、只接你点名的） |
 | 看能接哪些应用 | [能接哪些应用](#能接哪些应用) |
+| 给团队共用一份记忆：每人一个令牌，谁改了什么查得到 | [给团队用](#给团队用) |
 | 从自己的代码里调用 | [从你自己的代码里用](#从你自己的代码里用) |
 | 自己复现这些数字 | [自己复现](#自己复现) |
 | 弄清楚什么会离开本机 | [什么会离开本机](#什么会离开本机) |
@@ -85,9 +111,11 @@ curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bo
 ~/.dsh-krouter/current/scripts/krouter search "我们之前 X 是怎么定的？"      # 问第一句
 ```
 
-什么都不问，本机装了哪个 AI 应用就接哪个。想把记忆放进你已有的文件夹，比如你的 Obsidian 库：`sh /tmp/krouter-install.sh --vault ~/我的库`。已有的文件夹一个文件都不改，只补缺的；卸载不碰你的记忆。Windows、Claude Code 插件、`--minimal`、它会动哪些文件、不配 key 时哪些能用、怎么卸载：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md)。
+什么都不问，本机装了哪个 AI 应用就接哪个。已有的文件夹一个文件都不改，只补缺的；卸载不碰你的记忆。Windows、Claude Code 插件、`--minimal`、它会动哪些文件、不配 key 时哪些能用、怎么卸载：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md)。
 
-然后做一次：让 agent 把你以前的会话导进来，它第一天就认识你以前定过的事。前两步不调模型、内容不离开本机；第三步用你 agent 的订阅额度（每个会话至少一次调用，默认只做最新的 40 个，不会一次把全部历史做完）：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#把以前的会话导进来)。
+## 第一天：把过去的会话带进来
+
+做一次就行：让 agent 把你以前的会话导进来，它第一天就认识你以前定过的事。前两步不调模型、内容不离开本机；第三步用你 agent 的订阅额度（每个会话至少一次调用，默认只做最新的 40 个，不会一次把全部历史做完）：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#把以前的会话导进来)。
 
 ```bash
 python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --dry-run --distill        # 看数量，不写入
@@ -95,7 +123,11 @@ python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --local 
 python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distill --distill-max 40  # 提炼最新的 40 个
 ```
 
-### 从你自己的代码里用
+## 给团队用
+
+一个服务装下你们团队的一份记忆：放在 git 仓库里的一个 Markdown 文件夹，自己部署（没有 KRouter 云服务）。每个人一个令牌，每次写入都记在写的人名下，「这条是谁在什么时候改的」查得到（`krouter_changes`）；两个人对同一个决定给出相反的纠正时，后到的生效，先到的保留为被取代，回执里点名。十个人的 agent 在一台笔记本上同时读写（第 27 套）：三种规模下各 440 次调用 0 次出错，每种规模的 204 次写入都记到了对的人名下、一条不丢；1 万页连跑 30 分钟：21,218 次调用 0 错误。**只在单机上测过，没有真实团队长期使用的记录。** 部署、令牌、TLS 和这些数字：见 [`docs/TEAM.zh.md`](docs/TEAM.zh.md)。
+
+## 从你自己的代码里用
 
 `pipx install "git+https://github.com/398894496-arch/KRouter"`，然后在 Python 里 `krouter.ask("我们怎么发版？")` 给出出处页、一句话结论、库里有没有；`krouter.note(…)` 记一笔。LangGraph 的长期记忆也能放在这个文件夹里（`krouter.integrations.langgraph.KRouterStore`）；JavaScript、LlamaIndex 和别的框架的 MCP 客户端：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#从你自己的代码里用) 和 [`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md)。
 

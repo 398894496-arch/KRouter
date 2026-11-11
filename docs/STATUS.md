@@ -17,7 +17,8 @@
 >   Answer accuracy at five pages is not measured yet (set 22, registered).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
->   "3 of 30" quoted before was 1.1.1); LoCoMo, evidence first for 991 of 1,540,
+>   "3 of 30" quoted before was 1.1.1; with a reader model on top, 29 of 30 are answered "not mentioned", but the same
+>   reader given nothing says so for all 30, so that layer is mostly the model's: [`NUMBERS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/NUMBERS.md)); LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
@@ -31,6 +32,10 @@
 >   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
 >   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
 >   `KROUTER_TAG` pins one.
+> - **On `main`, unreleased (2.0.1):** the README is back to showing the team server on its first page, with a Claude
+>   Desktop + Obsidian example and the refusal numbers in two layers; the receipt adds a `recall_note:` naming question
+>   words the top page never uses when the confidence is not `high` (ranking, confidence and refusal unchanged; its
+>   effect on a reader's refusals is **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).

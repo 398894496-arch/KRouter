@@ -50,7 +50,7 @@ sys.path.insert(0, str(HERE))
 from krouter_home import vault_path  # noqa: E402
 import team  # noqa: E402
 
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 PROTOCOLS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 INSTRUCTIONS = (
@@ -58,7 +58,9 @@ INSTRUCTIONS = (
     "Call krouter_ask before answering a question about how this user does things, what was decided before, or what "
     "was corrected. Answer from the `how` line and cite the page path; open the page only when `how` does not close "
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
-    "instead of guessing; `recall_note:` means only part of the question matched: say that too. "
+    "instead of guessing; `recall_note:` means only part of the question matched: say that too. When it says the top "
+    "page does not mention some of the question's words, read the page for them: unless it states the answer outright, "
+    "answer that the memory does not cover it. "
     "`recall_conflict:` means an earlier page says otherwise: answer from the page listed first (the newer one) and "
     "say the decision was changed; when it says `possible`, read both pages before answering. Pages under "
     "`associated:` are connected to the hits but were not named by the question: read one only when the hits leave "
@@ -75,7 +77,9 @@ TOOLS = [
     {
         "name": "krouter_ask",
         "description": "Look up the user's vault for one question. Returns the best page with a one-line answer "
-                       "(`how`), the matching lines and a receipt, or `recall: none` when the vault has nothing on it.",
+                       "(`how`), the matching lines and a receipt, or `recall: none` when the vault has nothing on it. A "
+                       "`recall_note:` naming words the top page does not mention means: unless the page states the "
+                       "answer outright, treat the question as not covered.",
         "inputSchema": {
             "type": "object",
             "properties": {

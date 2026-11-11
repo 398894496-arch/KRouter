@@ -4,7 +4,10 @@
 
 **Give your agent a subconscious: mention it and it comes to mind, with what is connected to it, and the lessons carry over.**
 
-KRouter is a local Markdown memory for coding agents such as Claude Code, Codex and Cursor. When something you
+*"Subconscious" is a figure of speech: recall that happens without you asking. A lookup on your machine, no model, nothing sent.*
+
+KRouter is a local Markdown memory for coding agents such as Claude Code, Codex and Cursor, and for any app that speaks
+MCP, Claude Desktop for one. When something you
 mention was settled before, the agent recalls it, with what is connected to it; a lesson from one task is offered on
 another; a change of mind replaces the old answer; every answer names the page it came from. No API key, no server.
 
@@ -20,8 +23,7 @@ You only mentioned it in passing; KRouter recognised something already settled i
 agent with the page it came from. The second remark touches nothing in the memory, so nothing was added and the
 agent answered as usual. Both agent replies are real: Claude Sonnet 5.5 (a Claude Code subagent, no tools),
 2026-11-10, given exactly what the collapsed block below shows, copied as it answered; with another agent, the reply
-is up to that agent. "Subconscious" is a figure of speech for recall that happens without being asked: a lookup on
-your machine, no model, nothing sent.
+is up to that agent.
 
 <details>
 <summary>What the agent was actually handed (the prompt hook's raw output on the English sample memory)</summary>
@@ -36,6 +38,34 @@ hook > (nothing)
 ```
 
 </details>
+
+**Not only for code.** The same in Claude Desktop, writing in the Obsidian vault you already keep (here a three-note
+sample, [`docs/examples/writer-vault`](docs/examples/writer-vault)). You are drafting a newsletter and say: *"Going to
+open this week's newsletter with a question to the reader."* This is what the `krouter_ask` tool hands back (the
+router's receipt on that vault, verbatim; its bookkeeping lines with the version, time and file paths are left out):
+
+```text
+recall_confidence: medium
+recall_margin: 9.9
+recall_strong_terms: 5
+recall:
+- Newsletter/Opening lines.md tier=other status=active score=3.148
+  how: Do not open an issue with a question to the reader. Open with the one thing tha…
+  L8: Do not open an issue with a question to the reader. Open with the one thing that happened this week.
+- Newsletter/Formatting.md tier=other status=active score=0.0
+  how: Subject lines and headings in sentence case, no exclamation marks. One link per…
+  L2: title: Newsletter formatting
+- Newsletter/Publishing schedule.md tier=other status=active score=0.0
+  how: The newsletter goes out on Friday at 08:00. The draft is frozen on Thursday eve…
+  L8: The newsletter goes out on Friday at 08:00. The draft is frozen on Thursday evening; only typo fixes after that.
+open_page: only the top recall hit, and only if its how does not close the question
+```
+
+That is all KRouter does: it hands over the rule, the page it is on and how sure it is. What your agent says next is its
+own call. To use your own vault: add `--vault ~/MyVault` to the install below (Claude Desktop: the installer writes its
+settings file while the app is closed, or builds a double-click extension for your folder). It keeps every file already
+in the folder and adds only what is missing, writes the MCP settings of each AI app it finds with a copy of every file
+it changes (`*.krouter-bak`), plus its own folders under your home: [every file, listed](docs/INSTALL.md).
 
 ### Mention it and it comes to mind
 
@@ -61,10 +91,18 @@ fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](b
 ### Underneath, what you can check
 
 Every answer comes with the page it came from; when a lookup finds nothing, the receipt says so outright rather than
-handing over something close (measured: [`docs/NUMBERS.md`](docs/NUMBERS.md)); a correction replaces the old answer instead of competing with it; and you can see all of
+handing over something close; a correction replaces the old answer instead of competing with it; and you can see all of
 it: the memory is a folder of plain Markdown you can open and edit, in [Obsidian](https://obsidian.md) or any editor,
 and `krouter view` / `krouter why` show what it holds and why it answered. It works with the AI you already use, and
 one is enough.
+
+**Refusing comes in two layers, and only the first is KRouter's.** On LongMemEval's 30 unanswerable questions KRouter's
+own receipt says `recall: none` for 9. With a reader model on top, 29 of the 30 were answered "not mentioned", but the
+same reader given nothing at all said so for all 30, so that second number is mostly the model's doing. What KRouter does:
+when nothing in the memory matches, it says so outright; when only something close matches, it hands the model the page
+and a confidence level instead of passing a near match off as the answer. Not a guarantee without exceptions: for 22 of
+those 30 the best page is a real session about something near what was asked. Method and the other benches:
+[`docs/NUMBERS.md`](docs/NUMBERS.md).
 
 ### What it does not do
 
@@ -101,6 +139,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 | see what it remembers, and why it answered the way it did | [`krouter view`, `krouter why`](#see-what-it-remembers) |
 | give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds (`--minimal`: lookup only, the apps you name) |
 | check which apps it connects to | [Works with](#works-with) |
+| run one memory for my team: a token each, who changed what | [For a team](#for-a-team) |
 | call it from my own code | [From your own code](#from-your-own-code) |
 | check the numbers myself | [Check it yourself](#check-it-yourself) |
 | know exactly what leaves my machine | [What leaves your machine](#what-leaves-your-machine) |
@@ -113,13 +152,14 @@ curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bo
 ~/.dsh-krouter/current/scripts/krouter search "what did we decide about X?"    # your first question
 ```
 
-It asks nothing and connects the AI apps it finds. To keep the memory in a folder you already have, your Obsidian
-vault for instance: `sh /tmp/krouter-install.sh --vault ~/MyVault`. An existing folder keeps every file; only missing
-ones are added, and uninstalling never touches your memory. Windows, the Claude Code plugin, `--minimal`, every file it
-changes, what works without a key, and uninstalling: [`docs/INSTALL.md`](docs/INSTALL.md).
+It asks nothing and connects the AI apps it finds. An existing folder keeps every file; only missing ones are added,
+and uninstalling never touches your memory. Windows, the Claude Code plugin, `--minimal`, every file it changes, what
+works without a key, and uninstalling: [`docs/INSTALL.md`](docs/INSTALL.md).
 
-Then, once, let your agent bring in your past sessions, so on day one it knows what you settled before. The first two
-steps never call a model and nothing leaves the machine; the third uses your agent's subscription (at least one call
+## Day one: bring in your past sessions
+
+Once, if you like, let your agent bring in your past sessions, so on day one it knows what you settled before. The first
+two steps never call a model and nothing leaves the machine; the third uses your agent's subscription (at least one call
 per session, the newest 40 by default, not your whole history in one go): [`docs/INSTALL.md`](docs/INSTALL.md#bring-in-your-past-sessions).
 
 ```bash
@@ -128,7 +168,17 @@ python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --local 
 python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distill --distill-max 40  # distill the newest 40
 ```
 
-### From your own code
+## For a team
+
+One server holds your team's memory: a folder of Markdown in a git repository, run by you (there is no KRouter cloud).
+Each person gets their own token, every write is recorded under the writer's name, and "who changed this, and when" can be
+asked (`krouter_changes`); when two people correct the same decision, the last to arrive is in force and the earlier one
+is kept as replaced, named in the reply. Ten people's agents on one laptop (set 27): 0 errors in 440 calls at each of
+three sizes, all 204 writes per size under the right person's name, none lost; 30 minutes at 10,136 pages: 21,218
+calls, 0 errors. **Tested on one machine only: no real team has used it over weeks.** Deployment, tokens, TLS and the
+numbers: [`docs/TEAM.md`](docs/TEAM.md#5-ten-people-at-once).
+
+## From your own code
 
 `pipx install "git+https://github.com/398894496-arch/KRouter"`, then in Python `krouter.ask("how do we ship a
 release?")` gives the page, the one-line answer and whether the memory refused, and `krouter.note(…)` writes a line.
