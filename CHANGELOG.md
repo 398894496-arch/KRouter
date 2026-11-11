@@ -24,6 +24,8 @@ measured** ([`docs/NUMBERS.md`](docs/NUMBERS.md)).
 
 - Added `docs/examples/writer-vault` and `writer-vault-zh` (three notes each) and `tests/test_readme_example.py`, which
   checks that the receipt printed in each README is what the sample vault gives.
+- `server.json` (the registry entry) still names v2.0.0 and its `KRouter.mcpb` hash until 2.0.1 is released; the two
+  version tests now allow that while the top changelog section is unreleased.
 - `krouter_ask`'s tool description, the server instructions and `SKILL.md` say how to read the new line.
 
 - KRouter 2.0.0 is in the official MCP Registry as `io.github.398894496-arch/krouter`; `server.json` names the

@@ -12,7 +12,11 @@ def test_server_json_matches_the_package_and_the_readme_marker():
     version = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.M).group(1)
     assert re.fullmatch(r"[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+", srv["name"])
     assert 1 <= len(srv["description"]) <= 100
-    assert srv["version"] == version
+    # 登记条目描述的是已发布的那一版：包的版本领先于它时（CHANGELOG 顶部是「未发布」），条目保持指向已发布的资产，
+    # 发版时随 tag 一起改（版本、地址、SHA-256）
+    if srv["version"] != version:
+        assert re.search(r"^## (\S+) — unreleased", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), re.M).group(1) == version
+        version = srv["version"]
     assert srv["packages"]
     for pkg in srv["packages"]:
         assert pkg["transport"] == {"type": "stdio"}
