@@ -30,6 +30,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -221,7 +222,8 @@ def query_engine(it: dict) -> tuple[str, list[str]]:
 
 
 def clean(s: str) -> str:
-    return re.sub(r"\banswer_", "", s)  # LongMemEval's answer sessions carry this prefix in their ids
+    # LongMemEval's answer sessions carry the prefix `answer_`, the sessions of its unanswerable questions `_abs` in their ids
+    return re.sub(r"_abs(?=_\d|\.md)", "", re.sub(r"\banswer_", "", s))
 
 
 def state_of(receipt: str) -> str:
@@ -263,6 +265,14 @@ def write_batches(cond: str, rows: list[dict]) -> int:
     if cur:
         batches.append(cur)
     for i, b in enumerate(batches, 1):
+        d = STATE / "files" / cond / f"batch_{i:02d}"
+        shutil.rmtree(d, ignore_errors=True)
+        d.mkdir(parents=True)
+        for r in b:  # the agents' file reader cuts lines over 2 000 characters: long lines are soft-wrapped at spaces
+            wrapped = "\n".join("\n".join(textwrap.wrap(ln, 1500, break_long_words=False, break_on_hyphens=False,
+                                                         drop_whitespace=False)) or "" if len(ln) > 1500 else ln
+                                for ln in r["prompt"].split("\n"))
+            (d / f"{r['id']}.txt").write_text(wrapped, encoding="utf-8")
         (out / f"batch_{i:02d}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in b),
                                                   encoding="utf-8")
     return len(batches)
@@ -318,6 +328,8 @@ def replies_of(cond: str) -> dict[str, str]:
     idx = json.loads((STATE / "index.json").read_text(encoding="utf-8"))
     back = {k.split("/", 1)[1]: v["qid"] for k, v in idx.items() if v["cond"] == cond}
     raw = read_dir(STATE / "replies" / cond, "response")
+    for f in (STATE / "replies" / cond).glob("batch_*/*.txt"):
+        raw.setdefault(f.stem, f.read_text(encoding="utf-8", errors="replace").strip())
     return {back[k]: v for k, v in raw.items() if k in back}
 
 
