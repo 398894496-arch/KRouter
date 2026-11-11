@@ -1,4 +1,7 @@
 #!/bin/sh
+# awk 在 UTF-8 区域设置下按排序规则比较字符串（BSD/macOS awk 用 strcoll），汉字可能被当成"相等"，
+# 路径换算就会选错一行（CI 上 en_US.UTF-8 时 日更健康 → Memory changes）。按字节比较：
+awk() { LC_ALL=C command awk "$@"; }
 set -eu
 
 # 记忆文件夹：KROUTER_VAULT（正式名字），其次 OBSIDIAN_VAULT（旧名字，照样认），都没有就用一键安装记下的路径

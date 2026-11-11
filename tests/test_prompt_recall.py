@@ -318,3 +318,18 @@ def test_learning_is_off_by_default_and_keeps_no_words(box):
     said = "演示前那台机器的数据会不会被清掉"
     _say(box, said, sid="L3")
     assert not list((box["state"] / "recalled").glob("*.last.json")) if (box["state"] / "recalled").exists() else True
+
+
+def test_a_page_fetched_with_a_windows_path_is_found(tmp_path):
+    """Windows receipts name pages with backslashes; they were hidden by the JSON escaping the patterns ran on."""
+    import recollect
+
+    vault = tmp_path / "vault"
+    (vault / "团队手册").mkdir(parents=True)
+    (vault / "团队手册/测试环境.md").write_text("# 测试环境\n\n每天凌晨 3 点重置\n", encoding="utf-8")
+    win = str(vault).replace("/", "\\")
+    rows = [{"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "t1",
+                                                      "content": f"route: canonical\ncanonical_source: {win}\\团队手册\\测试环境.md"}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "t2",
+                                                      "content": "recall:\n- 团队手册\\测试环境.md tier=rule score=3"}]}}]
+    assert recollect.fetched_pages(vault, rows) == ["团队手册/测试环境.md"]

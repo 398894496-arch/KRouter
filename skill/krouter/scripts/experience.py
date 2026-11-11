@@ -733,7 +733,7 @@ def main() -> int:
             print("learn: the card must be JSON", file=sys.stderr)
             return 2
         path, why = learn(vault, item, args.source or "experience.py learn")
-        print(json.dumps({"written": str(path.relative_to(vault)) if path else "", "reason": why}, ensure_ascii=False))
+        print(json.dumps({"written": path.relative_to(vault).as_posix() if path else "", "reason": why}, ensure_ascii=False))
         return 0 if path else 1
     if args.cmd == "suggest":
         print("\n".join(render(suggest(vault, args.query), vault)) or "suggestions: none")

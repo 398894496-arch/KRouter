@@ -596,8 +596,21 @@ def index_on() -> bool:
 
 LEARN_LOG = "recall-learn.jsonl"
 TAIL_BYTES = 2_000_000
-CANON_LINE = re.compile(r"canonical_source:\s*(\S[^\n\\\"]*\.md)")
-RECALL_LINE = re.compile(r"(?:^|\\n|\n)recall:(?:\\n|\n)- ([^\n\\]+?\.md) tier=")
+CANON_LINE = re.compile(r"canonical_source:\s*(\S[^\n\"]*\.md)")
+RECALL_LINE = re.compile(r"(?:^|\n)recall:\n- ([^\n]+?\.md) tier=")
+
+
+def _strings(obj):
+    """Every string in a transcript row (its tool results, its text), as written: not the JSON dump, whose escaping
+    hid Windows paths (`C:\\Users\\…`) from the patterns."""
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            yield from _strings(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _strings(v)
 
 
 def _last_file(agent: str, session: str) -> Path:
@@ -692,22 +705,25 @@ def _final_text(rows: list[dict]) -> str:
 def fetched_pages(vault: Path, rows: list[dict]) -> list[str]:
     """Vault pages a lookup in these transcript lines returned (a lock's `canonical_source`, recall's first page) or a
     tool read directly, in order; logical paths."""
-    root = str(vault.resolve())
+    roots = {str(vault.resolve()).replace("\\", "/"), str(vault).replace("\\", "/")}
     out: list[str] = []
     for d in rows:
-        blob = json.dumps(d, ensure_ascii=False)
-        if "canonical_source" not in blob and " tier=" not in blob and root not in blob:
-            continue
         found = []
-        for m in CANON_LINE.finditer(blob):
-            found.append(m.group(1))
-        for m in RECALL_LINE.finditer(blob):
-            found.append(m.group(1))
-        for m in re.finditer(re.escape(root) + r"/([^\"\\\n]+?\.md)", blob):
-            found.append(m.group(1))
+        for text in _strings(d):
+            if "canonical_source" not in text and " tier=" not in text and not any(r in text.replace("\\", "/") for r in roots):
+                continue
+            text = text.replace("\\", "/")  # Windows 的路径分隔符
+            found += [m.group(1) for m in CANON_LINE.finditer(text)]
+            found += [m.group(1) for m in RECALL_LINE.finditer(text)]
+            for root in roots:
+                found += [m.group(1) for m in re.finditer(re.escape(root) + r"/([^\"\n]+?\.md)", text)]
         for raw in found:
-            rel = raw[len(root) + 1:] if raw.startswith(root + "/") else raw
-            rel = zones.canon(vault, rel)
+            raw = raw.replace("\\", "/")
+            for root in sorted(roots, key=len, reverse=True):
+                if raw.startswith(root + "/"):
+                    raw = raw[len(root) + 1:]
+                    break
+            rel = zones.canon(vault, raw)
             if (vault / zones.real(vault, rel)).is_file() and rel not in out:
                 out.append(rel)
     return out

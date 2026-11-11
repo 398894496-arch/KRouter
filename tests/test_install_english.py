@@ -61,7 +61,9 @@ def test_a_default_layout_vault_is_untouched_by_the_english_table(tmp_path):
 def test_router_status_and_search_on_an_english_vault_are_english(tmp_path, sh_only):
     v = _english_vault(tmp_path)
     env = {**os.environ, "OBSIDIAN_VAULT": str(v), "KROUTER_SH_ONLY": sh_only, "KROUTER_NO_QUERY_LOG": "1",
-           "KROUTER_CACHE_DIR": str(tmp_path / "cache"), "HOME": str(tmp_path), "XDG_CONFIG_HOME": str(tmp_path / "cfg")}
+           "KROUTER_CACHE_DIR": str(tmp_path / "cache"), "HOME": str(tmp_path), "XDG_CONFIG_HOME": str(tmp_path / "cfg"),
+           # CI 的区域设置：BSD awk 在 UTF-8 下按排序规则比较汉字，路径换算曾因此选错一行
+           "LANG": "en_US.UTF-8", "LC_ALL": "en_US.UTF-8"}
     env.pop("KROUTER_MAP", None)
 
     def route(*a: str) -> str:
@@ -410,7 +412,7 @@ def test_a_crontab_that_cannot_run_does_not_break_the_install(tmp_path):
     fake = tmp_path / "bin"
     fake.mkdir()
     cron = fake / "crontab"
-    cron.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")  # on PATH, found by `which` …
+    cron.write_text("#!/bin/sh\necho 'crontab: Operation not permitted' >&2\nexit 1\n", encoding="utf-8")  # on PATH …
     cron.chmod(0o755)
     site = tmp_path / "site"
     site.mkdir()
@@ -430,7 +432,8 @@ def test_a_crontab_that_cannot_run_does_not_break_the_install(tmp_path):
     assert "Traceback" not in res.stderr and out.get("timer") is False
     res, out = _boot(env, "--lang", "en", "--timer")  # asked for: never claimed when it is not there
     assert res.returncode == 0 and "Traceback" not in res.stderr, res.stdout[-1500:] + res.stderr[-1500:]
-    assert out.get("timer") is not True or (Path(env["HOME"]) / "Library/LaunchAgents").is_dir()
+    # on macOS the job is launchd's (crontab is only probed); elsewhere a crontab that cannot run means no job
+    assert out.get("timer") is not True or sys.platform == "darwin", res.stdout[-1500:]
 
 
 @POSIX

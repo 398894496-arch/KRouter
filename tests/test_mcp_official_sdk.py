@@ -33,14 +33,19 @@ def env(tmp_path):
             "KROUTER_STATE_DIR": str(tmp_path / "state"), "KROUTER_NO_QUERY_LOG": "1"}
 
 
+def _field(obj, camel: str, snake: str):
+    """The MCP SDK renamed result fields to snake_case (serverInfo → server_info, isError → is_error); read either."""
+    return getattr(obj, snake) if hasattr(obj, snake) else getattr(obj, camel)
+
+
 async def _session_checks(session: ClientSession) -> None:
     init = await session.initialize()
-    assert init.serverInfo.name.lower().startswith("krouter")
+    assert _field(init, "serverInfo", "server_info").name.lower().startswith("krouter")
     names = {t.name for t in (await session.list_tools()).tools}
     assert {"krouter_ask", "krouter_status"} <= names
     res = await session.call_tool("krouter_ask", {"query": "what port does the local api listen on"})
     text = res.content[0].text
-    assert not res.isError and "API port" in text and "8080" in text
+    assert not _field(res, "isError", "is_error") and "API port" in text and "8080" in text
     none = await session.call_tool("krouter_ask", {"query": "which espresso grinder setting do we use"})
     assert "recall: none" in none.content[0].text
 
@@ -58,10 +63,19 @@ def test_official_sdk_over_stdio(env):
 def test_official_sdk_over_streamable_http(env, tmp_path):
     try:
         from mcp.client.streamable_http import streamable_http_client as http_client  # 1.2x 以后的名字
-        import httpx
+        try:  # the SDK's own client maker: 2.x builds it on httpx2, 1.2x on httpx
+            from mcp.client.streamable_http import create_mcp_http_client
+
+            def client():
+                return create_mcp_http_client(headers={"Authorization": f"Bearer {TOKEN}"})
+        except ImportError:
+            import httpx
+
+            def client():
+                return httpx.AsyncClient(headers={"Authorization": f"Bearer {TOKEN}"})
 
         def connect(url):
-            return http_client(url, http_client=httpx.AsyncClient(headers={"Authorization": f"Bearer {TOKEN}"}))
+            return http_client(url, http_client=client())
     except ImportError:
         from mcp.client.streamable_http import streamablehttp_client
 

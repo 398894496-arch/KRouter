@@ -429,3 +429,24 @@ def test_the_demo_runs(tmp_path):
     assert "agent: I am allergic to peanuts, so no satay.  [from users/ada/fact-1.md]" in lines
     assert lines.count("agent: Nothing in my memory about that.") == 2
     assert (tmp_path / "memory" / "users" / "ada" / "fact-1.md").is_file()
+
+
+def test_a_long_key_works_where_the_disk_refuses_long_names(store, monkeypatch):
+    """Linux (ext4) answers a file name over 255 bytes with ENAMETOOLONG instead of "no such file"; CI found it.
+    Simulated here so it is caught on any disk."""
+    import errno
+    from pathlib import Path as _P
+
+    real = _P.is_file
+
+    def is_file(self):
+        if len(self.name.encode("utf-8")) > 255:
+            raise OSError(errno.ENAMETOOLONG, "File name too long", str(self))
+        return real(self)
+
+    monkeypatch.setattr(_P, "is_file", is_file)
+    key = "k" * 300
+    store.put(A, key, {"content": "long"})
+    assert store.get(A, key).value == {"content": "long"}
+    store.put(A, key, {"content": "longer"})
+    assert store.get(A, key).value == {"content": "longer"} and store.purge(A, key) >= 1

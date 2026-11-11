@@ -1,4 +1,7 @@
 #!/bin/sh
+# awk 在 UTF-8 区域设置下按排序规则比较字符串（BSD/macOS awk 用 strcoll），汉字可能被当成"相等"，
+# 路径换算就会选错一行（CI 上 en_US.UTF-8 时 日更健康 → Memory changes）。按字节比较：
+awk() { LC_ALL=C command awk "$@"; }
 # Prove the self-evolution writer is present and the vault lamp is readable.
 # lamp is running (nightly job installed) or unused (not installed). Does not fire the daily job.
 set -eu

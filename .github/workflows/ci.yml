@@ -67,7 +67,7 @@ jobs:
           - {name: langchain, pip: "langchain-mcp-adapters langchain langgraph"}
           - {name: openai_agents, pip: "openai-agents"}
           - {name: pydantic_ai, pip: "pydantic-ai-slim[mcp] fastmcp"}
-          - {name: google_adk, pip: "google-adk"}
+          - {name: google_adk, pip: "google-adk[mcp]"}   # without the extra, ADK skips its MCP tools silently
           - {name: crewai, pip: "crewai"}
     runs-on: ubuntu-latest
     steps:

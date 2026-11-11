@@ -259,6 +259,7 @@ def test_plugin_hooks_also_record_each_claude_code_turn():
 def apps(tmp_path, monkeypatch):
     """A home with Codex and Cursor installed (their folders exist), nothing in their hooks files yet."""
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows: Path.home() reads USERPROFILE, not HOME
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / ".config"))
     monkeypatch.setenv("APPDATA", str(tmp_path / "AppData"))
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / ".codex"))
@@ -336,6 +337,7 @@ def test_a_file_that_is_not_json_is_left_alone(apps, which):
 
 def test_an_app_that_is_not_installed_gets_nothing(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows: Path.home() reads USERPROFILE, not HOME
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / ".config"))
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / ".codex"))
     monkeypatch.delenv("KROUTER_NO_HOOKS", raising=False)

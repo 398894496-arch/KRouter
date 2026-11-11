@@ -75,6 +75,7 @@ RESERVED = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"
 TAG = 10            # 标记长度（sha256 前 10 位）：`Alice` 和 `alice` 在不分大小写的磁盘上也是两个文件夹
 LABEL_MAX = 120     # 命名空间的一段转义后最多这么多字节（做文件夹名）
 KEY_MAX = 150       # 键转义后超过这么多字节就截断并加标记，完整的键记在页面的 frontmatter 里
+NAME_MAX = 255      # 一个文件名最多这么多字节（Linux ext4、macOS APFS 都是）
 LOCK_STALE = 30.0   # 写锁超过这么多秒没释放，当作上次写到一半的进程留下的
 RECALL_CAP = 80     # KRouter 召回一次最多看这么多候选
 EMPTY_KEY = "~"
@@ -473,6 +474,8 @@ class KRouterStore(BaseStore):
         with self._lock(d / (self._stem(key) + ".md")):
             # 当前页，以及同名但被人标成失效的页：都删
             for name in dict.fromkeys([self._stem(key) + ".md", _escape(key) + ".md"]):
+                if len(name.encode("utf-8")) > NAME_MAX:
+                    continue  # 不可能存在的文件名（见 _current）
                 page = self._load(d / name, tuple(namespace)) if (d / name).is_file() else None
                 if page and page.key == key and (page.ours or name in os.listdir(d)):
                     page.path.unlink()
@@ -530,12 +533,16 @@ class KRouterStore(BaseStore):
         """The live page for `key`: the store's own file name, else a page someone added with the key as its name."""
         d = self._dir(namespace)
         names = [self._stem(key) + ".md"]
-        if key and _escape(key) + ".md" not in names:
+        # 人加的页用键本身做文件名；一个文件名超过 255 字节的页在磁盘上不可能存在（Linux 上一问就报"文件名太长"）
+        if key and _escape(key) + ".md" not in names and len((_escape(key) + ".md").encode("utf-8")) <= NAME_MAX:
             names.append(_escape(key) + ".md")
         listing = None
         for name in names:
             p = d / name
-            if not p.is_file():
+            try:
+                if not p.is_file():
+                    continue
+            except OSError:  # ENAMETOOLONG 之类：这个名字不可能有页
                 continue
             page = self._load(p, namespace)
             if not page or not page.live:

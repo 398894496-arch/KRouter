@@ -4,6 +4,7 @@ names, English for an English one; the checks and their ok / note / FAIL marks a
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -15,9 +16,12 @@ CJK = re.compile(r"[一-鿿]")
 
 
 def _doctor(tmp: Path, vault: Path) -> subprocess.CompletedProcess:
-    env = {"HOME": str(tmp / "home"), "PATH": "/usr/bin:/bin", "PYTHONPATH": str(REPO / "sdk"),
-           "KROUTER_NO_QUERY_LOG": "1", "KROUTER_STATE_DIR": str(tmp / "state"), "KROUTER_CACHE_DIR": str(tmp / "cache"),
-           "KROUTER_VAULT_FILE": str(tmp / "none"), "KROUTER_KEYS_ENV": str(tmp / "keys.env")}
+    # 从当前环境出发（Windows 上 Python 少了 SYSTEMROOT 等就起不来），只换掉家目录和 KRouter 自己的变量
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("KROUTER_", "OBSIDIAN_")) and not k.endswith("_API_KEY")}
+    env.update({"HOME": str(tmp / "home"), "USERPROFILE": str(tmp / "home"), "PYTHONPATH": str(REPO / "sdk"),
+                "KROUTER_NO_QUERY_LOG": "1", "KROUTER_STATE_DIR": str(tmp / "state"), "KROUTER_CACHE_DIR": str(tmp / "cache"),
+                "KROUTER_VAULT_FILE": str(tmp / "none"), "KROUTER_KEYS_ENV": str(tmp / "keys.env"),
+                "XDG_CONFIG_HOME": str(tmp / "home/.config"), "APPDATA": str(tmp / "home/AppData")})
     (tmp / "home").mkdir(exist_ok=True)
     return subprocess.run([sys.executable, "-m", "krouter.cli", "--vault", str(vault), "doctor"], env=env,
                           capture_output=True, text=True, timeout=120)

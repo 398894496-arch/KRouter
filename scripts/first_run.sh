@@ -22,7 +22,8 @@ if [ -n "${KROUTER_FIRST_RUN_VAULT:-}" ]; then
 elif [ "$LANG_PICK" = zh ]; then
   OBSIDIAN_VAULT=$ROOT/template-zh
 else
-  TMP_VAULT=$(mktemp -d "${TMPDIR:-/tmp}/krouter-first-run.XXXXXX")
+  _tmp=${TMPDIR:-/tmp}
+  TMP_VAULT=$(mktemp -d "${_tmp%/}/krouter-first-run.XXXXXX")  # macOS 的 TMPDIR 以 / 结尾：去掉，免得路径里出现 //
   OBSIDIAN_VAULT=$TMP_VAULT/vault
   python3 -c "import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); import zones; zones.lay_out(Path(sys.argv[2]), Path(sys.argv[3]), alias_sample=Path(sys.argv[1]) / 'canonical_sources.psv')" \
     "$SCRIPTS" "$ROOT/template" "$OBSIDIAN_VAULT"
