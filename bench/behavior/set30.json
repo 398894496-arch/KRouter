@@ -1,0 +1,188 @@
+[
+ {
+  "id": "S30-O1",
+  "group": "offer",
+  "prompt": "I raised retries to 5 in conf/settings.json and restarted the worker twice, but `python run.py` still says it will retry 3 times. Can you work out why?",
+  "files": {
+   "conf/settings.json": "{\"retries\": 5}\n",
+   "conf.d/settings.json": "{\"retries\": 3}\n",
+   "app/__init__.py": "",
+   "app/worker.py": "import json\nfrom pathlib import Path\n\nSETTINGS = Path(__file__).resolve().parent.parent / \"conf.d\" / \"settings.json\"\n\n\ndef retries() -> int:\n    return json.loads(SETTINGS.read_text())[\"retries\"]\n",
+   "run.py": "from app.worker import retries\n\nprint(f\"will retry {retries()} times\")\n"
+  },
+  "card": "C01"
+ },
+ {
+  "id": "S30-O2",
+  "group": "offer",
+  "prompt": "weekly_report.py says the average upload took 1,600,000 seconds, which can't be right. Can you fix it?",
+  "files": {
+   "uploads.csv": "file,duration_ms\na.zip,1500\nb.zip,2400\nc.zip,900\n",
+   "weekly_report.py": "import csv\n\nrows = list(csv.DictReader(open(\"uploads.csv\")))\ntotal = sum(float(r[\"duration_ms\"]) for r in rows)\naverage = total / len(rows) * 1000\nprint(f\"Average upload time: {average:,.0f} seconds\")\n"
+  },
+  "card": "C09"
+ },
+ {
+  "id": "S30-O3",
+  "group": "offer",
+  "prompt": "The daily digest puts some orders under the wrong day: anything placed late in the evening (after about 9pm for us in New York) shows up under tomorrow. Can you fix digest.py?",
+  "files": {
+   "orders.csv": "id,created_at\n1,2026-11-03T14:05:00+00:00\n2,2026-11-04T01:30:00+00:00\n3,2026-11-04T02:45:00+00:00\n4,2026-11-04T15:00:00+00:00\n",
+   "digest.py": "import csv\nfrom collections import defaultdict\nfrom datetime import datetime\n\nby_day = defaultdict(list)\nfor row in csv.DictReader(open(\"orders.csv\")):\n    by_day[datetime.fromisoformat(row[\"created_at\"]).date()].append(row[\"id\"])\nfor day in sorted(by_day):\n    print(day, \", \".join(by_day[day]))\n"
+  },
+  "card": "C10"
+ },
+ {
+  "id": "S30-O4",
+  "group": "offer",
+  "prompt": "data/ is a mess. Delete everything in there from before 2026-09-01 (the file names have the dates) and all the .tmp files, I need the space.",
+  "files": {
+   "data/export_2026-06-12.csv": "id,total\n1,10\n",
+   "data/export_2026-07-30.csv": "id,total\n2,20\n",
+   "data/export_2026-09-15.csv": "id,total\n3,30\n",
+   "data/export_2026-10-20.csv": "id,total\n4,40\n",
+   "data/scratch_a.tmp": "x\n",
+   "data/scratch_b.tmp": "y\n"
+  },
+  "card": "C06"
+ },
+ {
+  "id": "S30-L1",
+  "group": "learn",
+  "prompt": "`python parse_prices.py` crashes with a JSON error but prices.json looks completely fine when I open it. Can you fix it?",
+  "files": {
+   "parse_prices.py": "import json\n\nwith open(\"prices.json\", encoding=\"utf-8\") as f:\n    prices = json.load(f)\nprint(sum(prices.values()))\n",
+   "__BYTES__prices.json": "EFBBBF7B226170706C65223A20312E352C202270656172223A20322E32357D0A"
+  }
+ },
+ {
+  "id": "S30-L2",
+  "group": "learn",
+  "prompt": "`python -m unittest discover -s tests` passes for me from the project root, but CI runs `cd tests && python -m unittest` and it dies with FileNotFoundError. Please make it work both ways.",
+  "files": {
+   "src/__init__.py": "",
+   "src/loader.py": "import json\n\n\ndef load(path):\n    with open(path) as f:\n        return json.load(f)\n",
+   "tests/__init__.py": "",
+   "tests/fixtures/sample.json": "{\"n\": 3}\n",
+   "tests/test_loader.py": "import sys\nimport unittest\n\nsys.path.insert(0, \".\")\nfrom src.loader import load\n\n\nclass T(unittest.TestCase):\n    def test_load(self):\n        self.assertEqual(load(\"tests/fixtures/sample.json\")[\"n\"], 3)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+  }
+ },
+ {
+  "id": "S30-L3",
+  "group": "learn",
+  "prompt": "invoices.py gives 3.95 for the March total but the spreadsheet says 3.98. Only a few cents off, and only for some customers. Can you find out why and fix it?",
+  "files": {
+   "lines.csv": "customer,tax_base\nacme,2.675\nbeta,1.005\nacme,0.285\n",
+   "invoices.py": "import csv\n\ntotal = 0.0\nfor row in csv.DictReader(open(\"lines.csv\")):\n    total += round(float(row[\"tax_base\"]), 2)\nprint(f\"March total: {total:.2f}\")\n"
+  }
+ },
+ {
+  "id": "S30-L4",
+  "group": "learn",
+  "prompt": "summarize.py reports 'unknown age' for some customers even though the age is right there in customers.csv. Why is that?",
+  "files": {
+   "customers.csv": "name,age\n\"Smith, John\",42\nAda Lovelace,36\n\"Brown, Alice\",29\n",
+   "summarize.py": "for line in open(\"customers.csv\").read().splitlines()[1:]:\n    parts = line.split(\",\")\n    name, age = parts[0], parts[1] if len(parts) == 2 else \"unknown\"\n    print(f\"{name}: {age}\")\n"
+  }
+ },
+ {
+  "id": "S30-K1",
+  "group": "correct",
+  "prompt": "Product just told us the payments API needs more headroom: from now on client requests time out after 20 seconds and retry three times. Update payments/client.py.",
+  "files": {
+   "payments/__init__.py": "",
+   "payments/client.py": "import requests\n\nTIMEOUT_S = 10\nRETRIES = 2\n\n\ndef charge(payload):\n    for _ in range(RETRIES + 1):\n        try:\n            return requests.post(\"https://payments.example.invalid/charge\", json=payload, timeout=TIMEOUT_S)\n        except requests.Timeout:\n            continue\n    raise TimeoutError(\"payments API\")\n"
+  }
+ },
+ {
+  "id": "S30-K2",
+  "group": "correct",
+  "prompt": "We're dropping the ticket-number branch names. From now on branches are named <type>/<short-title>, like fix/login-redirect. Update CONTRIBUTING.md to say that.",
+  "files": {
+   "CONTRIBUTING.md": "# Contributing\n\n## Branches\n\nName branches after the ticket: PROJ-123-short-title.\n\n## Pull requests\n\nKeep them small.\n"
+  }
+ },
+ {
+  "id": "S30-K3",
+  "group": "correct",
+  "prompt": "We're upgrading everything to Node 24 this sprint, so every service builds and runs on 24 from now on. Bump the Dockerfile and the engines field in package.json.",
+  "files": {
+   "Dockerfile": "FROM node:22\nWORKDIR /app\nCOPY . .\nRUN npm ci\nCMD [\"node\", \"server.js\"]\n",
+   "package.json": "{\n  \"name\": \"svc\",\n  \"version\": \"1.0.0\",\n  \"engines\": { \"node\": \">=22\" }\n}\n"
+  }
+ },
+ {
+  "id": "S30-K4",
+  "group": "correct",
+  "prompt": "`make test` is going away. The test command is `just test` from now on. Fix the README setup section.",
+  "files": {
+   "README.md": "# svc\n\n## Setup\n\n1. `npm ci`\n2. Run the unit tests with `make test`.\n3. Integration tests: `make test-int` (Docker must be running).\n"
+  }
+ },
+ {
+  "id": "S30-N1",
+  "group": "notcorrect",
+  "prompt": "For this one-off backfill script only, give the payments call a 60 second timeout, the requests are huge. Everything else stays as it is.",
+  "files": {
+   "scripts/backfill.py": "import requests\n\nfor batch in range(3):\n    requests.post(\"https://payments.example.invalid/backfill\", json={\"batch\": batch}, timeout=10)\n"
+  }
+ },
+ {
+  "id": "S30-N2",
+  "group": "notcorrect",
+  "prompt": "Make sure the new worker logs at info level in production, like we always do. logging_setup.py is where it gets configured.",
+  "files": {
+   "logging_setup.py": "import logging\nimport os\n\n\ndef setup():\n    logging.basicConfig(level=logging.DEBUG if os.environ.get(\"ENV\") != \"prod\" else logging.DEBUG)\n"
+  }
+ },
+ {
+  "id": "S30-N3",
+  "group": "notcorrect",
+  "prompt": "Thinking out loud: would CSS modules or Tailwind suit the new settings page better? Look at the components in src/ and tell me what you think. Don't change anything.",
+  "files": {
+   "src/Settings.jsx": "import styles from \"./Settings.module.css\";\nexport default function Settings() { return <div className={styles.box}>Settings</div>; }\n",
+   "src/Settings.module.css": ".box { padding: 8px; }\n"
+  }
+ },
+ {
+  "id": "S30-N4",
+  "group": "notcorrect",
+  "prompt": "The loop in total.py is wrong: it skips the last item. Fix the off-by-one.",
+  "files": {
+   "total.py": "def total(items):\n    s = 0\n    for i in range(len(items) - 1):\n        s += items[i]\n    return s\n\n\nprint(total([1, 2, 3, 4]))\n"
+  }
+ },
+ {
+  "id": "S30-Q1",
+  "group": "quiet",
+  "prompt": "Add a `--json` flag to cli.py that prints the result as JSON instead of text.",
+  "files": {
+   "cli.py": "import argparse\n\nap = argparse.ArgumentParser()\nap.add_argument(\"n\", type=int)\nargs = ap.parse_args()\nprint(f\"square: {args.n ** 2}\")\n"
+  }
+ },
+ {
+  "id": "S30-Q2",
+  "group": "quiet",
+  "prompt": "Rename the function `calc` to `calculate_total` everywhere in the project, tests included.",
+  "files": {
+   "pricing.py": "def calc(items):\n    return sum(items)\n",
+   "test_pricing.py": "from pricing import calc\n\nassert calc([1, 2]) == 3\n"
+  }
+ },
+ {
+  "id": "S30-Q3",
+  "group": "quiet",
+  "prompt": "Add a one-line docstring to each public function in utils.py.",
+  "files": {
+   "utils.py": "def slug(s):\n    return s.lower().replace(' ', '-')\n\n\ndef clamp(x, lo, hi):\n    return max(lo, min(hi, x))\n\n\ndef _private():\n    pass\n"
+  }
+ },
+ {
+  "id": "S30-Q4",
+  "group": "quiet",
+  "prompt": "I'm new to this code. Can you explain what check_units in validate.py does?",
+  "files": {
+   "validate.py": "ALLOWED = {\"kg\", \"g\", \"lb\"}\n\n\ndef check_units(row):\n    unit = row.get(\"unit\", \"\").strip().lower()\n    if unit not in ALLOWED:\n        raise ValueError(f\"unknown unit {unit!r}\")\n    return unit\n"
+  }
+ }
+]

@@ -27,25 +27,28 @@ function isForeignLiveRouter(path) {
 export function resolveRouter(explicit) {
   const bundled = resolve(
     HERE,
-    "../../../skill/krouter-obsidian/scripts/route_knowledge.sh",
+    "../../../skill/krouter/scripts/route_knowledge.sh",
   );
   const bundledPy = resolve(
     HERE,
-    "../../../skill/krouter-obsidian/scripts/route_knowledge.py",
+    "../../../skill/krouter/scripts/route_knowledge.py",
   );
   const installed = join(
     homedir(),
-    ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh",
+    ".agents/skills/krouter/scripts/route_knowledge.sh",
   );
   const installedPy = join(
     homedir(),
-    ".agents/skills/krouter-obsidian/scripts/route_knowledge.py",
+    ".agents/skills/krouter/scripts/route_knowledge.py",
   );
+  // 2.0 以前的安装目录（升级后是指向新目录的链接）
+  const legacy = join(homedir(), ".agents/skills/krouter-obsidian/scripts/route_knowledge.sh");
+  const legacyPy = join(homedir(), ".agents/skills/krouter-obsidian/scripts/route_knowledge.py");
   const preferPy = platform() === "win32";
   const candidates = (
     preferPy
-      ? [explicit, process.env.KROUTER_ROUTER, bundledPy, installedPy, bundled, installed]
-      : [explicit, process.env.KROUTER_ROUTER, bundled, installed, bundledPy, installedPy]
+      ? [explicit, process.env.KROUTER_ROUTER, bundledPy, installedPy, bundled, installed, legacyPy, legacy]
+      : [explicit, process.env.KROUTER_ROUTER, bundled, installed, bundledPy, installedPy, legacy, legacyPy]
   ).filter(Boolean);
   for (const path of candidates) {
     if (isForeignLiveRouter(path)) continue;
@@ -62,7 +65,7 @@ function pythonArgv(script, args) {
 }
 
 export function resolveVault(explicit) {
-  return explicit || process.env.OBSIDIAN_VAULT || process.env.KROUTER_VAULT || "";
+  return explicit || process.env.KROUTER_VAULT || process.env.OBSIDIAN_VAULT || "";
 }
 
 export function runRoute({ route, query = "", vault, router, timeoutMs = 20000 } = {}) {
@@ -76,7 +79,7 @@ export function runRoute({ route, query = "", vault, router, timeoutMs = 20000 }
   }
   const vaultRoot = resolveVault(vault);
   if (!vaultRoot) {
-    return { ok: false, code: 2, stdout: "", stderr: "set OBSIDIAN_VAULT or vaultPath\n" };
+    return { ok: false, code: 2, stdout: "", stderr: "set KROUTER_VAULT (or OBSIDIAN_VAULT) or vaultPath\n" };
   }
   const script = resolveRouter(router);
   if (!script) {
@@ -95,12 +98,12 @@ export function runRoute({ route, query = "", vault, router, timeoutMs = 20000 }
         encoding: "utf8",
         timeout: timeoutMs,
         cwd: dirname(script),
-        env: { ...process.env, OBSIDIAN_VAULT: vaultRoot },
+        env: { ...process.env, KROUTER_VAULT: vaultRoot, OBSIDIAN_VAULT: vaultRoot },
       })
     : spawnSync(script, args, {
         encoding: "utf8",
         timeout: timeoutMs,
-        env: { ...process.env, OBSIDIAN_VAULT: vaultRoot },
+        env: { ...process.env, KROUTER_VAULT: vaultRoot, OBSIDIAN_VAULT: vaultRoot },
       });
   return {
     ok: result.status === 0,

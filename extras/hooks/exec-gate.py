@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-ROOT = os.environ.get("OBSIDIAN_VAULT", "").rstrip("/")
+ROOT = (os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", "")).rstrip("/")
 INBOX = f"{ROOT}/Clippings" if ROOT else ""
 
 DENY = {

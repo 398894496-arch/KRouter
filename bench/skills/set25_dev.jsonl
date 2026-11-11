@@ -1,0 +1,12 @@
+{"id": "u17", "kind": "applicable", "query": "刚给邻居家初二的小孩出完一套数学练习题，我准备直接打印了发给他妈妈", "expect": "S7952"}
+{"id": "u10", "kind": "applicable", "query": "同事离职了，留下一个做到一半的采购流程表，也没写啥说明，我明天开始接", "expect": "Sf69c"}
+{"id": "u06", "kind": "applicable", "query": "我这份标书明天上午十点要交了，刚写完最后一页，感觉差不多了", "expect": "S7952"}
+{"id": "u08", "kind": "applicable", "query": "客户问我这个小程序大概多久能上线，我心里估摸两周，要不要就这么告诉他", "expect": "Scee3"}
+{"id": "u03", "kind": "applicable", "query": "每个月我都要把二十几个供应商的对账单一个个复制到总表里，一次要弄两个多小时，烦死了", "expect": "Sff11"}
+{"id": "u15", "kind": "applicable", "query": "朋友结婚，让我给他们'整个视频'，没说多长也没说放在哪播，我直接开剪吗", "expect": "S4308"}
+{"id": "u09", "kind": "unrelated", "query": "把这句话翻成英文，语气客气一点：麻烦您周五前把合同回签给我们", "expect": null}
+{"id": "u23", "kind": "unrelated", "query": "给我妈写几句生日祝福，她今年六十，别太肉麻", "expect": null}
+{"id": "u21", "kind": "unrelated", "query": "一茶匙大概是多少毫升？我这个菜谱上只写了茶匙", "expect": null}
+{"id": "u19", "kind": "word_trap", "query": "公司让我写一份个人自检报告，总结上半年表现，开头怎么写比较好？", "expect": null}
+{"id": "u16", "kind": "word_trap", "query": "帮我确认一下，'需求'这个词的英文是 demand 还是 requirement，有啥区别", "expect": null}
+{"id": "u07", "kind": "word_trap", "query": "帮我估算一下从北京去上海，坐高铁和坐飞机哪个整体更快？", "expect": null}

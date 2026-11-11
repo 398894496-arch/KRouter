@@ -1,0 +1,28 @@
+{"id": "C01-x1", "query": "I fixed the header in our company Word template, but every new document I create from it still shows the old header. I saved it three times. What's wrong with my fix?", "expect": "C01", "kind": "transfer"}
+{"id": "C02-x1", "query": "My static blog generator resizes all 800 images from scratch every time I build the site, even when I only fixed a typo in one post. The build takes forever now.", "expect": "C02", "kind": "transfer"}
+{"id": "C03-x1", "query": "An Excel macro that ran perfectly in September now throws an error. My coworkers have edited that workbook something like 40 times since then and I have the saved versions from every week.", "expect": "C03", "kind": "transfer"}
+{"id": "C04-x1", "query": "My home printer fails to print about one job in five and I can't see any pattern. I'm thinking of just reinstalling the driver and hoping.", "expect": "C04", "kind": "transfer"}
+{"id": "C05-x1", "query": "I'm about to run a mail merge that sends personalised emails to all 4,000 of our newsletter subscribers. The template is finished and I'm ready to hit send on everyone.", "expect": "C05", "kind": "transfer"}
+{"id": "C06-x1", "query": "I want to run a find-and-replace over our master customer spreadsheet to strip the area codes from every phone number, and I'll save over the original file. It's a one-click thing, right?", "expect": "C06", "kind": "transfer"}
+{"id": "C07-x1", "query": "My Arduino LED circuit won't blink. I've checked everything I can think of and I just can't see what's wrong. I'm completely stuck.", "expect": "C07", "kind": "transfer"}
+{"id": "C08-x1", "query": "The landing page I designed feels bland and flat. It's all soft blues, and every time I add another blue gradient or shadow it looks even more washed out. How do I give it some life?", "expect": "C08", "kind": "transfer"}
+{"id": "C09-x1", "query": "I used ffmpeg to trim a clip to 30 and it produced a video that's only about 30 milliseconds long, basically one frame. The command looked right to me.", "expect": "C09", "kind": "transfer"}
+{"id": "C10-x1", "query": "In my signups spreadsheet the daily counts look shifted for users in Sydney, especially the ones who signed up in the evening, which land on the previous day. The totals are right though.", "expect": "C10", "kind": "transfer"}
+{"id": "C11-x1", "query": "I renamed one interface in my TypeScript project and now the build shows around 300 red errors across the whole codebase. Where do I even begin?", "expect": "C11", "kind": "transfer"}
+{"id": "C12-x1", "query": "My boss told me the quarterly slides 'just don't feel right' but can't say what's wrong. I've already changed the fonts and the colours twice and she still isn't happy. What should I do next?", "expect": "C12", "kind": "transfer"}
+{"id": "C13-x1", "query": "I've been trying to get my sourdough starter to rise properly for three weeks, tweaking flour and water ratios every day, and nothing really improves. I have a bake sale on Saturday, what should I do?", "expect": "C13", "kind": "transfer"}
+{"id": "C14-x1", "query": "I just wrote the install steps in the README for my little CLI tool and my tests pass. I'm about to tell my teammate it's ready for her to set up.", "expect": "C14", "kind": "transfer"}
+{"id": "T03", "query": "How do I show a compact graph view of git log and limit it to commits that touched one folder?", "expect": null, "kind": "topic-trap", "near": "C03"}
+{"id": "T08", "query": "How do I compute a 7-day moving average for a daily sales report in pandas?", "expect": null, "kind": "topic-trap", "near": "C10"}
+{"id": "T13", "query": "Which is cheaper for hosting a small Flask app, Fly.io or Render?", "expect": null, "kind": "topic-trap", "near": "C14"}
+{"id": "T11", "query": "Do you have a good template for a GitHub issue bug report that maintainers like?", "expect": null, "kind": "topic-trap", "near": "C07"}
+{"id": "T04", "query": "What are the main differences between GitHub Actions and GitLab CI for a small team of four?", "expect": null, "kind": "topic-trap", "near": "C02"}
+{"id": "T10", "query": "How do I add a foreign key constraint to an existing Postgres table?", "expect": null, "kind": "topic-trap", "near": "C06"}
+{"id": "T02", "query": "How long should I braise pork belly for hong shao rou, and should I use rock sugar or regular sugar?", "expect": null, "kind": "topic-trap", "near": "C08"}
+{"id": "W05", "query": "What's a reasonable batch size for training a small CNN on a GPU with 8GB of memory?", "expect": null, "kind": "word-trap", "near": "C05"}
+{"id": "W03", "query": "How do I cut a pizza dough recipe in half so it feeds two people instead of four?", "expect": null, "kind": "word-trap", "near": "C03"}
+{"id": "W04", "query": "Can you give me an example of a polite email declining a job offer?", "expect": null, "kind": "word-trap", "near": "C12"}
+{"id": "W01", "query": "What's the time limit for returning an item to Amazon after it's been delivered?", "expect": null, "kind": "word-trap", "near": "C13"}
+{"id": "U05", "query": "Can you sketch a relaxed 3-day itinerary for Kyoto in April, mostly temples and food?", "expect": null, "kind": "unrelated"}
+{"id": "U03", "query": "Why is Canberra the capital of Australia and not Sydney?", "expect": null, "kind": "unrelated"}
+{"id": "U01", "query": "Can you translate 'Where is the nearest pharmacy?' into Spanish and Portuguese?", "expect": null, "kind": "unrelated"}

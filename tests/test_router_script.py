@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-ROUTER = REPO / "skill/krouter-obsidian/scripts/route_knowledge.sh"
+ROUTER = REPO / "skill/krouter/scripts/route_knowledge.sh"
 BARE_PATH = "/usr/bin:/bin"
 
 

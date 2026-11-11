@@ -1,11 +1,15 @@
 #!/bin/sh
+# awk 在 UTF-8 区域设置下按排序规则比较字符串（BSD/macOS awk 用 strcoll），汉字可能被当成"相等"，
+# 路径换算就会选错一行（CI 上 en_US.UTF-8 时 日更健康 → Memory changes）。按字节比较：
+awk() { LC_ALL=C command awk "$@"; }
 # Prove the self-evolution writer is present and the vault lamp is readable.
-# Default lamp is running (timer on). Does not fire the daily job.
+# lamp is running (nightly job installed) or unused (not installed). Does not fire the daily job.
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
-VAULT="${OBSIDIAN_VAULT:-$ROOT/template}"
-HEALTH="$VAULT/90 系统文件/自动化/日更健康.md"
+VAULT="${KROUTER_VAULT:-${OBSIDIAN_VAULT:-$ROOT/template}}"
+ZONES="$ROOT/skill/krouter/scripts/zones.py"
+HEALTH=$(python3 "$ZONES" real "$VAULT" "90 系统文件/自动化/日更健康.md")
 
 if [ ! -f "$HEALTH" ]; then
   printf '%s\n' "FAIL missing health page: $HEALTH" >&2
@@ -24,7 +28,7 @@ case "$lamp" in
     printf '%s\n' "ok self-evolution lamp=running (timer on) on $HEALTH"
     ;;
   unused)
-    printf '%s\n' "ok self-evolution lamp=unused (you turned the timer off) on $HEALTH"
+    printf '%s\n' "ok self-evolution lamp=unused (no nightly job installed) on $HEALTH"
     ;;
   *)
     printf '%s\n' "FAIL lamp must be running (default) or unused (got: $lamp) in $HEALTH" >&2
@@ -41,7 +45,7 @@ for f in README.md PROMPT.md check.sh run.sh resolve.py api_writer.py wire_keys.
   fi
 done
 
-KEY_PAGE="$VAULT/90 系统文件/自动化/自进化钥匙.md"
+KEY_PAGE=$(python3 "$ZONES" real "$VAULT" "90 系统文件/自动化/自进化钥匙.md")
 if [ ! -f "$KEY_PAGE" ]; then
   printf '%s\n' "FAIL missing key page: $KEY_PAGE" >&2
   exit 1

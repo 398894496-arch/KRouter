@@ -32,7 +32,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SCRIPTS = HERE.parents[1] / "skill/krouter-obsidian/scripts"
+SCRIPTS = HERE.parents[1] / "skill/krouter/scripts"
 sys.path.insert(0, str(SCRIPTS))
 DAY = date(2026, 10, 1)
 NONE_LINES = ("没有定下来的事", "没有改主意的事", "nothing was decided", "no decisions")

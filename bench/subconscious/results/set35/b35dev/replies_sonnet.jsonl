@@ -1,0 +1,60 @@
+{"id": "7e5838ca89", "response": "CALL krouter_ask: 权限申请\n先别口头找小王。手册（团队手册/权限申请.md）规定权限要走工单，由上级和系统负责人双人审批，临时权限还有最长期限。我先取那一页确认细节，再帮你起草工单内容。"}
+{"id": "0e92cedf06", "response": "大文件 OOM 很可能就是一次性读进内存。把读取改成流式：按块或按行读，边读边写到输出流，别在内存里先攒完整数组。把 export 的实现贴给我，我帮你定位具体是哪一步在整体加载。"}
+{"id": "8acdcdf7f0", "response": "在 webpack 配置里把 node_modules 加进 watchOptions.ignored（例如 watchOptions: { ignored: /node_modules/ }），同时确认 loader 的 rules 里有 exclude: /node_modules/。dev 配置还要看 devtool 是不是用了很重的 source-map、有没有开多余的 plugin。把 webpack.config 贴上来，我逐项帮你看。"}
+{"id": "b6315d5c8c", "response": "CALL krouter_ask: production access review\n手册（Handbook/Access reviews.md）写的是：生产库访问每季度复核一次，60 天没用的权限会被移除；这条提示里没写本季度由谁负责。我取完整页面看有没有写负责人，没有的话就如实告诉你不知道，你可以直接问安全或平台团队。交接的过期账号清单可以先按 60 天未使用的标准整理好。"}
+{"id": "7bfcad44f8", "response": "崩溃点是 list.js:44 的 renderRow：某个对象是 undefined 时读取了 .items，说明传进来的数据（比如接口返回或父组件的 prop）为空。那条 Sunset header 的 WARN 只是弃用检查被跳过，和崩溃无关。把 list.js 第 30 到 50 行和调用 renderRow 的地方贴给我，通常加一个空值保护并查清为什么数据没到就能解决。"}
+{"id": "dc6ed495c4", "response": "CALL krouter_ask: 图片资源\n先别直接提交这张 2MB 的 PNG。手册（团队手册/图片资源.md）要求图片传 CDN 图床，用 WebP 格式，单张有大小上限（约 300KB），超了要先压缩。我取页面确认后，可以给你转 WebP 的命令。"}
+{"id": "454267ae38", "response": "CALL krouter_ask: 节假日安排\n手册（团队手册/节假日安排.md）里写着节前一天下午 3 点后不发布，傍晚推版本大概率违反这条。我取页面确认细节，建议把发布挪到节前一天下午 3 点之前，或者放到节后。"}
+{"id": "421361190b", "response": "可以。我先全仓搜索 getUserData 的所有引用，包括 import、动态引用、测试和文档里的字符串，再统一改成 fetchUserProfile 并修正导入路径。改完跑一遍类型检查和测试确认没有遗漏。"}
+{"id": "3125f6992e", "response": "CALL krouter_ask: 接口文档\n字段说明只写在 PR 描述里不够。手册（团队手册/接口文档.md）要求对外接口用 OpenAPI 描述，并且随代码一起提交。我取页面确认是否包含内部接口，然后帮你把这两个接口的 OpenAPI 片段写出来。"}
+{"id": "ec129370dd", "response": "CALL krouter_ask: 数据共享\n先别直接邮件发 Excel。手册（团队手册/数据共享.md）规定给合作方的数据只走数据交换平台，文件要加密，链接 72 小时失效。我取页面确认细节，再告诉你怎么把这份订单明细走平台发出去。"}
+{"id": "5976a66a3e", "response": "不是了。按 Handbook/On-site days.md，团队到岗日现在是周二和周三，其余时间远程，是春季调查后改的，旧页（On-site days (old).md）已被取代。所以回顾会的会议室建议订周二或周三，并且按页面要求提前一天在办公应用里订工位。"}
+{"id": "aec36d48e7", "response": "CALL krouter_ask: status page\nCALL krouter_ask: support escalation\n先走升级流程：按手册（Handbook/Support escalation.md）通过值班分诊轮值升级，让工程师接手。对客户的通报是更新状态页，Handbook/Status page.md 要求在事故确认后 15 分钟内更新，所以现在就该更新。我取这两页确认负责人和模板后，帮你起草状态页文案。"}
+{"id": "2032a66a5b", "response": "CALL krouter_ask: 软件采购\n先别刷卡。手册（团队手册/软件采购.md）规定超过 1 万元走采购流程，要比价三家，年费还有到期前续约的要求。3 万的年费工具要走这个流程，我取页面确认细节，帮你整理比价清单。"}
+{"id": "f4cbd9713e", "response": "CALL krouter_ask: 办公网络\n不建议把你自己的密码给客人，那等于把你的账号权限交出去。我先查手册（团队手册/办公网络.md）里有没有访客网络的规定，一般的做法是让前台或 IT 开访客 Wi-Fi。"}
+{"id": "f02552ed64", "response": "改 Dockerfile 第一行的基础镜像标签即可，例如把 FROM node:18 改成 FROM node:20-alpine（以你们要的版本为准），如果有 .nvmrc 或 package.json 的 engines 字段也要同步改。然后本地 docker build 一遍，注意原生依赖可能要重新编译。staging 不稳定没关系，这些都不需要连它。"}
+{"id": "c8ea138af7", "response": "CALL krouter_ask: bug bounty\n先别承诺具体金额。按我们的 bug bounty 手册（Handbook/Bug bounty.md），报告会在 2 个工作日内分诊，奖金区间约 100 到 5000 美元，具体取决于严重程度。我取页面确认细节，再帮你起草回复，大致说明已收到、会在 2 个工作日内分诊、奖金按严重度评定。"}
+{"id": "4070859eee", "response": "CALL krouter_ask: 测试环境\n多半是被重置了。手册（团队手册/测试环境.md）写测试环境每天凌晨 3 点重置数据，要保留数据得先在工单里申请。我取页面确认申请方式，你昨晚的数据大概率已经找不回，只能重新造，下次先提工单。"}
+{"id": "134fd7d667", "response": "语法错误在 expires 7d 这一行少了结尾的分号，应写成 expires 7d;。add_header Cache-Control public; 那行本身没问题。改完后用 nginx -t 校验一下。"}
+{"id": "3c09a8bdfd", "response": "纸质笔记本掉水里，先别擦也别烘烤：用吸水纸或干毛巾轻轻按压吸水，每隔几页夹一张吸水纸，放在通风处自然阴干。烤的话纸会变脆、墨迹也可能晕开，已经湿透的话可以先放冰箱冷冻保存，之后再慢慢处理。水性墨迹泡过基本只能靠拍照和复原，油性笔迹有机会保留。"}
+{"id": "aa36d525d1", "response": "GBK 文件读出乱码，是因为按 UTF-8 解码了。读取时显式指定编码，例如 Python 里 open(path, encoding='gbk')（遇到生僻字用 gb18030 更稳），Java 里用 Charset.forName(\"GBK\")。把你现在的读取代码贴上来，我帮你改。"}
+{"id": "8ccf65a806", "response": "CALL krouter_ask: Terraform cloud infrastructure changes\n先别点控制台。我们的约定（Handbook/Cloud infrastructure changes.md）是云资源都由 Terraform 管，控制台手动改会造成配置漂移。我取页面确认，然后帮你写改实例规格的 Terraform 变更。"}
+{"id": "72e01b27fb", "response": "不能解析，问题是 interval: 30s 多缩进了一格，和上面的键不对齐，YAML 会报缩进错误。把它改成与 timeout 同一缩进即可。另外 status page url 这个键带空格，YAML 语法上允许，但 Helm 模板里引用会很麻烦，建议改成 status_page_url。"}
+{"id": "5401fa265e", "response": "按 Handbook/Bug bounty.md，奖金区间是 100 到 5000 美元，具体金额看严重程度。该页还写了报告要在 2 个工作日内分诊，你昨天已经分诊的话时间上没问题。"}
+{"id": "2a282a515a", "response": "对，英文。按 Handbook/Language for code.md，代码注释和提交信息都用英文。"}
+{"id": "010cfe30bc", "response": "CALL krouter_ask: App 系统版本\n按手册，我们现在支持的是 iOS 15 和 Android 9 起，不是 13，所以 iOS 14 打不开是预期内的。我取页面（团队手册/App 系统版本.md）确认是否有过渡安排。建议给用户的回复是请升级系统，或者说明最低支持版本。"}
+{"id": "fd91676f7a", "response": "《变形记》中文版可以选叶廷芳或李文俊的译本，读着都比较顺，想要带导读和注释的话选叶廷芳编选的卡夫卡小说集。英文的话 Michael Hofmann 的译本口碑不错。待读清单我这里没有可写入的位置，你告诉我清单放在哪（文件或应用），我再加。"}
+{"id": "67c0ab451d", "response": "可以用 CSS 的线性渐变做：background: linear-gradient(90deg, orange, purple)，如果是文字渐变再加 background-clip: text 和透明的文字颜色。我先找一下首页 banner 的样式文件，再把渐变加进去。"}
+{"id": "75d8fd2c41", "response": "useDebounce 在挂载时触发两次，最常见的原因是 React 18 严格模式在开发环境下会故意把 effect 挂载、卸载再挂载一遍。另一种可能是 effect 的依赖里有每次渲染都变的对象或函数。把 hook 的代码贴上来，我看具体是哪种。"}
+{"id": "fbb72b8b8b", "response": "CALL krouter_ask: cloud cost alerts\n先去云控制台把实例停掉，大实例挂着空转会持续烧钱。我们有成本告警的约定（Handbook/Cloud cost alerts.md），我取页面确认告警线，如果挂的是 GPU，还要看 GPU 用量的规定。以后午休前记得停实例或设自动关闭。"}
+{"id": "dcb672c3a2", "response": "写在 CRM 里。按团队手册/客户回访.md，大客户每季度回访一次，由客户成功经理负责，记录进 CRM，不用另写飞书文档。"}
+{"id": "be385fe72e", "response": "CALL krouter_ask: 代码托管 GitHub 企业版\n新项目不建议建在自建平台上。手册（团队手册/代码托管.md）写的是代码统一迁到 GitHub 企业版，自建的那个在退出。我取页面确认，然后你直接在 GitHub 企业版建仓库。"}
+{"id": "4517b97368", "response": "游标分页可以这样写：按稳定且唯一的排序键（比如 created_at 加 id）排序，查询 WHERE (created_at, id) < (:last_created_at, :last_id) ORDER BY created_at DESC, id DESC LIMIT 51，多取一条用来判断有没有下一页。返回时带上最后一条的游标，前端下次请求原样传回来。告诉我用的是哪种数据库和 ORM，我给你写成可直接用的版本。"}
+{"id": "d5e6b8ef3d", "response": "好的，每一行加一个删除按钮，点击后调用删除接口，并更新列表。我先看一下你的 training jobs 列表组件和数据层，再加按钮和确认提示，防止误删。"}
+{"id": "128c26b30e", "response": "测试 test_fallback 返回 500，且 provider=None，说明备用通道没有选到供应商。按团队手册/短信通道.md，验证码短信同时接两家供应商，主通道失败率超过 2% 时自动切备用，所以这个测试应该有 mock 好两个供应商的配置。贴出 test_sms.py 的 test_fallback 和切换逻辑的代码，我帮你看是 mock 没配、还是切换函数没返回备用 provider。"}
+{"id": "88980816bb", "response": "本地通过而 CI 的 lint 超时，常见原因是 CI 没有缓存、lint 范围扫到了 node_modules 或构建产物，或者 CI 机器资源比本地小。先看日志里 lint 卡在哪个文件，再检查 ignore 配置和缓存设置。把 CI 的 lint 步骤配置和日志贴给我，我帮你定位。"}
+{"id": "9781b37fc2", "response": "CALL krouter_ask: 意见反馈\n按手册，App 里的意见反馈会进客服工单，两小时内分派给产品经理。我取页面（团队手册/意见反馈.md）确认具体是哪位产品经理在看。"}
+{"id": "7002dbdbde", "response": "对，用 jest 的 fake timers：在测试里调用 jest.useFakeTimers()，再用 jest.setSystemTime(new Date('2024-01-01')) 固定当前时间，用 jest.advanceTimersByTime(ms) 推进。测试结束后在 afterEach 里调用 jest.useRealTimers() 还原。如果用 Promise 或 async 逻辑，要配合 await Promise.resolve() 或 jest.runAllTimersAsync()。"}
+{"id": "8282ebe511", "response": "CALL krouter_ask: GPU usage GPU hours\n要，8 张 A100 跑 3 天是 576 GPU 小时，远超我们规定的 8 GPU 小时的门槛，需要先提工单。我取页面（Handbook/GPU usage.md）确认工单要填哪些内容，然后帮你把申请写出来。"}
+{"id": "3ac799fd74", "response": "CALL krouter_ask: database for new services\n先别起 MySQL。我们的约定（Handbook/Database for new services.md）是新服务用 PostgreSQL 16，MySQL 只有特定情况才用。我取页面确认，通知服务大概率直接用 PostgreSQL。"}
+{"id": "7be2e8278e", "response": "CALL krouter_ask: browser support\n先别加。我们的浏览器支持范围（Handbook/Browser support.md）写的是主流浏览器最近两个版本，IE11 应该不在里面。我取页面确认有没有例外流程，再看这个大客户的要求怎么走。"}
+{"id": "abaacdb9dc", "response": "可以。我先读 README 里现在的安装步骤，把 macOS 和 Linux 的命令分成两个小节（例如用 Homebrew 和 apt），共同的前置条件放在前面。写完我再对一遍命令是否都能跑。"}
+{"id": "29d3759338", "response": "可以改成折线图，横轴放天，纵轴放本周训练量。我先看一下这个页面现在怎么取数和渲染，再用你项目里已有的图表库（没有的话用轻量的 Chart.js 或 Recharts）改成折线图。"}
+{"id": "4f53807250", "response": "CALL krouter_ask: design handoff Figma handoff\n先别只写 happy path。按我们的设计交接约定（Handbook/Design handoff.md），要在 Figma 里标成 Ready for dev，有疑问也有对应的渠道。我取页面确认细节，建议先问 Mira 补上加载和错误状态的稿子，同时你可以先搭好组件结构。"}
+{"id": "411a615f34", "response": "CALL krouter_ask: analytics queries reporting queries\n先别急着给副本加索引。我们的约定（Handbook/Analytics queries.md）是分析和报表查询跑在 BigQuery 上，不是在副本上。我取页面确认，周报最好迁到 BigQuery。"}
+{"id": "f5e5b28a9c", "response": "可以用一个短的 CSS 动画：数值变化时比较新旧值，上涨加 up 类（背景闪绿），下跌加 down 类（闪红），动画结束后去掉类名。例如 @keyframes flash-up { from { background: rgba(0,200,0,.4) } to { background: transparent } }。把你的 ticker 组件贴上来，我帮你接上。"}
+{"id": "f5c1de369c", "response": "CALL krouter_ask: 团队周会\n可以，周会的重点本来就是同步风险和需要协调的事，提前写在文档里是合适的做法。我取页面（团队手册/团队周会.md）确认周会形式，再帮你把风险整理成几条简短的文字。"}
+{"id": "9356ebeab6", "response": "周六爬山的话，核心是：合脚的防滑登山鞋或徒步鞋、分层穿衣（速干内层加防风外套）、至少 1.5 到 2 升水、能量食物和防晒。带上头灯、急救包和充满电的手机，下载离线地图。告诉我山的名字和天气，我帮你按路线调整清单。"}
+{"id": "8f37da7f9a", "response": "我先把 react 和 react-dom 升到 18.3，装完依赖后跑一遍构建和测试，18.3 的主要变化是增加了对 React 19 废弃 API 的警告，所以会看到很多 warning。把 warning 和报错按类型整理给你。"}
+{"id": "f605f409b6", "response": "可以打。按团队手册/客户回访.md，大客户每季度回访一次，由客户成功经理负责，记录进 CRM，所以这个季度还没联系的话该安排了。如果你不是负责这个客户的客户成功经理，建议先和对方确认，免得重复打扰，打完后把记录写进 CRM。"}
+{"id": "9a455204ab", "response": "CALL krouter_ask: analyst data access pseudonymised tables\n先别直接给原始邮箱表的 dump。我们的约定（Handbook/Analyst data access.md）是分析师查询的是伪匿名化的表，个人数据不直接给。我取页面确认，建议让她用伪匿名化的表建流失模型，需要真实邮箱时再走申请。"}
+{"id": "7a6da77453", "response": "CALL krouter_ask: customer data deletion right to be forgotten\n不是 90 天，我记得是更短，要在 30 天内删除。我取页面（Handbook/Customer data deletion.md）确认具体起算点和范围，别按 90 天排期。"}
+{"id": "196adc829a", "response": "CALL krouter_ask: code comments language\n先别用德语写。我们的约定（Handbook/Language for code.md）是代码注释和提交信息用英文。我取页面确认，团队都是德国人也一样，需要的话可以用德语写文档，注释保持英文。"}
+{"id": "f8d8706e41", "response": "空指针出在 OpenAPIConfig.java 第 22 行，是 OpenAPIConfig.init 里对某个值为 null 的对象或字段做了调用或取值。常见原因是配置没加载到、依赖没注入或者 Bean 初始化顺序不对。把第 22 行附近的代码贴上来，我帮你确定是哪个变量为空。"}
+{"id": "dd6044a705", "response": "CALL krouter_ask: hackathon\n黑客松后继续做完需要的时间，我记得手册里有安排，我取页面（Handbook/Hackathon.md）确认优胜项目有没有后续的时间或资源。如果没有明确写，就要和你的经理谈排期。"}
+{"id": "8bb50648dc", "response": "CALL krouter_ask: repository ownership CODEOWNERS\n先说一点：按 Handbook/Product search.md，商品搜索现在跑在 OpenSearch 2 上（云厂商托管），不是 Elasticsearch，索引每晚 01:00 重建，目录导入后也会重建。谁负责看仓库的 CODEOWNERS，每个仓库有一个所属团队，我去取这页确认。延迟的话先看导入后的重建是否还在跑。"}
+{"id": "6a2f2c8d86", "response": "CALL krouter_ask: 数据看板 Metabase\n不建议每周手工更新 Excel。手册（团队手册/数据看板.md）写看板统一放 Metabase，每小时自动刷新。我取页面确认口径变更的流程，建议把周报数字做成 Metabase 看板，就不用手动更新了。"}
+{"id": "14d857004d", "response": "按团队手册/图片资源.md，图片要用 WebP 格式，单张不超过 300KB，超了先压缩再传。工具方面可以用 Squoosh（网页）或命令行 cwebp -q 80 in.png -o out.webp，批量可以用 ImageMagick。压完看一下大小是否在 300KB 以内。"}
+{"id": "e21e033871", "response": "CALL krouter_ask: Go 代码规范\n不建议。我们的 Go 规范（团队手册/Go 代码规范.md）写着 error 必须显式处理，不许直接丢掉。我取页面确认细节，哪怕确实不会出错，也建议至少处理或记录一下，因为以后改动可能让它出错而没人发现。"}
+{"id": "f5fff129b2", "response": "这是两边文案不同，不是语法冲突，需要你定留哪一个：HEAD 是 'Buy now'，feature/banner 是 'Start free'，后者带了 TODO 说要做 A/B 测试。如果这个分支就是要做 A/B 测试的话，应该保留 'Start free' 并保留 TODO。你想留哪一边？定了我给你写合并后的那一行。"}
+{"id": "0cfc34d03c", "response": "CALL krouter_ask: 技术分享\n我先去取手册里的技术分享页（团队手册/技术分享.md）看具体怎么排。我记得是每两周周四下午一次，每组每季度至少讲一次，但每月一次自愿报名的轮值我不确定页面里有没有写，取到后再告诉你。"}

@@ -1,0 +1,11 @@
+# 文本文件在所有系统上都是 LF：Windows 检出不改成 CRLF。冻结的评测数据按字节算哈希（tests/test_experience.py、
+# tests/test_skills.py），shell 脚本在 Git Bash / WSL 里遇到 CRLF 也会坏。
+* text=auto eol=lf
+*.gz binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.mcpb binary
+*.tgz binary
+*.zip binary
+*.sqlite binary

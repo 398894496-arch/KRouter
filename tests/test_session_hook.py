@@ -13,12 +13,12 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-HOOK = REPO / "skill/krouter-obsidian/scripts/session_hook.py"
+HOOK = REPO / "skill/krouter/scripts/session_hook.py"
 DIGEST = "## 定了什么、改了什么（模型提炼，待你确认）"
 
 
 def _root(path: Path) -> str:
-    sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
     from krouter_home import project_root
 
     return project_root(str(path))
@@ -175,6 +175,7 @@ def test_end_does_nothing_without_consent(tmp_path):
 def test_plugin_declares_its_hooks():
     # 纠正就记（UserPromptSubmit）和压缩前记一笔（PreCompact）也随插件装上；同意导入之前它们什么都不做
     hooks = json.loads((REPO / "hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
-    assert set(hooks) == {"SessionStart", "SessionEnd", "UserPromptSubmit", "PreCompact"}
+    assert set(hooks) == {"SessionStart", "SessionEnd", "UserPromptSubmit", "Stop", "PreCompact"}
     mode = {ev: hooks[ev][0]["hooks"][0]["command"].rsplit("\" ", 1)[1] for ev in hooks}
-    assert mode == {"SessionStart": "start", "SessionEnd": "end", "UserPromptSubmit": "prompt", "PreCompact": "end"}
+    assert mode == {"SessionStart": "start", "SessionEnd": "end", "UserPromptSubmit": "prompt", "Stop": "turn",
+                    "PreCompact": "end"}

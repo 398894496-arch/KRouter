@@ -11,6 +11,8 @@ permissions:
   # 构建来源证明：由 GitHub 的工作流身份签名，不和安装包放在一起，`gh attestation verify` 可查
   id-token: write
   attestations: write
+  # 团队服务器镜像推到 GHCR
+  packages: write
 
 jobs:
   pack:
@@ -42,15 +44,67 @@ jobs:
           print("release v" + tag + ": versions, changelog and status block agree")
           CHECK
       - name: Pack and checksum
-        run: |
-          npm pack
-          sha256sum dsh-krouter-*.tgz > SHA256SUMS
-          cat SHA256SUMS
+        # 和本地发版前跑的是同一个脚本：打包、算校验和，并检查 README 引用的每个附件都在、包里有安装要跑的东西
+        run: sh scripts/release_pack.sh .
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: dsh-krouter-*.tgz
+          subject-path: |
+            dsh-krouter-*.tgz
+            bootstrap.sh
+            bootstrap.ps1
+            KRouter.mcpb
       - name: Attach to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dsh-krouter-*.tgz SHA256SUMS --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dsh-krouter-*.tgz bootstrap.sh bootstrap.ps1 KRouter.mcpb SHA256SUMS --clobber
+
+  smoke:
+    # 发出去之后，照 README 两种语言里的每条安装命令去真实地址取一遍：任何一条取不到、跑不起来就失败
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: astral-sh/setup-uv@v5
+      - name: Every install command in the README works against the published release
+        run: |
+          pipx --version || python3 -m pip install --user pipx
+          python3 scripts/release_smoke.py --tag "${{ github.event.release.tag_name }}"
+
+  image:
+    # 团队服务器镜像：版本检查通过后才构建；冒烟测试过了才推送；镜像本身也带构建来源证明
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - name: Build
+        run: docker build -t krouter:release .
+      - name: Smoke test
+        run: sh scripts/docker_smoke.sh krouter:release
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Push
+        id: push
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          IMG=ghcr.io/398894496-arch/krouter
+          docker tag krouter:release "$IMG:$TAG"
+          docker tag krouter:release "$IMG:latest"
+          docker push "$IMG:$TAG"
+          docker push "$IMG:latest"
+          echo "digest=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMG:$TAG" | cut -d@ -f2)" >> "$GITHUB_OUTPUT"
+      - name: Attest the image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/398894496-arch/krouter
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

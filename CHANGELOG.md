@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -12,6 +12,604 @@ notice, then the details.
 ## Unreleased
 
 Nothing yet.
+
+## 2.0.0 — 2026-11-10
+
+What you will notice: mention something and the agent recalls what was
+decided about it, with its page; a lesson from one task is offered on another in the same situation, and lessons that
+keep coming back grow into skills; a lookup gives five pages, two of them ones the vault connects to the answer; a change of mind holds with no key; the default install
+is lighter, says what it changed and is English end to end on an English machine; the memory is a plain folder,
+Obsidian optional; `krouter why` explains how a lookup came out and `krouter view` shows what the memory holds on a read-only page of its own; a team server knows who wrote what and holds ten callers at once; LangGraph can keep its long-term memory in the
+folder; Codex, Cursor and Claude Desktop were tested inside the apps, and Linux in a clean container. 2.0 because the receipt and the
+install path change (below).
+
+### Mention it and it comes to mind (on by default)
+
+- **Two layers, both on.** The session-start hook now hands the host a standing index: one line per live topic of
+  the alias table (its name, one other name, what was decided, the page; a replaced page's row counted under the page
+  that replaced it), rule pages first, then most recently used or updated, at most 60 full lines and 5,400 characters,
+  then one line on how to fetch a page: `krouter_ask`, or the route command, or the file path, since some hosts show
+  the model no tool list. With more topics than that, every topic keeps its name in one "also known" line and the
+  first ones keep full lines (300 topics: 16 full lines and all 300 names, about 2,500 tokens). And the prompt hook
+  looks up every message on this machine (`recollect.py`, no model call): a name from the alias table (the lock's
+  rules, Latin names as whole words), a trigger word or a learned question, and full-text recall only when one page
+  leads by 2.5 × or more; a name match also needs a second key (recall over the whole message must not refuse it, or
+  the page must match at least four of its content words). The hook brings at most two pages in that turn's context,
+  each with its conclusion, its path and a mark that it is memory, not something you said; an old page brings the
+  page that replaced it and says an earlier page said otherwise; superseded, expired and secret pages never come.
+  Code fences and lines that read like pasted code, logs, diffs or command output are not matched; a page comes once
+  per session (again if its conclusion changed), at most ten per session; nothing matched, nothing printed. Every page
+  brought is listed in `~/.local/state/krouter/recalled.jsonl` for `why` and the viewer. `KROUTER_RECALL_PROMPT=0`,
+  `KROUTER_RECALL_INDEX=0` or `KROUTER_INJECT=0` turn them off.
+- **Measured.** The hook alone (set 32, cases written blind by Sonnet 5.5): quiet (1 of 24 should-be-quiet messages
+  brought a page, no wrong or superseded page) but only 7 of 24 mentions, because people mostly say a thing in other
+  words. Both layers (set 35, 120 new cases, two thirds of the mentions without the page's names; held-out, run once
+  per host): **Sonnet 5.5 remembered 24 / 24 mentions and 12 / 12 changed rules, 1 of 24 quiet messages moved either
+  layer, no wrong page; Haiku 5.5 23 / 24, 12 / 12, 2 of 24, no wrong page.** The hook found 7 of the 24, the host
+  the rest from the index. With 240 unrelated topics in the index (development): Sonnet 23 / 24, Haiku 21 / 24, no
+  noisier. Hosts given a page the hook brought used it and cited it 10–11 of 11 times and were not pulled off course
+  by a page that did not fit (set 33). The whole prompt hook takes 83–126 ms at the median, at most 144 ms at p95
+  warm, on 110 and on 10,000 pages (62 ms with the lookup off). Claude Code and Codex get the hook's note as
+  `additionalContext` (checked with the real Codex CLI 0.155 against a local mock model: a developer message right
+  after yours); Cursor gets the index at session start but its `beforeSubmitPrompt` cannot add context, so the
+  prompt hook does not run there.
+- **Learning how you say things (experimental, off).** With `KROUTER_RECALL_LEARN=1` the turn hook notes a page the
+  agent fetched and used after the prompt hook said nothing, and the nightly `learn_mentions` step adds the message's
+  most distinctive phrase as a provisional trigger word (`下意识触发词-待验证.psv`, recall only; a phrase the agent
+  later passes over is dropped). Set 36: after learning, the hook alone brought the right page for 6 of 13 later
+  messages that reused a team expression (English 5 / 8, Chinese 1 / 5) and quiet messages were no louder (1 of 32
+  before and after); the line was 7 of 13, so it stays off. Chinese phrases are cut in the wrong places without word
+  segmentation.
+- **What a session starts with, in one order and under one cap.** This project's decisions (at most 1,600
+  characters), the experience digest (at most 3,000: fewer card lines when longer), the skills list (at most 2,000:
+  drafts, then the last skills left out), the standing index (what is left, at most 5,400; left out under 800), then
+  one line on the write tools and on `recall: none`; 9,400 characters in all, under the 10,000 Claude Code shows in
+  full. How to call each tool is said once: `krouter_ask` by the index's closing line, `krouter_skill` by the skills
+  list, `krouter_correct` and `krouter_learn` by the last line (with no index, that line names `krouter_ask` too). The
+  prompts the development sets were written on (sets 15, 16, 24, 25, 33, 35) are unchanged by this, word for word;
+  the real-session sets 30 and 31 saw the opening before it. `tests/test_session_start.py`.
+
+### Lessons that carry over to other tasks
+
+- **Experience that keeps coming back grows into a skill.** The nightly run drafts a skill (a Markdown page: a name,
+  when to use it, numbered steps, which cards and sessions it came from) from a card adopted or seen again 3 times, or
+  from several cards on the same kind of situation; one model call at most, through the host lane, and only when the
+  cards changed (no lane: skipped, and the nightly report says so). Drafts are listed at session start apart from the
+  facts and marked as drafts; a draft adopted twice becomes a skill, one offered 4 times or 45 days with no adoption is
+  withdrawn, each change one commit (`skills.py undo <run>`), and the nightly report lists what was drafted, promoted
+  and withdrawn with the counts. The host gets names and "when to use" only and fetches the steps with the new MCP tool
+  `krouter_skill`; nothing is written into any app's configuration, and `skills.py export --app claude|codex|cursor`
+  does that only when you run it. On by default when the vault has skills (`KROUTER_SKILLS=0` off). Held-out (sets
+  24–26, registered first, material by fresh Sonnet 5.5 subagents): **the right draft in 16 of 16 scenarios, all 16
+  judged faithful and subject-free, no draft in 16 that should get none; the right skill fetched and followed on 12 of
+  12 tasks it fits, nothing said on 12 it does not**; follow-ups recorded as adopted 4 of 5, falsely 0 of 13. The
+  adoption cues were widened on development to get there ("已经把…发给他了", "the fan is quiet again"), which also
+  applies to experience cards. `docs/SKILLS.md`, `bench/skills/`.
+- **Experience cards are on by default when your vault has some.** The digest at session start, the use records and
+  `krouter_learn` now default on (`KROUTER_EXPERIENCE=0` turns them off; extraction through the model lane stays
+  opt-in). Cards no longer carry `when` phrases; the agent names the session's subject and a lesson that still uses it
+  is sent back; every number left in a card must be in the session; and a lesson the digest already has is recorded
+  on the old card as seen again (`same_as`) instead of written twice, which also moves that card up the digest.
+  Nightly lists near-duplicate cards to merge by hand. Set 23 (new sessions by another model, duplicate labels
+  confirmed by a second model, each card judged by the host that did not write it): a card for 13 of 16 lesson
+  sessions, faithful 92%, subject-free 92%, no new card on any of 8 duplicates, none on empty sessions: passed.
+- **Experience cards: a lesson from one task offered on another task in the same situation, measured.** With `KROUTER_EXPERIENCE=1`, distilling a session also asks the model lane for at most two cards
+  (situation, action, result, the lesson without the subject, source) in `02 经验与方法/经验卡/`, checked before they
+  are written and recorded in the change ledger (no model lane, nothing happens), and the session-start hook gives the
+  host model a digest of every card (one subject-free line each, at most 30, about 780 tokens at the cap) with one line
+  on how to use it: offer at most two, as lessons from another task with their id, only when the situation is the
+  same. Cards never appear among recalled facts. Set 15 (`bench/memory_honesty/HELDOUT.md`, registered before any
+  host ran; 56 cases written by Fable 5.2 from the lessons alone): on held-out, **Sonnet 5.5 recalled 14 of 14 and
+  Haiku 5.5 11 of 14 tasks with a new subject, and neither spoke on any of the 14 that should get nothing**; with 40
+  distractor cards added (development), 14 and 13 of 14, still none. The first version matched by shared words
+  (set 13) and found 0 of 14: one situation in other words shares no words. (Off by default at this stage; set 23 turned it on, above.) `docs/EXPERIENCE.md`, `bench/transfer/`.
+- **Experience cards, round three: in English, written by the agent itself, ranked by use.**
+  The digest is English on an English vault; on set 16 (English, cases by Sonnet 5.5) held-out Sonnet 5.5 offered the
+  right lesson on 14 of 14 and Haiku 5.5 on 13 of 14, and neither spoke on any of the 14 that should get nothing. The
+  agent that ran a session can write the card itself, with no key: `krouter_learn` over MCP or `experience.py learn`.
+  Session imports record when a card was offered (its id in an answer) and, conservatively, when it was adopted (the
+  next question says it was followed or worked); the digest lists adopted cards first and sinks cards offered three
+  times and never taken. Set 17 checked twelve synthetic sessions: a card for every one with a lesson, none for
+  duplicates or empty ones, but subject-free 86% and faithful 71% against a 90% bar, so the "on when the vault has
+  cards" default (`experience.DEFAULT_ON`) stayed off here (set 23, above, passed).
+
+### Pages the vault connects, not only pages that match
+
+- **A lookup now gives five pages: three that match the question, then up to two the vault connects to them.** The
+  recall cache keeps an edge table (links, `supersedes:`, same imported session, same day, shared rare words, and
+  co-citation), and recall spreads from the first three direct hits along it. The first three places are always direct
+  hits; associated pages take places four and five (with fewer than three direct hits they may move up), and a place
+  they do not need goes to the next direct hit. Hub pages (index, overview, 12+ links) and replaced pages are never
+  offered; a page joined only by shared words needs at least six of them. A refusal stays a refusal: with no direct hit
+  nothing is associated. The receipt lists them apart, under `associated:`, each with the edge it came along (`via:`).
+  Built in, no switch. Set 18 (`bench/memory_honesty/HELDOUT.md`, registered before the path was written; LongMemEval
+  split in half, tuned on one half, the other run), "every answer session among the pages", held-out half at five
+  pages: multi-session **40 of 47** (BM25's top five 31, KRouter's five direct hits 32; paired against BM25 [+4,
+  +15]), temporal 58 of 73 (54, 53), all **210 of 235** (198, 198; [+3, +21]). Against the three pages KRouter gave
+  before: 28, 50 and 187. LoCoMo, a check that decided nothing: 1 185 of 1 536 at five pages, BM25 1 181, five direct
+  hits 1 204, the old three pages 1 104; on its short sessions the associated pages cost places four and five that a
+  direct hit had right. Memory honesty, six sets: unchanged. Cost: the receipt is about a fifth longer (median 1 692 →
+  1 952 characters, 2.6 → 3.8 pages listed on the bench questions), a CLI lookup 71 → 77 ms, in-process 12.5 → 17.7
+  ms at 10,000 pages; building the cache for 10,000 pages 3.6 s → 6.0 s, 29 → 38 MB (50,000 pages: 25 → 32 s, 150
+  → 193 MB, measured with other jobs running). `recall(..., assoc=False)` gives the direct ranking alone (the nightly
+  checkup and reconsolidation use it). Offline count, no model: `bench/longmemeval/assoc.py`.
+- **Pages a confident lookup returned together get a stronger edge, overnight.** The router's query log now records
+  the direct hits each lookup returned (`pages`; never the associated ones, so the path cannot feed itself), and a
+  new nightly step, `cocite` (after `checkup`, no model, writes only a file in the state directory), adds one to the
+  co-citation weight of every pair a `high` or `medium` lookup returned, reading each log line once. The weight
+  saturates at five.
+- **The MCP server tells the agent how to read the new receipt lines:** answer from the page listed first when
+  `recall_conflict:` says an earlier page says otherwise (read both when it says `possible`), and read a page under
+  `associated:` only when the direct hits leave part of the question open, never citing it as the answer alone.
+
+### No key needed, a change of mind included
+
+- **When the vault changed its mind and nothing has been distilled yet, the newer page now comes first, and the
+  receipt says an earlier page says otherwise.** No model needed. Two of the top three pages that match the question
+  about as well, share most of its words and carry dates, where the newer one has a line saying something was
+  changed (`switched … to`, `instead of`, `no longer`, `改成`, `换成`, …) that names the subject: the newer page is
+  listed first, both are marked (`conflict=newer` / `conflict=older`), and the receipt prints
+  `recall_conflict: an earlier page says otherwise. …`. When the dates cannot order them (the same day) the pages are
+  marked `possible` and the order is kept; anything less is left alone. The audit's case (Monday PostgreSQL,
+  Wednesday SQLite, imported, no key; the old page was first) is a test. On LongMemEval's answerable questions it
+  fires as "sure" for 42 of 470 and reorders 21; the newest answer session is first for 44 instead of 39 of the 72
+  knowledge-update questions, and an answer session is first for 420 of 470 either way (counted without the
+  refusal gate; not a registered set). Memory honesty, six sets: unchanged. On by default; `KROUTER_CONFLICT=0` turns it off.
+- **"Use SQLite from now on" holds at once, with no key.** The agent calls `krouter_correct` in the turn you correct
+  something (or `corrections.py apply`): a correction page that supersedes the old one, the old page marked
+  `superseded` (or its line annotated when it says other things too), the corrections page and the change ledger, one
+  commit. And the nightly distill now marks a session page `superseded` when a later change of mind replaced every
+  decision on it, so a lookup stops giving the old answer as current. "改用" now counts as a correction.
+  `docs/AUTO_CAPTURE.md` §4, `tests/test_correct_now.py`.
+- **The nightly run works with no key, on the agent you are logged in to.** Run for real in a throwaway vault: the
+  nightly job found the logged-in Codex CLI by itself, distilled two sessions and settled the correction candidate in 6
+  calls, each on the subscription record page, stopped at the cap. The install's nightly question says, in one
+  sentence, that it uses that CLI's subscription, the daily cap and how to turn it off. `docs/HOST-LANE.md`.
+- **Model steps can borrow the agent you already use, with a cap you can see.** With no key, the nightly steps run
+  through the agent's own CLI on your login (`claude --print`, `codex exec`, …), at most 30 calls a day
+  (`KROUTER_HOST_CLI_MAX`), each one a line in `90 系统文件/自动化/订阅调用记录.md` (metadata only); this spends your
+  subscription, and `KROUTER_HOST_CLI=0` turns it off. KRouter never reads or reuses an app's login or keychain. A key
+  you set still goes first. MCP sampling is not used (deprecated; Claude Code does not support it); the server records
+  whether a client declares it. The nightly report lists what is off when there is no lane at all. The one real run on
+  the author's machine failed on a lapsed CLI login. `docs/HOST-LANE.md`.
+- **A correction the distill misses is no longer lost.** When no line of the session's digest covers a correction you
+  typed, it is written into the digest in your own words (`补记`) and listed in the change ledger, instead of being
+  settled as not holding. Settling no longer counts the correction wording itself (`改成` on both sides) as shared
+  content: a match needs a shared model, number or name, or at least three shared Chinese terms. On the
+  maintainer's pages, 7 of 10 candidates had been tied to an unrelated line, three of them corrections the distill had
+  missed (`docs/AUTO_CAPTURE.md` §5).
+- **The correction catcher keeps only what you typed.** Blocks the app attached and documents you pasted in are left
+  out before matching, and a question (ending in 吗 / 呢 / ？) or a suggestion ("要不要再…") is not a correction. On
+  the same 11 days: 12 kept lines, 7 of them corrections, became 6 kept, all corrections.
+
+### A lighter install that says what it changes
+
+- **Recommended once after installing: bring in your past sessions.** The README gives three commands of
+  `import_sessions.py`: a preview (`--days 3650 --dry-run --distill`: how many sessions, how many to distill, how many
+  characters; writes and sends nothing), the import of all of them with no model (`--local`), and distilling the
+  newest 40 (`--distill --distill-max 40`, on a key or a logged-in agent's subscription; at least one call per session;
+  30 calls a day through a CLI). 2.0 does not work through the whole history by itself: run the third again with a
+  larger number. `docs/INSTALL.md` has the details and how to take a run back; `docs/FOR-AGENTS.md` tells an installing
+  agent to offer it, show the preview's numbers, and go on only on a yes. A manual `--distill` with no model lane now
+  says `distill skipped` once and exits 0 (it failed once per session). Checked in a throwaway home with five
+  synthetic sessions.
+- **The default install no longer imports past sessions.** It makes the memory folder, connects the apps it finds
+  (each settings file it changes is copied to `*.krouter-bak` first, and every file it created or changed is listed
+  at the end) and records sessions from then on. Its last line gives the one command that imports the last 7 days;
+  `--all` does that up front, with claude-mem's memory (the old default). `--no-import` / `--minimal` stay lookup only; `import_sessions.py --revoke` stops the recording.
+  (Earlier in this release's development the default imported the last 7 days; that is `--all` now.)
+- **Install:** the README line saves the script to a file before running it, so a failed download exits non-zero
+  (`curl … | sh` exited 0 on a 404). `--minimal` installs lookup only (no session import, nightly job, Claude Code
+  plugin, hooks or Cursor rules) and connects only the apps named with `--apps`. Run with no terminal (by an agent),
+  the installer no longer opens Obsidian; `--open` forces it. `--dry-run` lists every vault file, the router, the
+  rules, the recorded path, the plugin and its marketplace. The install output and the README say what works without
+  a model, what still holds a change of mind without one, and what does not ("No key needed" above). The
+  health page's `lamp` is `running` only when a nightly job is installed. A `~/.codex` holding only `tmp/` (left by
+  probing the Codex app's login) no longer counts as a Codex install.
+- **`krouter doctor`** (and `scripts/krouter doctor` from a clone or `~/.dsh-krouter/current`, no pip needed): one
+  verdict, OK or what is missing with the command that fixes it. The installer prints where `krouter` is.
+- **Uninstall** also uninstalls the Claude Code plugin and removes its marketplace when it points at a folder on this
+  machine (its session hooks kept firing before); `--purge` also removes `~/.dsh-krouter`. The README's Install
+  section has the uninstall command. `first_run.sh` no longer requires ripgrep (the router already fell back to a
+  built-in search). The release package now carries `sdk/krouter`, `.claude-plugin/`, `hooks/` and `plugin/`, so a
+  release install gets the plugin and `krouter doctor` like a clone does.
+- **The one-line install's script comes from the release too.** Releases attach `bootstrap.sh` and `bootstrap.ps1`
+  (in `SHA256SUMS`, with a provenance attestation), and the install lines read
+  `https://github.com/398894496-arch/KRouter/releases/latest/download/…` instead of `main`. Until the first release that
+  carries them, that address does not resolve: publish the release before pointing people at the new line.
+- **Release checks you can run before tagging:** `scripts/release_pack.sh` builds the assets exactly as the release
+  workflow does (the workflow now calls it) and fails when a README links an asset the release would not attach or the
+  package lacks what a release install runs (2.0's new modules included: associated pages, experience cards, the
+  host lane, in-session corrections). `scripts/release_smoke.py` runs every install command in both READMEs
+  against the real addresses (assets, the one-line install with its checksum, `uvx --from`, `pipx install`, the
+  Claude Code marketplace); a new `smoke` job runs it after each release. Against today's addresses it fails, as it
+  should: `releases/latest/download/bootstrap.sh` is a 404 and `main` has no `pyproject.toml` yet.
+- **One install wires every app it finds.** Besides Claude Code and Codex, the installer now writes KRouter into the
+  MCP settings of Claude Desktop, Cursor, VS Code (Copilot), GitHub Copilot CLI, Gemini CLI, Kiro and Zed when each is
+  installed, in the format each app documents (checked 2026-11-09): everything else in the file is kept and copied to
+  `.krouter-bak`, a file it cannot parse (Zed's comments, say) or a `krouter` entry it did not write is left alone,
+  and `uninstall.sh` takes out only its own entries (`bootstrap.py --unregister-mcp`). `tests/test_mcp_apps.py`
+  checks each format. Not yet tested inside these apps.
+- **The Claude Code plugin is installed with the rest**, from the same checksummed release added as a local
+  marketplace, not from GitHub's `main`; an older Claude Code without `claude plugin` gets the one-line hint as before.
+- **Cline CLI** is wired by the installer too (`~/.cline/data/settings/cline_mcp_settings.json`, per Cline's docs).
+- **A Python package and a `krouter` command.** `pyproject.toml` builds `krouter` (standard library only):
+  `krouter.ask()` returns the page, the one-line answer, whether it refused and the confidence; `krouter.status()`;
+  `krouter.note()`; the command `krouter ask|status|note|mcp`. Install with
+  `pipx install "git+https://github.com/398894496-arch/KRouter"`; not on PyPI yet. `tests/test_sdk.py`.
+- **`krouter demo`**: decide, change your mind, ask, on a throwaway memory in a few seconds, with no install and no
+  key (`uvx --from git+https://github.com/398894496-arch/KRouter krouter demo`, `--lang zh`); the templates ship in
+  the package for it. The README opens with it and with a "Start here" table.
+- **Your AI can write a line down.** A third MCP tool, `krouter_note` (text up to 500 characters; kind `decision`,
+  `correction` or `note`), appends one line to that day's notes page `05 时间日志/会话摘录/<date>｜agent 记下.md`
+  (status `provisional`, so a clue, never a rule page), with secrets redacted and the calling app's name from MCP
+  `initialize`. Each note is a change-ledger entry and, in a git vault, one `[krouter-run <id>]` commit that
+  `import_sessions.py --undo <id>` takes back. On by default over stdio; the HTTP server keeps it off unless started
+  with `--allow-write`.
+
+### English all the way through
+
+- **An English install is English all the way through, and the install says what it changes.** A new English vault
+  gets English folder and file names (`Home.md`, `02 Methods/`, `90 System/Automation/Daily health.md`, …) from
+  `skill/krouter/scripts/zones_en.psv`, recorded in the vault's `krouter-zones.psv`; `krouter demo`, `status`,
+  receipts' `how` lines, `first_run.sh` and the correction-candidates page (`YYYY-MM-DD｜Correction candidates.md`)
+  follow it. Vaults with the default (Chinese) names keep working unchanged; nothing is migrated. The language is
+  `--lang`, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's (an English terminal on a Mac set to Chinese
+  used to get the Chinese install).
+- **Corrections in an English vault link the vault's own pages.** `krouter_correct` / `corrections.py apply` wrote
+  links and reported paths with the default layout's names (`05 时间日志/会话摘录/…`) where the page is
+  `05 Journal/Sessions/…`; they now use the vault's own path, as do the import's `writes` list and a secret page's
+  `how` line (English in an English vault). Found by the no-key change-of-mind check in a throwaway home.
+- **An English vault's session pages say Q and A.** Imported session pages in an English vault now label turns
+  `**Q**` / `**A**` under `## Excerpt` instead of the Chinese 问 / 答 / 摘录; every parser reads both, so existing pages
+  and Chinese vaults are unchanged.
+
+### Independent of Obsidian
+
+- **`KROUTER_VAULT`** is the memory folder's name. `OBSIDIAN_VAULT` still works for older installs; when both are set,
+  `KROUTER_VAULT` wins (an explicit `--vault` / `vault=` beats both). Messages and the README say "memory folder";
+  Obsidian is one optional way to open it.
+- **Messages, the README and the MCP server say "memory folder"**: a plain Markdown folder; Obsidian is one optional
+  way to open it, and nothing needs it installed.
+
+### See what it remembers
+
+- **`krouter why "<a sentence>"` explains a lookup in words.** Which alias or words matched, why each page sits where it
+  does (the words it holds and where, text relevance × tier weight), why the confidence is that one, which pages came
+  along a connection and from which page by which kind of edge, which page replaced which, the experience cards that
+  go with the question, and, when the memory does not know, which word it could not find and which check refused. In
+  the memory's language (`--lang`, `--json`). It writes nothing and logs nothing: a `why` is not a question the
+  nightly job should learn from. The refusal reasons are recomputed from recall's own helpers; a test keeps them in
+  step with `recall`, and when a refusal cannot be reproduced the output says so instead of guessing.
+- **`krouter view` opens a read-only page about the memory, on this machine only.** It prints
+  `http://127.0.0.1:<free port>/` and opens nothing unless you add `--open` (`--demo` shows a made-up sample memory).
+  Pages with search (paged, so a memory of tens of thousands of pages costs one screen a request), one page with what
+  replaced it and what it connects to, the connections around a page with why each exists and how strong, the
+  experience cards with times offered, adopted and met again, what the last nights did (report, ledger, git history of
+  the report), and a box that shows what `why` shows. English and Chinese, light and dark, phone width. Python's
+  standard library and three hand-written files in `sdk/krouter/view_ui/`; no new dependency. It binds 127.0.0.1 only,
+  answers GET and HEAD only (every other method is 405, there is no endpoint that writes), refuses a request whose
+  `Host` is not its own address, and sends a Content-Security-Policy that allows nothing from outside; none of its
+  responses names an external address. `tests/test_why.py` and `tests/test_view.py` check these over HTTP without a
+  browser. On a synthetic memory of 10,000 pages (M2): first index 6–7 s, later starts 0.06 s, the first screen
+  of rows 0.05–0.3 s after the page loads, one explanation about 0.1 s ([how to read it](docs/DETAILS.md#see-what-it-remembers-krouter-why-and-krouter-view)).
+- `krouter.sample` builds the sample memory (and, for timing, a synthetic memory of any size) the page, its tests and
+  the README screenshot use.
+- **`krouter view` and `krouter why` show what the hook and the skills did.** The viewer lists skills and drafts
+  with how often each was offered and adopted, and a "Brought to mind" tab lists every page the prompt hook brought
+  (from `recalled.jsonl`; empty when there is none). `krouter why` says, for a sentence, whether the prompt hook would
+  bring the page itself and by which route, whether the page is in the session-start index (so an agent that used it
+  without the hook fetched it after reading the index), and when the hook brought it before.
+
+### Tested inside the apps
+
+- **Claude Desktop: no more entries lost on restart, and a one-click extension.** Claude Desktop keeps its settings in
+  memory while it runs and writes the whole `claude_desktop_config.json` back when it quits, so an entry the installer
+  wrote while the app was open disappeared after the next restart. The installer now checks whether the app is running
+  (macOS: a process whose executable is `…/Claude.app/Contents/MacOS/Claude`; Windows: a `Claude` process under
+  `AnthropicClaude` or `WindowsApps`) and, if so, leaves the file alone and offers two ways: quit the app and run
+  `bootstrap.py --connect claude-desktop`, or double-click `KRouter.mcpb`, built for your memory folder. Uninstall
+  leaves the file alone too while the app runs, and says so. `krouter doctor` reports when Claude Desktop is installed
+  but KRouter is in neither its settings file nor its extensions. The extension (`scripts/build_mcpb.py`, MCPB
+  manifest 0.3, Python server, the memory folder as a `directory` setting) is a release asset; `release_pack.sh` and
+  the release smoke check its structure and start it from the unpacked bundle for a real MCP round trip.
+  Tested inside the app (Claude Desktop 4.23118.1, macOS, 2026-11-10) with a test build pinned to a sample memory
+  folder: one press of Install, no restart, about 7 seconds of online checking with nothing on screen, then 3 tools
+  connected; in an ordinary chat one question was answered with its page (`02 Methods/Automation/Seal the day from the
+  log file.md`) and one refused (`recall: none`). The README says to press Install once and wait (a second press
+  removed it). The test build named the full Python path, as the installer's build does; the release file's plain
+  `python3` takes another launch path in the app and is not yet tested there.
+- **Codex and Cursor tested through their command line agents (2026-11-09).** Codex (codex-cli 0.155.0-alpha.9.2, a real
+  model, a copy of the sample vault): the MCP tools were found, a question the vault answers was answered with its page, one
+  it does not answer was refused; the hooks noted a typed correction and ran the turn-end and session-end imports. Cursor
+  (agent CLI 2026.11.05-86047df, `-p --force`; `--mode ask` rejects MCP calls in print mode): the project-level MCP entry
+  was found, its tools listed, a question answered with its page, another refused; the turn-end and session-end hooks wrote
+  the session pages, but the CLI's non-interactive mode did not run `beforeSubmitPrompt`, so a typed correction is not
+  noted there (the hook handles Cursor's payload when fed it by hand). Both vendors document that the command line and
+  the editor read the same MCP configuration (Cursor) / configuration layers (Codex, CLI and IDE extension). Claude Desktop
+  4.23118.1: the config entry's command started the server, listed the three tools, answered with its page and refused
+  outside the app; three restarts did not load an entry written while the app was running (it writes its in-memory
+  settings back when it quits). That finding is why the installer now leaves the file alone while the app runs and
+  builds the extension instead, which was then tested inside the app (the Claude Desktop entry above). Also found: a Codex `hooks.json` with top-level event names
+  is skipped whole (already documented); `krouter_ask` takes `query`, not `question`.
+- **Claude Desktop is set up by the installer.** When its settings folder exists, `bootstrap.py` merges
+  `mcpServers.krouter` into `claude_desktop_config.json` (other servers kept, a backup `.krouter-bak` written, a file
+  it cannot parse or a `krouter` entry it did not write left alone); `uninstall.sh` removes only that entry.
+  `KROUTER_CLAUDE_DESKTOP_CONFIG` points it elsewhere. Checked by `tests/test_claude_desktop.py`. While the app runs the
+  file is now left alone and the extension built instead (the first entry in this group).
+- **Codex and Cursor now remember turn by turn too, not only overnight.** Once you said yes to importing, the
+  installer merges KRouter's session hooks into `~/.codex/hooks.json` and `~/.cursor/hooks.json` (each app's
+  documented format, checked 2026-11-09), keeping every hook already there and a `.krouter-bak` copy; `uninstall.sh`
+  takes out only its own. In all three agents a session starts with this repository's recorded decisions, each turn is
+  written to its page as it ends (`import_sessions.py --file … --local`: no model call even when distilling is on,
+  0.4–0.9 s in the background on 80–355 MB transcripts), a correction is noted the moment it is typed (`codex:` /
+  `cursor:` candidates, settled by the next distill), and the session is distilled when it ends if you said yes to
+  that. Claude Code's plugin gains the same per-turn `Stop` hook. A page distilled when its session was shorter now
+  keeps that digest (and the turn count it covers) until the next distill, instead of losing it when the session
+  grows. Checked in codex-cli 0.155 against a local mock model: the decisions arrive as developer context, the
+  correction is noted, `Stop` and `SessionEnd` run the import. Codex runs a hook only after you trust it (`/hooks`),
+  and the installer says so. A Codex `hooks.json` with event names at the top level (no `"hooks"` key) is skipped
+  whole by Codex (`unknown field`); the installer leaves such a file alone and says why. Cursor's hooks are checked
+  by tests against its documented format, not yet inside Cursor. `tests/test_live_hooks.py`.
+- **Agent frameworks and JavaScript.** `krouter.integrations.llamaindex.KRouterRetriever` (a LlamaIndex retriever:
+  the answering page as a node with its source, no node on `recall: none`; `pip install "krouter[llamaindex]"`),
+  a JavaScript / TypeScript client with no dependencies (`sdk/js`: stdio or a team server over HTTP; not on npm yet),
+  and `docs/FRAMEWORKS.md` (and `.zh.md`) with the way LangChain, the OpenAI Agents SDK, Pydantic AI, Google ADK,
+  CrewAI and the Vercel AI SDK load the server, each tested against it on 2026-11-09 in its own environment
+  (`tests/test_frameworks.py`, `tests/frameworks/vercel/`; langchain 1.4, openai-agents 0.24, pydantic-ai-slim 2.66,
+  google-adk 2.14, crewai 1.15, ai 7.0), LangChain, Pydantic AI and the Vercel AI SDK through their whole agent loop
+  with their own stand-in models; CI runs each one (jobs `frameworks`, `vercel-ai-sdk`). Testing caught that
+  google-adk 2.x needs its `mcp` extra (`pip install "google-adk[mcp]"`). The official MCP Python SDK is tested
+  over stdio and Streamable HTTP (`tests/test_mcp_official_sdk.py`).
+- **LangGraph long-term memory, without MCP.** `krouter.integrations.langgraph.KRouterStore` is a LangGraph
+  `BaseStore` (sync and async): a namespace such as `("users", "ada")` is a folder, each item a Markdown page you can
+  edit, and a query search runs KRouter's recall on that namespace alone, with the page it came from (`item.page`)
+  and an empty list when the namespace does not know. Writing a key again keeps the old page in `.history/` marked
+  superseded (`supersedes`, `store.history()`); `delete` keeps it marked retired; `store.purge()` removes a key with
+  its history. Optional: `pip install "krouter[langgraph]"` once 2.0.0 is on PyPI (from a clone until then), which
+  adds only `langgraph>=1.0,<2`; the core package still has no dependencies. Tested in real graphs on langgraph 1.0.0
+  (langgraph-checkpoint 2.1.0) and 1.2.20 (4.3.1), no model called (`tests/test_langgraph_store.py`, CI job
+  `langgraph-store`); `python -m krouter.integrations.langgraph_demo` runs a two-turn graph with no key. With 300
+  users of 5 memories, 320 questions in one user's namespace gave the right page first for 100 of 129 answerable,
+  nothing for all 191 the user never answered, and no other user's page (`bench/scale/langgraph_store.py`).
+  Associations, the experience digest and corrections through `krouter_correct` are not on this path.
+  `docs/FRAMEWORKS.md#langgraph-store-long-term-memory`.
+- **Try it in your app.** `CONTRIBUTING.md` lists every app, framework and deployment still marked "not yet run by
+  us", and a "Works in my app" issue form takes the report that moves it to tested.
+- **Linux tested in a clean `python:3.12-slim` container** from the release package: install, upgrade from the pre-2.0
+  folder (the old path becomes a link to the new one), lookup, refusal, `doctor`, `krouter mcp`, uninstall, cold
+  install. **Windows was not tested for 2.0** (no reachable Windows host); the junction fallback of the folder move is
+  covered by a test that runs on any OS. [`docs/VERIFY.md`](docs/VERIFY.md#platforms-and-real-sessions-200-candidate-2026-11-10)
+
+### Team server
+
+- **A token per person, and every write says who made it.** `--users FILE` takes one line per person or agent
+  (`name|sha256:<hash>|write or read|banks`; only the hash is kept; `team.py add-user` writes a new token to a file of
+  its own, mode 600, and `remove-user` stops it at once; the file is re-read without a restart). The shared tokens
+  (`--token-file`, `--bank-token`) keep working beside it; their writes are recorded as the shared token's. A `read`
+  token is not offered the write tools; a token limited to some banks gets 403 on the others. Every note, correction
+  and lesson names its person on the page (`— 来自 alice（MCP，claude-code）`, `author:`, `superseded_by_author:`), in
+  the change ledger, in a new journal (`90 系统文件/自动化/团队变更.jsonl`: order, time, person, app, pages, conflicts)
+  and as the git commit's author. `krouter_changes` (and `team.py changes`) answers who changed a page and when. The
+  access log names the person; no token is written anywhere. The app name a client gives at `initialize` is kept per
+  person, not in one global shared by every caller.
+- **Two corrections of the same thing: the later one holds, the earlier one is kept.** Writes to one memory now run
+  one at a time (a lock in the server and a file lock), pages are replaced in one step, and two writes in one second
+  get different run ids. A correction that names a page someone has already corrected replaces the correction now in
+  force at the end of the `superseded_by` chain, instead of leaving two corrections in force; one on a line that
+  already has a `⚠ 已改` note replaces the corrections those notes point to. The reply names each replaced correction,
+  its author and time (`conflict: … Rule: the later correction holds`), as do the journal and
+  `krouter_correction_conflicts_total`. Before, the second correction overwrote the old page's `superseded_by` and left
+  the first one active, and two corrections with the same words in the same second could overwrite each other's page.
+- **Ten people at once, measured and in CI.** `bench/team/load.py`: 10 clients with their own tokens ask, note,
+  correct one shared page and contradict one decision at once, then check from the vault, the journal, git and every
+  reply that nothing acknowledged is missing, no page is broken, every write is attributed to its token, each
+  contested decision ends with the last correction in force, and every answer names a page ([set 27](bench/memory_honesty/HELDOUT.md)).
+  All held at 136, 10,136 and 50,136 pages; reads p50 / p95 39 / 129 ms, 102 / 284 ms, 446 / 2,010 ms; about 8, 5
+  and 2.5 writes a second (git commits are most of a write); no errors (`docs/TEAM.md` §5). `tests/test_team_concurrency.py`
+  runs a smaller version on every platform in CI. Thirty minutes at 10,000 pages (21,218 calls): 0 errors, memory
+  195 MB at 5 minutes and 205 MB at the end, every property held, on the third run; the first two failed and are kept
+  in set 28's log.
+- **Long-running fixes the 30-minute run found** (set 28's first run failed on both): a correction now follows the
+  supersede chain to its end (it stopped after 100 steps, so from the 101st correction of one decision on, each new
+  one superseded nothing and two or more stood in force), and a chain that is broken or goes round is reported in the
+  reply (`unresolved`) instead of passing silently; the change ledger moves whole to
+  `90 系统文件/自动化/记忆变更记录/<time>.md` once it passes 256 KB, with a link from the new page and in the same
+  commit, because every write re-indexed all of it (at 1.6 MB, 945 ms with the index locked, so lookups queued
+  behind writes and slowed as the server ran).
+- **A replaced correction stops answering the old page's questions.** When a correction page is itself replaced, the
+  title words it took from the page it replaced are cleared (correction pages only). After 544 corrections of one
+  decision, the 80 full-text candidates a lookup starts from were all replaced corrections and the answer was
+  `recall: none`; now the correction in force is found. A question worded like the corrections themselves can still
+  miss once more than about 80 nearly identical corrections of one thing exist (the candidate limit; not changed).
+- **A write no longer makes every lookup re-walk the vault.** After a note or correction, each resident lookup
+  process re-reads just the files that write changed, instead of every file's modification time (the full re-check
+  every 2 s stays, for changes from a `git pull`). Each write also starts fewer git processes (5 instead of 8 for a
+  note): 176 ms → 86 ms per note on the template on our laptop.
+- **A correction page answers with the new decision.** Its `how:` is now `现在：<new>` (before, the receipt's `how`
+  was the page's first line, `原来：<old>`), and it carries the title of the page it replaces in `topic_terms`, so a
+  question worded like the old page finds the correction too (at 10,000 pages it did not before).
+
+- **The team server is 15–25 times faster and holds up under load.** At 10,000 pages a lookup over HTTP takes 13 ms
+  instead of 210 ms and the server answers 301 questions a second with 32 callers instead of 15; at 50,000 pages,
+  54 ms and 75/s instead of 980 ms and 3/s (`bench/scale/serve_load.py`, new; the table is in the README's new
+  "Running it for a team" section and `docs/TEAM.md` §4). Each memory keeps up to 4 resident lookup processes
+  (`route_worker.py`; `--workers N`, `--workers 0` for the old one process per lookup), which re-check the vault's
+  files at most every 2 s (`--refresh-every`; a note written through the server is found by the next lookup); a
+  lookup that hangs is cut off after 120 s and its process replaced. The literal fallback (what a question the vault
+  cannot answer costs) now reads only the pages the index says can hold the question, and prints the same lines as
+  reading every file (2,442 pieces of page text compared; `tests/test_resident_lookups.py`); this also makes a
+  one-shot lookup at 50,000 pages 0.35 s instead of 0.53 s. The index cache keeps each page's frontmatter for that
+  check (cache schema v14: rebuilt once on upgrade). Resident memory is about 200–270 MB with 4 processes, against
+  15–29 MB before; `/metrics` gains `krouter_lookup_workers`.
+- **Several isolated memories on one team server, and metrics.** `--bank NAME=PATH` (repeat) serves each vault at
+  `/mcp/NAME`, with its own index, its own label on every receipt and, with `--bank-token NAME=FILE`, its own token; the
+  server refuses to start off loopback while any bank has no token. `GET /metrics` is Prometheus text (tool calls by
+  vault, tool and outcome; refusals; a latency histogram; index build time), counts only, behind the tokens.
+  `deploy/docker-compose.yml`: two banks, read-only, non-root, with a container pulling each vault every five
+  minutes (checked with `docker compose config`). `docs/TEAM.md` gains a "Running it" table. `tests/test_mcp_banks.py`.
+- **A memory for a team, self-hosted.** `mcp_server.py --http HOST:PORT` serves the same two read-only tools over
+  Streamable HTTP (`POST /mcp`, JSON replies; `GET /healthz`). It binds to 127.0.0.1 unless told otherwise and refuses
+  any other address without `--token-file` (bearer token, compared in constant time, at least 16 characters). Browser
+  origins other than localhost are refused unless listed (`--allow-origin`); bodies over 1 MB get 413. The access log
+  is one JSON line a request with a SHA-256 prefix of the question, never its text, and questions are not written to
+  the query log unless `--log-queries`. The index is built before the server listens. `--label NAME` stamps
+  `vault_label: NAME` on every receipt (stdio too), so an answer says which memory it came from; `--vault` names the
+  vault to serve. `docs/TEAM.md`: a team vault in its own git repository, pulled every few minutes, served read-only,
+  added by each person as a second MCP server next to the personal one, which stays on stdio and on the machine.
+  Tested with a plain client (`tests/test_mcp_http.py`) and with Claude Code over `--transport http`.
+- **Docker image** for the team server (`Dockerfile`: Python slim, standard library only, user 10001, the vault
+  mounted read-only, health check on `/healthz`). Every PR builds it and runs `scripts/docker_smoke.sh` (healthy,
+  token enforced, labelled receipt, hashed question in the log, vault untouched, not root); a published release
+  pushes `ghcr.io/398894496-arch/krouter:<tag>` and `:latest` with a build-provenance attestation, after the same
+  smoke test.
+- **Kubernetes and systemd.** `deploy/kubernetes/krouter.yaml` (Deployment and Service: an init container clones
+  each memory, a sidecar pulls it, tokens and deploy key from Secrets, read-only root filesystem, `/healthz` probes,
+  Prometheus annotations) and a hardened `deploy/systemd/krouter.service`, next to the Compose file. Checked by
+  `tests/test_deploy.py`; not yet applied to a cluster or a systemd host by us.
+- **Scale bench** (`bench/scale/`): a synthetic vault of N pages and the time of one lookup as the MCP server runs it.
+  On an Apple M2 laptop: 1,000 pages 0.08 s per lookup (p50), 10,000 0.12 s, 50,000 0.53 s (p95 1.1 s, 76 MB peak);
+  the first lookup, which builds the index, takes 0.4 s, 4.8 s and 24 s. Over HTTP, 16 parallel callers on 10,000
+  pages right after 200 pages changed: no errors. `docs/BENCHMARK.md` → Scale.
+- **`server.json`** for the MCP registry (`io.github.398894496-arch/krouter`, the PyPI package run as `uvx krouter mcp`)
+  and the `mcp-name` marker in the README; `tests/test_server_json.py` keeps its version in step with `pyproject.toml`.
+  Not listed yet: it needs the package on PyPI first.
+
+### Measured, and what the numbers say
+
+- **Real sessions, measured for the first time** (sets 30 and 31): Codex CLI, a Claude Sonnet 5.5 subagent and the Cursor
+  agent CLI, given small tasks that never mention the memory. They mention a stored lesson when the situation matches
+  (2 of 4 on both full runs) and never when it does not; they rarely call `krouter_learn` (0 of 4 on both hosts) and
+  Codex never called `krouter_correct` (0 of 4; the Claude subagent 3 of 4). Cause on Codex: this version shows the model
+  no krouter tool and none of the server's instructions. **Changed:** the session hook now ends with one line naming
+  `krouter_ask`, `krouter_correct` and `krouter_learn` and when to call each, and the server's instruction sentences for
+  the last two say the same (after the merge with the standing index, that line names only the two write tools, since
+  the index's own closing line says how to call `krouter_ask`; sets 30 and 31 were measured on the opening before that
+  merge). On a development set the Claude subagent went from 1 of 3 to 2 of 3 on `krouter_learn`
+  and stayed at 3 of 3 on `krouter_correct`; the Codex check could not run (its usage limit was reached), so the change is
+  not verified on the host it was made for.
+- **An answer-accuracy number you can set next to other projects'.** LongMemEval S, all 500 questions: a
+  reader given only the pages KRouter 1.3.0 cites answered 400 right (80.0%, 95% interval 76.4–83.4), with the
+  benchmark's own reader and judge prompts; reader and judge are Claude Sonnet 5.5, not GPT-4o. Registered before the
+  run as set 11 (`bench/memory_honesty/HELDOUT.md`); `bench/longmemeval/qa.py` writes the prompts and scores the
+  replies; every reply and verdict is in `bench/longmemeval/results/`.
+- **How much of the 80% answer accuracy is KRouter: measured, and the answer is "no more than keyword search".** Set
+  12 (`bench/memory_honesty/HELDOUT.md`, registered before the run) keeps set 11's reader, judge and prompts and
+  changes only what the reader is given. Nothing: 30 of 500 right, 0 of the 470 answerable. Plain BM25's top three
+  sessions: 405 (81.0% [77.4, 84.4]). KRouter's cited pages: 400 (80.0% [76.4, 83.4]). Paired, KRouter minus BM25:
+  −1.0 points [−2.8, +0.8], no difference shown. The benchmark's own answer sessions (perfect
+  retrieval): 492 (98.4% [97.2, 99.4]), +18.4 points over KRouter [15.0, 21.8], so the missing 18 points are lost in
+  retrieval, not by the reader: mostly multi-session (69 → 117 of 121) and temporal (97 → 125 of 127) questions,
+  where three pages miss a session. (That row was paused for cost after 26 of 75 reader batches and finished the same
+  day; nothing was scored before all 500 replies existed.) `bench/longmemeval/qa.py` gains `baseline`, `collect` and
+  `compare`; results in `bench/longmemeval/results/2026-11-09-sonnet-qa.{none,bm25,oracle}.jsonl`.
+- **The refusal gate was checked against LongMemEval's unanswerable questions: no change, and the "3 of 30" is stale.**
+  Set 14 (`bench/memory_honesty/HELDOUT.md`, no model called) found: 3 of 30 is 1.1.1 at the retrieval layer; the shipped
+  gate refuses 9 of 30, and the answer says "not mentioned" for 29 of 30 (sets 11 and 12, same for plain BM25). These
+  questions ask for a detail that a related session in the vault does not give, so the best page is an answer session
+  for 22 of 30. 49,288 one- and two-signal rules searched on the development half (a seed-drawn half of the 470
+  answerable questions, the 30 `_abs`, and the half with its answer sessions removed): none refuses clearly more within a
+  1-point loss of answerable questions (at most 2 more of the 21 still answered; 5 more at 2.1 points lost). With
+  the answer sessions removed from each vault the unchanged gate refuses 220 of 470 (46.8%). Nothing in the product
+  changed; the held-out half was not opened. `bench/longmemeval/lme.py` gains `ablate`, new `gate_study.py` reproduces
+  the search. README, STATUS and the doc banners still say 3 of 30: to fix with the next README pass.
+- **README: "level with keyword search" replaced by what was measured since, and said at which layer.** The main
+  line is now the retrieval result at five pages (set 18's held-out half: every needed session handed over for 210 of
+  235 questions against BM25's 198, multi-session 40 of 47 against 31). The same-reader table (6.0 / 81.0 / 80.0 /
+  98.4%) measured the three-page 1.3.0 and moved to `docs/NUMBERS.md` with its version and page count; the README
+  says the five-page answer accuracy has not been rerun (set 22, registered, not run). LoCoMo's 19 fewer than five
+  direct hits is in `docs/NUMBERS.md` and the README's weak spots. `README.zh.md` matches.
+- **README, a fifth shorter** (4,611 → about 3,700 words): the same-reader table above, a "Words used here" glossary
+  (receipt, floor, superseded, distill, change ledger, bank, …), and the full numbers table moved, unchanged apart
+  from the new row, to `docs/NUMBERS.md` (`docs/NUMBERS.zh.md`); the README keeps only what its other sections do not
+  already say. Plugin version notes moved to `docs/DETAILS.md`. `README.zh.md` matches.
+- **README shows what capture did on the maintainer's machine** (30 runs, 714 lines, 407 changes of mind; 5 of 8
+  hand-recorded corrections in the memory by the next run), with a per-day chart, and the decision-capture bench's
+  numbers.
+- **README:** a team server and remote-MCP apps in "Works with"; "no hosted service, a self-hosted team server is
+  fine"; the install line says the script installs the latest release tag, not `main`; the Chinese ledger path and
+  the terms receipt, floor and answer cards are explained where they first appear.
+- **`MAINTAINERS.md`:** one maintainer, said plainly; what you keep if the project stops (your Markdown folder, the
+  MIT standard-library code, no hosted service), how a fork releases and re-measures, when the repository would be
+  handed over, and how to become a maintainer.
+
+### Fixes
+
+- **Fixed: a question you had asked before came back as its own answer.** With sessions recorded, asking the vault
+  about something it does not hold left an excerpt page whose only matching line was your question; asked again, that
+  page came back `medium`. An undistilled excerpt where the question's words match only your own questions (and no
+  answer has them, or every answer that does says the vault has nothing) is no longer evidence: it is left out of the
+  ranking, and when what is left is weak the receipt says `recall: none` and `recall_note: you asked this before (…),
+  but no answer was recorded`. A line where you stated something, and any answer with the content, still count.
+  Found on the maintainer's own vault, not in a registered set; the six memory-honesty sets and set 18 are unchanged.
+  `tests/test_asked_before.py` (English and Chinese).
+- **Fixed: what a machine put into your turn was taken as your words.** A message from another agent session
+  (`<\~cross-session-message …>`) was noted as a correction candidate; the same would have been imported as one of
+  your turns. The prompt hook, the turn record and the session import now skip messages from other sessions,
+  background task notices, system reminders, sub-session and CI events and text a KRouter hook injected (the blocks
+  are taken out of a message; a message made only of them is not a turn). Found on the maintainer's own vault, not in
+  a registered set. `tests/test_machine_input.py`.
+- **A nightly job that did not install is no longer reported as installed.** On a machine with no systemd user session
+  and no crontab (a container, a minimal server) `--timer` printed "HOST ACTION: no systemd … and no crontab" and then
+  went on to say, in its summary line and on the health page, that the job was running, and `krouter doctor` failed
+  with "no job is installed". The install now checks that a job exists after asking for one and says "The nightly job
+  was NOT installed". The "keeps up by itself" line also no longer comes out empty when the nightly job is on and no app
+  has hooks.
+- **An English question in a mostly Chinese vault no longer comes back `medium` from English web clippings that
+  only share its common words.** Seen on a real vault (reproduced on a synthetic one, a test now): "What is the
+  production database password of the billing service?" matched three clipped articles on `production`, `billing` and
+  `service`, while `database` and `password` appear nowhere in the vault; the rule for words the vault has never seen
+  let it through because three other words matched. Now, when every one of the top three pages is a web clipping (a
+  folder named for clippings, `剪藏`, `Clippings`, `Web clips`, or clipper frontmatter: a `source:` URL, a `clippings`
+  tag, `type: clipping`), confidence is at most `low` and the receipt says the pages are someone else's writing; and if
+  the question also has a word of four or more letters that no word in the vault even starts like (`password`, but not
+  `move` when `moved` is there), it is `recall: none`. The stricter version without the clipping condition was tried
+  first, on development data: it would refuse 3 to 7 answerable LongMemEval dev questions and one dev2 correction, so
+  it was not used. No page in the memory-honesty vaults or the LongMemEval haystacks is a clipping: the rule fired on
+  none of 395 development questions, and the six memory-honesty sets are unchanged.
+- **Fixed: running the install again could make a second memory folder.** 1.x named the folder from the
+  system's language; 2.0 reads the terminal's. Upgrading a 1.3.0 install made on a Mac set to Chinese from an English
+  terminal created `Second Brain` beside `第二大脑` and pointed the nightly job at it (found by the upgrade check in a
+  throwaway home). The installer now uses the folder the first install recorded (`~/.config/krouter/vault`) while it
+  exists, after `--vault` and `KROUTER_VAULT`, before the default name.
+- **Fixed: two lookups that found the same changed pages at once could index them twice.** Each then indexed the
+  pages it had seen change, and the index held two entries for a page (the old one-process-per-lookup server and
+  parallel `krouter ask` runs could hit it too; reproduced 3 of 3 times with 6 processes and 150 changed pages).
+  Re-indexing now takes SQLite's write lock and re-reads what is indexed first, and a refresh that finds nothing
+  changed takes no lock. Also fixed: `recall()` left its SQLite connection open until the garbage collector ran
+  (about 2.7 MB each in a long-running process).
+- **Fixed: `krouter.ask()` gave the vault folder as `page` and an empty `how` for ordinary lookups.** They now come
+  from recall's best live hit (the locked page on an exact match), and `Answer.hits` lists every hit with its tier and
+  status, a replaced page included but never as the answer.
+
+### Not compatible, and how to upgrade
+
+- **The router moved.** `skill/krouter-obsidian` is `skill/krouter`; the install is `~/.agents/skills/krouter`
+  (was `~/.agents/skills/krouter-obsidian`) and the Cursor rule `~/.cursor/rules/krouter.mdc` (was
+  `krouter-obsidian.mdc`). Upgrading moves the code and your alias table there, leaves the old path as a link to
+  the new folder (so a path you pasted into your own notes or agent rules keeps working), registers the MCP entries,
+  the Codex / Cursor hooks and the nightly job at the new path, and removes the old Cursor rule. Uninstall removes
+  both paths. `krouter doctor` names any settings file that still starts KRouter from the old path. Tested in a
+  throwaway home: a 1.3.0 install (nightly job, Codex hooks, Claude Code MCP and plugin) upgraded, looked up through
+  both paths with the same answer, doctor OK, uninstalled with no KRouter entry left. Not tested on Windows, where
+  the link is a symlink or, without the right to make one, a directory junction.
+- **The receipt has more in it.** A lookup lists up to five pages: three direct hits under `recall:`, then up to
+  two under `associated:` (each with `via:`). Hit lines can carry `conflict=newer` / `conflict=older`, and a receipt
+  can have a `recall_conflict:` line. A reader that takes the first `recall:` hit is unaffected; one that counts
+  pages or reads the whole block should skip `associated:` (`recall(..., assoc=False)` in process gives the direct
+  ranking alone). The recall cache is rebuilt by itself on first use (schema `recall-v15`).
+- **Defaults that changed:** the install imports nothing from the past (`--all` for the old default); the
+  language is the terminal's (`--lang`, then `LC_ALL` / `LC_MESSAGES` / `LANG`), not the system's; the experience
+  digest is on when the vault has cards (`KROUTER_EXPERIENCE=0`); with no key, the nightly steps run on a logged-in
+  agent CLI and spend its subscription, at most 30 calls a day, each listed (`KROUTER_HOST_CLI=0` turns it off).
+  Every message is now looked up on this machine by the prompt hook and the session starts with the standing index
+  (`KROUTER_RECALL_PROMPT=0`, `KROUTER_RECALL_INDEX=0`); skills are listed and drafted overnight when there are cards
+  to grow them from (`KROUTER_SKILLS=0`); a team server started with `--users` needs each caller's own token.
+- **`KROUTER_VAULT`** names the memory folder; `OBSIDIAN_VAULT` still works.
+- **To upgrade,** run the install line again (from a clone, `python3 scripts/bootstrap.py`), then `krouter doctor`.
+  It keeps the memory folder it recorded, every file in it, and what you said yes to before.
+- **Benchmark numbering:** the refusal-gate study is set 14 in `bench/memory_honesty/HELDOUT.md` (two
+  branches had both called theirs 13); no registered number changed.
 
 ## 1.3.0 — 2026-11-09
 

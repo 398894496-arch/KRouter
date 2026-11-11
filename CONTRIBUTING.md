@@ -22,6 +22,23 @@ Tests and evaluation runs must not write the host's query log (`~/.local/state/k
 
 `main` takes reviewed changes; hosts should pin a release tag. Release cadence: a minor release (new features) at most once a week; a patch release (fixes, docs, benchmark updates) at most once a week, security fixes excepted. **Until 2026-11-12, 1.1.x takes fixes only**; feature PRs stay open for 1.2.0. Each changelog entry starts with a "what you will notice" summary.
 
+## The quickest way to help: try it in your app and say so
+
+Several rows of the README's "Works with" table and of [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) say "not yet
+tested inside the app" or "not yet run by us". One report from someone who ran it moves a row to "tested by a user":
+open a [Works in my app](https://github.com/398894496-arch/KRouter/issues/new?template=works-with.yml) issue with
+the app or framework, its version, your OS, and what `krouter_ask` answered (a question your memory knows, and one it
+does not). It worked and it did not are both worth reporting. Open right now:
+
+| Where | What to try |
+|---|---|
+| Claude Desktop, VS Code (Copilot), Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI | after the one-line install, restart the app and ask it something your memory holds |
+| Cursor | the session hooks: a new chat starts with this repository's decisions; a turn shows up in `05 时间日志/会话摘录/` |
+| An agent framework not in `docs/FRAMEWORKS.md` (Agno, Mastra, AutoGen, Haystack, …) | load the MCP server the way that framework loads one, and say what it took |
+| The LangGraph store (`KRouterStore`) | on Windows; in a LangGraph Platform deployment (`langgraph.json` store config); with langmem's memory tools |
+| The Kubernetes manifest, the systemd unit | `deploy/kubernetes/krouter.yaml`, `deploy/systemd/krouter.service` on a real cluster or host |
+| Any benchmark | rerun it on your machine (`bench/scale/serve_load.py`, `bench/memory_honesty/run.py`, `bench/longmemeval/`) and post your numbers next to ours |
+
 ## Good first issues
 
 Issues labeled [`good first issue`](https://github.com/398894496-arch/KRouter/labels/good%20first%20issue) are small and self-contained. Typical ones: import sessions from another agent (Cursor, Gemini CLI, OpenCode) in `import_sessions.py`; a vault template for another field; an adapter for the memory honesty bench ([`docs/BENCHMARK.md`](docs/BENCHMARK.md)) that runs another memory system on the same 30 questions.

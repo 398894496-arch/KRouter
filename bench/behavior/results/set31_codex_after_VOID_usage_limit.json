@@ -1,0 +1,109 @@
+[
+ {
+  "id": "S31-K1",
+  "group": "correct",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-K2",
+  "group": "correct",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-K3",
+  "group": "correct",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-L1",
+  "group": "learn",
+  "rc": 1,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the Makefile’s invisible characters and test the build after correcting the actual syntax issue."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-L2",
+  "group": "learn",
+  "rc": 0,
+  "calls": [],
+  "messages": [
+   "I’ll inspect the script’s line endings, convert it safely if needed, and then verify the interpreter line is clean.",
+   "Fixed [deploy.sh](<run>/proj/deploy.sh).\n\nIt had Windows CRLF line endings, so the server interpreted the shebang as `/bin/sh\\r`. Converted it to Unix LF endings and verified `sh ./deploy.sh` runs successfully."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-L3",
+  "group": "learn",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-N1",
+  "group": "notcorrect",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-N2",
+  "group": "notcorrect",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-O1",
+  "group": "offer",
+  "rc": 1,
+  "calls": [],
+  "messages": [
+   "I’ll first inventory the sample filenames, then rename only `.jpeg` files to lowercase `.jpg`, checking for collisions before changing anything.",
+   "The dry-run exposed a path-construction mistake in my check, before any files were touched. I’ve corrected it and am rerunning the collision check before the rename."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-O2",
+  "group": "offer",
+  "rc": 1,
+  "calls": [],
+  "messages": [
+   "I’ll profile the repeated work in `report.py`, then make a targeted optimization and benchmark it on a representative run. I’m using the project-knowledge routing skill because this may have prior performance decisions or constraints worth preserving.",
+   "The bottleneck is already clear in the script: it parses the identical schema once per row, including a simulated 0.2-second delay. I’ll load it once and verify the output and timing. Also, KRouter’s local maintenance reports that its nightly distillation has no callable model configured; that does not affect this optimization."
+  ],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-Q1",
+  "group": "quiet",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ },
+ {
+  "id": "S31-Q2",
+  "group": "quiet",
+  "rc": 1,
+  "calls": [],
+  "messages": [],
+  "vault_commits_after_fixture": 0
+ }
+]

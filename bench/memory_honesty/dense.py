@@ -153,7 +153,7 @@ def dense_answers(rows: list[dict]) -> list[dict]:
 
 def _krouter_raw(rows: list[dict], src: Path | None = None) -> list[dict]:
     """KRouter's recall with its decision and its best page even when it refuses."""
-    sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
     os.environ["KROUTER_NO_QUERY_LOG"] = "1"
     with tempfile.TemporaryDirectory(prefix="krouter-dense-", ignore_cleanup_errors=True) as tmp:
         os.environ["KROUTER_CACHE_DIR"] = str(Path(tmp) / "cache")

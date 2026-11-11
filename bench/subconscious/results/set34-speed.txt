@@ -1,0 +1,32 @@
+ 5:09  up 1 day,  4:13, 1 user, load averages: 5.34 6.35 8.01
+== routes 0 vault v10k
+index build: 6.8 s
+hit: printed=[False]  cold p50 65 ms p95 77 ms (n=20)  warm p50 62 ms p95 73 ms (n=200)
+miss: printed=[False]  cold p50 61 ms p95 66 ms (n=20)  warm p50 61 ms p95 71 ms (n=200)
+ 5:09  up 1 day,  4:14, 1 user, load averages: 4.74 6.09 7.85
+== routes alias,trigger vault v10k
+index build: 6.8 s
+hit: printed=[True]  cold p50 219 ms p95 246 ms (n=20)  warm p50 129 ms p95 149 ms (n=200)
+miss: printed=[False]  cold p50 161 ms p95 167 ms (n=20)  warm p50 72 ms p95 82 ms (n=200)
+ 5:10  up 1 day,  4:14, 1 user, load averages: 5.74 6.11 7.74
+== routes 1 vault v10k
+index build: 6.8 s
+hit: printed=[True]  cold p50 221 ms p95 246 ms (n=20)  warm p50 126 ms p95 144 ms (n=200)
+miss: printed=[False]  cold p50 214 ms p95 327 ms (n=20)  warm p50 116 ms p95 139 ms (n=200)
+ 5:11  up 1 day,  4:16, 1 user, load averages: 5.62 5.97 7.56
+== routes 0 vault m/vault
+index build: 0.1 s
+hit: printed=[False]  cold p50 63 ms p95 74 ms (n=20)  warm p50 63 ms p95 74 ms (n=200)
+miss: printed=[False]  cold p50 61 ms p95 68 ms (n=20)  warm p50 62 ms p95 71 ms (n=200)
+ 5:12  up 1 day,  4:16, 1 user, load averages: 5.84 5.99 7.52
+== routes alias,trigger vault m/vault
+index build: 0.1 s
+hit: printed=[True]  cold p50 91 ms p95 95 ms (n=20)  warm p50 85 ms p95 100 ms (n=200)
+miss: printed=[False]  cold p50 67 ms p95 69 ms (n=20)  warm p50 64 ms p95 79 ms (n=200)
+ 5:12  up 1 day,  4:17, 1 user, load averages: 5.77 5.96 7.45
+== routes 1 vault m/vault
+index build: 0.1 s
+hit: printed=[True]  cold p50 91 ms p95 126 ms (n=20)  warm p50 87 ms p95 124 ms (n=200)
+miss: printed=[False]  cold p50 94 ms p95 121 ms (n=20)  warm p50 83 ms p95 102 ms (n=200)
+ 5:13  up 1 day,  4:17, 1 user, load averages: 5.94 5.96 7.38
+ALLDONE

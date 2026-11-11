@@ -1,0 +1,14 @@
+{"id": "zh-release", "lines": ["- 原来大家随手从任意分支打 tag → 改成只从 main 分支打 tag（10:05）", "- 原来 tag 名随手起、没有统一格式 → 改成用日期 v年.月.日（10:05）", "- 发版只从 main 分支打 tag（10:05）", "- tag 名用日期，格式为 v年.月.日（10:05）"]}
+{"id": "zh-cache-change", "lines": ["- 原来缓存过期时间 CACHE_TTL=30m → 改成 CACHE_TTL=10m（14:06）"]}
+{"id": "zh-agent-proposal-accepted", "lines": ["- 原来日志格式不统一、各写各的 → 改成统一的 JSON 格式，一行一条，固定字段 ts/level/msg，logger 已改为 JSON 输出（09:15）", "- 日志统一成 JSON 一行一条，字段固定为 ts/level/msg（09:15）"]}
+{"id": "zh-agent-proposal-rejected", "lines": ["- 本地存储继续用 SQLite，不换 Redis，单机够用（16:22）"]}
+{"id": "zh-discussion-only", "lines": ["- （这段会话没有定下来的事）"]}
+{"id": "zh-one-off", "lines": ["- （这段会话没有定下来的事）"]}
+{"id": "zh-port-revert", "lines": ["- 原来本地 API 端口从 8080 改成 9090 → 改回 8080（15:40）"]}
+{"id": "zh-long-late-decision", "lines": ["- 周报固定每周五 18:00 发，抄送整个组（13:30）"]}
+{"id": "en-tooling", "lines": ["- 这个仓库用 pnpm 作为包管理器（packageManager 设为 pnpm）（08:33）", "- CI 跑在 Node 22 上，不用 Node 20（08:33）"]}
+{"id": "en-branch-change", "lines": ["- 原来默认分支是 master → 改成默认分支为 main（17:02）", "- 原来 CI 在 master 上触发 → 改成在 main 上触发（17:02）", "- CI 从现在起只对 main 触发（17:02）"]}
+{"id": "zh-three-rules", "lines": ["- 选题每周三定（10:00）", "- 口播不超过 90 秒（10:00）", "- 封面字统一用黄色（10:03）"]}
+{"id": "zh-steps-only", "lines": ["- （这段会话没有定下来的事）"]}
+{"id": "zh-tentative", "lines": ["- （这段会话没有定下来的事）"]}
+{"id": "zh-user-corrects-agent", "lines": ["- 原来截图存成 JPG 放进 shots/ → 改成全部存 PNG（12:01）", "- 截图一律存 PNG，不存 JPG（JPG 会糊）（12:01）"]}

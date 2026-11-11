@@ -4,28 +4,35 @@
       {
         "matcher": "startup|clear|compact",
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter-obsidian/scripts/session_hook.py\" start", "timeout": 10 }
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/session_hook.py\" start", "timeout": 10 }
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter-obsidian/scripts/session_hook.py\" end", "timeout": 10 }
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/session_hook.py\" end", "timeout": 10 }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter-obsidian/scripts/session_hook.py\" prompt", "timeout": 10 }
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/session_hook.py\" prompt", "timeout": 10 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/session_hook.py\" turn", "timeout": 10 }
         ]
       }
     ],
     "PreCompact": [
       {
         "hooks": [
-          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter-obsidian/scripts/session_hook.py\" end", "timeout": 10 }
+          { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/session_hook.py\" end", "timeout": 10 }
         ]
       }
     ]

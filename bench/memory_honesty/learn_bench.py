@@ -34,7 +34,7 @@ from collections import defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SCRIPTS = HERE.parents[1] / "skill/krouter-obsidian/scripts"
+SCRIPTS = HERE.parents[1] / "skill/krouter/scripts"
 spec = importlib.util.spec_from_file_location("mh_bench_learn", HERE / "run.py")
 bench = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bench)

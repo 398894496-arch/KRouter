@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krouter"
+version = "2.0.0"
+description = "Your AI remembers what you decided, and what you changed your mind about: plain-Markdown memory for any MCP app."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [{name = "KRouter contributors"}]
+keywords = ["memory", "mcp", "agent-memory", "obsidian", "second-brain", "claude-code", "codex", "cursor"]
+classifiers = ["License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Operating System :: OS Independent"]
+
+[project.urls]
+Homepage = "https://398894496-arch.github.io/KRouter/"
+Source = "https://github.com/398894496-arch/KRouter"
+Changelog = "https://github.com/398894496-arch/KRouter/blob/main/CHANGELOG.md"
+
+[project.scripts]
+krouter = "krouter.cli:main"
+
+[project.optional-dependencies]
+llamaindex = ["llama-index-core>=0.12"]
+langgraph = ["langgraph>=1.0,<2"]   # krouter.integrations.langgraph：LangGraph 的长期记忆存储（需要 Python 3.10+）
+
+[tool.setuptools]
+packages = ["krouter", "krouter.integrations", "krouter_router", "krouter_template", "krouter_template_zh"]
+
+[tool.setuptools.package-dir]
+krouter = "sdk/krouter"
+"krouter.integrations" = "sdk/krouter/integrations"
+krouter_router = "skill/krouter/scripts"
+krouter_template = "template"
+krouter_template_zh = "template-zh"
+
+[tool.setuptools.package-data]
+krouter = ["view_ui/*"]  # krouter view: the page, hand-written, no external file
+krouter_router = ["*.sh", "*.txt", "*.psv"]
+krouter_template = ["**/*"]       # krouter demo 用的示例库
+krouter_template_zh = ["**/*"]

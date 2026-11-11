@@ -10,3 +10,9 @@ __pycache__/
 extras/host-daily-evolution/.runtime-prompt.md
 node_modules/
 
+
+# Python package build output
+build/
+dist/
+*.egg-info/
+dist-release/

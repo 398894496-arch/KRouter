@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 316" width="760" height="316" role="img" aria-label="Lines KRouter wrote to memory per day on the maintainer's machine, 2026-10-30 to 11-09">
+<rect width="760" height="316" fill="#0d1117" rx="8"/>
+<g font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<text x="46" y="26" font-size="15" font-weight="600" fill="#e6edf3">What the memory wrote down on its own, per day</text>
+<text x="46" y="46" font-size="12" fill="#9198a1">Maintainer's machine, 2026-10-30 → 11-09 · 30 runs · 714 lines, 407 of them a change of mind</text>
+<line x1="46" x2="744" y1="260.0" y2="260.0" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="264.0" font-size="11" text-anchor="end" fill="#9198a1">0</text>
+<line x1="46" x2="744" y1="210.5" y2="210.5" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="214.5" font-size="11" text-anchor="end" fill="#9198a1">35</text>
+<line x1="46" x2="744" y1="161.0" y2="161.0" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="165.0" font-size="11" text-anchor="end" fill="#9198a1">70</text>
+<line x1="46" x2="744" y1="111.5" y2="111.5" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="115.5" font-size="11" text-anchor="end" fill="#9198a1">105</text>
+<line x1="46" x2="744" y1="62.0" y2="62.0" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="66.0" font-size="11" text-anchor="end" fill="#9198a1">140</text>
+<rect x="57.4" y="168.1" width="40.6" height="91.9" fill="#3fb98f" rx="2"><title>10-30: 65 changes of mind, 62 new, 3 runs</title></rect>
+<rect x="57.4" y="80.4" width="40.6" height="87.7" fill="#1f5a48" rx="2"/>
+<text x="77.7" y="75.4" font-size="10" text-anchor="middle" fill="#9198a1">127</text>
+<text x="77.7" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">10-30</text>
+<rect x="120.9" y="247.3" width="40.6" height="12.7" fill="#3fb98f" rx="2"><title>10-31: 9 changes of mind, 19 new, 1 runs</title></rect>
+<rect x="120.9" y="220.4" width="40.6" height="26.9" fill="#1f5a48" rx="2"/>
+<text x="141.2" y="215.4" font-size="10" text-anchor="middle" fill="#9198a1">28</text>
+<text x="141.2" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">10-31</text>
+<rect x="184.3" y="209.1" width="40.6" height="50.9" fill="#3fb98f" rx="2"><title>11-01: 36 changes of mind, 28 new, 1 runs</title></rect>
+<rect x="184.3" y="169.5" width="40.6" height="39.6" fill="#1f5a48" rx="2"/>
+<text x="204.6" y="164.5" font-size="10" text-anchor="middle" fill="#9198a1">64</text>
+<text x="204.6" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-01</text>
+<rect x="247.8" y="173.7" width="40.6" height="86.3" fill="#3fb98f" rx="2"><title>11-02: 61 changes of mind, 46 new, 2 runs</title></rect>
+<rect x="247.8" y="108.7" width="40.6" height="65.1" fill="#1f5a48" rx="2"/>
+<text x="268.1" y="103.7" font-size="10" text-anchor="middle" fill="#9198a1">107</text>
+<text x="268.1" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-02</text>
+<rect x="311.2" y="196.4" width="40.6" height="63.6" fill="#3fb98f" rx="2"><title>11-03: 45 changes of mind, 46 new, 2 runs</title></rect>
+<rect x="311.2" y="131.3" width="40.6" height="65.1" fill="#1f5a48" rx="2"/>
+<text x="331.5" y="126.3" font-size="10" text-anchor="middle" fill="#9198a1">91</text>
+<text x="331.5" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-03</text>
+<rect x="374.7" y="186.5" width="40.6" height="73.5" fill="#3fb98f" rx="2"><title>11-04: 52 changes of mind, 32 new, 4 runs</title></rect>
+<rect x="374.7" y="141.2" width="40.6" height="45.3" fill="#1f5a48" rx="2"/>
+<text x="395.0" y="136.2" font-size="10" text-anchor="middle" fill="#9198a1">84</text>
+<text x="395.0" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-04</text>
+<rect x="438.1" y="226.1" width="40.6" height="33.9" fill="#3fb98f" rx="2"><title>11-05: 24 changes of mind, 25 new, 3 runs</title></rect>
+<rect x="438.1" y="190.7" width="40.6" height="35.4" fill="#1f5a48" rx="2"/>
+<text x="458.5" y="185.7" font-size="10" text-anchor="middle" fill="#9198a1">49</text>
+<text x="458.5" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-05</text>
+<rect x="501.6" y="206.3" width="40.6" height="53.7" fill="#3fb98f" rx="2"><title>11-06: 38 changes of mind, 17 new, 6 runs</title></rect>
+<rect x="501.6" y="182.2" width="40.6" height="24.0" fill="#1f5a48" rx="2"/>
+<text x="521.9" y="177.2" font-size="10" text-anchor="middle" fill="#9198a1">55</text>
+<text x="521.9" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-06</text>
+<rect x="565.1" y="223.2" width="40.6" height="36.8" fill="#3fb98f" rx="2"><title>11-07: 26 changes of mind, 9 new, 3 runs</title></rect>
+<rect x="565.1" y="210.5" width="40.6" height="12.7" fill="#1f5a48" rx="2"/>
+<text x="585.4" y="205.5" font-size="10" text-anchor="middle" fill="#9198a1">35</text>
+<text x="585.4" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-07</text>
+<rect x="628.5" y="193.5" width="40.6" height="66.5" fill="#3fb98f" rx="2"><title>11-08: 47 changes of mind, 19 new, 4 runs</title></rect>
+<rect x="628.5" y="166.7" width="40.6" height="26.9" fill="#1f5a48" rx="2"/>
+<text x="648.8" y="161.7" font-size="10" text-anchor="middle" fill="#9198a1">66</text>
+<text x="648.8" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-08</text>
+<rect x="692.0" y="254.3" width="40.6" height="5.7" fill="#3fb98f" rx="2"><title>11-09: 4 changes of mind, 4 new, 1 runs</title></rect>
+<rect x="692.0" y="248.7" width="40.6" height="5.7" fill="#1f5a48" rx="2"/>
+<text x="712.3" y="243.7" font-size="10" text-anchor="middle" fill="#9198a1">8</text>
+<text x="712.3" y="276.0" font-size="11" text-anchor="middle" fill="#9198a1">11-09</text>
+<rect x="454" y="294" width="10" height="10" fill="#3fb98f" rx="2"/><text x="469" y="303" font-size="11" fill="#e6edf3">changed: "was A → now B"</text>
+<rect x="624" y="294" width="10" height="10" fill="#1f5a48" rx="2"/><text x="639" y="303" font-size="11" fill="#e6edf3">newly decided</text>
+</g></svg>

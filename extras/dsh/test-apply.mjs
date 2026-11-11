@@ -22,7 +22,7 @@ registerKrouterTools(
   },
   {
     vaultPath: join(HERE, "../../template"),
-    routerScript: join(HERE, "../../skill/krouter-obsidian/scripts/route_knowledge.sh"),
+    routerScript: join(HERE, "../../skill/krouter/scripts/route_knowledge.sh"),
   },
   (spec) => spec,
 );

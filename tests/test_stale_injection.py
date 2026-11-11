@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-HOOK = REPO / "skill/krouter-obsidian/scripts/session_hook.py"
+HOOK = REPO / "skill/krouter/scripts/session_hook.py"
 
 
 @pytest.fixture()
@@ -25,7 +25,7 @@ def world(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
-    sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
     from krouter_home import project_root
 
     root = project_root(str(repo))  # 和 hook 用同一个函数：Windows 上 git 输出的路径写法和它解析出的不一样

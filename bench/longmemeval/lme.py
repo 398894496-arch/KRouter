@@ -22,6 +22,11 @@ of the answerable questions; those are seen (HELDOUT.md, set 7 amendment), so it
     KROUTER_DENSE_MODEL=BAAI/bge-m3 python3 bench/longmemeval/lme.py run --system rescue --sample 60
     python3 bench/longmemeval/lme.py run --system krouter-inproc --sample 60   # the same sample, KRouter in-process
 
+Set 14 (HELDOUT.md) asks whether the refusal gate can be raised without losing answerable questions. Its data step:
+
+    python3 bench/longmemeval/lme.py ablate        # each answerable question's vault with its answer sessions removed
+    python3 bench/longmemeval/gate_study.py        # features, the development-half rule search, no model
+
 State (vaults, outputs, report) lives in `~/.local/state/krouter-eval/lme/` (`KROUTER_LME_STATE` to move it).
 """
 
@@ -42,6 +47,7 @@ REPO = HERE.parents[1]
 STATE = Path(os.environ.get("KROUTER_LME_STATE") or Path.home() / ".local/state/krouter-eval/lme")
 SESSIONS = "05 时间日志/会话摘录"  # KRouter 自己导入会话时放的位置
 SEED = 20261018
+SPLIT_SEED = 20261110  # set 14: which half of the 470 answerable questions is the development half
 RESAMPLES = 10_000
 DENSE_SYSTEMS = {"dense", "dense-floor", "agree", "rescue"}
 
@@ -112,7 +118,62 @@ def sample_of(rows: list[dict], n: int) -> list[dict]:
     return sorted(random.Random(SEED).sample(pool, n), key=lambda r: r["id"])
 
 
-def run(system: str, limit: int, repo: Path, sample: int = 0) -> None:
+def split_of(rows: list[dict]) -> dict[str, str]:
+    """Set 14: `abs` for the 30 unanswerable (a development set since set 7's amendment), and a seed-drawn half of the
+    470 answerable questions each for `dev` and `heldout`. Rules are chosen on `dev` only."""
+    ids = sorted(r["id"] for r in rows if not r["abs"])
+    dev = set(random.Random(SPLIT_SEED).sample(ids, len(ids) // 2))
+    return {r["id"]: "abs" if r["abs"] else ("dev" if r["id"] in dev else "heldout") for r in rows}
+
+
+def make_ablated(rows: list[dict]) -> list[dict]:
+    """Each answerable question's vault with every labelled answer session deleted: no page can answer it, so the
+    right behaviour is a refusal. Easier than the real `_abs` questions (whose topical sessions stay in the vault),
+    but labelled by the authors' own `answer_session_ids` and needs no model."""
+    split = split_of(rows)
+    base = STATE / "ablated"
+    out = []
+    for it in rows:
+        if it["abs"]:
+            continue
+        dst = base / it["id"]
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(it["vault"], dst)
+        answer = set(it["answer_sessions"])
+        for rel, meta in it["pages"].items():
+            if meta["sid"] in answer:
+                (dst / rel).unlink(missing_ok=True)
+        out.append({"id": it["id"], "q": it["q"], "type": it["type"], "split": split[it["id"]], "vault": str(dst)})
+    return out
+
+
+def ablate(repo: Path) -> None:
+    """KRouter's own gate (in-process `recall`) on the ablated vaults; counts the refusals per half."""
+    import tempfile
+
+    sys.path.insert(0, str(repo / "skill/krouter/scripts"))
+    rows = make_ablated(load_questions())
+    out = []
+    with tempfile.TemporaryDirectory(prefix="krouter-ablate-") as tmp:
+        os.environ["KROUTER_CACHE_DIR"] = tmp
+        import recall_index as ri
+
+        for it in rows:
+            res = ri.recall(Path(it["vault"]), it["q"], limit=3)
+            refused = res["confidence"] == "none" or not res["hits"]
+            out.append({"id": it["id"], "split": it["split"], "refused": refused,
+                        "cited": [] if refused else [h["rel"] for h in res["hits"]]})
+            for f in Path(tmp).glob("recall-*"):
+                f.unlink(missing_ok=True)
+    (STATE / "ablated.krouter.jsonl").write_text("".join(json.dumps(o, ensure_ascii=False) + "\n" for o in out),
+                                                 encoding="utf-8")
+    by = {h: [o for o in out if o["split"] == h] for h in ("dev", "heldout")}
+    print(json.dumps({"ablated_refused": f"{sum(o['refused'] for o in out)}/{len(out)}",
+                      **{h: f"{sum(o['refused'] for o in v)}/{len(v)}" for h, v in by.items()}}))
+
+
+def run(system: str, limit: int, repo: Path, sample: int = 0, pages: int = 3) -> None:
     rows = load_questions()[: limit or None]
     if sample:
         rows = sample_of(rows, sample)
@@ -132,7 +193,8 @@ def run(system: str, limit: int, repo: Path, sample: int = 0) -> None:
     elif system == "krouter":
         cache = STATE / "cache"
         for it in rows:
-            ans = run_real.route_answers(repo, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"])[0]
+            ans = run_real.route_answers(repo, [{"id": it["id"], "q": it["q"]}], Path(it["vault"]), cache / it["id"],
+                                         pages=pages)[0]
             out.append({"id": it["id"], "cited": ans["cited"], "refused": ans["refused"], "repo": str(repo)})
             shutil.rmtree(cache / it["id"], ignore_errors=True)
     else:
@@ -228,16 +290,21 @@ def main() -> int:
     r = sub.add_parser("run")
     r.add_argument("--system", choices=["krouter", "bm25-floor", "krouter-inproc", *sorted(DENSE_SYSTEMS)], required=True)
     r.add_argument("--sample", type=int, default=0, help="a seed-drawn sample of this many answerable questions")
+    r.add_argument("--pages", type=int, default=3, help="krouter: how many cited pages to keep (set 22: 5)")
     r.add_argument("--limit", type=int, default=0)
     r.add_argument("--repo", default=str(REPO), help="the KRouter checkout to run (e.g. a worktree at the release tag)")
     sub.add_parser("score")
+    a = sub.add_parser("ablate")
+    a.add_argument("--repo", default=str(REPO))
     args = ap.parse_args()
     os.environ["KROUTER_NO_QUERY_LOG"] = "1"
     STATE.mkdir(parents=True, exist_ok=True)
     if args.cmd == "convert":
         convert(Path(args.data))
     elif args.cmd == "run":
-        run(args.system, args.limit, Path(args.repo), args.sample)
+        run(args.system, args.limit, Path(args.repo), args.sample, args.pages)
+    elif args.cmd == "ablate":
+        ablate(Path(args.repo))
     else:
         score()
     return 0

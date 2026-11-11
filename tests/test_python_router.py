@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-ROUTER = REPO / "skill/krouter-obsidian/scripts/route_knowledge.py"
+ROUTER = REPO / "skill/krouter/scripts/route_knowledge.py"
 
 
 def _route(vault: Path, *args: str) -> subprocess.CompletedProcess:

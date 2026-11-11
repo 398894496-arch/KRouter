@@ -1,4 +1,10 @@
 #!/bin/sh
+# KRouter from this copy, no pip needed: `krouter doctor|demo|ask|why|view|note|mcp` run the Python command line (sdk/),
+# anything else (`status`, `search "…"`, `preference`, …) goes to the router as before.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-exec "$ROOT/skill/krouter-obsidian/scripts/route_knowledge.sh" "$@"
+case "${1:-}" in
+  doctor|demo|ask|why|view|note|mcp|--version|-h|--help)
+    PYTHONPATH="$ROOT/sdk${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m krouter.cli "$@" ;;
+esac
+exec "$ROOT/skill/krouter/scripts/route_knowledge.sh" "$@"

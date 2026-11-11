@@ -48,7 +48,7 @@ def ask_cli(cli: str, model: str, effort: str, prompt: str) -> str:
     if Path(cli).name in ("claude", "claude-max"):  # Claude Code：不给任何工具，提示词走标准输入
         argv = [cli, "--print", "--tools", "", "--output-format", "text", "--no-session-persistence"]
         argv += ["--model", model] if model else []
-        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "skill/krouter-obsidian/scripts"))
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "skill/krouter/scripts"))
         import llm  # 和夜间任务一样：钥匙文件里的长期 CLI 令牌（钥匙串登录过期也能用）
 
         res = subprocess.run(argv, input=prompt, capture_output=True, text=True, timeout=1800, env=llm.cli_env())

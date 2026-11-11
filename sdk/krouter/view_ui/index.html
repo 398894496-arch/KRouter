@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>KRouter</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true">K</span><span class="name">KRouter</span>
+    <span class="badge" id="ro" data-i18n="readonly"></span></div>
+  <nav class="tabs" id="tabs" aria-label="sections">
+    <a href="#/memory" data-tab="memory" data-i18n="tab_memory"></a>
+    <a href="#/graph" data-tab="graph" data-i18n="tab_graph"></a>
+    <a href="#/experience" data-tab="experience" data-i18n="tab_experience"></a>
+    <a href="#/recalled" data-tab="recalled" data-i18n="tab_recalled"></a>
+    <a href="#/nightly" data-tab="nightly" data-i18n="tab_nightly"></a>
+    <a href="#/why" data-tab="why" data-i18n="tab_why"></a>
+  </nav>
+  <div class="tools">
+    <button id="lang" type="button" aria-label="language">中文</button>
+    <button id="theme" type="button" aria-label="theme">◐</button>
+  </div>
+</header>
+<p class="vaultline" id="vaultline"></p>
+<main id="main" tabindex="-1"></main>
+<script src="/app.js"></script>
+</body>
+</html>

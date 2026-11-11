@@ -14,13 +14,13 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent
 ROOT = DIR.parents[1]
-BUNDLED_ROUTER = ROOT / "skill/krouter-obsidian/scripts/route_knowledge.sh"
+BUNDLED_ROUTER = ROOT / "skill/krouter/scripts/route_knowledge.sh"
 
 
 def main() -> int:
-    vault = os.environ.get("OBSIDIAN_VAULT", "").strip()
+    vault = (os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", "")).strip()
     if not vault:
-        print("KRouter: OBSIDIAN_VAULT is not set. Timer on; distill skipped.", file=sys.stderr)
+        print("KRouter: KROUTER_VAULT (or OBSIDIAN_VAULT) is not set. Timer on; distill skipped.", file=sys.stderr)
         return 0
     router = os.environ.get("KROUTER_ROUTER", "")
     if "obsidian-knowledge-router" in router or not router:

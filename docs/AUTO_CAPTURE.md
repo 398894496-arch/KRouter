@@ -97,7 +97,7 @@ late or not at all; it is a top-up, not the trigger. What runs the work on a sch
   so a session that crossed midnight is seen; with the incremental digest a page that did not grow sends nothing.
   State and a one-line summary per run: `~/.local/state/krouter/intraday.json`, `intraday.log`.
 - **Corrections on the spot.** `session_hook.py prompt` (UserPromptSubmit) appends a typed correction to
-  `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md` (`status: provisional`, time, project, `claude:<id8>`, the cue word,
+  `05 时间日志/会话摘录/YYYY-MM-DD｜纠正候选.md` (`status: provisional`, time, project, `claude:<id8>` (or `codex:`, `cursor:`), the cue word,
   "待下次蒸馏判定"). Pattern match only: correction cues (改成/改为/换成/以后都/一律/锁死/不要再/别再/记住/纠正/搞错/说错,
   `from now on`, `instead of`, `that's wrong`, …), minus a sentence that ends as a rhetorical question (不是吗/对不对/
   是不是/难道不是, `isn't it`). Skipped: no consent, a prompt over 1500 characters, a session marked `#不记`, and any
@@ -122,6 +122,106 @@ nothing ever took effect. In its place every run that changes something is visib
 - The SessionStart hook brings every distilled line (corrections first), unmarked; `KROUTER_INJECT=confirmed`
   restores the earlier confirmed-pages-only default. A run that changes nothing writes no commit and no entry.
 
+## 3c. Every turn, in Claude Code, Codex and Cursor
+
+Reviewers comparing memory tools in November 2026 put it plainly: real-time capture was Claude Code only, Codex and
+Cursor were batch. Codex and Cursor both have documented lifecycle hooks now, so the same four hooks run in all three:
+
+| `session_hook.py` | Claude Code (plugin) | Codex (`~/.codex/hooks.json`) | Cursor (`~/.cursor/hooks.json`) | What it does |
+|---|---|---|---|---|
+| `start` | `SessionStart` | `SessionStart` → `hookSpecificOutput.additionalContext` | `sessionStart` → `additional_context` | this repository's recorded decisions, corrections first, each with its page |
+| `prompt` | `UserPromptSubmit` | `UserPromptSubmit`; prints nothing unless a page is recalled (Codex adds any output to the context) | `beforeSubmitPrompt`, always `{"continue": true}` (no recall: it cannot add context) | a typed correction becomes a candidate; a page the message names comes as `additionalContext` (§3d) |
+| `turn` | `Stop` | `Stop` | `stop`, prints `{}` (a `followup_message` would be sent as your next question) | `import_sessions.py --file … --local` in the background |
+| `end` | `SessionEnd`, `PreCompact` | `SessionEnd` (Codex waits at most 3 s; the import is detached) | `sessionEnd` | the same import, distilled if you said yes to that |
+
+- **The turn hook never calls a model**, even when distilling is on: `--local` writes the excerpt only. A page that
+  was distilled when its session was shorter keeps that digest, with `digest_turns` still the number of turns it
+  covers, so the decisions do not vanish from the page (and from the next session's context) between distills, and
+  the next distill sends only the new turns. Cost per turn: one python process, 0.4–0.9 s on the author's six
+  largest recent Claude Code transcripts (80–355 MB, 35–215 turns), about 0.2 s on an 18 MB one; no git commit (a run that
+  only rewrites an excerpt has nothing for the change ledger).
+- **Cursor sends other field names**: `conversation_id`, `workspace_roots` (the first is the project) and a
+  `transcript_path` that may be empty; a missing transcript is found by the session id under
+  `~/.cursor/projects/*/agent-transcripts/<id>/<id>.jsonl` (Codex: under `~/.codex/sessions/`).
+- **Installed only after a yes to importing**, by `bootstrap.py` (`register_hooks`), merged into the app's own file:
+  every entry already there is kept, the file is copied to `.krouter-bak`, re-running replaces only KRouter's entries
+  (`session_hook.py … --agent codex|cursor`), a file that is not plain JSON is left alone, and
+  `bootstrap.py --unregister-mcp` (what `uninstall.sh` runs) takes out only KRouter's. An app counts as installed
+  when its folder exists (`~/.codex`, or Cursor's own settings folder; `~/.cursor` alone does not count, since
+  `install.sh` creates it for the rule).
+- **Codex runs no hook you have not trusted.** Trust is recorded against the hook's hash in Codex's `/hooks`; the
+  installer cannot and does not grant it, and says to open `/hooks` once. `[features] hooks = false` in Codex's
+  `config.toml` turns hooks off; the installer says so instead.
+- **A Codex `hooks.json` with event names at the top level** (`{"Stop": […]}`, no `"hooks"` key) does not load:
+  codex-cli 0.155 prints ``failed to parse hooks config …: unknown field `Stop`, expected `description` or `hooks` `` and
+  skips the whole file, the hooks already in it included. The installer leaves such a file alone and says why,
+  rather than rewriting someone's hooks into a shape that would suddenly start running them.
+
+**Checked inside Codex** (codex-cli 0.155.0-alpha.9.2, 2026-11-09), with a throwaway `CODEX_HOME`, a throwaway vault
+and a local mock of the Responses API, hooks installed by `register_hooks` and run with
+`--dangerously-bypass-hook-trust` (the same as trusting them in `/hooks`): the recorded decision reached the model as
+a developer message, "以后一律用 pnpm" became a `codex:` candidate, and `Stop` and `SessionEnd` both ran the import.
+`codex exec` sessions are headless, so the import writes no page for them (by design); the rollout that run wrote
+was read back correctly as an interactive session. Without the bypass the untrusted hooks did not run. The same version was also run on 2026-11-09 against a real model (ChatGPT login, a throwaway `CODEX_HOME`): the
+prompt "以后一律用 pnpm" became a candidate on the day's 纠正候选 page, and `Stop` and `SessionEnd` each ran the import
+(0 sessions, as above). **Checked in the Cursor agent CLI** (2026.11.05-86047df, 2026-11-09, `cursor-agent -p --force`, project-level
+`.cursor/mcp.json` and `.cursor/hooks.json`): the turn-end and session-end hooks wrote a `cursor` session page for each
+run; `beforeSubmitPrompt` did not run, so "以后一律用 pnpm" was not noted there (fed to `session_hook.py prompt --agent
+cursor` by hand with Cursor's payload it is). The hook formats follow
+Cursor's hooks documentation and are covered by `tests/test_live_hooks.py`, which also runs the installed command line
+through a shell.
+
+## 3d. Mention it and it comes to mind (`recollect.py` and the standing index, on by default)
+
+The lock answers when the agent asks. This makes the vault answer when you merely mention something it knows, in two
+layers: the prompt hook catches a page by its name, and the host, given a standing index of what the vault knows at
+session start, catches the mentions in other words and fetches the page itself.
+
+- **The standing index** (`compile_subconscious.standing_index`, printed by `session_hook.py start`;
+  `KROUTER_RECALL_INDEX=0` off): one line per live topic of the alias table, "name / one other name: what was decided
+  〔page〕", rule pages first, then the newest of last used (`recalled.jsonl`, `queries.jsonl`) and last updated; at
+  most 60 full lines and 5,400 characters; with more topics, every topic keeps its name in one "also known" line and
+  the first ones keep full lines. Then one usage line: when the message touches any of them, even in other words,
+  fetch the one page that bears on it most before answering, with `krouter_ask`, else the route command (absolute
+  path), else by reading the file (absolute path), and cite it; a word inside pasted code or logs is not a mention;
+  otherwise do nothing and do not mention the index. The whole session-start text stays under 9,400 characters.
+- **Learning from use** (`KROUTER_RECALL_LEARN=1`, off by default): the turn hook reads the end of the transcript; a
+  page a lookup returned (or a vault file read) that the agent's answer names, and that the prompt hook had not
+  brought, is a `learn` event in `recall-learn.jsonl`; the nightly `learn_mentions` step adds one distinctive phrase
+  of the message to `90 系统文件/自动化/下意识触发词-待验证.psv` (recall only), and drops a provisional phrase the
+  agent passed over for another page.
+
+- **What counts as a mention**, most sure first: a name from the alias table, with the lock's rules (the whole
+  message is the name, or the name is inside it and carries it: four or more characters once spaces and punctuation
+  are dropped, or half the message; a Latin name only as whole words; a phrase two pages claim equally brings
+  neither); a trigger word from `下意识触发词*.psv`, or a question the nightly step learned, repeated; full-text recall
+  at `medium`/`high` confidence with the top page at least 2.5 × the second, never a log page. A name or trigger also
+  needs a second key from recall over the whole message (it does not refuse, or the page matches at least four
+  content words).
+- **What comes**: at most two pages, each with its conclusion (`how`, else the alias anchor, else the page's first
+  rule line), its path, the phrase and the route, under a line that says it is memory and not the user's words; up to
+  two linked pages as titles only. A replaced page brings the page that replaced it (`superseded_by`) and names the
+  old one; a page that `supersedes` another says so; a later "⚠ 已改" line is quoted. Superseded, retired, expired,
+  not-yet-valid and secret pages never come.
+- **Quiet**: code fences and lines that read like pasted code, logs, stack traces, diffs, commands or config are not
+  matched (blocks the app attached were already dropped); a page comes once per session unless its conclusion
+  changed; ten per session at most; nothing matched, nothing printed. `KROUTER_RECALL_PROMPT=0` off, or a list of
+  routes; `KROUTER_INJECT=0` also off.
+- **Seen**: each page brought is one line in `~/.local/state/krouter/recalled.jsonl` (time, app, session id, the
+  sentence the phrase was in, redacted and cut to 200 characters, the phrase, the route, the page, any older page);
+  with `#不记` the sentence is left empty. Outside the vault, never sent.
+- **Fast**: it reads the recall index as it is and never builds it in the hook; a detached refresh runs at most every
+  ten minutes. The phrase table is compiled once and kept next to the index, keyed by each file's size and time.
+- **Per app**: the index goes out at session start in all three (Cursor's `sessionStart` takes `additional_context`).
+  The prompt hook's note: Claude Code and Codex, `hookSpecificOutput.additionalContext` (Codex's documentation: added as
+  developer context; checked with codex-cli 0.155.0-alpha.9.2, a throwaway `CODEX_HOME`, a local mock of the
+  Responses API and `--dangerously-bypass-hook-trust`: the note arrived as a developer message right after the user's
+  message, and a message that named nothing sent none). Cursor: `beforeSubmitPrompt` can only allow or block (its
+  documented output is `continue` and `user_message`), so this step is not available there and is not run.
+- **Measured** (sets 32–36 in `bench/memory_honesty/HELDOUT.md`; numbers in `docs/NUMBERS.md`): the hook alone is
+  quiet but finds 7 of 24 mentions; with the index both hosts remember 23–24 of 24 and stay quiet on 22–23 of 24, so
+  both layers are on by default. Learning from use missed its line by one and stays off.
+
 ## 4. Decision-capture bench (`bench/decision_capture/`)
 
 Set 6 (`bench/real_questions/capture_bench.py`) measures capture on the author's real sessions with model judges; it
@@ -137,6 +237,71 @@ python3 bench/decision_capture/run.py --cli /opt/homebrew/bin/claude --save line
 python3 bench/decision_capture/run.py --replay lines.jsonl
 ```
 
-No baseline yet: on 2026-10-30 the `claude` CLI answered "OAuth session expired and could not be refreshed".
+Baseline, 2026-11-09, `claude` lane: 14 of 14 decisions found, 3 of 3 changes, 20 lines with none false, nothing
+written for the 4 sessions where nothing was decided. The lines are in `results/2026-11-09-claude.jsonl` (`--replay`
+regrades them). (On 2026-10-30 the same run had failed: the CLI's login had expired.)
 Lexical scoring undercounts a correct line worded with none of the listed alternatives; `--show` prints misses and
 false lines to read. Tests: `tests/test_decision_capture_bench.py`.
+
+## 5. Back-test on the maintainer's machine (2026-10-30 → 11-09)
+
+Capture ran on the author's machine from 2026-10-30, so its own record can be checked against what actually happened.
+Only counts are published here, never session content. Sources: the change ledger (`记忆变更记录.md`), the session
+pages it wrote, the day's correction-candidate pages, and the corrections the author recorded by hand in the same
+period (8 entries in the Claude Code correction log, each with the person's own words and date). Labels below were
+assigned by Claude reading the pages, not by a person.
+
+**What it wrote.** 30 runs on 11 days, 68 page writes over 27 sessions, 714 lines: 407 changes of mind ("was A → now B")
+and 307 new decisions. Every line names its session; no run was undone. All sessions in the period were Claude Code
+ones (the machine had no Codex or Cursor sessions after 2026-10-30), so this says nothing about the other importers.
+
+**Against the 8 hand-recorded corrections.**
+
+| | Count |
+|---|---|
+| In the memory as a "was A → now B" line by the next run | 5 |
+| In the session page's turns, missed by the distill | 2 |
+| About the agent's own tool use, which import does not see (it keeps questions and closing answers only) | 1 |
+
+From the turn that made the correction to the run that wrote it down: 0.5 to 17.7 hours, median 15. The machine slept
+through most daytime slots; the slot then runs once after wake.
+
+**The correction catcher** (`session_hook.py prompt`) only worked from 2026-11-04 (a manual install had not recorded
+the vault path; fixed in `install.sh`). On the 12 lines it kept from then to 11-09:
+
+| | 1.3.0 | after this change |
+|---|---|---|
+| Lines kept | 12 | 6 |
+| Of them, a correction or decision the person typed | 7 | 6 |
+| Kept although not the person's words (an app-attached block, a pasted document) | 2 | 0 |
+| Kept although a question or a suggestion ("…有 ECC 纠错吗", "要不要再去…查一下") | 3 | 0 |
+| A real correction now dropped (a decision phrased as a question, "…对吗") | — | 1 |
+
+Settling was the larger fault. Of 10 settled candidates, 7 were tied to the wrong digest line, because the shared
+words counted included the correction wording itself (`改成` on both sides). Three of those were corrections the
+distill had missed altogether (a price, a disk size, a cache size): the old rule tied each to an unrelated line and
+reported it covered. Now correction wording and times are left out of the comparison; a match needs a shared
+distinctive term (a model, a number, a name) or at least three shared Chinese terms; and a candidate no digest line
+covers is written into the digest in the person's own words (`补记`) instead of being settled as not holding. Replayed
+on the same pages, the three missed corrections are now written in, and no candidate is tied to an unrelated line.
+
+## 4. A correction that holds in the same turn, with no key (2026-11-09)
+
+The gap: on a fresh install with no key, "use SQLite from now on" was written down as a correction candidate
+(`session_hook.py prompt`) to be settled by the next distill, and distilling needs a model, so the next lookup still
+put the old answer first. Now the agent makes it hold in its own turn, with the vault's existing supersede rule:
+
+- `krouter_correct(new, old, page)` over MCP (or `corrections.py apply --new … --old … --page …`): a correction page in
+  `05 时间日志/会话摘录/` (`type: correction`, `supersedes: [[old page]]`, the "原来 A → 改成 B" line); the old page
+  gets `status: superseded` and `superseded_by` when it is only that decision (≤ 12 lines of body), or a "⚠ 已改" line
+  under the old sentence when it says other things too (its status is left alone); one line in
+  `90 系统文件/Agent记忆/纠错与取代记录.md`; today's matching correction candidates settled as 成立; a ledger entry and
+  one commit, undone like any run.
+- Refused when the old sentence is not on the named page, or the page is a system page, a secret page or outside the
+  vault: nothing is superseded on a guess.
+- The MCP server's instructions ask the agent to call it in the turn the user corrects something. The prompt hook
+  prints nothing for a correction (`tests/test_correction_capture.py`; it prints only a recalled page, §3d); the candidate it writes is settled either way.
+
+Measured: `tests/test_correct_now.py` puts "本地开发数据库用 Postgres 16" on a page, asks "本地开发用什么数据库" (that
+page first), calls `krouter_correct`, and asks again: the old page is no longer first and the first page holds the new
+answer. Ordering two live pages that disagree, newest first, is another session's change in `recall_index.py`.

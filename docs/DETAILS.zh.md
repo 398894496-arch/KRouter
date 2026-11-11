@@ -1,23 +1,41 @@
 # KRouter 详细说明
 
 <!-- krouter-status:start (source: docs/STATUS.zh.md; run scripts/sync_status.py) -->
-> **`main` 的当前状态（最新发布版 v1.3.0，2026-11-09）：测过什么，没测过什么。** 一行安装拿到的是最新发布版；
+> **`main` 的当前状态（最新发布版 v2.0.0，2026-11-10）：测过什么，没测过什么。** 一行安装拿到的是最新发布版；
 > CHANGELOG.md 里「Unreleased」下的改动只在 `main` 上。给评估 agent 的全部事实和出处：
 > [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md)。
 > - **留出测评**（合成的 110 页库上 200 道从没调过分的题，*不是*真实流量）：KRouter 引错 26%，80 道库里答不了的题
 >   拒答 47 道，120 道可答题答对 102 道。默认设置下 claude-mem 引错 64%、basic-memory 78%，分别答对 72 和 45 道；
 >   两者都没有拒答机制。给 BM25 加上 KRouter 那两条规则（跳过已被取代的页、匹配太弱就拒答），它就和 KRouter 打平：
 >   领先来自这两条规则默认开着，不是排序算法。
-> - **别人出的基准**（按出题方标注评分，不用模型当裁判）：LongMemEval S 470 道可答题里 439 道引到答案会话，30 道
->   无答案题拒了 3 道；LoCoMo 1 540 道里 991 道第一条就是证据，446 道陷阱题拒了 37 道。测的是找没找对页，不是答案
+> - **答案准确率**（LongMemEval S，也就是别家公布的那个数；测的是只交 3 页的 1.3.0）：500 道答对 400 道，80.0%
+>   [76.4, 83.4]；只给 KRouter 引用的前三页，作答和评判都是 Claude Sonnet 5.5、用基准自带的提示词，不是多数项目用的 GPT-4o。最弱的是要把好几段
+>   聊天加起来的题（121 道答对 69 道）。同一个作答模型改看纯 BM25 排前三的聊天，答对 405 道（81.0%）：看不出差距
+>   （配对差 −1.0 个百分点 [−2.8, +0.8]）；什么都不给时，470 道可答题一道都答不对。在这个基准上，检索和 BM25 持平，
+>   不是领先。直接给基准标注的答案所在聊天（检索满分）时，同一个模型答对 492 道（98.4%）：还差的 18 个百分点
+>   [15.0, 21.8] 丢在检索上，不在作答模型上。2.0 交 5 页，其中两页是库里和命中页相关联的：留出的 235 道题里 210 道
+>   所需的答案会话都在这 5 页里（BM25 前 5 是 198），多会话题 47 道里 40 道（31）（[第 18 套](https://github.com/398894496-arch/KRouter/blob/main/bench/memory_honesty/HELDOUT.md)）。
+>   5 页时的答案准确率还没测（第 22 套，已登记）。
+> - **别人出的基准**（按出题方标注评分，不用模型当裁判）：LongMemEval S 470 道可答题里 439 道引到答案会话（1.x，交 3 页）；
+>   30 道无答案题，现在的拒答门槛拒 9 道（第 14 套；以前常引的「3 道」是 1.1.1 的）；LoCoMo 1 540 道里 991 道第一条就是证据，446 道陷阱题拒了 37 道。测的是找没找对页，不是答案
 >   准确率；纯 BM25 找到的也差不多。
 > - **新查询上的真实流量盲测**（[VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md) 第 4 层）：
 >   还没跑，要等攒够 50 条新查询（到 2026-11-09 记下了 30 条）。
 > - **留出题是谁写的：** claude.ai 里单独会话中的 Claude Opus，不是真人。真人写的一套在计划中。
-> - **发版节奏：** 1.3.0（2026-11-09）：同意导入之后，记忆自己保持更新，不再逐条等你确认；每一轮都有记录、能撤回。
+> - **举一反三**（留出集；宿主模型看经验卡摘要自己判断）：换了题材、处境相同的中文任务，Sonnet 5.5 14 / 14、Haiku 5.5
+>   11 / 14 提出了对的经验，英文 14 / 14 和 13 / 14；14 道不该提的一道都没打扰；agent 自己写卡在第 23 套过线（13 / 16，忠于原会话 92%）。
+> - **发版节奏：** 2.0.0（2026-11-10）：提到就想起；经验能举一反三、长成技能；一次交 5 页（含库里相关联的页）；不配 key
+>   改主意也算数；安装更轻、英文从头到尾是英文；路由器目录改成 `skill/krouter`（升级时旧路径留成指向新目录的链接）。
 >   小版本每周最多一个，补丁随时发；`KROUTER_TAG` 可以固定版本。
-> - **夜间任务：** 一行安装只装查询，什么都不问；加 `--ask` 才问要不要导入会话、开夜间任务。从 clone 手动跑 `install.sh`
->   会直接装（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
+> - **团队服务**（自己部署，没有 KRouter 云）：一个服务挂几份互不相通的记忆，各有 token，有 Prometheus `/metrics`；
+>   有 Docker、Compose、Kubernetes 和 systemd 的部署文件。一台 M2 笔记本上走 HTTP：1 万页每次 13 ms、32 个调用方时每秒
+>   答 301 次，5 万页 54 ms、每秒 75 次（合成库，`bench/scale/serve_load.py`）。Kubernetes 清单和 systemd 服务由测试检查过，
+>   还没在真集群、真主机上跑过。
+> - **安装和自动记：** 一行安装什么都不问，把本机装了的应用都接上（Claude Code 连同插件、Codex、Cursor、Claude Desktop、
+>   VS Code、Copilot CLI、Gemini CLI、Kiro、Zed、Cline CLI），逐条列出改过的设置文件（每个都留了备份），不导入以前的会话
+>   （`--all` 在本机导入近 7 天、不调模型；`--minimal` 只装查询、只接你点名的应用）。从这以后
+>   Claude Code、Codex、Cursor 都通过会话钩子在每一轮结束时记下（只在本机、不调模型；Codex 要先在 `/hooks` 里信任；Cursor
+>   的在它的 agent 命令行里跑过，那里打出来的纠正不会被记下）。用模型提炼和夜间任务会先问（`--ask`）。从 clone 手动跑 `install.sh` 会直接装夜间任务（`KROUTER_NO_TIMER=1` 跳过）。查询从不出本机。
 > - **夜间写入通道：** API key 通道本机不跑任何进程；grok（内核沙箱）和 claude（工具白名单）只能动库；Codex 能读整个账号、
 >   只写库，所以只有你点名或设 `KROUTER_ALLOW_CODEX=1` 才用；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。
 <!-- krouter-status:end -->
@@ -28,21 +46,28 @@
 
 - **agent 会话**（`import_sessions.py`）：Claude Code、Codex 和 Cursor agent 的会话记录，每个会话每天一页，放在 `05 时间日志/会话摘录/`。只留你的提问和每轮最后的回答，先脱敏；工具输出、思考过程、注入的上下文、子 agent 和无头运行都不收。加 `--distill` 让模型写出「定了什么、改了什么」。`--consent` 之后，夜间任务每天导入前一天的会话；`--file 路径` 只导一个会话，插件的会话结束 hook 用的就是这个。
 - **claude-mem**（`import_claude_mem.py`，已在 claude-mem 13.35.0 的真实安装上跑通）：按会话所在仓库的路径（claude-mem 的 `cwd`）区分项目；老版本没有这个字段，那些会话照样导入，但不会自动带进新会话。只读打开 `~/.claude-mem/claude-mem.db`。会话总结和记录写进 `05 时间日志/claude-mem/`；每个项目的「决定」汇成一页，放在 `02 经验与方法/从 claude-mem 导入/`，状态是 `status: candidate`。加 `--distill` 会把这些决定分成「还有效的」和「被取代的」。
-- **会话 hook**（Claude Code 插件里的 `session_hook.py`）：会话结束时，在后台导入刚结束的这个会话；新会话开始时，带上这个仓库（按 git 根目录匹配，不按文件夹名）最近的至多 8 条决定，每条注明出处页。纠错排在前面，提炼出来的条目全部带上，不再要人确认：每一轮写了什么记在 `90 系统文件/自动化/记忆变更记录.md`，`import_sessions.py --undo <run>` 一条命令撤回。`UserPromptSubmit`（`session_hook.py prompt`）把你打的纠正当场记成候选，下一次提炼那个会话时自动判定。没同意之前都不做；`KROUTER_INJECT=confirmed` 只带确认过的页加纠错（1.3 以前的默认），`KROUTER_INJECT=0` 都不带。会话比上次提炼时长了，只发新增的轮次；同一时刻只跑一个导入；hook 用同意时点名的模型通道（`--cli`），不看会话 shell 里碰巧有哪个 key。和别的采集器共存：`05 时间日志/` 下 `type: daily-log` 的日记已经列出的会话（`` `agent:id` `` 或 8 位以上十六进制前缀，只算那篇日记自己那天），或那篇日记的采集器覆盖了的那天，默认链接到日记（`covered_by`，`--overlap link`），也可以不写页（`--overlap skip`）。分叉、续接复制了别的会话的轮次（时间和问题都一样）按内容认出来：长的那个留共有轮次，短的只留自己的（`forked_from`），整段都在别的会话里的不写页。设计和成本见 [`docs/AUTO_CAPTURE.md`](AUTO_CAPTURE.md)。 长对话压缩上下文之前（`PreCompact`）也会导入一次，开着好几天的窗口也能记下。这四个 hook 都随插件一起装上。
+- **会话 hook**（`session_hook.py`；Claude Code 走插件，Codex 走 `~/.codex/hooks.json`，Cursor 走 `~/.cursor/hooks.json`，后两个在你同意导入后由安装脚本并进去）：每一轮结束（`Stop`，Cursor 叫 `stop`）把这个会话到目前为止的内容写进它那一页，只在本机、不调模型；会话结束时，在后台导入刚结束的这个会话，同意过提炼的话再提炼；新会话开始时，带上这个仓库（按 git 根目录匹配，不按文件夹名）最近的至多 8 条决定，每条注明出处页。纠错排在前面，提炼出来的条目全部带上，不再要人确认：每一轮写了什么记在 `90 系统文件/自动化/记忆变更记录.md`，`import_sessions.py --undo <run>` 一条命令撤回。`UserPromptSubmit`（`session_hook.py prompt`）把你打的纠正当场记成候选，下一次提炼那个会话时自动判定。没同意之前都不做；`KROUTER_INJECT=confirmed` 只带确认过的页加纠错（1.3 以前的默认），`KROUTER_INJECT=0` 都不带。会话比上次提炼时长了，只发新增的轮次；同一时刻只跑一个导入；hook 用同意时点名的模型通道（`--cli`），不看会话 shell 里碰巧有哪个 key。和别的采集器共存：`05 时间日志/` 下 `type: daily-log` 的日记已经列出的会话（`` `agent:id` `` 或 8 位以上十六进制前缀，只算那篇日记自己那天），或那篇日记的采集器覆盖了的那天，默认链接到日记（`covered_by`，`--overlap link`），也可以不写页（`--overlap skip`）。分叉、续接复制了别的会话的轮次（时间和问题都一样）按内容认出来：长的那个留共有轮次，短的只留自己的（`forked_from`），整段都在别的会话里的不写页。设计和成本见 [`docs/AUTO_CAPTURE.md`](AUTO_CAPTURE.md)。 长对话压缩上下文之前（`PreCompact`）也会导入一次，开着好几天的窗口也能记下。这四个 hook 都随插件一起装上。
 
 ## 安装 —— 一行，什么都不用懂
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
 Windows（PowerShell，不需要管理员）：
 
 ```powershell
-irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
+irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex
 ```
 
-它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（系统语言是中文就用中文模板），装好路由器和 agent 规则，并在 Obsidian 里打开这座库。默认到此为止：只装查询，什么都不问，没有内容离开本机。加 `--ask` 才会问要不要导入最近的 agent 会话、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`… | KROUTER_TAG=v1.3.0 sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`… | sh -s -- --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
+它会下载最新发布版（tag，永远不是 `main`），先按 release 里的 `SHA256SUMS` 核对 SHA-256，再在 `文稿/第二大脑` 建一座库（语言是中文就用中文模板：先看 `--lang`，再看 `LC_ALL` / `LC_MESSAGES` / `LANG`，最后才看系统语言；英文库的目录和文件名都是英文），装好路由器和 agent 规则；从终端运行时在 Obsidian 里打开这座库（`--open` 总是打开，`--no-open` 从不，agent 代跑时不打开）。`--minimal` 只装查询：不导入、不装插件和钩子、不写 Cursor 规则，只接 `--apps` 点名的应用。它还会把本机装了的应用都接上（首页那张表：各写进应用自己的 MCP 设置，Claude Code 另外从同一个发布包装插件），逐条列出改过的设置文件（每个都在旁边留了 `*.krouter-bak`），从这以后开始记会话，不导入以前的会话（`--all`，或安装最后几行给的那条命令，会把近 7 天的会话导成页面：只在本机、先脱敏、不调模型、每页记在变更记录里）。默认到此为止：什么都不问，没有内容离开本机；`--no-import` 不导入。加 `--ask` 会在导入前先问，并问要不要用你的模型提炼、要不要装夜间任务，并用一句话说清：会用哪个 CLI、以什么权限运行，每晚会发出多少页、多少 token——数字来自在新库上的一次预演。没有终端可问就当不要；`--timer`、`--import` 表示事先同意。升级时保留你以前同意过的。想固定在某个版本：`KROUTER_TAG=v2.0.0 sh /tmp/krouter-install.sh`（Windows 先设 `$env:KROUTER_TAG`）。已有的库（`sh /tmp/krouter-install.sh --vault ~/MyVault`）一个文件都不动，只补缺失的骨架文件。同一行再跑一次就是升级。唯一的前提是 Python 3（Windows 脚本缺 Python 时会用 winget 自动装）。最后一行会告诉你还剩哪一步：登录一个 AI 编程工具，或者贴一个 API key。之后不需要维护任何东西——锁名词只是可选的快捷方式，不是前提；召回自己就能按页面标题和正文答，答不了就直说，不硬猜。哪天晚上的活没干成，会弹桌面通知说明原因。数据去向、CLI 写入器能看到什么：[`SECURITY.md`](../SECURITY.md)。
+
+### Claude Code 插件
+
+一行安装会从同一个校验过的发布包装上插件。想手动装：`/plugin install krouter --marketplace 398894496-arch/KRouter`
+需要 Claude Code 2.1.275 或更高；在 shell 里用 `claude plugin install krouter --marketplace 398894496-arch/KRouter`
+需要 2.1.292。第三方插件市场不会自动更新：运行 `claude plugin update krouter@krouter`，或在 `/plugin` → Marketplaces →
+krouter 里选 Enable auto-update。
 
 ## 什么会离开本机，要花多少
 
@@ -57,9 +82,9 @@ irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootst
 库的 git 历史（如果有）能撤回一次改坏，但扛不住硬盘坏了、电脑丢了，或者勒索软件把整个文件夹加密。要防这些，得有一份放在别处的副本，而且是真的恢复过的副本。`backup.py` 就做这件事；不给它指定文件夹，它就不运行。
 
 ```bash
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py init --dir "<一个会同步到别处的文件夹>"
+python3 ~/.agents/skills/krouter/scripts/backup.py init --dir "<一个会同步到别处的文件夹>"
 # 把 ~/.dsh-krouter-keys.env 里的 KROUTER_BACKUP_PASSPHRASE 复制进密码管理器，然后：
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
+python3 ~/.agents/skills/krouter/scripts/backup.py saved
 ```
 
 之后夜间任务每晚写一个备份包，并且先把它重新打开验一遍，验过了才算数。连续三天没有一次恢复成功，或者密码还只存在这台电脑上，`status` 都会说出来，你的 agent 也就会告诉你。为什么这样设计：
@@ -74,6 +99,56 @@ python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
 - **恢复不依赖 KRouter。** 用 `backup.py restore <备份包> --into <新文件夹>`（从不覆盖已有文件夹）；或者在任何装了 openssl 和 tar 的电脑上手动恢复：
   `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in <备份包> -out vault.tar.gz && tar -xzf vault.tar.gz`。
 - **自己亲手试一次。** `backup.py verify --latest` 会在临时文件夹里打开最新的备份，什么都不改；再真的 `restore` 到一个新文件夹一次，用 Obsidian 打开看看。
+
+## 看得见：krouter why 与 krouter view
+
+两条命令都只读：不写页面、不写日志、不改设置。唯一碰的是召回缓存（`~/.cache/krouter/`，可以删了重建，不在你的记忆文件夹里），`ask` 也是同样刷新它。和别的命令一样要知道记忆文件夹：`--vault`、`KROUTER_VAULT`，或安装时记下的那个。
+
+### `krouter why "<一句话>"`
+
+用七小节讲一次查询是怎么得出结果的。它问的是 `krouter ask` 问的同一段代码，然后说：
+
+1. **别名锁。** 哪个别名对上了、怎么对上的（问题就是别名、包含别名、或占了别名的大半），别名表给的页和那一句答案；没有锁就说为什么：没有接近的、两个不同的页打平（锁不猜）、别名对上了但那一页已被取代或不在了。锁是直接答的，所以锁答了的时候，排序搜索只作「参考」展示，没有决定任何事。
+2. **词。** 召回拿来排序的词，以及其中整个库都没有页面含有的。
+3. **页面和顺序。** 每一页：问题里的哪些词在它里面、在哪里（标题、别名或触发词、正文），得分是「正文相关度 × 层级权重」（点名的主题档案、或问题就是这一页的名字时再乘一个系数）；只有这个乘积能复现召回给的数时才会写出来。被取代的页会写明谁取代了它，永远不当答案；取代了别的页的也会写明。
+4. **为什么是这个置信度。** `high` 要第一名至少是第二名的 1.5 倍并且是规则页或主题档案；`medium` 是明显领先但不满足前者；`low` 是前两名很接近、只对上一个词、或全是网页剪藏。`none` 会列出拦下的检查：问题点了库里没人提过的名字、核心词从未出现、真词大多在库外、最好的一页没对上任何真词、得分低于门槛。这些是用召回自己的函数重算的，有测试保证和 `recall` 一致。
+5. **沿联想带出来的页。** 每一页带它的边和出发的页：链接、取代、同一次会话、以前被一起引用、共有的少见词（哪些词）。
+6. **新旧冲突。** 前几名里有两页在不同日期说同一件事、较新的那页说了改动：谁取代了谁，较新的排在前面。
+7. **经验卡。** 经验卡不按问题匹配（agent 在会话开始时拿到整份摘要，自己判断处境像不像），所以这里只说有几张，并点出处境和问题共有词的、或出处就是上面某一页的。
+
+### 剪藏和别人写的材料
+
+一页算剪藏（别人写的东西，不是你的笔记）的条件：它路径上有一层文件夹名字里带 `剪藏`、`Clippings` 或 `Web clips`，或者它的页头有 `source:` 网址、`clippings` 标签或 `type: clipping`。想让一个研究资料夹按剪藏对待，就把文件夹名字改成带这几个词的（比如「研究资料（剪藏）」），或者给里面的页加上 `tags: [clippings]`。前三名全是剪藏时，置信度最多 `low`，回执会说这些是别人写的；只有问题里还有一个库里怎么都找不到的词时，才判 `recall: none`。剪藏和你自己的页混在一起时不起作用。
+
+输出语言跟记忆库走（`krouter-zones.psv` 写了 `@lang|en` 就是英文，否则中文）；`--lang en|zh` 可以改，`--json` 输出结构。`why` 不记查询日志：夜间任务是从你真实的提问里学的，不该从这些里学。
+
+### `krouter view`
+
+```bash
+krouter view                  # 打印 http://127.0.0.1:<空闲端口>/ 然后等着；Ctrl-C 停
+krouter view --port 8765      # 固定端口（仍然只是 127.0.0.1）
+krouter view --open           # 同时用默认浏览器打开；不加这个什么都不会打开
+krouter view --demo [--lang zh]   # 用一个虚构的样例记忆库（退出就删）代替你的
+```
+
+| 页签 | 显示什么 |
+|---|---|
+| 记忆 | 所有页面，每次 40 条分页，可按层级、状态过滤，按路径或最近改动排序，按路径、标题或词搜索；一页显示正文（机密页只给路径，密钥照常遮掉）、被谁取代或取代了谁、连着哪些页 |
+| 关联 | 以一页为中心的相连页，每条边的种类、方向和强度：强度是联想通路从这一页出发会给这条边加的数，没有计枢纽页分摊和问题的权重。同一天的页会列出，但不参与排序 |
+| 经验 | 经验卡，按会话开始时摘要给出的顺序，带被提出、被采纳、又遇到的次数和最近的使用记录；记忆库里有头部写着 `type: skill…` 的页，就列出技能草稿和技能，没有这块就是空的 |
+| 昨晚 | 最近一次夜间报告（每一步：跑了、跳过、没开，附原因）、没开的功能和原因、用库的 git 历史列出更早几晚、每一轮加了什么取代了什么（来自变更记录）、当场落实的纠正、学到的触发词 |
+| 试一句 | 你输入一句话，显示 `krouter why` 打印的同样解释 |
+
+它保证的（`tests/test_view.py` 不开浏览器逐条验证）：
+
+- 只监听 `127.0.0.1`，没有改成别的地址的选项；只有 `Host` 头正是这个地址的请求才会回应，别的网站上的网页没法借你的浏览器读它。
+- 只有 GET 和 HEAD；其他方法一律 `405`，服务里没有任何会写入的接口。
+- 不从外面加载任何东西：没有来自别的地址的脚本、字体、样式、图片，不向任何别处发请求，`Content-Security-Policy` 一概不放行（内联脚本和样式也不行）。页面是 `sdk/krouter/view_ui/` 里三个手写的文件，服务是 Python 标准库。不新增依赖。
+- 列表永远只给一屏：每次请求 40 条（最多 200），不管记忆库多大。
+
+在一台 M2 笔记本上，用 1 万页的合成记忆库（`krouter.sample.build_big`）实测：第一次启动建索引 6–7 秒，之后再启动 0.06 秒；从打开页面到第一屏 40 行出现 0.05–0.3 秒（浏览器窗格里三次加载：52、109、311 毫秒；35 页的样例库 79 毫秒）；一次 `why` 约 0.1 秒。运行中改了页面，约 20 秒内会出现在页面上。
+
+它不做的：编辑、删除、移动页面，把任何东西发到别处，调用任何模型。夜间报告和变更记录是夜间任务用中文写的；页面切到英文时，固定的句式会译成英文，页面名、引用的句子和命令保持原样。
 
 ## 证据一览
 
@@ -210,7 +285,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 ./scripts/install.sh            # 以后升级：./scripts/install.sh --upgrade · 卸载：./scripts/uninstall.sh
 ```
 
-别名表是你的，放在**库里**（`90 系统文件/canonical_sources.psv`），跟着库同步，升级不会动它；安装只在第一次放进十个样例名词，之后再也不碰。开始写自己的名词时，`python3 ~/.agents/skills/krouter-obsidian/scripts/propose_aliases.py` 会从你的库里起草候选，写到 `90 系统文件/自动化/别名候选.md`——勾上要的行，再加 `--apply` 运行。没勾的一行都不会进表。建议固定在某个发布 tag，不要直接跟 `main`。
+别名表是你的，放在**库里**（`90 系统文件/canonical_sources.psv`），跟着库同步，升级不会动它；安装只在第一次放进十个样例名词，之后再也不碰。开始写自己的名词时，`python3 ~/.agents/skills/krouter/scripts/propose_aliases.py` 会从你的库里起草候选，写到 `90 系统文件/自动化/别名候选.md`——勾上要的行，再加 `--apply` 运行。没勾的一行都不会进表。建议固定在某个发布 tag，不要直接跟 `main`。
 
 **先 API key：** key 只存在 `~/.dsh-krouter-keys.env`（权限 600），永不留在库里。贴在 [`90 系统文件/自动化/自进化钥匙.md`](../template-zh/90%20系统文件/自动化/自进化钥匙.md) 也行——下一次运行会把它挪进那个文件，页面上留一句说明——因为库里的东西 CLI 写入器读得到，库同步到哪儿它就跟到哪儿。写入器锁定该家旗舰模型，蒸馏并写准经验。
 
@@ -224,7 +299,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 - **先**把 `OBSIDIAN_VAULT` 指到那座库再跑 `install.sh`，否则不挂定时器
 - `dsh plugin add` 是挂载，不是这个写入器。`lamp: unused` 是你把定时器关了
 
-装到 `~/.agents/skills/krouter-obsidian`、`~/.cursor/rules/krouter-obsidian.mdc`、`~/.cursor/rules/ask-product.mdc`。Cursor 规则先跑 `status`，收据里有 `host_action` **必须告诉宿主**。若 `~/.agents/skills/krouter-obsidian` 已在，不带 `--upgrade`（与 `--force` 相同）会 exit 1；两者都只换代码，别名表、台账和软链原样保留。`uninstall.sh` 删掉定时器、Cursor 规则、hook 和 skill，别名表还没进库的先救进库，库本身不动（先用 `--dry-run` 看；`--purge` 另外清掉可重建的缓存和查询日志）。不会覆盖正在用的 `obsidian-knowledge-router`。定时器钉死本仓库的 `krouter-obsidian`。问的匹配器是 L3：一句最多一条准经验；`record` 不写 `active`；采纳且该次验收后 `promote` 才升正式。触发词是你自己的，写在准经验页或 `ask-triggers.json`。Codex / Claude 仍要贴 [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md)。
+装到 `~/.agents/skills/krouter`、`~/.cursor/rules/krouter.mdc`、`~/.cursor/rules/ask-product.mdc`。Cursor 规则先跑 `status`，收据里有 `host_action` **必须告诉宿主**。若 `~/.agents/skills/krouter` 已在，不带 `--upgrade`（与 `--force` 相同）会 exit 1；两者都只换代码，别名表、台账和软链原样保留。`uninstall.sh` 删掉定时器、Cursor 规则、hook 和 skill，别名表还没进库的先救进库，库本身不动（先用 `--dry-run` 看；`--purge` 另外清掉可重建的缓存和查询日志）。不会覆盖正在用的 `obsidian-knowledge-router`。定时器钉死本仓库的 `skill/krouter`。问的匹配器是 L3：一句最多一条准经验；`record` 不写 `active`；采纳且该次验收后 `promote` 才升正式。触发词是你自己的，写在准经验页或 `ask-triggers.json`。Codex / Claude 仍要贴 [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md)。
 
 本机已登录 CLI 时的订阅通道：grok 在内核沙箱 `krouter` 里运行（只碰知识库和路由器），claude 用 `--permission-mode dontAsk` 加白名单（知识库和路由器），Codex `exec --sandbox workspace-write`。见 [`SECURITY.md`](../SECURITY.md)。
 
@@ -240,7 +315,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 
 | 挂载 | 仓库里有什么 |
 |---|---|
-| Cursor | `install.sh` → `extras/cursor/krouter-obsidian.mdc` |
+| Cursor | `install.sh` → `extras/cursor/krouter.mdc` |
 | Codex | `extras/codex/AGENTS.snippet.md` |
 | Claude Code | `extras/claude-code/CLAUDE.snippet.md` |
 | DeepSeek Harness | DSH 插座。克隆后：`dsh plugin add /path/to/this/repo`。目录：`dsh plugin --profile web add github:398894496-arch/KRouter`。只读工具，含 **correction**；`memory` 是库内路由，不是聊天记忆。卸插件不删库 |

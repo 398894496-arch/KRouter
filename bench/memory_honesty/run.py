@@ -102,7 +102,7 @@ def aggregate(result: dict) -> dict:
 
 
 def krouter_answers(rows: list[dict], vault_src: Path | None = None) -> list[dict]:
-    sys.path.insert(0, str(REPO / "skill/krouter-obsidian/scripts"))
+    sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
     saved = {k: os.environ.get(k) for k in ("KROUTER_NO_QUERY_LOG", "KROUTER_CACHE_DIR", "KROUTER_MAP")}
     # Windows 上召回缓存的 SQLite 连接在进程里一直开着，临时目录删不掉也不算失败
     with tempfile.TemporaryDirectory(prefix="krouter-bench-", ignore_cleanup_errors=True) as tmp:
@@ -115,9 +115,10 @@ def krouter_answers(rows: list[dict], vault_src: Path | None = None) -> list[dic
 
         out = []
         for it in rows:
-            res = ri.recall(vault, it["q"], limit=3)
+            # 和 agent 拿到的一样：交 ri.PAGES 页（前 3 页直接命中，后面是联想），冲突兜底按产品默认（`KROUTER_CONFLICT`）
+            res = ri.recall(vault, it["q"])
             refused = res["confidence"] == "none" or not res["hits"]
-            out.append({"id": it["id"], "refused": refused, "cited": [] if refused else [h["rel"] for h in res["hits"]],
+            out.append({"id": it["id"], "refused": refused, "cited": [] if refused else ri.page_list(res, ri.PAGES),
                         "score": None if refused else float(res["hits"][0]["score"])})
     for k, v in saved.items():
         if v is None:

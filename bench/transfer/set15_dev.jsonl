@@ -1,0 +1,28 @@
+{"id": "C01-x1", "query": "简历上的手机号我改了，也重新投了一遍，HR 却说她看到的还是旧号码，我是不是哪步没保存上？", "expect": "C01", "kind": "transfer"}
+{"id": "C02-x1", "query": "每次投一家新公司，我都要重新把同样的成绩单和证书扫描、压缩、合并成 PDF，一弄就是半小时，烦死了。", "expect": "C02", "kind": "transfer"}
+{"id": "C03-x1", "query": "这个 Word 模板上周打印还好好的，这周我调了页边距、字体、页眉、分节符十几处，现在一打印页码全乱，不知道是哪处搞的。", "expect": "C03", "kind": "transfer"}
+{"id": "C04-x1", "query": "家里 WiFi 这几天时不时断一下，有时一天好几次，有时一整天都没事，我打算直接换信道再把路由器固件刷了，你教我怎么刷。", "expect": "C04", "kind": "transfer"}
+{"id": "C05-x1", "query": "给 3000 个会员群发的生日短信模板我写好了，里面带姓名和积分两个变量，准备现在一键全发，帮我最后看一眼文案。", "expect": "C05", "kind": "transfer"}
+{"id": "C06-x1", "query": "博客要换新模板，我打算把新主题的文件夹直接传上去盖掉旧的，旧的里面有我以前手改过的样式，怎么上传？", "expect": "C06", "kind": "transfer"}
+{"id": "C07-x1", "query": "这道几何证明题我盯了一晚上，每一步看着都对，可最后就是推不出结论，实在看不出哪里有毛病。", "expect": "C07", "kind": "transfer"}
+{"id": "C08-x1", "query": "我家客厅全是米色系，沙发地毯窗帘都很搭，但看着就是平平的没精神，我想再买几个米色靠垫丰富一下，推荐几款？", "expect": "C08", "kind": "transfer"}
+{"id": "C09-x1", "query": "我把体检报告的数录进自己的健康记录表，血糖那栏画出来比去年高了十几倍，可医生说完全正常，是不是我画图的代码有 bug？", "expect": "C09", "kind": "transfer"}
+{"id": "C10-x1", "query": "我的记步 app，夜里十二点以后走的路全算到前一天里去了，出差到美国之后才这样，是 app 坏了吗？", "expect": "C10", "kind": "transfer"}
+{"id": "C11-x1", "query": "把供应商表导进系统，一下报了三百多条错，第一条说表头少了一列，后面全是各行字段对不上，我得一条条改吗？", "expect": "C11", "kind": "transfer"}
+{"id": "C12-x1", "query": "老板让我改周报，改了四版他都说不够有高度，问他哪里不行又讲不出来，你帮我再改一版试试。", "expect": "C12", "kind": "transfer"}
+{"id": "C13-x1", "query": "年会开场视频里那个转场特效我已经抠了三个晚上，还是不满意，周五就要放了，你帮我看看这个特效还能怎么调。", "expect": "C13", "kind": "transfer"}
+{"id": "C14-x1", "query": "给我妈手机上装好了视频通话的 app，账号也登上了，我明早就回城，打算走之前跟她说一声都弄好了，还有什么要交代她的？", "expect": "C14", "kind": "transfer"}
+{"id": "T04", "query": "GitHub 的 issue 怎么打标签、怎么指派给同事？我第一次用。", "expect": null, "kind": "topic-trap", "near": "C07"}
+{"id": "T14", "query": "想给照片文件定个命名规范，日期放前面好还是地点放前面好？以后新拍的都按这个来。", "expect": null, "kind": "topic-trap", "near": "C05"}
+{"id": "T01", "query": "Docker Compose 和 k8s，对我们这种三个人的小项目部署哪个更合适？简单说说区别。", "expect": null, "kind": "topic-trap", "near": "C14"}
+{"id": "T06", "query": "A3 海报要送印刷厂，分辨率设多少 dpi 合适，出血留几毫米？", "expect": null, "kind": "topic-trap", "near": "C12"}
+{"id": "T10", "query": "日报里想加一列环比增长率，公式应该怎么写？", "expect": null, "kind": "topic-trap", "near": "C10"}
+{"id": "T05", "query": "集成测试和单元测试的区别是什么？我们项目里两种大概各占多少比较合理？", "expect": null, "kind": "topic-trap", "near": "C04"}
+{"id": "T07", "query": "GitHub Actions 里怎么设置成只有 main 分支有 push 时才触发构建？", "expect": null, "kind": "topic-trap", "near": "C02"}
+{"id": "W04", "query": "填表的时候工作单位那一栏，自由职业者应该怎么写？", "expect": null, "kind": "word-trap", "near": "C09"}
+{"id": "W05", "query": "给我一份辞职信的样例，语气客气一点，三四段就行。", "expect": null, "kind": "word-trap", "near": "C12"}
+{"id": "W07", "query": "我想从头学吉他，完全零基础，第一个月应该先练什么？", "expect": null, "kind": "word-trap", "near": "C02"}
+{"id": "W01", "query": "帮我看下这张组织架构图的层次对不对，总监下面应该是经理还是直接挂主管？", "expect": null, "kind": "word-trap", "near": "C08"}
+{"id": "U06", "query": "复利是什么意思？用存钱的例子给我讲一下。", "expect": null, "kind": "unrelated"}
+{"id": "U04", "query": "用 Python 写一个判断字符串是不是回文的函数，忽略大小写和空格。", "expect": null, "kind": "unrelated"}
+{"id": "U02", "query": "推荐三部近几年的悬疑电影，不要太血腥的。", "expect": null, "kind": "unrelated"}

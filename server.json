@@ -1,0 +1,38 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.398894496-arch/krouter",
+  "title": "KRouter",
+  "description": "Plain-Markdown memory for your AI: every answer cites its page, and it says when it does not know.",
+  "version": "2.0.0",
+  "websiteUrl": "https://398894496-arch.github.io/KRouter/",
+  "repository": {
+    "url": "https://github.com/398894496-arch/KRouter",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "krouter",
+      "version": "2.0.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "OBSIDIAN_VAULT",
+          "description": "The memory folder (plain Markdown). Leave unset to use the one the KRouter installer set up.",
+          "isRequired": false,
+          "format": "filepath"
+        }
+      ]
+    }
+  ]
+}

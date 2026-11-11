@@ -1,0 +1,105 @@
+[
+ {
+  "id": "S31-O1",
+  "group": "offer",
+  "prompt": "There are a few hundred .jpeg files in photos/ (I put a handful there as a sample). Rename them all to .jpg and lowercase the names, please.",
+  "files": {
+   "photos/IMG_0001.JPEG": "a",
+   "photos/Holiday_Beach.jpeg": "b",
+   "photos/portrait-02.JPEG": "c",
+   "photos/Team Photo.jpeg": "d",
+   "photos/IMG_0007.jpeg": "e"
+  },
+  "card": "C05"
+ },
+ {
+  "id": "S31-O2",
+  "group": "offer",
+  "prompt": "report.py takes about 40 seconds on the real data, and every run is the same. Can you make it faster?",
+  "files": {
+   "schema.json": "{\"fields\": [\"id\", \"total\", \"currency\"]}\n",
+   "report.py": "import json\nimport time\n\n\ndef load_schema():\n    time.sleep(0.2)  # stands in for parsing a 30 MB schema\n    return json.load(open(\"schema.json\"))\n\n\nrows = [{\"id\": i, \"total\": i * 3, \"currency\": \"EUR\"} for i in range(200)]\nout = []\nfor row in rows:\n    schema = load_schema()\n    out.append({k: row[k] for k in schema[\"fields\"]})\nprint(len(out), \"rows\")\n"
+  },
+  "card": "C02"
+ },
+ {
+  "id": "S31-L1",
+  "group": "learn",
+  "prompt": "`make build` fails with 'missing separator' on line 4 but the Makefile looks completely fine to me. Can you fix it?",
+  "files": {
+   "Makefile": "CC = cc\n\nbuild:\n        @echo building\n\nclean:\n\t@echo cleaning\n"
+  }
+ },
+ {
+  "id": "S31-L2",
+  "group": "learn",
+  "prompt": "./deploy.sh works on my laptop but on the server it dies with `/bin/sh^M: bad interpreter`. What is going on? Please fix the file.",
+  "files": {
+   "__BYTES__deploy.sh": "23212F62696E2F73680D0A6563686F206465706C6F79696E670D0A6578697420300D0A"
+  }
+ },
+ {
+  "id": "S31-L3",
+  "group": "learn",
+  "prompt": "tags.py keeps returning tags from earlier calls: `add_tag('a')` then `add_tag('b')` gives ['a', 'b'] the second time instead of ['b']. Why, and can you fix it?",
+  "files": {
+   "tags.py": "def add_tag(tag, tags=[]):\n    tags.append(tag)\n    return tags\n\n\nif __name__ == \"__main__\":\n    print(add_tag(\"a\"))\n    print(add_tag(\"b\"))\n"
+  }
+ },
+ {
+  "id": "S31-K1",
+  "group": "correct",
+  "prompt": "We moved the web app to port 4000 and the API to 9090 in local development. That is the standard from now on. Update docker-compose.yml.",
+  "files": {
+   "docker-compose.yml": "services:\n  web:\n    build: ./web\n    ports: [\"3000:3000\"]\n  api:\n    build: ./api\n    ports: [\"8080:8080\"]\n"
+  }
+ },
+ {
+  "id": "S31-K2",
+  "group": "correct",
+  "prompt": "Backups now run at 03:30 and we keep 14 days instead of 30. That is the new policy. Update backup.sh.",
+  "files": {
+   "backup.sh": "#!/bin/sh\n# runs nightly at 02:00 from cron\npg_dump app > /backups/app-$(date +%F).sql\nfind /backups -mtime +30 -delete\n"
+  }
+ },
+ {
+  "id": "S31-K3",
+  "group": "correct",
+  "prompt": "Starting this week one approval is enough to merge; the module-owner requirement is dropped. Update the PR template.",
+  "files": {
+   ".github/PULL_REQUEST_TEMPLATE.md": "## Checklist\n\n- [ ] Tests pass\n- [ ] Two approvals, one of them from the module owner\n"
+  }
+ },
+ {
+  "id": "S31-N1",
+  "group": "notcorrect",
+  "prompt": "The README has a typo: it says `make tset` where it means the test command. Fix the typo.",
+  "files": {
+   "README.md": "# svc\n\nRun the unit tests with `make tset`.\n"
+  }
+ },
+ {
+  "id": "S31-N2",
+  "group": "notcorrect",
+  "prompt": "For tonight's migration only, move the backup in backup.sh to 01:00. The normal schedule stays as it is.",
+  "files": {
+   "backup.sh": "#!/bin/sh\n# runs nightly at 02:00 from cron\npg_dump app > /backups/app-$(date +%F).sql\n"
+  }
+ },
+ {
+  "id": "S31-Q1",
+  "group": "quiet",
+  "prompt": "Add a --limit option to list_users.py that caps how many users are printed.",
+  "files": {
+   "list_users.py": "import argparse\n\nap = argparse.ArgumentParser()\nargs = ap.parse_args()\nfor u in [\"ann\", \"bob\", \"cy\", \"di\"]:\n    print(u)\n"
+  }
+ },
+ {
+  "id": "S31-Q2",
+  "group": "quiet",
+  "prompt": "Can you explain what the retry loop in sync.py does?",
+  "files": {
+   "sync.py": "import time\n\n\ndef push(item, send):\n    for attempt in range(3):\n        try:\n            return send(item)\n        except ConnectionError:\n            time.sleep(2 ** attempt)\n    raise ConnectionError(\"gave up\")\n"
+  }
+ }
+]

@@ -1,0 +1,88 @@
+{
+ "questions": 500,
+ "judged": 500,
+ "seed": 20261109,
+ "accuracy": {
+  "all": {
+   "right": 400,
+   "of": 500,
+   "pct": 80.0,
+   "ci95": [
+    76.4,
+    83.4
+   ]
+  },
+  "answerable": {
+   "right": 371,
+   "of": 470,
+   "pct": 78.9,
+   "ci95": [
+    75.1,
+    82.6
+   ]
+  },
+  "abstention": {
+   "right": 29,
+   "of": 30,
+   "pct": 96.7,
+   "ci95": [
+    90.0,
+    100.0
+   ]
+  },
+  "single-session-user": {
+   "right": 61,
+   "of": 64,
+   "pct": 95.3,
+   "ci95": [
+    89.1,
+    100.0
+   ]
+  },
+  "multi-session": {
+   "right": 69,
+   "of": 121,
+   "pct": 57.0,
+   "ci95": [
+    47.9,
+    66.1
+   ]
+  },
+  "single-session-preference": {
+   "right": 20,
+   "of": 30,
+   "pct": 66.7,
+   "ci95": [
+    50.0,
+    83.3
+   ]
+  },
+  "temporal-reasoning": {
+   "right": 97,
+   "of": 127,
+   "pct": 76.4,
+   "ci95": [
+    68.5,
+    83.5
+   ]
+  },
+  "knowledge-update": {
+   "right": 69,
+   "of": 72,
+   "pct": 95.8,
+   "ci95": [
+    90.3,
+    100.0
+   ]
+  },
+  "single-session-assistant": {
+   "right": 55,
+   "of": 56,
+   "pct": 98.2,
+   "ci95": [
+    94.6,
+    100.0
+   ]
+  }
+ }
+}

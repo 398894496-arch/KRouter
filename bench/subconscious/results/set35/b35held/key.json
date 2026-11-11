@@ -1,0 +1,748 @@
+{
+ "1a4aaa7e96": {
+  "id": "en-changed-04",
+  "lang": "en",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "Support asked if she can give back $120 to an unhappy user without asking anyone.",
+  "expect": "Handbook/Customer refunds.md",
+  "old": "Handbook/Customer refunds (old).md",
+  "note": "Customer refunds",
+  "hook": [
+   "Handbook/Customer refunds.md"
+  ]
+ },
+ "b80e693c0f": {
+  "id": "en-changed-06",
+  "lang": "en",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "A customer emailed support asking for CSV export; where should I tell them to send ideas like this?",
+  "expect": "Handbook/Feature requests.md",
+  "old": "Handbook/Feature requests (old).md",
+  "note": "Feature requests",
+  "hook": []
+ },
+ "630cad80fa": {
+  "id": "en-changed-07",
+  "lang": "en",
+  "kind": "changed",
+  "subkind": null,
+  "named": true,
+  "text": "Planning to send the candidate a take-home task this weekend, about 6 hours of work.",
+  "expect": "Handbook/Interview process.md",
+  "old": "Handbook/Interview process (old).md",
+  "note": "Interview process",
+  "hook": [
+   "Handbook/Interview process.md"
+  ]
+ },
+ "3f1d9476d6": {
+  "id": "en-changed-08",
+  "lang": "en",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "Only 1.6% of sessions crashed on the new Android build, good enough to ship to everyone?",
+  "expect": "Handbook/Mobile release criteria.md",
+  "old": "Handbook/Mobile release criteria (old).md",
+  "note": "Mobile release criteria",
+  "hook": []
+ },
+ "a6a2d555ea": {
+  "id": "en-changed-09",
+  "lang": "en",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "I'll just scp the new pickle to the prediction box, faster than going through the pipeline.",
+  "expect": "Handbook/Model deployment.md",
+  "old": "Handbook/Model deployment (old).md",
+  "note": "Model deployment",
+  "hook": []
+ },
+ "d21a42bde7": {
+  "id": "en-changed-12",
+  "lang": "en",
+  "kind": "changed",
+  "subkind": null,
+  "named": true,
+  "text": "Is posting in #engineering still how support escalation works, or is there a rotation now?",
+  "expect": "Handbook/Support escalation.md",
+  "old": "Handbook/Support escalation (old).md",
+  "note": "Support escalation",
+  "hook": [
+   "Handbook/Support escalation.md"
+  ]
+ },
+ "271ec378f7": {
+  "id": "en-quiet-03",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "unrelated",
+  "named": null,
+  "text": "Add a dark mode toggle to the settings drawer, use the existing theme context.",
+  "expect": null,
+  "old": null,
+  "note": "-",
+  "hook": []
+ },
+ "4f1e777cc7": {
+  "id": "en-quiet-04",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "unrelated",
+  "named": null,
+  "text": "why is my docker build so slow today",
+  "expect": null,
+  "old": null,
+  "note": "-",
+  "hook": []
+ },
+ "16617f95c0": {
+  "id": "en-quiet-05",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "unrelated",
+  "named": null,
+  "text": "Write a regex that matches ISO dates but not times.",
+  "expect": null,
+  "old": null,
+  "note": "-",
+  "hook": []
+ },
+ "598c993447": {
+  "id": "en-quiet-07",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "other_sense",
+  "named": null,
+  "text": "Need a quick script for the A/B test of my two sorting algorithms, just time both on the same 1M-element array and print the averages.",
+  "expect": null,
+  "old": null,
+  "note": "planted: A/B test (benchmark sense)",
+  "hook": []
+ },
+ "3b31bd1678": {
+  "id": "en-quiet-09",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "other_sense",
+  "named": null,
+  "text": "In my side-project game, the player gets a bounty for every bug enemy they squash. Add a bug bounty counter to the score HUD.",
+  "expect": null,
+  "old": null,
+  "note": "planted: bug bounty (game)",
+  "hook": []
+ },
+ "60c430e193": {
+  "id": "en-quiet-11",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "other_sense",
+  "named": null,
+  "text": "Do an access review of this Java class: which fields should be private and which protected?",
+  "expect": null,
+  "old": null,
+  "note": "planted: access review (access modifiers)",
+  "hook": []
+ },
+ "981de828d3": {
+  "id": "en-quiet-15",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "common_word",
+  "named": null,
+  "text": "The price of this dependency upgrade is that we have to touch about forty files. Can you start with the `utils/` folder and keep each commit small?",
+  "expect": null,
+  "old": null,
+  "note": "planted: price",
+  "hook": []
+ },
+ "0f92998b08": {
+  "id": "en-quiet-16",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "common_word",
+  "named": null,
+  "text": "Budget is tight for the offsite so I'm trying to keep the cost down on the ticket sales page. Make the alert dialog less ugly and shrink the hero image.",
+  "expect": null,
+  "old": null,
+  "note": "planted: cost/alert",
+  "hook": []
+ },
+ "13e738dd01": {
+  "id": "en-quiet-18",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "common_word",
+  "named": null,
+  "text": "It's a bit of a bounty of options in this config file, about forty keys. Group them into sections and keep the order inside each section.",
+  "expect": null,
+  "old": null,
+  "note": "planted: bounty",
+  "hook": []
+ },
+ "93065f70d3": {
+  "id": "en-quiet-19",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "pasted",
+  "named": null,
+  "text": "Fix the flaky test please, output below.\nFAIL tests/audit.test.ts > access review job > skips inactive users\n  Expected: 3\n  Received: 2\n  at Object.<anonymous> (tests/audit.test.ts:57:21)",
+  "expect": null,
+  "old": null,
+  "note": "planted in pasted: access review (no fence)",
+  "hook": []
+ },
+ "e8a0b5e75a": {
+  "id": "en-quiet-23",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "pasted",
+  "named": null,
+  "text": "Fix the dtype mismatch.\n```\nRuntimeError: expected scalar type Float but found Half\n  File \"train.py\", line 88, in forward\nINFO GPU usage 7.9/8.0 GB\n```",
+  "expect": null,
+  "old": null,
+  "note": "planted in pasted: GPU usage (fenced)",
+  "hook": []
+ },
+ "a93c16c8d1": {
+  "id": "en-quiet-24",
+  "lang": "en",
+  "kind": "quiet",
+  "subkind": "pasted",
+  "named": null,
+  "text": "squash the last three commits please\n$ git log --oneline -4\na1b2c3d Fix footer alignment\n9f8e7d6 Add bug bounty page to footer\n4c5b6a7 Update lockfile\n1d2e3f4 Initial footer",
+  "expect": null,
+  "old": null,
+  "note": "planted in pasted: bug bounty (no fence)",
+  "hook": []
+ },
+ "52d8be82f2": {
+  "id": "en-recall-01",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "The checkout experiment looks great after four days, 12% lift. Can I flip it on for everyone and move on?",
+  "expect": "Handbook/A/B tests.md",
+  "old": null,
+  "note": "A/B tests",
+  "hook": []
+ },
+ "14145b3ebb": {
+  "id": "en-recall-02",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "Do we need to register the primary metric before launching this A/B test or can I add it after?",
+  "expect": "Handbook/A/B tests.md",
+  "old": null,
+  "note": "A/B tests",
+  "hook": [
+   "Handbook/A/B tests.md"
+  ]
+ },
+ "c490db7b9c": {
+  "id": "en-recall-03",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "I want to drop the legacy `user_ref` field from the v2 response next sprint, it's just dead weight.",
+  "expect": "Handbook/API deprecation.md",
+  "old": null,
+  "note": "API deprecation",
+  "hook": []
+ },
+ "318648df85": {
+  "id": "en-recall-04",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "Partners still read `legacy_id`; PM wants it gone by end of month. Can you rip it out and bump the changelog?",
+  "expect": "Handbook/API deprecation.md",
+  "old": null,
+  "note": "API deprecation",
+  "hook": []
+ },
+ "dd4a76a2cb": {
+  "id": "en-recall-05",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "Her prod login disappeared this morning, she hasn't touched the orders DB since September. Know why?",
+  "expect": "Handbook/Access reviews.md",
+  "old": null,
+  "note": "Access reviews",
+  "hook": []
+ },
+ "8813e16951": {
+  "id": "en-recall-08",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "A customer in Madrid is asking if they can chat with someone at 9pm tonight.",
+  "expect": "Handbook/Support hours.md",
+  "old": null,
+  "note": "Support hours",
+  "hook": []
+ },
+ "e877599108": {
+  "id": "en-recall-09",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "Someone filed a bug that the dashboard is broken on Safari 14 on an old iPad. Worth fixing?",
+  "expect": "Handbook/Browser support.md",
+  "old": null,
+  "note": "Browser support",
+  "hook": []
+ },
+ "128f1d00e3": {
+  "id": "en-recall-13",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "Our staging project's spend doubled overnight and finance pinged me. Who's supposed to answer?",
+  "expect": "Handbook/Cloud cost alerts.md",
+  "old": null,
+  "note": "Cloud cost alerts",
+  "hook": []
+ },
+ "4ffdb70cf6": {
+  "id": "en-recall-14",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "Got a cost alert for the data-eng project, 3x normal. Looking into it now.",
+  "expect": "Handbook/Cloud cost alerts.md",
+  "old": null,
+  "note": "Cloud cost alerts",
+  "hook": [
+   "Handbook/Cloud cost alerts.md"
+  ]
+ },
+ "37ff5e6845": {
+  "id": "en-recall-15",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "I just got off a call with a customer at Acme, my scribbles are in my notebook. Where do those go?",
+  "expect": "Handbook/Customer interview notes.md",
+  "old": null,
+  "note": "Customer interview notes",
+  "hook": []
+ },
+ "c6899746b8": {
+  "id": "en-recall-22",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "We're bumping the Pro plan by $5 in January. When do existing subscribers need to hear about it?",
+  "expect": "Handbook/Price changes.md",
+  "old": null,
+  "note": "Price changes",
+  "hook": []
+ },
+ "7a3746b13d": {
+  "id": "en-recall-24",
+  "lang": "en",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "Should I post on the status page now or wait until we're sure it's the load balancer?",
+  "expect": "Handbook/Status page.md",
+  "old": null,
+  "note": "Status page",
+  "hook": [
+   "Handbook/Status page.md"
+  ]
+ },
+ "4702aaafa1": {
+  "id": "zh-changed-03",
+  "lang": "zh",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "下周去上海出差，酒店每晚 400 以内对吧？",
+  "expect": "团队手册/出差标准.md",
+  "old": "团队手册/出差标准（旧）.md",
+  "note": "出差标准",
+  "hook": [
+   "团队手册/出差标准.md"
+  ]
+ },
+ "acaa60ecf8": {
+  "id": "zh-changed-04",
+  "lang": "zh",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "版本发完了，我在群里说一声就行了吧？",
+  "expect": "团队手册/发布说明.md",
+  "old": "团队手册/发布说明（旧）.md",
+  "note": "发布说明",
+  "hook": []
+ },
+ "29395bb243": {
+  "id": "zh-changed-05",
+  "lang": "zh",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "有个用户投诉退款慢，三个工作日内回他就行吧？",
+  "expect": "团队手册/客户投诉.md",
+  "old": "团队手册/客户投诉（旧）.md",
+  "note": "客户投诉",
+  "hook": []
+ },
+ "a2ee5b2d47": {
+  "id": "zh-changed-08",
+  "lang": "zh",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "这批 5 万条语料我自己标吧，反正算法组也是自己标。",
+  "expect": "团队手册/数据标注.md",
+  "old": "团队手册/数据标注（旧）.md",
+  "note": "数据标注",
+  "hook": []
+ },
+ "7d5fb4a5c8": {
+  "id": "zh-changed-10",
+  "lang": "zh",
+  "kind": "changed",
+  "subkind": null,
+  "named": false,
+  "text": "我想把支付模块独立成一个新服务，跟技术负责人说一声就行吧？",
+  "expect": "团队手册/服务拆分.md",
+  "old": "团队手册/服务拆分（旧）.md",
+  "note": "服务拆分",
+  "hook": []
+ },
+ "ee95695ded": {
+  "id": "zh-changed-12",
+  "lang": "zh",
+  "kind": "changed",
+  "subkind": null,
+  "named": true,
+  "text": "新的异步任务我接 RabbitMQ 就行吧？",
+  "expect": "团队手册/消息队列.md",
+  "old": "团队手册/消息队列（旧）.md",
+  "note": "消息队列",
+  "hook": [
+   "团队手册/消息队列.md"
+  ]
+ },
+ "6e119cf913": {
+  "id": "zh-quiet-01",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "unrelated",
+  "named": null,
+  "text": "帮我把这个 SQL 里的子查询改成 join，现在慢得离谱。",
+  "expect": null,
+  "old": null,
+  "note": "-",
+  "hook": []
+ },
+ "1023f2c62b": {
+  "id": "zh-quiet-02",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "unrelated",
+  "named": null,
+  "text": "前端按钮点两下会重复提交，加个防抖。",
+  "expect": null,
+  "old": null,
+  "note": "-",
+  "hook": []
+ },
+ "0800aaa96b": {
+  "id": "zh-quiet-06",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "unrelated",
+  "named": null,
+  "text": "docker compose 起来之后 3306 端口被占了，帮我看下是谁占的。",
+  "expect": null,
+  "old": null,
+  "note": "-",
+  "hook": []
+ },
+ "4a3a1b0997": {
+  "id": "zh-quiet-08",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "other_sense",
+  "named": null,
+  "text": "我们在做游戏赛事数据，GPL 联赛的积分榜表结构怎么设计？",
+  "expect": null,
+  "old": null,
+  "note": "planted: GPL (联赛简称)",
+  "hook": []
+ },
+ "09053e221b": {
+  "id": "zh-quiet-09",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "other_sense",
+  "named": null,
+  "text": "帮我写个提醒，下个月要去换驾驶许可证。",
+  "expect": null,
+  "old": null,
+  "note": "planted: 许可证 (驾驶证)",
+  "hook": []
+ },
+ "65bb935e9e": {
+  "id": "zh-quiet-11",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "other_sense",
+  "named": null,
+  "text": "我想写个围棋棋盘的渲染，Go 棋盘是 19x19，怎么用 canvas 画格线？",
+  "expect": null,
+  "old": null,
+  "note": "planted: Go (围棋)",
+  "hook": []
+ },
+ "8b00812599": {
+  "id": "zh-quiet-15",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "common_word",
+  "named": null,
+  "text": "刚才大家意见反馈挺多的，我想先把登录页的校验逻辑改掉：手机号格式不对时给出明确提示，别只显示“失败”。",
+  "expect": null,
+  "old": null,
+  "note": "planted: 意见反馈 (口头)",
+  "hook": []
+ },
+ "93b4beb9f5": {
+  "id": "zh-quiet-17",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "common_word",
+  "named": null,
+  "text": "帮我把这个 500 行的 handle_order 函数拆分成几个小函数，别动逻辑，变量名也顺手理一下。",
+  "expect": null,
+  "old": null,
+  "note": "planted: 拆分 (函数)",
+  "hook": []
+ },
+ "63077e4cc0": {
+  "id": "zh-quiet-18",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "common_word",
+  "named": null,
+  "text": "我下周出差，这几天 PR 可能回得慢，先帮我把 flaky 的那个登录用例修掉。",
+  "expect": null,
+  "old": null,
+  "note": "planted: 出差",
+  "hook": []
+ },
+ "a6422b914d": {
+  "id": "zh-quiet-20",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "pasted",
+  "named": null,
+  "text": "这个 yaml 为什么解析报错？\nsync:\n  target: 数据交换平台\n   retention: 72h\n  mode: full",
+  "expect": null,
+  "old": null,
+  "note": "planted in pasted: 数据交换平台 (no fence)",
+  "hook": [
+   "团队手册/数据共享.md"
+  ]
+ },
+ "0c1ff93dc3": {
+  "id": "zh-quiet-21",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "pasted",
+  "named": null,
+  "text": "我把日志贴一下，帮我找出哪个请求最慢。\n2026-11-02 10:21:03 INFO kafka consumer group=orders lag=1200\n2026-11-02 10:21:04 INFO GET /api/items 812ms\n2026-11-02 10:21:04 INFO GET /api/cart 95ms",
+  "expect": null,
+  "old": null,
+  "note": "planted in pasted: kafka (no fence)",
+  "hook": []
+ },
+ "b1666732a4": {
+  "id": "zh-quiet-24",
+  "lang": "zh",
+  "kind": "quiet",
+  "subkind": "pasted",
+  "named": null,
+  "text": "这个 pod 一直重启，帮我看看日志怎么拉\n```\nkubectl get pods -n 测试环境\nNAME      READY   STATUS             RESTARTS\napi-7d9f  0/1     CrashLoopBackOff   6\n```",
+  "expect": null,
+  "old": null,
+  "note": "planted in pasted: 测试环境 (fenced)",
+  "hook": []
+ },
+ "7b71fbffba": {
+  "id": "zh-recall-02",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "gofmt 跑一下，CI 又红了。",
+  "expect": "团队手册/Go 代码规范.md",
+  "old": null,
+  "note": "Go 代码规范",
+  "hook": [
+   "团队手册/Go 代码规范.md"
+  ]
+ },
+ "c3a45f3b59": {
+  "id": "zh-recall-03",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "我在家连不上内网的 Jenkins，是不是我这边网络有问题？",
+  "expect": "团队手册/办公网络.md",
+  "old": null,
+  "note": "办公网络",
+  "hook": []
+ },
+ "9406dc1a07": {
+  "id": "zh-recall-05",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "明天早上那个例会我要讲一下这周的进度，PPT 做个十几页够吗？",
+  "expect": "团队手册/团队周会.md",
+  "old": null,
+  "note": "团队周会",
+  "hook": []
+ },
+ "fe829afe20": {
+  "id": "zh-recall-08",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "我想引个开源库，协议是 SSPL，直接装上了啊？",
+  "expect": "团队手册/开源许可证.md",
+  "old": null,
+  "note": "开源许可证",
+  "hook": []
+ },
+ "7cee4569e5": {
+  "id": "zh-recall-10",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "我准备写 Redis 迁移的设计文档，直接从空白文档开始写行吗，还是有现成格式？",
+  "expect": "团队手册/技术方案模板.md",
+  "old": null,
+  "note": "技术方案模板",
+  "hook": []
+ },
+ "dc93d3bc55": {
+  "id": "zh-recall-12",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "这批用户手机号和身份证的导出我想拷到我自己电脑上跑个脚本。",
+  "expect": "团队手册/数据分级.md",
+  "old": null,
+  "note": "数据分级",
+  "hook": []
+ },
+ "75131242f6": {
+  "id": "zh-recall-14",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "新来的实习生今天到岗，他的电脑和屏幕谁来给？",
+  "expect": "团队手册/设备申领.md",
+  "old": null,
+  "note": "设备申领",
+  "hook": []
+ },
+ "b78d1887d4": {
+  "id": "zh-recall-16",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "产品刚丢给我一个需求文档，我今天下午就开写了，反正很简单。",
+  "expect": "团队手册/需求评审.md",
+  "old": null,
+  "note": "需求评审",
+  "hook": []
+ },
+ "d99e9b3c3e": {
+  "id": "zh-recall-18",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": false,
+  "text": "法务让我看看这个依赖能不能用，它是 copyleft 的，你帮我判断下？",
+  "expect": "团队手册/开源许可证.md",
+  "old": null,
+  "note": "开源许可证",
+  "hook": []
+ },
+ "c260a362d8": {
+  "id": "zh-recall-20",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "公司 VPN 老是 12 小时就断，有没有办法延长？",
+  "expect": "团队手册/办公网络.md",
+  "old": null,
+  "note": "办公网络",
+  "hook": [
+   "团队手册/办公网络.md"
+  ]
+ },
+ "53c91ae9ac": {
+  "id": "zh-recall-23",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "测试环境每天几点重置来着？",
+  "expect": "团队手册/测试环境.md",
+  "old": null,
+  "note": "测试环境",
+  "hook": [
+   "团队手册/测试环境.md"
+  ]
+ },
+ "950b38d0aa": {
+  "id": "zh-recall-24",
+  "lang": "zh",
+  "kind": "recall",
+  "subkind": null,
+  "named": true,
+  "text": "软件采购要比几家价？",
+  "expect": "团队手册/软件采购.md",
+  "old": null,
+  "note": "软件采购",
+  "hook": [
+   "团队手册/软件采购.md"
+  ]
+ }
+}

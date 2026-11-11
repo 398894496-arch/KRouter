@@ -1,0 +1,40 @@
+# English layout for a new English vault: default path|English path (zones.py; longest prefix wins).
+# bootstrap.py, `krouter demo` and first_run.sh lay the template down with it and copy it into the vault as
+# krouter-zones.psv. A vault that already exists keeps its own names: nothing here renames a folder.
+@lang|en
+Agent第二大脑.md|Home.md
+01 项目|01 Projects
+01 项目/项目.md|01 Projects/Projects.md
+01 项目/示例项目|01 Projects/Sample project
+01 项目/示例项目/示例项目.md|01 Projects/Sample project/Sample project.md
+02 经验与方法|02 Methods
+02 经验与方法/经验与方法.md|02 Methods/Methods.md
+02 经验与方法/Agent/用户偏好与工作约束.md|02 Methods/Agent/User preferences.md
+02 经验与方法/准经验|02 Methods/Provisional
+02 经验与方法/准经验/准经验入口.md|02 Methods/Provisional/Provisional.md
+02 经验与方法/主题档案|02 Methods/Topics
+02 经验与方法/技能|02 Methods/Skills
+02 经验与方法/从 claude-mem 导入|02 Methods/From claude-mem
+03 资料与证据|03 Sources
+03 资料与证据/资料与证据.md|03 Sources/Sources.md
+04 已完成与复盘|04 Done
+04 已完成与复盘/已完成与复盘.md|04 Done/Done.md
+05 时间日志|05 Journal
+05 时间日志/时间日志入口.md|05 Journal/Journal.md
+05 时间日志/会话摘录|05 Journal/Sessions
+05 时间日志/2026-01/01｜示例日.md|05 Journal/2026-01/01｜Sample day.md
+90 系统文件|90 System
+90 系统文件/状态.md|90 System/Status.md
+90 系统文件/Clippings 整理记录.json|90 System/Clippings ledger.json
+90 系统文件/Agent记忆|90 System/Agent memory
+90 系统文件/Agent记忆/可靠记忆索引.md|90 System/Agent memory/Reliable memory index.md
+90 系统文件/Agent记忆/纠错与取代记录.md|90 System/Agent memory/Corrections and replacements.md
+90 系统文件/自动化|90 System/Automation
+90 系统文件/自动化/日更健康.md|90 System/Automation/Daily health.md
+90 系统文件/自动化/自进化钥匙.md|90 System/Automation/Model key.md
+90 系统文件/自动化/夜间维护.md|90 System/Automation/Nightly upkeep.md
+90 系统文件/自动化/下意识.md|90 System/Automation/Standing index.md
+90 系统文件/自动化/下意识体检.md|90 System/Automation/Recall checkup.md
+90 系统文件/自动化/别名候选.md|90 System/Automation/Alias candidates.md
+90 系统文件/自动化/记忆变更记录.md|90 System/Automation/Memory changes.md
+90 系统文件/自动化/主题档案清单.psv|90 System/Automation/Topic list.psv

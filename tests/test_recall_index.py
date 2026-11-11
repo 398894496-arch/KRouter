@@ -142,7 +142,7 @@ def test_route_widens_from_single_file_scope(vault, monkeypatch, tmp_path):
     import subprocess
     import sys
 
-    root = Path(__file__).resolve().parents[1] / "skill/krouter-obsidian/scripts/route_knowledge.py"
+    root = Path(__file__).resolve().parents[1] / "skill/krouter/scripts/route_knowledge.py"
     write(vault, "02 经验与方法/Agent/用户偏好与工作约束.md", "---\ntitle: 用户偏好\n---\n\n名称要能看懂。\n")
     env = {**__import__("os").environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_STATE_DIR": str(tmp_path / "state"),
            "KROUTER_NO_QUERY_LOG": "0"}
@@ -177,7 +177,7 @@ def test_checkup_flags_dead_lock_and_tenure(vault, tmp_path):
           "---\ntitle: 新排版规则\nstatus: active\nsupersedes:\n  - \"[[02 经验与方法/准经验/旧排版规则]]\"\n---\n\n排版形态和动画要多变。\n")
     psv = tmp_path / "m2.psv"
     psv.write_text("Q09|旧规则|02 经验与方法/准经验/旧排版规则.md|x\n", encoding="utf-8")
-    script = Path(__file__).resolve().parents[1] / "skill/krouter-obsidian/scripts/checkup.py"
+    script = Path(__file__).resolve().parents[1] / "skill/krouter/scripts/checkup.py"
     env = {**__import__("os").environ, "OBSIDIAN_VAULT": str(vault), "KROUTER_STATE_DIR": str(tmp_path / "s")}
     subprocess.run([sys.executable, str(script), "--map", str(psv), "--days", "1"], check=True, env=env, capture_output=True)
     page = (vault / "90 系统文件/自动化/下意识体检.md").read_text(encoding="utf-8")

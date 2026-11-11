@@ -1,0 +1,28 @@
+{"id": "C01-p2", "query": "Excel 里把公式改过了，可那一格算出来的还是旧数", "expect": "C01", "kind": "transfer"}
+{"id": "C02-p2", "query": "每次打开这个网页都要重新加载一大堆图片，等得很烦", "expect": "C02", "kind": "transfer"}
+{"id": "C03-p1", "query": "这个 Excel 宏上个月还能跑，这个月不知道谁改了哪儿就报错了，表格里改动特别多", "expect": "C03", "kind": "transfer"}
+{"id": "C04-p2", "query": "这个爬虫偶尔会拿到空页面，大部分时候没问题", "expect": "C04", "kind": "transfer"}
+{"id": "C05-p2", "query": "准备用正则把整个仓库里的旧 API 调用一次性全替换成新的", "expect": "C05", "kind": "transfer"}
+{"id": "C06-p1", "query": "我想把手机恢复出厂设置，卖掉之前清干净", "expect": "C06", "kind": "transfer"}
+{"id": "C07-p1", "query": "这道动态规划题我想了一晚上都想不明白状态怎么定义", "expect": "C07", "kind": "transfer"}
+{"id": "C08-p1", "query": "这张海报配色全是蓝灰色，看着太闷了，总觉得差点意思", "expect": "C08", "kind": "transfer"}
+{"id": "C09-p2", "query": "地图上两个点的距离算出来是 6000 多公里，实际就隔两条街", "expect": "C09", "kind": "transfer"}
+{"id": "C10-p2", "query": "打卡记录里晚上 11 点后下班的那天总被算成第二天的", "expect": "C10", "kind": "transfer"}
+{"id": "C11-p1", "query": "LaTeX 编译出来一屏幕的红字，我只是改了一个公式", "expect": "C11", "kind": "transfer"}
+{"id": "C12-p2", "query": "产品经理说这个按钮的交互感觉不太对，但讲不出具体哪里不对", "expect": "C12", "kind": "transfer"}
+{"id": "C13-p1", "query": "为了把博客首页的加载动画做到完美，我已经调了三个晚上了", "expect": "C13", "kind": "transfer"}
+{"id": "C14-p1", "query": "我准备回复客户说退款已经处理好了", "expect": "C14", "kind": "transfer"}
+{"id": "C02-t", "query": "CI 的 YAML 里怎么设置只在 main 分支上触发", "expect": null, "kind": "topic-trap", "near": "C02"}
+{"id": "C12-t", "query": "海报尺寸一般用多大", "expect": null, "kind": "topic-trap", "near": "C12"}
+{"id": "C11-t", "query": "编译器的 -O2 和 -O3 有什么区别", "expect": null, "kind": "topic-trap", "near": "C11"}
+{"id": "C01-t", "query": "nginx 的 server_name 支持通配符吗", "expect": null, "kind": "topic-trap", "near": "C01"}
+{"id": "C08-t", "query": "红烧肉用五花肉还是前腿肉", "expect": null, "kind": "topic-trap", "near": "C08"}
+{"id": "C09-t", "query": "超时时间一般设多少合适", "expect": null, "kind": "topic-trap", "near": "C09"}
+{"id": "C14-t", "query": "Docker 容器怎么设置开机自启", "expect": null, "kind": "topic-trap", "near": "C14"}
+{"id": "W01", "query": "这个月比上个月多了一天假期，帮我排一下出游计划", "expect": null, "kind": "word-trap"}
+{"id": "W04", "query": "我今天心情很平静，想写篇日记，帮我开个头", "expect": null, "kind": "word-trap"}
+{"id": "W05", "query": "帮我写个函数，每次调用都返回当前时间", "expect": null, "kind": "word-trap"}
+{"id": "U05", "query": "帮我起一个咖啡店的名字", "expect": null, "kind": "unrelated"}
+{"id": "U02", "query": "用 Python 写一个快速排序", "expect": null, "kind": "unrelated"}
+{"id": "U01", "query": "帮我把这段中文翻译成英文：明天下午三点开会", "expect": null, "kind": "unrelated"}
+{"id": "U04", "query": "解释一下什么是 TCP 三次握手", "expect": null, "kind": "unrelated"}

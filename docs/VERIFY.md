@@ -1,24 +1,50 @@
 # What a stranger can verify
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v1.3.0, 2026-11-09). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.0.0, 2026-11-10). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
 >   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
+> - **Answer accuracy** (LongMemEval S, the number other projects publish; measured on 1.3.0, which gave three pages):
+>   400 of 500 right, 80.0% [76.4, 83.4], with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
+>   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
+>   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
+>   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
+>   BM25, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the reader gets 492 (98.4%), so
+>   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader. 2.0 gives five pages, two of them
+>   ones the vault connects to the hits: every answer session among them for 210 of 235 held-out questions (BM25's
+>   top five 198), multi-session 40 of 47 (31) ([set 18](https://github.com/398894496-arch/KRouter/blob/main/bench/memory_honesty/HELDOUT.md)).
+>   Answer accuracy at five pages is not measured yet (set 22, registered).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
->   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
+>   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
+>   "3 of 30" quoted before was 1.1.1); LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
->   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
-> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
->   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
+>   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
+>   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
+> - **Releases:** 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
+>   over between tasks and grow into skills; five pages with the ones the vault connects; a change of mind holds
+>   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
+>   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
+>   `KROUTER_TAG` pins one.
+> - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
+>   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
+>   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
+>   The Kubernetes manifest and systemd unit are checked by tests, not yet run on a cluster or host.
+> - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI), lists every settings
+>   file it changed (a copy of each kept), and imports nothing from the past (`--all` imports the last 7 days, locally,
+>   no model call; `--minimal` is lookup only and connects only the apps you name). From then on, Claude Code, Codex and Cursor each
+>   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
+>   in `/hooks`; Cursor's run in its agent CLI, where a typed correction is not noted). Distilling with a model and the nightly job
+>   ask first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
 >   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
 >   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
@@ -90,6 +116,69 @@ python3 -m pytest -q tests/test_recall_bench.py
 The Chinese template (`template-zh/`, what a Chinese-speaking host starts with) has its own bench, [`tests/fixtures/recall_bench_zh.jsonl`](../tests/fixtures/recall_bench_zh.jsonl): 12 gold-page questions, 6 off-topic, 6 half-off-topic. A fresh vault is a small vault, and small vaults are where corpus statistics stop telling a word from a fragment (`天会`) or saying that `房贷` / `报销` are absent for a reason; 0.11.0 decides that from a general two-character word list instead. 0.10.2: gold page 9/12, off-topic refused 5/6, half-off-topic refused 1/6. 0.11.0: 9/12, 6/6, 5/6 (CI: ≥ 9, all, ≥ 5). **With the alias table emptied the numbers are the same** — on this template recall needs no lock noun at all. The English template and the author vault are unchanged by the change.
 
 **Windows, on a real host** (Windows 11, PowerShell 5.1, Python 3.12, 2026-10-11): `bootstrap.py` made the Chinese vault, installed the skill, put the alias table in the vault and registered the scheduled task; `route_knowledge.py` locked a Chinese question and refused an off-topic one; a fake key pasted on the key page moved into the keys file and never printed; `nightly.py --dry-run` and a real run (no model → `skipped`, report written); `run.py --dry-run`; `install_windows_task.ps1 -Uninstall`. The one-line `bootstrap.ps1` itself fetches a release, so it is checked on the host after a release is published.
+
+### Platforms and real sessions (2.0.0 candidate, 2026-11-10)
+
+**Windows: not tested for 2.0.0.** The four Windows hosts in the maintainer's SSH configuration were tried once each
+with a short timeout and none answered (three: port 22 timed out; the fourth: the connection came up and the SSH
+banner never arrived). So `bootstrap.ps1`, the Windows install, the scheduled task and the move of the pre-2.0 folder on
+Windows have not run on a real machine since the 2026-10-11 check above. What is pinned instead is the logic, on any OS:
+`tests/test_bootstrap.py::test_windows_upgrade_keeps_the_table_and_falls_back_to_a_junction` runs `install_windows` on a
+pre-2.0 folder and checks that the alias table is carried over and that, when a symlink cannot be made, the old path
+becomes a directory junction (`cmd /c mklink /J`). A junction made by a real `mklink` is not checked.
+
+**Linux, in a container** (Docker 29 under Colima, Ubuntu 24.04 aarch64 host; image `python:3.12-slim`, Debian 13,
+Python 3.12.16, a fresh user, no systemd, no cron, no curl, no network for apt). Built with `scripts/release_pack.sh`;
+the release `bootstrap.sh` ran as the README says, with `KROUTER_RELEASE_BASE` pointing at the release files and a
+twenty-line `curl` stand-in for `file://` (the image has no curl): the checksum check, the unpack and the link are the
+real script. Steps and seconds: the pre-2.0 layout (an archive of `9d73bd5`) installed, 2 s; one-line upgrade to 2.0.0,
+1 s: `~/.agents/skills/krouter-obsidian` became a link to `~/.agents/skills/krouter`, the old Cursor rule was replaced, the
+alias table kept; the old path still resolves; `krouter doctor` OK, 1 s; a question the memory answers came back with its
+page, a question it cannot answer with `recall: none`, under 1 s each; `krouter mcp` listed its five tools; `--timer`:
+"HOST ACTION: no systemd user session and no crontab", nothing installed; uninstall removed the skill, the link and the
+recorded memory path and left the memory folder alone, 0 s; a cold install of 2.0.0 on a clean user, 2 s, then the same
+questions and uninstall. **One bug found and fixed:** after that `--timer`, the install's summary said `"timer": true`,
+the health page said the job was running and `krouter doctor` then failed with "no job is installed". The install now
+checks that a job exists after asking for one and says "The nightly job was NOT installed" otherwise
+(`test_timer_that_did_not_install_is_not_reported_as_installed`). Not run: a Linux machine with a systemd user session or
+a crontab (the `crontab` branch of the installer is unchanged and untested here), and any non-Debian distribution.
+
+**Real sessions: does the host do it by itself?** Sets 30 and 31 in
+[`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md), code and records in [`bench/behavior/`](../bench/behavior/). Each
+scenario is a small project and one user message that never mentions memory, KRouter or lessons; the memory is a
+throwaway copy with 14 cards and 30 decision pages; KRouter is installed the way the README says. Codex CLI 0.155.0-alpha.9.2
+(model `gpt-5.6-terra`), 20 scenarios, once each:
+
+| | Should (of 4) | Should not |
+|---|---|---|
+| Mention the digest's lesson | 2 (C01, C09) | 0 of 12 |
+| Call `krouter_learn` after solving a problem | **0** | 0 of 12 |
+| Call `krouter_correct` when the user changes a decision | **0** | 0 of 16 |
+
+A Claude Code subagent (Sonnet 5.5, one fresh subagent per scenario), same 20: offer 2 of 4 (0 of 12), learn **0** of 4
+(0 of 12), correct 3 of 4 (0 of 16; the fourth wrote a note instead after its lookup found no page). **This host is an
+approximation:** a subagent cannot be given an MCP server, so the same tool descriptions, server instructions and
+SessionStart text were put in its context and the tools reached through a shell helper. It shows what the wording does
+to a Claude model, not what Claude Code does with the MCP server.
+
+*Why Codex never called the write tools:* in this Codex version the model is given the SessionStart text but no tool
+definition that mentions krouter and none of the server's instructions; asked to list its krouter tools it listed none, and
+the tools worked when it was told by name to call one. The only wording about `krouter_correct` and `krouter_learn` that reaches
+it is the descriptions it does not see. The digest (which it did use, twice) never names a tool. Change made after set 30:
+the SessionStart hook now ends with one line naming `krouter_ask`, `krouter_correct` and `krouter_learn` and when to call
+each, and the server's two instruction sentences say the same. Checked on a new development set of 12 (set 31, counts
+below): **Codex could not be rerun** (the account's usage limit was reached during the run: 11 of the 12 sessions failed
+before the model saw anything, so that run is void and the change is **not verified on Codex**); before the change, 12 of 12
+valid sessions gave offer 1 of 2, learn 0 of 3, correct 0 of 3, nothing where nothing was called for.
+Claude subagent, same set, old wording then new: offer 1 of 2 and 1 of 2; learn 1 of 3 then 2 of 3; correct 3 of 3 and
+3 of 3; should-not 0 in every cell. One scenario's difference is within what one run varies; this shows no harm and a possible
+gain, not a measured one. Cursor agent CLI (free account, model `auto`, the new wording, three scenarios): it
+looked the tool up itself and called `krouter_correct` on a decision change (1 of 1), did not call `krouter_learn` after fixing a
+Makefile (0 of 1), and made two lookups and no write on a plain feature request.
+
+**Limits.** The scenarios were written by the same model family that wrote the tool descriptions, with those descriptions
+in view; 4 scenarios per behaviour, so one session moves a cell by 25 points; the Claude host is not MCP; one Codex
+model; the Codex "after" is missing. On set 30 no host reaches the registered line for `learn` (3 of 4).
 
 ---
 

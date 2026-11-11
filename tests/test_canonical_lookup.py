@@ -5,7 +5,7 @@ import pytest
 from canonical_lookup import lookup, near_score, suggestions
 
 ROOT = Path(__file__).resolve().parents[1]
-MAP = ROOT / "skill/krouter-obsidian/scripts/canonical_sources.psv"
+MAP = ROOT / "skill/krouter/scripts/canonical_sources.psv"
 VAULT = ROOT / "template"
 
 

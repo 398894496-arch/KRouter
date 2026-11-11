@@ -31,8 +31,8 @@ PROMPT = HERE / "PROMPT.md"
 def _load_lane():
     """The provider table and flagship lock live in the skill's llm.py: one table for the writer and the
     nightly steps. Loaded by file path so an unrelated `llm` package on sys.path cannot stand in for it."""
-    for scripts in (HERE.parents[1] / "skill/krouter-obsidian/scripts",
-                    Path.home() / ".agents/skills/krouter-obsidian/scripts"):
+    for scripts in (HERE.parents[1] / "skill/krouter/scripts",
+                    Path.home() / ".agents/skills/krouter/scripts"):
         path = scripts / "llm.py"
         if path.is_file():
             spec = importlib.util.spec_from_file_location("krouter_llm", path)
@@ -41,7 +41,7 @@ def _load_lane():
             if str(scripts) not in sys.path:
                 sys.path.append(str(scripts))
             return mod
-    raise SystemExit("KRouter: skill/krouter-obsidian/scripts/llm.py not found")
+    raise SystemExit("KRouter: skill/krouter/scripts/llm.py not found")
 
 
 _lane = _load_lane()
@@ -110,9 +110,9 @@ TOOLS = [
 
 
 def vault_root() -> Path:
-    raw = os.environ.get("OBSIDIAN_VAULT", "").strip()
+    raw = (os.environ.get("KROUTER_VAULT") or os.environ.get("OBSIDIAN_VAULT", "")).strip()
     if not raw:
-        raise SystemExit("OBSIDIAN_VAULT is not set")
+        raise SystemExit("KROUTER_VAULT (or OBSIDIAN_VAULT) is not set")
     return Path(raw).resolve()
 
 

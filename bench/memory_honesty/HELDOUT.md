@@ -383,6 +383,303 @@ LoCoMo (Maharana et al., ACL 2024; `github.com/snap-research/locomo`, `data/loco
 | 2026-10-30 | Adapter shakedown before registration (as said above): `krouter` evidence first 991 / 1 540, in top 3 1 204, refused answerable 137, category 5 refused 37 / 446; `bm25` 968, 1 257, 0, 0; `bm25-floor` (dev3 floor) 46, 46, 1 494, 422. |
 | 2026-10-30 | Registered, then the dense systems run once each. MiniLM: `dense` 703 / 1 053 / 0 / 0; `dense-floor` 396 / 525 / 860 / 289; `agree` 286 / 286 / 1 225 / 359; `rescue` 999 / 1 212 / 127 / 34 (minus `krouter`, evidence first [+0.2, +0.9] points). BGE-M3: `dense` 963 / **1 272** / 0 / 0 (evidence first [−4.7, +1.0], top 3 [+2.0, +6.9]); `dense-floor` 331 / 403 / 1 103 / 349; `agree` 371 / 371 / 1 148 / 317; `rescue` 991 / 1 204 / 136 / 37. Floors from dev3 do not transfer to session pages. Retrieval scores, not LLM-judged answers: not comparable with published LoCoMo accuracies. |
 
+## Set 11: LongMemEval answer accuracy, scored the way other projects report it (registered 2026-11-09, before any run)
+
+**Why.** Set 7 counts whether a cited page is an answer session. Other memory projects publish answer accuracy: a
+model reads what the memory returned, answers, and a judge model grades the answer with the benchmark's own prompts.
+This set gives KRouter that number, produced the same way, so it can be read next to theirs.
+
+**Data.** `longmemeval_s_cleaned.json` (SHA-256 `d6f21ea9…c3a442`), all 500 questions (470 answerable, 30 `_abs`).
+**Seen:** set 7's results were read question by question and the refusal gate was tuned on the 30 `_abs` (set 7
+amendment), so every number from this set is marked as on a seen set.
+
+**Retrieval.** KRouter at `main` `16d5ee5` (v1.3.0), `route_knowledge.py search <question>` on each question's own
+vault, as in set 7: up to three cited session pages, or a refusal. Run once; KRouter is not changed between this
+registration and the scoring.
+
+**Reader.** Claude Sonnet, run as Claude Code subagents on the maintainer's Claude subscription (the model each agent
+reports is logged), with the benchmark's own reader template (`src/generation/run_generation.py`, the step-by-step
+variant: "I will give you several history chats between you and a user. Please answer the question based on the
+relevant chat history. Answer the question step by step: …"), history in its `nl` format: the cited sessions' turns
+from the dataset, sorted by date, each as `### Session i: / Session Date: / Session Content:`. A refused question
+gets the same template with the history `(no chat history was retrieved)`. The reader is given the prompt only: no
+answers, labels or other questions. It ran with file access and was told to read its batch file only; said here as
+such.
+
+**Judge.** Claude Sonnet, in separate subagents that see only the judge prompt, with the benchmark's own per-type
+prompts (`src/evaluation/evaluate_qa.py`, `get_anscheck_prompt`, verbatim; the abstention prompt for `_abs`), the reply
+parsed as the original does (`'yes' in reply.lower()`). The paper's judge is GPT-4o; this one is not, and every number
+names its reader and judge.
+
+**Reported,** whatever it shows: accuracy over the 500, over the 470 answerable, per question type, and on the 30
+`_abs`, with 95% bootstrap intervals (10 000 resamples over questions, seed 20261109). `bench/longmemeval/qa.py`
+(prepare, judge-prepare, score); the dataset is not committed.
+
+**Result (2026-11-09).** **400 of 500 right, 80.0%** (95% interval 76.4–83.4); answerable 371 / 470, 78.9%
+[75.1, 82.6]; `_abs` 29 / 30 identified as unanswerable. By type: single-session-user 61 / 64, single-session-assistant
+55 / 56, knowledge-update 69 / 72, temporal-reasoning 97 / 127, single-session-preference 20 / 30, multi-session 69 /
+121. Reader and judge: every agent reported `claude-sonnet-5-5` (Claude Sonnet 5.5); 108 reader agents and 20 judge
+agents, none of which saw another's files by instruction (one judge wrote its output file with a short script and
+said so; one reader listed the answers folder and said so). Retrieval: the v1.3.0 run, an answer session among the
+cited pages for 437 / 470 answerable, 14 answerable and 9 `_abs` refused.
+*Judge check:* four batches (100 verdicts: the two lowest-scoring, 6 / 25 and 9 / 25, another multi-session batch
+at 19 / 25 and a knowledge-update batch at 25 / 25) were judged again by fresh judge agents; they agreed on 100 of 100. Same model twice, so this shows the
+judge is stable, not that another judge would agree.
+*Read with:* most published LongMemEval numbers use GPT-4o as reader and judge; this run uses a newer model for both,
+so a difference from them is partly the model. LongMemEval has been public since 2024, so the reader may have seen
+it in training. The weakest type is the one top-three retrieval limits: multi-session questions add up facts from
+several sessions, and three pages often miss some (in the lowest batch the reader counted 2 of 4 film festivals, 2
+of 3 weddings). Set 7's results were read before this run (see *Seen* above).
+Files: `bench/longmemeval/results/2026-11-09-sonnet-qa.jsonl` (each question's cited sessions, reply and verdict;
+`qa.py score --verdicts bench/longmemeval/results` recomputes the numbers) and `…score.json`.
+
+## Set 12: the same reader, given different things (registered 2026-11-09, before any run)
+
+**Why.** Set 11's 80.0% is one number from one reader (Claude Sonnet 5.5), and other projects' numbers come from other
+readers, so nobody can tell how much of it is KRouter and how much is the model. This set holds the reader and the
+judge fixed and changes only what the reader is given.
+
+**Data, reader, judge.** As set 11, unchanged: the same 500 questions, the same reader template and judge prompts,
+Claude Sonnet as Claude Code subagents with the same instructions to the agents (reader batches of up to 12 prompts
+or 200 000 characters, judge batches of 25; the *nothing* row's prompts are a few hundred characters each and go 50
+to a batch). Every agent's reported model is logged; a row is only compared with set 11 if its agents report the same
+model, and any that does not is said.
+
+**Rows** (what the reader is given for each question):
+
+1. *Nothing*: the template with `(no chat history was retrieved)`. What the reader scores from the question alone
+   (the 30 `_abs` questions are answered right by saying the information is not there).
+2. *Plain BM25, top three sessions*: Okapi BM25 over the question's own haystack, one document per session (all turns,
+   both speakers), lower-cased `[a-z0-9]+` tokens, no stemming, no stop list, k1 1.2, b 0.75, the three highest
+   scores, never a refusal (`qa.py baseline --kind bm25`, written before this registration and not changed after).
+3. *KRouter*: set 11's run as it stands (v1.3.0, up to three cited pages or a refusal). Not run again.
+4. *Answer sessions*: the sessions the benchmark labels as holding the answer (`answer_session_ids`), the
+   benchmark's own oracle setting. What this reader scores when retrieval is perfect.
+
+**Not run again.** Where a row gives the reader a prompt identical, character for character, to one set 11 already
+ran (the same sessions, or the same nothing), the reply and verdict from set 11 are copied, not produced again; the
+results files mark each such question (`from_set_11`) and the counts are reported.
+
+**Known before the run.** The whole set is seen (set 11's *Seen*), and set 11's replies were read. An exploratory
+count on 2026-10-18 found that plain BM25 cites an answer session about as often as KRouter on these haystacks, so
+rows 2 and 3 are expected to be close; that is the question this set puts a number on, not a result to steer.
+
+**Reported,** whatever it shows: each row over the 500, the 470 answerable, the 30 `_abs` and per question type, with
+95% bootstrap intervals; and, paired over the same questions, KRouter minus BM25 and answer-sessions minus KRouter
+(10 000 resamples, seed 20261109), with how many questions only one of the two got right (`qa.py compare`).
+
+**Not in this set.** The benchmark's full-history setting (all of a question's ~50 sessions, about 115 000 tokens per
+question) is not run: 500 such prompts through subagents is beyond what this run can spend. No other memory project
+is run here either; their published numbers use their own readers and are not put in the same table.
+
+**Result (2026-11-09).** All four rows; the fourth was paused for cost and finished the same day (see *Deviations*).
+
+| The reader is given | All 500 | 470 answerable | 30 `_abs` |
+|---|---|---|---|
+| Nothing | 30, 6.0% [4.0, 8.2] | 0 | 30 |
+| Plain BM25, top three sessions | 405, 81.0% [77.4, 84.4] | 376, 80.0% [76.4, 83.6] | 29 |
+| KRouter (set 11) | 400, 80.0% [76.4, 83.4] | 371, 78.9% [75.1, 82.6] | 29 |
+| Answer sessions (perfect retrieval) | 492, 98.4% [97.2, 99.4] | 462, 98.3% [97.0, 99.4] | 30 |
+
+| By type (right / of) | knowledge-update | multi-session | single-session-assistant | single-session-preference | single-session-user | temporal-reasoning |
+|---|---|---|---|---|---|---|
+| Nothing | 0 / 72 | 0 / 121 | 0 / 56 | 0 / 30 | 0 / 64 | 0 / 127 |
+| Plain BM25 | 68 / 72 | 69 / 121 | 56 / 56 | 21 / 30 | 62 / 64 | 100 / 127 |
+| KRouter | 69 / 72 | 69 / 121 | 55 / 56 | 20 / 30 | 61 / 64 | 97 / 127 |
+| Answer sessions | 71 / 72 | 117 / 121 | 55 / 56 | 30 / 30 | 64 / 64 | 125 / 127 |
+| KRouter − BM25, points [95%] | +1.4 [0.0, 4.2] | 0.0 [−5.0, 4.1] | −1.8 [−5.4, 0.0] | −3.3 [−13.3, 6.7] | −1.6 [−7.8, 3.1] | −2.4 [−6.3, 0.8] |
+| Answer sessions − KRouter, points [95%] | +2.8 [−2.8, 8.3] | +39.7 [31.4, 48.8] | 0.0 [0.0, 0.0] | +33.3 [16.7, 50.0] | +4.7 [0.0, 10.9] | +22.0 [15.0, 29.1] |
+
+*Paired, KRouter minus BM25:* −1.0 points [−2.8, +0.8] over the 500 (−1.1 [−3.0, +0.9] over the 470 answerable);
+only KRouter right on 8 questions, only BM25 on 13. **No difference shown, and the point estimate is on BM25's side.**
+For 262 of the 500 questions the two gave the reader the same sessions, so those replies and verdicts are set 11's
+(`from_set_11`); the *nothing* row copies 23 (the questions KRouter refused).
+
+*Paired, answer sessions minus KRouter:* +18.4 points [15.0, 21.8] over the 500 (+19.4 [15.7, 23.0] over the 470
+answerable); only the answer-sessions row right on 93 questions, only KRouter on 1. Answer sessions minus BM25:
++17.4 [14.0, 20.8]. For 17 questions KRouter had cited exactly the answer sessions, so those are set 11's replies.
+
+*What it says.* The reader knows none of the answers by itself (0 of 470), so set 11's 80% comes from the retrieved
+pages, not from the model's own knowledge. But plain BM25 with no floor and no supersede rule gets the same reader
+just as far: on this benchmark KRouter's lookup adds nothing over keyword search. The floor does not help here
+either: given BM25's three sessions for an unanswerable question, the reader itself says the answer is not there
+(29 of 30), as often as when KRouter has a chance to refuse first. LongMemEval's raw sessions carry no `superseded`
+marks, so this set says nothing about corrections (sets 1–3 and 9 are about those).
+
+*Where the other 18 points are.* Given the answer sessions, the same reader gets 492 of 500, so the reader is not
+what limits set 11: retrieval is. Of the 93 questions it then gets right and KRouter's row gets wrong (48
+multi-session, 28 temporal), KRouter had cited every answer session for 3, some but not all for 58 and none for 32;
+24 of them need more than three sessions, which three cited pages cannot hold (33 of the 500 questions do). BM25's
+top three lose the same way (89 questions: 3, 61 and 25). Counted after the run from the results files, not
+registered. The limit is how few pages are handed over and whether all of a question's sessions are among them.
+
+*Agents.* *Nothing*: 10 reader agents, 6 judge agents. *BM25*: 54 reader agents, 10 judge agents. *Answer sessions*: 75 reader agents (26 before the pause, 49 after), 7 judge
+agents. All reported
+`claude-sonnet-5-5`, the model set 11's agents reported. Results: `bench/longmemeval/results/2026-11-09-sonnet-qa.none.jsonl`,
+`…-sonnet-qa.bm25.jsonl` and `…-sonnet-qa.oracle.jsonl`; `qa.py compare` reproduces the tables from them.
+
+*Deviations from the registration.* (1) **The *answer sessions* row was paused for cost** after 26 of 75 reader
+batches (166 questions answered, none judged) and an earlier version of this page said the row was not reported. It
+was resumed the same day at the maintainer's request: the other 49 batches went to the same reader with the same
+instructions, and nothing was judged or scored before all 500 replies existed, so no result was seen in between.
+(2) The *nothing* and *answer sessions* rows were judged in batches of up to 80 instead of 25 (the prompts
+unchanged), to use fewer agents. (3) One *nothing* judge agent wrote its verdict file with a short script, and one
+*answer sessions* judge agent ran a shell command that did nothing; both said so, and each read only its input file.
+(4) The *answer sessions* verdicts were not judged a second time. Eight multi-session and temporal ones drawn at
+random (7 yes, 1 no) were read against the benchmark's answers afterwards and all eight stood: a spot check, not a
+second judge.
+
+## Set 18: does following the vault's own connections bring the whole answer? (registered 2026-11-10, before the associative path was written or any held-out question was run)
+
+**Why.** Set 12 put KRouter level with plain BM25 on LongMemEval (80.0% and 81.0% with the same reader), and 98.4%
+when the reader gets the labelled answer sessions. The points lost are mostly multi-session and temporal questions,
+whose answer is spread over several sessions. Counted offline over all 500 (not a test: every question was seen in
+sets 7, 11 and 12), BM25's top 3 holds every answer session for 384 of 500, multi-session 73 of 133, temporal 91 of
+133. This set asks whether a second, associative path (spreading from the pages the question hits, along links,
+supersedes, same session or day, shared rare words, and later co-citation) brings more of the whole answer in the
+same number of pages. Retrieval only: no reader and no judge, no model is called.
+
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 470 answerable questions are split as set 14 split them
+(`lme.split_of` on branch `claude/wp2-refusal-396930`: seed 20261110, `random.Random.sample` of the sorted ids, half to
+*dev*): 235 dev (74 multi-session, 54 temporal), 235 held out (47 multi-session, 73 temporal). Set 14 counted only
+refusals of the unchanged gate on held-out ablated vaults; no ranking on the held-out half was looked at for this
+set. The 30 `_abs` questions are left out (no answer to bring). Every design choice and constant of the associative
+path is chosen on the dev half and on the development benches of this directory (`dev`, `dev2`, `dev3`).
+
+**Metric.** For k = 3, 5, 8: the number of questions whose k returned pages include *every* labelled answer session,
+overall and per question type. Systems, each giving exactly k pages, no refusal gate (the gate is unchanged by this
+set and reported separately): `bm25` (the offline count above: FTS5 BM25 over character pairs and words, superseded
+pages skipped), `krouter` (in-process `recall`, `gate=False`, at `9d73bd5`'s ranking), `krouter+assoc` (the same
+direct hits, the associative pages filling the k slots as the shipped code fills them). Paired 95% bootstrap intervals
+for `krouter+assoc` minus `bm25` (10 000 resamples over questions, seed 20261110).
+
+**Pass bar, fixed now.** On the held-out half: (1) multi-session: `krouter+assoc` above `bm25` with the paired 95%
+interval above zero at k = 3 and at k = 5, and not below `bm25` at k = 8; (2) all 235: `krouter+assoc` not below
+`bm25` at any k; (3) the memory honesty sets (`dev`, `dev2`, `dev3`, `heldout`, `heldout2`, `heldout3`, aggregates
+only): with the associative path on, no more wrong citations, no fewer refusals, no fewer correction or current hits
+than with it off. If any part fails, the associative path ships off by default and the numbers are reported as they
+are. The held-out half is run once, for the one configuration chosen on dev. LoCoMo (set 10's vaults and scoring of
+"evidence cited", top 3) is a second outside check if time allows; it decides nothing.
+
+**Separately (not part of the pass bar):** the deterministic tie-break for "the vault changed its mind" (a newer page
+on the same thing ranked first and the conflict named, with no model and no distillation), judged by its own tests
+(the audit's PostgreSQL-then-SQLite scenario among them).
+
+### Log, set 18
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. |
+| 2026-11-10 | Dev half, said as it happened. A prototype over dumped dev rankings tried seeds 1–5, 40–400 key words per page, query boost 0–10, a same-day weight 0 or 0.5 and three slot splits; same-day edges lowered the count (about ten sessions share a day here), so their weight is 0. Shipped code, first run: k = 3 fell (41 → 39 multi-session) because the third direct hit, given up for the associative slot, could not come back as an associated page; fixed. A quiet gate for pages joined only by shared words (at least 6 shared rare words and an associative score of at least 0.2) was chosen on the memory-honesty dev benches (pages offered on 56 of 61 answered dev questions before, 7 after), and changed no dev count by more than one. Final configuration (`associate.py`): 3 seeds, 64 key words, query boost 3, words in more than 30% of pages ignored, slots (k + 1) // 3. Dev half, multi-session at k = 3 / 5 / 8: bm25 42 / 47 / 56, krouter 41 / 49 / 57, krouter+assoc **48 / 63 / 67**; all 235: 181 / 193 / 208, 182 / 195 / 209, **192 / 213 / 224**. Memory honesty, six sets: identical with the path on and off, and identical to `9d73bd5`. The held-out half is run next, once. |
+| 2026-11-10 | **Held-out half, run once at `6dedefd`.** Multi-session (47) at k = 3 / 5 / 8: bm25 24 / 31 / 35, krouter 28 / 32 / 36, krouter+assoc **29 / 40 / 42**; paired, krouter+assoc minus bm25: k = 3 [0, +10], k = 5 [+4, +15], k = 8 [+3, +12]. Temporal (73): 51 / 54 / 59, 50 / 53 / 59, 50 / 58 / 63. All 235: 184 / 198 / 208, 187 / 198 / 209, **190 / 210 / 218** (k = 3 [−1, +13]). Memory honesty, six sets: no change. **Bar (1) fails at k = 3**: the interval's lower end is 0, not above it (most of the four-question lead over BM25 at k = 3 is the direct path's: krouter alone is 28); (2) and (3) pass. So the associative path ships **off by default** (`KROUTER_ASSOC=1` turns it on). |
+| 2026-11-10 | After the held-out run, the conflict tie-break (not part of this bar) was narrowed: a newer page whose change line does not name the question's subject is no longer flagged (the dev half had 57 such "possible" flags in 235 questions, long chats being full of "instead of" and "replace"; 13 after). The held-out fire counts had been seen once before this change (they were counted next to dev's), not the coverage counts. The held-out half was then run a second time with the final code to report the shipped configuration: **every count identical** to the run above. |
+| 2026-11-10 | LoCoMo, a second outside check that decides nothing (set 10's conversion, categories 1–4 with evidence, 1 536 questions, all sessions of a conversation in one vault): all at k = 3 / 5 / 8: bm25 1 079 / 1 181 / 1 269, krouter 1 104 / 1 204 / 1 273, krouter+assoc 1 078 / 1 183 / 1 271; category 1 (282, the multi-evidence category): 47 / 73 / 105, 51 / 78 / 110, 50 / 78 / 106. On LoCoMo's short sessions the associative path takes slots from direct hits that were right: **no gain, a small loss against krouter**. |
+| 2026-11-10 | **The maintainer's decision after these numbers** (relayed by the planning session): the associative path goes in built in, no switch, as five pages, the first three always direct hits and the associated pages in places four and five (earlier only when there are fewer than three direct hits), a place they do not need going to the next direct hit. This is the k = 5 configuration measured above, decided by the maintainer, not by bar (1), which stays failed at k = 3. One fix with it: when one associated page was found, the fifth place could repeat it as a direct hit; now it goes to the next direct hit not already listed. Rerun of both halves and LoCoMo with that code: held-out k = 5 **unchanged** (multi-session 40, temporal 58, all 210; krouter's five direct hits 32 / 53 / 198; bm25 31 / 54 / 198); dev k = 5 unchanged (63 / 46 / 213). k = 3 is now krouter's three direct hits (no associated place), and k = 8 three direct + five associated (held-out 42 / 61 / 215). LoCoMo at five pages: 1 185 (bm25 1 181, five direct hits 1 204, the earlier three pages 1 104); at three pages now equal to krouter (1 104). Memory honesty, six sets, at five pages: unchanged. |
+| 2026-11-10 | **A guard for short sessions, tried and not added.** On LoCoMo's short sessions the associated pages took places four and five from direct hits that were right. Two rules fixed before any count, each keeping a fourth or fifth direct hit in its place (so the path gets fewer places) when its score is high: at least half the top score, or at least 0.9 of the third hit's score. Counted on development data only: the LongMemEval dev half and five of LoCoMo's ten conversations (`random.Random(20261110).sample` of the sorted conversation vaults: conv-41, 43, 44, 47, 48; 794 questions), five pages, no gate. No guard: LongMemEval 213 (multi-session 63), LoCoMo 630. Half the top score: 203 (55), 634. 0.9 of the third: 211 (61), 632. Neither is a clear gain (the first costs ten LongMemEval questions for four LoCoMo ones, the second trades two for two), so **neither is added** and the held-out halves were not run for them. The other five LoCoMo conversations stay unused for this. |
+
+## Set 22: the same reader, five pages each — keyword search against KRouter with its associative path (registered 2026-11-10, before any reader or judge call)
+
+**Why.** Set 12 found KRouter's three pages level with plain BM25's three (400 and 405 of 500), and the README says so.
+KRouter now hands over five pages, the last two from the associative path, and set 18 counted, without a reader, that
+this brings every answer session for more multi-session and temporal questions. This set asks whether that turns
+into answers, against keyword search given the same number of pages.
+
+**Data, reader, judge.** As set 12, unchanged: the same 500 questions, the reader template and judge prompts in
+`bench/longmemeval/qa.py`, Claude Sonnet 5.5 as Claude Code subagents with the same instructions, reader batches of up
+to 12 prompts or 200 000 characters, judge batches of 25. Every agent's reported model is logged; a row is compared
+with sets 11 and 12 only if its agents report `claude-sonnet-5-5`.
+
+**Rows.** (1) *Plain BM25, top five sessions*: `qa.py baseline --kind bm25 --top 5` (set 12's Okapi BM25, unchanged
+apart from five instead of three). (2) *KRouter, five pages*: `lme.py run --system krouter --pages 5` at the commit
+that carries this registration: `route_knowledge.py search`, as an agent calls it, the receipt's pages in order (direct
+hits, then `associated:`); a refusal gives the reader nothing.
+
+**Not run again.** A prompt identical, character for character, to one sets 11 or 12 ran is copied with its reply and
+verdict, not produced again; a prompt identical between the two rows of this set is run once and used for both. The
+results files mark each such question and the counts are reported.
+
+**Known before the run.** The whole set is seen (sets 7, 11, 12), and so is set 18's retrieval count on both halves
+(dev tuned, held-out run; FTS5 BM25 there, not this set's Okapi BM25). The configuration is set 18's five-page rule as
+shipped; nothing in ranking, refusal or the page rule changes between this registration and the run. Expected from set
+18: more answer sessions handed over on multi-session and temporal questions; whether the reader turns that into
+answers, and whether two more pages of distractors cost elsewhere, is the question.
+
+**Reported,** whatever it shows: each row over the 500, the 470 answerable, the 30 `_abs` and per type, with 95%
+bootstrap intervals; paired, KRouter minus BM25 (10 000 resamples, seed 20261110), with how many questions only one
+of the two got right; and each row next to set 12's three-page rows (same reader). **What may be said after it:** if
+the paired interval over the 500 is above zero, that KRouter is ahead of keyword search at the same five pages, with
+the numbers; if it holds zero, that they are level at five pages too; if it is below zero, that.
+
+**Estimated cost, counted from the prompts before any call** (KRouter's pages taken in-process, so the run's own
+count may differ by a few): BM25 row 500 prompts, 33.0 M characters, 205 reader batches; KRouter row 466 prompts after
+34 are copied from sets 11 and 12, 420 after 46 identical to the BM25 row are shared, 27.3 M characters, 168 reader
+batches; about 37 judge batches. In all **about 410 subagent runs and 60 M characters (about 15 M tokens) of reader
+input**. Not started until the maintainer says so.
+
+**Amendment (2026-11-10, before any reader or judge call; replaces *Rows*' scope, the batch size, *Reported*'s
+claim and the cost above).** (1) **Held-out half only**: the 235 answerable questions of set 14's held-out half
+(`lme.split_of`, seed 20261110). The associative path's settings were chosen on the dev half, so a reader result on it
+would not be clean; the held-out half is the number to trust. The dev half and the 30 `_abs` questions are not run.
+(2) The two rows are unchanged (BM25's top five, KRouter's five pages at the commit that carries this amendment);
+where both rows hand over exactly the same sessions the prompt is identical and is run once for both; a prompt
+identical to one sets 11 or 12 ran is still copied. Reader batches of up to 12 prompts or **400 000** characters
+(set 12: 200 000), judge batches of 25. (3) **Bar, fixed now:** KRouter is called *ahead of keyword search at five
+pages* only if the paired 95% interval of KRouter minus BM25 over the 235 has its lower end above zero; otherwise the
+README's "level with keyword search" stays as written (with this set's numbers added). Reported per question type,
+multi-session on its own line, with paired intervals per type; the type rows decide nothing. (4) KRouter's
+configuration: unchanged by the short-session guard tried after set 18 (see set 18's log: not added). **Cost, counted
+from the prompts** (KRouter's pages through `route_knowledge.py`, as the run takes them): 235 BM25 prompts; for
+KRouter 23 shared with BM25 and 17 copied from sets 11 and 12, so 195 to run; **430 reader prompts, 28.3 M characters
+(about 7 M tokens), 78 reader batches and 18 judge batches: about 96 subagent runs.** Waiting for the maintainer.
+
+### Log, set 22
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. Not run (waiting for the maintainer, for cost). |
+| 2026-11-10 | Amended as above, before any reader or judge call: held-out half only, batches of 400 000 characters, the bar for "ahead" fixed, cost recounted (about 96 subagent runs instead of about 410). Not run. |
+| 2026-11-10 | **Registered, not run: the maintainer decided not to spend the quota on it.** No reader or judge call was made and there is no result at the answer level for five pages. The registration (as amended) stands; it can be run as written later. |
+## Set 14: can the refusal gate refuse more, without losing answers? (registered 2026-11-09, after the development analysis below and before any held-out half was opened)
+
+**Why.** The README's "refuses 3 of 30 LongMemEval questions that have no answer" is quoted as a gap. Two things in it
+are stale or mixed up: 3 of 30 is KRouter 1.1.1 (set 7); the gate shipped since the absent-name rule (`fix/named-absent`)
+refuses 9 of 30 (set 7's log), and set 11's retrieval was that 9. And it is a *retrieval* number (the cited-pages
+list is empty); the benchmark's own question is whether the *answer* says the information is not there, which
+set 11 and 12 measured: 29 of 30, for KRouter and for plain BM25 alike, and 30 of 30 when the reader is given nothing.
+This set asks the narrower product question: can the gate itself be made to refuse more of them, without refusing
+questions it can answer?
+
+**Data.** `longmemeval_s_cleaned.json`, as set 7. The 30 `_abs` questions stay a development set (set 7 amendment: they
+were read question by question and the gate was tuned on them once already, so no abstention number from them is a
+test). The 470 answerable questions are split by `lme.split_of` (seed 20261110, `random.Random.sample` of the sorted
+ids): 235 *dev*, 235 *held out*. Held-out unanswerable questions come from two places no rule is chosen on: (a) the
+*held-out half with its answer sessions removed* (`lme.make_ablated`: every page the authors label as an answer session
+is deleted from the question's vault, so nothing can answer it; labelled by the authors, no model; easier than the real
+`_abs`, whose topical sessions stay in the vault), and (b) LoCoMo category 5 (set 10; KRouter's 37 of 446 there was an
+aggregate seen once, nothing was tuned on it).
+
+**Pass bar, fixed before any rule is chosen.** A candidate rule ("also refuse when ...") is kept only if, on the dev half,
+it loses at most 1 point of the answerable questions' evidence-cited rate (at most 2 of 235) and refuses clearly more
+of the real `_abs` than the 9 of 30 now (a gain of 5 or more of the 21 that are answered). Only then is the held-out
+half run, once, for that one rule: held-out answerable evidence cited must not fall by more than 1 point (of 235) and
+refusals on the held-out ablated vaults and on LoCoMo category 5 must rise. If no rule passes on dev, the held-out
+half is not opened and the report says so. No model is called, as for the reader-free sets.
+
+**Development analysis, said as it happened (before this registration, on dev data only).** Features per question for
+the gate shipped at `9d73bd5`: top score, gap to the second page, strong-match count, the share of the question's idf
+mass found on the best page, question words that no page contains, and a few more (`bench/longmemeval/gate_study.py`).
+One- and two-signal rules over a threshold grid, scored on: the 30 `_abs`, the dev half's answers the gate now gets
+right (225 of 235), and the dev half with answer sessions removed. The held-out half was not read; the unchanged
+gate's refusal rate on all 470 ablated vaults was counted (the product is not changed by this set, so that count tunes
+nothing). The same script reproduces the numbers below.
+
+### Log, set 14
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Gate at `9d73bd5`, unchanged: 9 of 30 `_abs` refused, 14 of 470 answerable refused, evidence cited 437 of 470 (reproduces set 11's retrieval). On the answer-sessions-removed vaults: **220 of 470 refused** (dev 103 of 235, held-out 117 of 235). For the 30 `_abs`, the labelled "answer" sessions are in the vault and the best page is one of them for 22 of 30: these questions ask for a detail a related session does not give. |
+| 2026-11-09 | Dev search, 49 288 rules: **no rule passes.** Within the 1-point budget (at most 2 of 235 answers lost) the best rule refuses 2 more of the 21 real `_abs` that are answered (in-sample, so an upper bound); at 5 lost (2.1 points) it refuses 5 more. Share of the question's idf mass on the best page, refuse below 0.40: 11 of 30 `_abs`, 17 answers lost; below 0.55: 18 of 30, 53 lost. Signals that carry the near-miss (best-page coverage, missing words, gap to the second page) separate the real `_abs` from answerable questions no better than chance (AUC 0.46–0.54: coverage 0.54, missing words 0.53 and 0.46, among the 21 still answered and the 225 right); the ones that do separate them (top score 0.70, strong-match count 0.72, short questions 0.68; gap to the second page 0.62) are what the gate already uses. The held-out half and LoCoMo were not opened; nothing in the product changed. |
+
 ## Set 9: written by people — corrections and their neighbours (registered 2026-10-18, before any item is written)
 
 The correction handling is KRouter's main claim and has no outside evidence: every question about it so far was
@@ -420,3 +717,700 @@ the close. Results are reported whatever they show; cases read after the run are
 | 2026-10-18 | **Reading it** (exploratory, not registered, said as such): plain BM25 with no floor, top three pages, cites an answer session for 447/470 and the latest update for 69/72, level with KRouter. The registered baseline's floor was picked on dev3, a 60-page Chinese vault, and on these 50-session English haystacks it refuses 43% of answerable questions; KRouter's lead over it comes from that floor, not from ranking, as on heldout3. What does hold: KRouter's refusal gate does not cost answerable questions here (12/470), and on raw sessions with no `superseded` marks it still cites the newest fact for 70 of 72 updates. What fails: it refuses 3 of 30 unanswerable questions. LongMemEval's abstention questions ask about a near neighbour of something the haystack does mention (a pet it never named, a trip it never took), the case KRouter's gate handles worst; it is the next thing to fix, measured on a seed-drawn half of `longmemeval_m` as registered. The model-judged secondary (reader and judge) has not been run. |
 | 2026-10-18 | Set 7 amended (S `_abs` now development; final abstention numbers from heldout3 neighbours and set 9, since M repeats S's questions). Set 9 registered before any item was written. |
 | 2026-10-18 | Development use of S (seen; not a reported score): candidate `fix/named-absent` (PR #61) refuses 9 of the 30 `_abs` questions (3 before) and 14 of 470 answerable (12 before); evidence cited 437 of 470 (439). Set 9 collection page published (owner reads all cases; each writer reads and writes only their own); a probe document was written, read back at owner and at `interact` level (not visible there), and deleted. |
+
+## Set 13: same situation, different subject — does an experience card come back as a suggestion? (registered 2026-11-09, before any matcher was written)
+
+**Why.** Every set above asks whether KRouter finds the page that answers a question. This one asks something else:
+whether a lesson learned on one task ("the stew tasted flat; a spoonful of sugar fixed it") comes back as a
+*suggestion* on a task with a different subject in the same situation ("the poster's colours look dull"), and stays
+quiet otherwise. Code: `skill/krouter/scripts/experience.py`; bench: `bench/transfer/`.
+
+**Cards.** 14 experience cards written by hand in `bench/transfer/cards/` (situation, what was done, what came of it,
+the lesson without the subject, the "when" triggers, a source line). Chinese only. Each comes from one subject (nginx,
+CI, a stew, a production database…). The cards are frozen at registration with the cases: SHA-256 of the
+concatenated card files in name order `df0cfe6a…5d6f191e`.
+
+**Cases.** 56, Chinese, written in one sitting before the matcher existed: 28 *transfer* cases (two per card, each on
+a subject different from the card's and from each other; the expected card is the one whose lesson a careful person
+would offer) and 28 that should get no suggestion: 14 *topic traps* (the card's own subject, a different situation:
+"does nginx's server_name take wildcards"), 6 *word traps* (a word from some card's triggers, a different situation:
+"the drawer is stuck"), 8 *unrelated*. Split at seed 20261109: for each card one transfer case to development and one
+to held-out; topic traps 7 / 7, word traps 3 / 3, unrelated 4 / 4. `bench/transfer/dev.jsonl` (28) is what the
+matcher is tuned on; `bench/transfer/heldout.jsonl.gz` (28, SHA-256 of the uncompressed text `3a7f625c…3361f33`) is
+run once.
+
+**Who wrote what.** The cards, all 56 cases and the matcher are written by the same Claude Code session (Opus 5.5).
+The cases were written before any matching code and are not edited after the split, but the author knew the cards'
+trigger wording when writing them: the held-out number measures generalisation from the development cases to unseen
+cases of the same author, not to other people's phrasing. This is the main limit of the set and is said with any
+number from it.
+
+**System.** The default suggestion path: lexical only (the recall index's tokenizer and word lists, the cards'
+`when` triggers and lesson line; no embeddings, no model call), up to two suggestions, a quiet threshold picked on
+development only. The optional dense tier (`docs/DENSE-OPTIN.md`) may be measured on development as a comparison; it
+is not the default and is not run on held-out unless registered here first.
+
+**Scored mechanically.** Recalled: on a transfer case, the expected card is among the suggestions. Wrong suggestion:
+any suggestion on a case that should get none, and any card other than the expected one on a transfer case. Reported
+for development and held-out: recalled / 28 transfer… per split, cases with a wrong suggestion, total wrong cards,
+and by negative kind.
+
+**Pass line (fixed now).** On held-out: recalled on at least 8 of 14 transfer cases (a majority), and at most 1 of the
+14 should-be-quiet cases gets any suggestion, and at most 1 wrong card on the transfer cases. If it fails, the
+suggestion path ships off by default, marked experimental, with the numbers as they are.
+
+### Log, set 13
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`e2b33e5`): cards, development cases and the sealed held-out file committed before `experience.py` existed. |
+| 2026-11-09 | **Development (in-sample).** Two lexical rules tried: a card's best single `when` phrase covered (`phrase`), and all its phrases pooled (`bag`); for `phrase`, also counting bigrams outside the word list at half weight. Thresholds swept with `run.py dev --sweep`. Choice rule, fixed before the sweep was read: highest recalled − 2 × (quiet cases with a suggestion + wrong cards on transfer cases), ties to the stricter. Chosen: `phrase`, at least 2 words of the phrase, coverage ≥ 0.6: **recalled 3 / 14, quiet cases with a suggestion 0 / 14, wrong cards 1**. The loosest setting tried recalled 6 / 14 with 2 quiet cases suggested and 4 wrong cards; `bag` at best 3 / 14 with 3 wrong cards; the half-weight variant was worse at every setting and was dropped. Reading the misses: most transfer cases share no word with the card's triggers ("差点意思" against "缺点什么", "改过" against "改了"); lexical matching cannot bridge them. The dense tier was not measured: no embedding model is on this machine and downloading one (about 250 MB) was not approved in this session. Threshold frozen; held-out next. |
+| 2026-11-09 | **Held-out, run once** (`run.py heldout`, threshold as frozen above). **Recalled 0 / 14 transfer cases. Quiet cases with a suggestion 2 / 14 (both word traps; topic traps 0 / 7, unrelated 0 / 4). Wrong cards on transfer cases 2.** Fails all three parts of the pass line (8 / 14, ≤ 1, ≤ 1). The development number (3 / 14) did not carry over at all: the three it recalled were cases whose wording happened to share two words with a trigger, and none of the held-out cases did. As registered, the suggestion path ships off by default, marked experimental (`KROUTER_EXPERIENCE=1` to try it). What it does show: a lexical matcher over subject-free triggers does stay quiet on questions about a card's own subject (0 of 14 topic traps over both splits); what it cannot do is recognise the same situation said in other words, which is the point of the feature. The held-out cases are now spent. |
+
+## Set 15: the host model judges the situation itself, from a digest of every card (registered 2026-11-09, before any host was run or the usage wording was settled)
+
+**Why.** Set 13 matched tasks to cards by shared words and recalled 0 of 14 held-out cases: one situation in other
+words shares no words. Here nothing is matched. The session-start hook gives the host model the whole experience
+digest (`experience.digest`: every card as one subject-free line "situation → what to do〔id〕", at most 30 lines,
+then one line on how to use them), and the host decides whether this task's situation is one of them. Set 13 and its
+spent held-out file stay as they are.
+
+**Cards.** Set 13's 14 cards, unchanged. For the scale check, 40 distractor cards in `bench/transfer/distractors/`
+(lessons about plants, cooking, travel, money…), written before any set 15 case was read; SHA-256 of the
+concatenated files in name order `8860fc6d…25a48`.
+
+**Cases.** 56, Chinese, written by Fable 5.2 (claude-fable-5-2) in a fresh Claude Code subagent, a different model
+from the session that wrote the cards and the code (Opus 5.5) and from both hosts. The writer saw one input file:
+the 14 lessons (`通用说法`) in shuffled order under neutral labels, each with a few words naming the card's original
+subject (needed for the topic traps). It did not see the triggers, the situation/action fields, the digest, the
+usage wording or any code, and was told to read nothing else. It wrote 28 *transfer* cases (two per lesson, subjects
+other than the original), 14 *topic traps* (the original subject, another situation), 8 *word traps* (a word from
+some lesson, another situation) and 6 *unrelated*. Not edited. Split at seed 20261115: one transfer case per card to
+each side, traps 7 / 7, word traps 4 / 4, unrelated 3 / 3. `bench/transfer/set15_dev.jsonl` (28) is where the usage
+wording may be revised; `bench/transfer/set15_heldout.jsonl.gz` (28; SHA-256 of the uncompressed text
+`88bec167…e854b5`) is sealed and run once per host. The writer's raw file (with its notes) is kept out of the repository.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, run as set 12 ran its reader: `bench/transfer/host.py prepare` writes batches of
+14 prompts (the injected digest, the user's message, and one bench line asking for only the first few sentences of
+the reply and no tools); a Claude Code subagent on the named model (`model: haiku` / `sonnet`) answers each prompt in
+a batch as if it were the only one and writes the replies back; each agent's reported model is logged. No API key
+and no stored Claude login are used. About 250 short prompts in all.
+
+**Scored mechanically** (`host.py score`): recalled = the expected card's id is cited; quiet case with a suggestion =
+any id cited where none should be; wrong cards = any other id cited on a transfer case (distractor ids included).
+Replies citing more than two ids are counted too.
+
+**Pass line (fixed now), per host, on held-out:** recalled ≥ 8 / 14, quiet cases with a suggestion ≤ 1 / 14, wrong
+cards ≤ 1. The digest passes when both hosts pass. Only then is a default-on proposal made.
+
+**Scale check (development only).** The same development cases with the 40 distractors added (54 cards, all listed);
+reported next to the 14-card development row for each host. Not a pass condition.
+
+**Known limits, said with any number.** Each agent sees up to 14 cases in one batch, so it may compare them; the bench
+line asks for short replies, which a real session does not; the writer saw each card's subject label; Chinese only;
+the digest's token count is an estimate (no tokenizer is downloaded: one token per CJK character, one per three
+other characters, an upper-end figure).
+
+### Log, set 15
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`dc985b4`). Before the first host run two harness faults were fixed, neither touching the digest or its wording: prompts were batched in case order (one batch all transfer cases, the other all quiet ones), and case ids such as `C01-x1` carried the expected card's id into the prompt. Prompts are now ordered and named by an opaque hash (`host.py opaque`). |
+| 2026-11-09 | **Development, first and only wording** (the digest and usage line as committed with this log; 28 prompts per host, two batches of 14; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: 13 / 14, 0 / 14, 1** (it added C05 to C11 on one case and missed C09 on another). No reply cited more than two ids. The wording was not revised: frozen as is. Digest: 14 lines, 842 characters, about 690 tokens by the registered estimate. |
+| 2026-11-09 | **Held-out, run once per host** (wording as frozen in `a581b84`; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`). **Sonnet 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Haiku 5.5: recalled 11 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0.** No reply cited more than two ids. Both hosts pass the registered line (≥ 8, ≤ 1, ≤ 1). A mechanical check not in the registration, reported for what it is: no quiet-case reply on either split says 「可以试试」 or offers a lesson without an id (one development reply uses 经验 in its ordinary sense, "常见的经验是测试金字塔"); every transfer case that cited its card also used the 「别的任务里的经验」 wording. Limits as registered: up to 14 cases per agent, short replies asked for, writer saw the subject labels, Chinese only. |
+| 2026-11-09 | **Scale check, development only** (14 cards + 40 distractors, all 54 listed; about 1 906 characters, about 1 518 tokens by the estimate). **Sonnet 5.5: 14 / 14, 0 / 14, 0. Haiku 5.5: 13 / 14, 0 / 14, 0** (against 13 / 14, 0, 1 with 14 cards): no distractor id was cited, quiet cases stayed quiet. Found while preparing it: with the shipped cap of 30 lines, all 14 real cards would have been left out, because nothing yet writes `adopted_at` and the bench cards share one date, so ties fall to file-name order (`D…` before `C…`). The cap's ordering is only as good as the dates and adoption marks on the cards. Totals for the set: 168 host prompts (56 per run: development, scale, held-out) in 12 agents, plus the case writer. |
+
+## Set 16: set 15 in English (registered 2026-11-09, before any host was run on it or its usage wording was settled)
+
+**Why.** Set 15 was Chinese only. This set asks the same question on an English vault with English sessions.
+
+**Cards.** Set 13's 14 cards translated into English by the session that wrote the code (`bench/transfer/cards_en/`,
+same ids; SHA-256 of the concatenated files in name order `b27d45a3…59f03bc`), on the public English template.
+
+**Digest.** The English digest: each card's lesson as written ("When …, … [id]"), then an English usage line with the
+same rules as set 15's (genuinely the same situation, not a shared word or subject; at most two, as "A lesson from
+another task you could try: … [id]"; otherwise say nothing). Written once before this registration; it may be revised
+on development only and is frozen before held-out.
+
+**Cases.** 56, English, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh Claude Code subagent that saw only the
+14 English lessons, shuffled under neutral labels, each with its original subject named in a few words, and was told
+to read nothing else; same four kinds and counts as set 15 (28 transfer, 14 topic traps, 8 word traps, 6 unrelated).
+Not edited. Split at seed 20261116 as set 15 was. `bench/transfer/set16_dev.jsonl` (28); `bench/transfer/set16_heldout.jsonl.gz`
+(28; SHA-256 of the uncompressed text `d939c2ca…5b24ba8a`), run once per host.
+
+**Hosts, scoring and pass line:** as set 15 (`host.py --set 16`): Haiku 5.5 and Sonnet 5.5, 14 prompts per agent,
+ids cited; per host on held-out, recalled ≥ 8 / 14, quiet cases with a suggestion ≤ 1 / 14, wrong cards ≤ 1.
+
+**Known limits,** beyond set 15's: **the case writer is also one of the two hosts** (Sonnet 5.5), so Sonnet's number
+may read better than an outside writer's cases would give it; the cards are a translation.
+
+## Set 17: are the cards a host agent writes itself any good? (registered 2026-11-09, before any host was run on it)
+
+**Why.** The zero-key path has the agent that ran a session write the card (`krouter_learn` / `experience.py learn`);
+no model lane, no key. Sets 15 and 16 used hand-written cards. This is a small check of what the hosts write.
+
+**Sessions.** 12 synthetic sessions written for this check by the session that wrote the code, never a real one
+(`bench/transfer/set17_sessions.jsonl`, SHA-256 `7ccda464…c4ba2de`): 7 with a lesson (5 Chinese, 2 English), 3 whose
+lesson is already one of the 14 cards in another subject (2 Chinese, 1 English), 2 with no lesson (one each). Each
+has gold: the subject's words, and terms the action and the result must hold.
+
+**Run.** `bench/transfer/extract.py`: each host (Haiku 5.5, Sonnet 5.5; one agent each, 12 prompts) gets the
+session-start digest of the vault in that language, the session, and the tool's own description, and says with what
+arguments it would call `krouter_learn` at the end. Every proposed card goes through `experience.learn()` on a fresh
+copy of the vault, as the tool would. Run once; no development split.
+
+**Scored mechanically.** Lesson sessions with a card written; of cards written, subject-free (no subject word in
+title, lesson or `when`) and faithful (action and result each hold a gold term); duplicate sessions with a card
+written (and whether the host proposed one at all); cards written on sessions with no lesson.
+
+**Bar (fixed now), both hosts together:** lesson sessions with a card ≥ 10 / 14; subject-free ≥ 90% and faithful ≥ 90%
+of cards written; duplicates written ≤ 1 / 6; cards on no-lesson sessions ≤ 1 / 4.
+
+**Known limits.** Twelve sessions, written by the code's author, short and clean; whether a host calls the tool on its
+own at the end of a real session, unprompted, is not measured here.
+
+### Log, sets 16 and 17
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`361f906`). |
+| 2026-11-09 | **Set 16, development, first and only wording** (English digest, 14 lines, 2 522 characters, about 846 tokens by the estimate; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). **Haiku 5.5: recalled 14 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Sonnet 5.5: 14 / 14, 0 / 14, 0.** Wording not revised; frozen. |
+| 2026-11-09 | **Set 17, run once** (one agent per host, 12 sessions). Haiku 5.5: lesson sessions with a card 7 / 7; of 7 cards, subject-free 6, faithful 6; duplicate sessions: none proposed, none written (0 / 3); no-lesson sessions: none written (0 / 2). Sonnet 5.5: 7 / 7; of 7 cards, subject-free 6, faithful 4; duplicates 0 / 3; no-lesson 0 / 2. **Both hosts together: lesson sessions with a card 14 / 14 (bar ≥ 10); subject-free 12 / 14 = 86% (bar ≥ 90%); faithful 10 / 14 = 71% (bar ≥ 90%); duplicates written 0 / 6 (≤ 1); no-lesson written 0 / 4 (≤ 1). The bar is not met** on subject-free and faithful. Reading the five failing cards afterwards (not part of the registered score, said as such): the four "unfaithful" cards say what the session says in other words than the gold terms ("明显减少" for 少了, "唯一标识" for 请求 id, "planned 22 and finished 21" for close/within); the two subject leaks are real, each one `when` phrase naming the subject ("新人总来问", "no reply to my email"), while both cards' lessons, the only field the digest shows, are subject-free. The duplicates were all skipped by the hosts themselves (the digest showed the same lesson), not caught by the code's lexical same-lesson check. |
+| 2026-11-09 | **Set 16, held-out, run once per host** (English wording as frozen in `f9597e6`). **Haiku 5.5: recalled 13 / 14, quiet cases with a suggestion 0 / 14, wrong cards 0. Sonnet 5.5: 14 / 14, 0 / 14, 0.** Both pass (≥ 8, ≤ 1, ≤ 1). Sonnet also wrote the cases (registered limit). 112 host prompts for set 16, 24 for set 17. |
+
+## Set 19: set 17 again, on sessions that read like real ones, judged by a model (registered 2026-11-09, before any host was run on it)
+
+(Set 18 is kept for another session's work.)
+
+**Why.** Set 17 missed its bar, and its result has been read, so it is spent. Two changes were made before this
+registration, on the strength of set 17's reading: cards no longer carry `when` phrases (nothing uses them since set
+13; both of set 17's subject leaks were there), and faithfulness is judged by a model reading the session instead of
+fixed gold terms.
+
+**Sessions.** 16, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh subagent, not by the session that wrote the
+code: 8 to 10 turns each, with drift and changes of course. 8 with a lesson (5 Chinese, 3 English), 4 whose lesson
+is one of the 14 cards in another subject (2 each; the writer saw the 14 lessons for that), 4 with no lesson (2 each).
+The writer also gave each session's subject words and the lesson's gist. Not read by the code's author before the
+run (counts only). `bench/transfer/set19_sessions.jsonl`, SHA-256 `b137cc96…9a07c85caf`.
+
+**Run.** As set 17 (`extract.py --set 19`): each host (Haiku 5.5, Sonnet 5.5; one agent each, 16 prompts) gets the
+digest, the session and `krouter_learn`'s description, now without `when`, and proposes arguments; every proposed card
+goes through `experience.learn()` on a fresh copy of the vault. Run once.
+
+**Judged.** Every card written on a lesson session is judged by the *other* host model (Haiku's cards by Sonnet,
+Sonnet's by Haiku; one agent each), reading the session and the card: faithful (situation, action and result say only
+what the session shows, nothing invented or abandoned) and subject-free (lesson and title would read unchanged on
+another subject), yes or no. The mechanical subject check against the writer's subject words is reported beside it.
+
+**Bar (fixed now), both hosts together:** lesson sessions with a card ≥ 12 / 16; of cards written on lesson sessions,
+judged faithful ≥ 90% and judged subject-free ≥ 90%; duplicate sessions with a card ≤ 1 / 8; no-lesson sessions with a
+card ≤ 1 / 8. If it passes, the digest, the use records and `krouter_learn` become the default when the vault has
+cards (`experience.DEFAULT_ON`); if not, they stay off.
+
+**Known limits.** Sonnet wrote the sessions, is one of the two hosts, and judges Haiku's cards; Haiku is a weaker
+judge of Sonnet's. Sixteen synthetic sessions. Whether a host calls the tool unprompted at the end of a real session
+is still not measured.
+
+### Log, set 19
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`4fbb174`). |
+| 2026-11-09 | **Run once.** Cards: Haiku 5.5 8, Sonnet 5.5 8; judges: Sonnet 5.5 for Haiku's, Haiku 5.5 for Sonnet's (agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); judged faithful 14 / 16 = 87.5% (bar ≥ 90%); judged subject-free 14 / 16 = 87.5% (bar ≥ 90%); duplicates written 0 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on each of the two counts. Haiku's cards: faithful 6 / 8, subject-free 8 / 8 (mechanical 7 / 8). Sonnet's: faithful 8 / 8, subject-free 6 / 8 (mechanical 8 / 8). The four judged failures: a result claiming two restructures where the session shows one; an action stating a step the session only suggested; two lessons keeping a subject term ("大件东西 / 运得进", "执行计划"). Set 19 is now development: the card instructions are revised on it, and a new set of held-out sessions is registered before the revised wording is checked on them. |
+| 2026-11-09 | **Development iterations on set 19** (in-sample; each round: both hosts propose cards, the other host judges). Round 2: a host-named `subject` list, and the code refuses a lesson or title that uses one of its own subject words (`experience.names_subject`), returning the reason; action only for steps actually carried out; result only as the session shows. Hosts listed ordinary words as subject and 3 Sonnet calls were refused; since the MCP tool returns its reason to the agent, the bench now lets a refused call be rewritten once with that reason (`extract.py retry`). Faithful 13 / 16, subject-free 15 / 16. Round 3: one sentence each; a corrected figure or cause, the corrected one; reread before calling. Sonnet 9 / 9 and 9 / 9, but Haiku wrote cards on 2 no-lesson sessions. Round 4: record only when something did not work, a way out was tried and its outcome seen; drafting, polishing, formatting, comparing options do not count; when in doubt, do not. Faithful 15 / 15, subject-free 13 / 15 (one session, judged by both hosts as tied to its subject), duplicates 1 / 8. Round 5: a self-test, "would the lesson make sense word for word to someone fixing a bug, writing a report and cooking; if not, one level higher". **Both hosts: lesson sessions with a card 14 / 16, faithful 14 / 14, subject-free 14 / 14, duplicates 0 / 8, no-lesson 0 / 8: the bar met in-sample.** Wording frozen here, before set 20. |
+
+## Set 20: set 19's check on new held-out sessions, with the wording revised on set 19 (registered 2026-11-09, before any host was run on it)
+
+**Sessions.** 16, written by Sonnet 5.5 in a fresh subagent with set 19's instructions, plus "the assistant sometimes
+suggests things the person does not end up doing"; same kinds and counts (8 lesson: 5 Chinese, 3 English; 4 duplicate;
+4 none). Written while the wording was being revised, without seeing it; not read by the code's author (counts only).
+`bench/transfer/set20_sessions.jsonl`, SHA-256 `56ad0b0c…8aabb780`.
+
+**Run, judging and bar:** as set 19 (`extract.py --set 20`), with the frozen wording of set 19's round 5, and one
+retry of a refused call with the tool's reason (`extract.py retry`), as an agent using the MCP tool would get. Bar,
+both hosts together: lesson sessions with a card ≥ 12 / 16; judged faithful ≥ 90% and judged subject-free ≥ 90% of cards
+on lesson sessions; duplicates ≤ 1 / 8; no-lesson ≤ 1 / 8. Run once. If it passes, `experience.DEFAULT_ON` is set.
+
+**Known limits:** as set 19 (Sonnet wrote the sessions, is a host and judges Haiku's cards).
+
+### Log, set 20
+
+| Date | Event |
+|---|---|
+| 2026-11-09 | Registered (`79bafe3`). |
+| 2026-11-09 | **Run once** (frozen wording; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Sonnet's calls refused for naming the subject and rewritten once with the tool's reason, none of Haiku's). **Both hosts together: lesson sessions with a card 16 / 16 (bar ≥ 12); of 18 cards on lesson sessions, judged faithful 16 = 88.9% (bar ≥ 90%), judged subject-free 17 = 94.4% (≥ 90%); duplicates written 1 / 8 (≤ 1); no-lesson sessions with a card 0 / 8 (≤ 1). Not passed**, by one card on faithfulness. Haiku's cards: faithful 7 / 9, subject-free 9 / 9, one duplicate written. Sonnet's: faithful 9 / 9, subject-free 8 / 9. Both unfaithful cards are Haiku's and misstate a figure (a result claimed for all batches where the session confirmed 20 of 24; a gap given as height where the session gave width); the subject leak is a Sonnet title naming "图纸". `experience.DEFAULT_ON` stays off. The sessions are now spent. |
+
+## Set 21: set 20's check again, with numbers held to the session (registered 2026-11-10, before any host was run on it)
+
+**Why.** Set 20 missed by one card on faithfulness, and both misses were figures. One change since, made without a
+development run to save calls (said as such): every number left in a card must be in the session, mechanically
+(`experience.unsupported_figures`); for a card the host writes, the session snippets it gives in `quotes`, since the
+MCP server does not see the session; for the model lane, the excerpt. A card with an unquoted number is sent back with
+the numbers named, and the instructions now say to leave numbers out of action and result unless the lesson needs
+them. Offline, both of set 20's unfaithful cards would have been sent back.
+
+**Sessions.** 16 new ones by Sonnet 5.5 in a fresh subagent with set 20's instructions, plus "numbers appear naturally,
+and some are corrected later"; same kinds and counts. Counts only read. `bench/transfer/set21_sessions.jsonl`, SHA-256
+`d1d77769…3d52744`.
+
+**Run, judging and bar:** exactly as set 20 (one retry of a refused call with the tool's reason; the other host
+judges; lesson sessions with a card ≥ 12 / 16, judged faithful ≥ 90%, judged subject-free ≥ 90%, duplicates ≤ 1 / 8,
+no-lesson ≤ 1 / 8). Run once. If it passes, `experience.DEFAULT_ON` is set.
+
+### Log, set 21
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`0eea66c`). |
+| 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 1 of Sonnet's calls refused and rewritten once, none of Haiku's). **Both hosts together: lesson sessions with a card 15 / 16 (bar ≥ 12); of 15 cards on lesson sessions, judged faithful 15 = 100% (≥ 90%), judged subject-free 15 = 100% (≥ 90%); no-lesson sessions with a card 0 / 8 (≤ 1); duplicates written 2 / 8 (bar ≤ 1). Not passed**, on duplicates. Both duplicate cards are on one session (N09), written as a duplicate of C06 ("before an action you cannot undo, keep a copy you can restore"); both hosts drew a different lesson from it ("delete what a tool keeps a record of through that tool, so the record and the files stay in step"), and the code's same-lesson check, lexical, did not match them to C06. Read afterwards, not part of the score: whether that session's lesson is C06's is arguable. `experience.DEFAULT_ON` stays off. |
+
+## Set 23: a repeated lesson is recorded on the old card, not written again (registered 2026-11-10, before any host was run on it)
+
+**Why.** Set 21 missed only on duplicates (2 of 8 sessions got a new card), both on one session whose duplicate label
+was arguable. Changes since, made without a development run (calls are short): when the digest already has the lesson,
+the host names that line's id (`same_as`) and the old card gets an `again` record, which counts in the digest's order
+like an adoption; the code's lexical same-lesson check records `again` too, as a fallback; nightly lists near-duplicate
+cards to merge by hand.
+
+**Sessions.** 16 new ones by Sonnet 5.5 in a fresh subagent, same kinds and counts as set 21; for each duplicate the
+writer also says which stored lesson it repeats and why (`dup_reason`), and was asked to make each duplicate teach that
+lesson and nothing else worth recording. 7 to 8 turns each, shorter than the 8 to 14 asked for. Counts only read.
+`bench/transfer/set23_sessions.jsonl`, SHA-256 `2d7d4c15…c65c2ef`.
+
+**Duplicate labels reviewed, rule fixed now.** Haiku 5.5, not the writer, reads each duplicate session with the stored
+lesson and the writer's reason and answers whether the session's lesson is the same (yes / no / unclear;
+`extract.py review`). A duplicate session the reviewer does not answer "yes" for is reported on its own and left out of
+the duplicates denominator; nothing else is left out.
+
+**Run, judging and bar:** as set 21 (one retry of a refused call; the other host judges faithfulness and
+subject-freedom; lesson sessions with a card ≥ 12 / 16, judged faithful ≥ 90%, judged subject-free ≥ 90%, no-lesson
+sessions with a card ≤ 1 / 8), and duplicates: at most 1 new card over the confirmed duplicate sessions of both hosts.
+Also reported: how many duplicates were linked to the right card with `same_as`. Run once. If it passes,
+`experience.DEFAULT_ON` is set.
+
+### Log, set 23
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`8ea41c3`). |
+| 2026-11-10 | **Review of the duplicate labels** (Haiku 5.5): all 4 confirmed ("yes"); none left out. |
+| 2026-11-10 | **Run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`; 2 of Haiku's calls refused, one for an unquoted number and one for naming the subject, and rewritten once). **Both hosts together: lesson sessions with a card 13 / 16 (bar ≥ 12); of 13 cards on lesson sessions, judged faithful 12 = 92.3% (≥ 90%), judged subject-free 12 = 92.3% (≥ 90%); new cards on confirmed duplicate sessions 0 of 8 (≤ 1), all 8 linked to the right card with `same_as`; no-lesson sessions with a card 0 / 8 (≤ 1). Passed.** Haiku: 6 / 8 lesson sessions, faithful 6 / 6, subject-free 5 / 6 (a lesson naming "font size"). Sonnet: 7 / 8, faithful 6 / 7 (one card counting one mismatch as two and generalising from one later round), subject-free 7 / 7. As registered, `experience.DEFAULT_ON` is set: the digest, use records and `krouter_learn` on by default when the vault has cards. |
+
+## Set 24: does experience grow into a skill where it should, and only there? (registered 2026-11-10, before any scenario was written or any host was run)
+
+**Why.** The nightly run now drafts skills from experience cards (`skills.py`): one card borne out repeatedly
+(adopted + seen again ≥ `DRAFT_EVIDENCE` = 3), or two or more cards the drafting model judges to be the same kind of
+situation. This set asks whether a draft appears where it should, says only what its cards say, and does not appear
+where it should not.
+
+**Scenarios.** 32, written by Sonnet 5.5 (claude-sonnet-5-5) in a fresh Claude Code subagent that sees neither the
+drafting prompt nor any code, only a description of what a card holds and of the four kinds: 8 *single* (one card
+borne out ≥ 3 times among unrelated ones), 8 *group* (two or three cards on the same kind of situation in different
+subjects, low counts, among unrelated ones), 8 *none* (unrelated cards, counts ≤ 2), 8 *trap* (cards sharing a
+subject, a tool or a word but not the situation, counts ≤ 2). Each kind 6 Chinese and 2 English, 5 to 7 cards each;
+the writer names the group that should become a skill (none for *none* and *trap*). Not edited. Split by kind and
+language at seed 2026112424 (`bench/skills/run.py split`): `bench/skills/set24_dev.jsonl` (16), where the drafting
+wording may be revised, and `bench/skills/set24_heldout.jsonl.gz` (16), sealed, run once per host. Card ids in the
+prompts are opaque hashes.
+
+**Run.** `run.py prepare24`: the prompt is exactly what `skills.draft_step` sends through the host lane. Hosts Haiku
+5.5 and Sonnet 5.5, Claude Code subagents on the named model, one agent per host and split, answer each prompt as if
+it were the only one; the reply goes through `skills.parse`, the code's own checks, as the nightly run does. No key,
+no stored Claude login.
+
+**Scored.** Mechanically: on *single* and *group*, a *right draft* = a draft whose cards are within the named group
+(and at least two of them when the group has two or more); *wrong-card drafts* = drafts that take a card outside the
+named group; on *none* and *trap*, any draft that passes the code. Judged: every right draft is read by the other host
+model (Haiku's by Sonnet, Sonnet's by Haiku) with the cards it rests on: faithful (every step supported by the cards'
+actions, results and lessons) and subject-free (name and "when to use"), yes or no.
+
+**Bar (fixed now), both hosts together on held-out:** right drafts on *single* + *group* ≥ 13 / 16; judged faithful
+≥ 90% and judged subject-free ≥ 90% of right drafts; scenarios of *none* + *trap* with a draft ≤ 2 / 16; wrong-card
+drafts ≤ 2.
+
+**Known limits.** The writer writes cards directly (the cards a host writes were measured in sets 17–23); 32
+scenarios; Sonnet writes them, is a host and judges Haiku's drafts; a real vault has more cards, written over months.
+
+## Set 25: does the host fetch and follow a skill when it fits, and keep quiet when it does not? (registered 2026-11-10, before any skill or case was written or any host was run)
+
+**Skills and cases.** Written by Sonnet 5.5 in a fresh subagent (another one than set 24's), which sees neither the
+digest wording nor any code: 6 skills (name, "when to use", 3 to 5 steps; 4 active, 2 drafts), each on its own kind of
+situation, and 24 user messages: 12 *applicable* (two per skill, a subject other than the one the skill's wording
+suggests) and 12 *quiet* (6 sharing a word or a subject with a skill but not its situation, 6 unrelated). Chinese.
+Skill ids are opaque. Split at seed 2026112425 by kind: `set25_dev.jsonl` (12) and `set25_heldout.jsonl.gz` (12).
+
+**Run.** The vault is the Chinese template with set 13's 14 cards and the 6 skills. Phase 1: the host gets the
+session-start context as the hook builds it (the experience digest, then `skills.digest`), `krouter_skill`'s
+description as the MCP server builds it, and the message; it either writes `CALL krouter_skill {"id": …}` or starts
+its reply. Phase 2, only where it called: the same context, the tool's answer (`skills.show`), and it replies. Hosts
+Haiku 5.5 and Sonnet 5.5 as in set 24.
+
+**Scored.** Mechanically: applicable cases where the right skill was fetched; where another was fetched; quiet cases
+where any skill was fetched or a skill id cited. Judged: on each applicable case with the right skill fetched, the
+other host model reads message, skill and reply: does the reply follow the skill's steps (yes / no)?
+
+**Bar (fixed now), both hosts together on held-out:** right skill fetched ≥ 10 / 12; judged as following ≥ 90% of
+those; wrong skill fetched ≤ 1; quiet cases with a skill fetched or cited ≤ 1 / 12.
+
+**If sets 24 and 25 both pass,** `skills.DEFAULT_ON` is set (skills in the digest, `krouter_skill`, the nightly
+step). If either fails, skills stay off by default (`KROUTER_SKILLS=1` turns them on) and the docs say so.
+
+**Known limits.** One-shot prompts with a bench note, not a live session; the case writer saw the skills; Chinese
+only; the tool call is simulated by a line the host writes, not a real MCP call.
+
+## Set 26: is a skill recorded as adopted only when the user says so, and what do the promotion and withdrawal counts become? (registered 2026-11-10, before any item was written)
+
+**Items.** 40, written by Sonnet 5.5 in set 25's writer subagent (after set 25's material): a user message, the
+assistant's reply following a skill (with `{id}` where the reply cites it), and the user's next message: 10 *adopt*
+(says it was followed or worked), 10 *reject*, 10 *ignore* (moves on), 10 *unclear* (neither). 30 Chinese, 10 English.
+Split at seed 2026112426 by kind and language: `set26_dev.jsonl` (20), `set26_heldout.jsonl.gz` (20).
+
+**Scored mechanically** (`run.py score26`) by `experience.uses_in`, the code that records card and skill use, not
+tuned here: p_true = adopt items recorded `adopted`; p_false = other items recorded `adopted`.
+
+**Thresholds, by a rule fixed now, on development only** (`run.py thresholds`): over W ∈ {4, 5, 6, 8, 10} and k ∈
+{1, 2, 3}, the smallest W, then the smallest k, such that a draft that never fits is promoted before withdrawal with
+probability ≤ 5% (Binomial(W, p_false) ≥ k, p_false taken as at least 2%) and one that always fits is promoted within W
+offers with probability ≥ 90% (Binomial(W, p_true) ≥ k). k becomes `PROMOTE_ADOPTED`, W `WITHDRAW_OFFERED`;
+`SINK_OFFERED` is half of W, rounded up; `WITHDRAW_DAYS` stays 45, a policy, not measured. **Held-out:** p_true and
+p_false reported once; bar p_false ≤ 1 / 15. Set 26 does not gate the default.
+
+**Known limits.** It assumes every offer of a fitting skill could be adopted, and treats offers as independent; real
+users answer in their own ways.
+
+### Log, sets 24–26
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`643db15`). |
+| 2026-11-10 | **Material written** by two fresh Sonnet 5.5 subagents (one for set 24, one for sets 25 and 26), counts checked mechanically, contents not read by the code's author except set 26's development half (below). Set 24: 32 scenarios, 8 per kind, 6 Chinese and 2 English each; split 16 / 16 (4 per kind each side); held-out text SHA-256 `f8d39268…bc20430`. Set 25: 6 skills (4 active, 2 drafts; `bench/skills/set25_skills.json`, SHA-256 `a093d11d…47905d2`, ids opaque) and 24 messages (12 applicable, 6 word traps, 6 unrelated); split 12 / 12; held-out SHA-256 `7625411f…e79406`. Set 26: 40 items as registered; **split 22 / 18, not 20 / 20**: the odd-sized groups (7 Chinese *ignore* and *unclear*, 3 English of those two kinds) are split by a coin in `run.py split`, which the registration did not foresee; held-out SHA-256 `ca1edc8c…f3fc49b`, 13 negatives, so the bar p_false ≤ 1 / 15 means none. |
+| 2026-11-10 | **Set 26, development, and a deviation from the registration.** As registered, `experience.uses_in` unchanged: p_true 1 / 5, p_false 0 / 17. With p_true 0.2 the threshold rule has no feasible pair (W = 10, k = 1 promotes a fitting draft with probability 0.89). The four missed adoptions report the result in plain words ("已经把三个问题发给他了", "重新输了新密码就好了", "真的不闪了", "the fan is quiet again"). **Deviation, before any held-out half was opened:** the adoption cues were extended on the development half (`experience.ADOPT_MORE`: saying it was done or the problem is gone; `experience.UNSURE`: a partly done or unsure reply is not an adoption; four more refusal phrases). This is shared code: card adoption records use it too. In-sample: p_true 5 / 5, p_false 0 / 17. The rule then picks **W = 4, k = 2**: `PROMOTE_ADOPTED` = 2, `WITHDRAW_OFFERED` = 4, `SINK_OFFERED` = 2 (useless draft promoted ≤ 0.23% with p_false taken as 2%). Set 26's held-out half is now a check of the extended cues, run once. |
+| 2026-11-10 | **Set 26, held-out, run once** (cues and thresholds as committed in `d7ccf16`): **p_true 4 / 5, p_false 0 / 13: passed** (bar: none of the 13). With p_true 0.8, W = 4, k = 2 still promotes a fitting draft with probability 0.97. |
+| 2026-11-10 | **Set 25, development, first and only wording** (the digest's skills part and `krouter_skill`'s description as committed; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). Both hosts: right skill fetched 6 / 6, judged as following 6 / 6 (by the other host), wrong skill 0, quiet cases with a skill 0 / 6, quiet cases citing a card 0. Wording not revised: frozen. |
+| 2026-11-10 | **Set 24, development, round 1** (drafting wording as first committed). Right drafts: Haiku 8 / 8, Sonnet 8 / 8; wrong-card drafts 0; drafts on *none* / *trap*: Haiku 1 / 8, Sonnet 0 / 8. Judged (other host): faithful Haiku 7 / 8, Sonnet 8 / 8; **subject-free Haiku 4 / 8, Sonnet 6 / 8 (10 / 16, 62%)**: names and "when to use" taken from the card's situation ("合并数据", "恢复训练", "a connection with under 90 minutes"). **Round 2:** name and "when to use" from the lessons, not the situations, with general-word examples and the set 19 self-test (bug / report / cooking); steps in general words. Right drafts 8 / 8 and 8 / 8; drafts on *none* / *trap*: Haiku 2 / 8 (one merging "slow practice with a metronome" and "switch food over seven days" as "do big changes in stages"), Sonnet 0 / 8. Not judged. **Round 3:** lessons that only share broad advice ("go gradually", "keep a fallback", "ask first") are not to be merged; the problem must be of one kind and the step the same. |
+| 2026-11-10 | **Set 24, development, round 3.** Right drafts Haiku 7 / 8, Sonnet 7 / 8 (both lost the same English *group* draft to the code's check that steps share words with the cards: both wrote it in Chinese, from English cards); drafts on *none* / *trap* Haiku 1 / 8, Sonnet 0 / 8; wrong-card drafts 0. Judged: faithful Haiku 5 / 7, Sonnet 7 / 7 (12 / 14, 86%); subject-free 7 / 7 and 7 / 7 (14 / 14). Haiku's two unfaithful drafts pad one-step lessons with steps the cards do not have ("find the source", "confirm it is off"). Changes after round 3: the prompt names the language to write in (made without its own development run, said as such; the subagents, like a host CLI on the author's machine, carry an instruction to answer in Chinese); 1 to 6 steps, each found in the cards, "if the cards give one step, write one step, do not pad" (the code now takes 1 to 7 steps). Round 4 runs that wording. |
+| 2026-11-10 | **Set 25, held-out, phase 1, run once** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`): right skill fetched Haiku 6 / 6, Sonnet 6 / 6; wrong skill 0; quiet cases with a skill fetched or cited 0 / 6 and 0 / 6. |
+| 2026-11-10 | **Set 24, development, round 4** (wording of `ea3a565`). Right drafts Haiku 8 / 8, Sonnet 8 / 8; wrong-card drafts 0; drafts on *none* / *trap* Haiku 1 / 8, Sonnet 0 / 8. **Drafting wording frozen here**, before round 4's drafts are judged and before any held-out scenario is run; held-out drafting runs in the same agents as round 4's judging. |
+| 2026-11-10 | **Set 24, development, round 4 judged** (after the freeze): faithful Haiku 8 / 8, Sonnet 8 / 8; subject-free 8 / 8 and 8 / 8. |
+| 2026-11-10 | **Set 25, held-out, run once, complete** (phase 2 and judging; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). **Both hosts together: right skill fetched 12 / 12 (bar ≥ 10); judged as following 12 / 12 = 100% (≥ 90%); wrong skill fetched 0 (≤ 1); quiet cases with a skill fetched or cited 0 / 12 (≤ 1). Passed.** No quiet case cited an experience card either. |
+| 2026-11-10 | **Set 24, held-out, drafting run once** (frozen wording of `88e6f51`; agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). Mechanical, both hosts together: **right drafts 16 / 16 (bar ≥ 13); drafts on *none* / *trap* 0 / 16 (≤ 2); wrong-card drafts 2 (≤ 2)**, one per host, each a second draft beside a right one. Found while scoring, before any held-out verdict was read: the scorer sent every draft of a scenario with a right draft to the judge, where the registration says right drafts; fixed to count right drafts only (a wrong-card draft is still judged, not counted). |
+| 2026-11-10 | **Set 24, held-out, judged** (Haiku's drafts by Sonnet, Sonnet's by Haiku; agents reported `claude-sonnet-5-5`, `claude-haiku-5-5`). **Both hosts together: right drafts 16 / 16 (bar ≥ 13); of 16 right drafts, judged faithful 16 = 100% (≥ 90%), judged subject-free 16 = 100% (≥ 90%); drafts on *none* / *trap* 0 / 16 (≤ 2); wrong-card drafts 2 (≤ 2). Passed.** With set 25 passed, as registered, `skills.DEFAULT_ON` is set. Model calls for sets 24–26: 3 writer agents, 20 host and judge agents (about 330 prompts). Limits as registered, and: the wording was revised three times on 16 development scenarios; Haiku is the weaker judge of Sonnet's drafts; the wrong-card bar was met exactly. |
+## Set 27: ten people with their own agents on one team server, at three sizes (registered 2026-11-10, before the 10,000- and 50,000-page rows were run)
+
+**Why.** An outside reviewer playing the lead of a ten-person team chose another memory because nothing showed a team
+had run KRouter, and named what would change that: a CI-verified test of ten concurrent people with their own agents,
+with correction conflicts and per-user attribution. Not a recall bench: no question is scored for being right, so
+this set registers properties and how the numbers are taken, before they are taken.
+
+**Harness.** `bench/team/load.py` (the CI test `tests/test_team_concurrency.py` runs it on the template vault, 8 mixed
+operations per client, two seeds). One `mcp_server.py --http` on 127.0.0.1 with `--allow-write` and a users file of
+10 personal tokens, on a git copy of the vault seeded with a short page to contradict (`数据库选型`) and a long page
+(`团队约定`) with one line everyone corrects and three lines per client. Ten client threads, each with its own token
+and client name: four bursts where all ten do the same thing at once (ask, note, correct the shared line, correct the
+topic, always naming the original page), then a seeded mix (seed 20261110): 60 % asks, 20 % notes, 10 % own-line
+corrections, 5 % topic corrections, 5 % shared-line corrections, 40 operations per client. No model, no network.
+
+**Sizes.** The template (about 90 pages), and `bench/scale/gen.py 10000` and `50000` on top of it. Default server
+settings (4 resident lookup processes). Apple M2, 8 GB, server and clients on one machine.
+
+**Properties, all required, all checked from the vault, the journal, git and the replies:** every acknowledged write is
+in the journal with consecutive `seq` and a unique run; every acknowledged note is on its page exactly once with its
+author; every write's journal row, git commit author and page `author` are the token's person; no page is unreadable
+or has an open frontmatter, no temporary file is left, nothing is uncommitted, `git fsck` passes; for every contested
+thing exactly one correction is in force, the last to arrive, every earlier one is superseded by the next in arrival
+order, and each reply after the first names the one it replaced; every answer starts with `vault_label: team` and names
+a page or says `recall: none`; no write fails; no token appears in the server log. After the run, the first correction
+page a lookup on the topic lists is the one in force and its `how` gives the new decision (the first page overall may
+be the corrections log; reported).
+
+**Reported, not judged:** p50, p95, p99 for reads and writes, completions per second in the mixed phase, error rate.
+Run once per size. A failed property is reported as failed, with the numbers.
+
+## Set 28: thirty minutes of mixed load (registered 2026-11-10, before the run)
+
+**Run.** Set 27's harness on the 10,000-page vault, `--duration 1800 --write-share 0.2 --rss-every 30` (80 % asks), in
+the background, once. **Reported:** the set 27 properties at the end, errors, latency, and the server's resident memory
+(server and its lookup processes) sampled every 30 s: first sample after warm-up, highest, last. Memory "does not grow"
+only if the last sample is within 20 % of the sample at 5 minutes; otherwise the growth is reported with a cause if one
+is found. Longer runs are left as a command in `docs/TEAM.md`.
+
+### Log, sets 27 and 28
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`51337a2`), with the template row already run during development (all properties held). |
+| 2026-11-10 | **Set 27, run once per size** (`51337a2`, machine busy with other test runs, load average 8 to 11): all properties held at 136, 10,136 and 50,136 pages, 0 errors in 440 calls each. Reads p50 / p95 / p99 47 / 160 / 297 ms, 124 / 361 / 1,611 ms, 755 / 4,033 / 6,294 ms; writes 0.95 / 1.26 / 1.41 s, 1.67 / 2.46 / 4.94 s, 2.70 / 4.18 / 4.43 s; 21.1, 10.9, 5.3 calls/s in the mix. |
+| 2026-11-10 | **Set 28, first run: failed.** 11,976 calls in 30 min, 0 errors, memory 262 MB at 5 min and 265 MB at the end (peak 357 MB), but `conflicts_converge` failed: the contested decision had 213 of its 312 corrections in force at the end. Cause: the supersede-chain walk stopped at 100 steps, so from the 101st correction of one decision on, each correction superseded nothing and said no conflict. Reads also slowed over the run (p50 1.03 s, p95 5.6 s, max 21 s against 124 / 361 ms in the 3-minute run): every write re-indexed the change ledger, by then 1.6 MB (945 ms with the index locked). Fixed in `7f3ed38` (the walk goes to the end and flags a broken chain; the ledger moves to an archive page past 256 KB); both have tests. Rerun below; this run's numbers stay reported as failed. |
+| 2026-11-10 | **Set 28, second run** (`7f3ed38`, load average 5 to 8): 21,798 calls in 30 min (17,431 reads, 4,367 writes), 0 errors, no token in the log; every property held (all 4,367 writes in the journal and attributed, 2,179 notes once each, 32 contested things with 2,188 corrections converged, 2,156 conflict replies each naming the right page) **except the final lookup**: after 544 corrections of one decision, "数据库选型现在用什么" returned `recall: none`, because the 80 full-text candidates were all replaced corrections carrying the old page's title. Memory 179 MB at 5 min, 209 MB at the end (+17 %), peak 227 MB. Reads p50 / p95 / p99 651 ms / 2.7 s / 4.3 s, max 9.3 s; writes 298 ms / 1.5 s / 2.0 s; 12.1 calls/s. Fixed in `c255760` (a replaced correction drops the replaced page's title words; on this run's vault the lookup then lists the correction in force first among corrections). Run again below. |
+| 2026-11-10 | **Set 27 again on the final code** (`c255760`, after set 28's fixes; load average 5 to 14): all properties held at every size, 0 errors in 440 calls each. Reads p50 / p95 / p99 39 / 129 / 234 ms, 102 / 284 / 396 ms, 446 / 2,010 / 2,885 ms; writes 1.09 / 1.38 / 1.46 s, 1.52 / 2.01 / 2.15 s, 2.99 / 4.35 / 4.65 s; 18.4, 12.7, 5.8 calls/s in the mix. These are the numbers in `docs/TEAM.md`. |
+| 2026-11-10 | **Set 28, third run** (`c255760`, load average 9 to 14): **passed.** 21,218 calls in 30 min (16,956 reads, 4,262 writes), 0 errors, no token in the log, every property held, the final lookup included (the correction in force is the first correction page, `how: 现在：…`); 32 contested things, 2,132 corrections, 2,100 conflict replies. Memory 195 MB at 5 min, 205 MB at the end (+5 %), peak 230 MB: no growth by the registered rule. Reads p50 / p95 / p99 717 ms / 2.7 s / 4.1 s, max 8.2 s; writes 291 ms / 1.6 s / 1.9 s; 11.7 calls/s. Reads slower than in set 27: by the end each correction re-indexed the corrections log (589 KB, 0.39 s) and the shared page (0.15 s), each note the notes page (0.12 s). Three runs were made where one was registered; all three are reported. |
+| 2026-11-10 | Harness fix, nothing rerun: `bench/team/load.py` drained the server's stderr into `server.log` on a thread and the file was block-buffered until that thread closed it, so code reading the log right after the server stopped could see it short of its last few kilobytes (once, a short CI-sized run under load saw it empty and the test failed). The two properties read from the log (no 5xx line, no token in the log) may therefore have missed lines at the very end of these runs; every other property (journal, git authors, convergence, final answer) does not read it. The log is now written line by line and read only after the drain thread is done (`load.stop`). |
+
+## Set 30: does a host agent do it by itself, in a real session? (registered 2026-11-10, before any scenario was run)
+
+**Why.** Everything measured about experience cards and corrections so far asked the host directly ("here is the digest,
+what would you suggest", "here is the session, write the card") or tested the protocol. Not measured: an agent in a
+working session, handed KRouter the way the README installs it, (a) mentions the digest's lesson when its situation is
+the task's, (b) calls `krouter_learn` when the session really hit a problem and worked it out, (c) calls
+`krouter_correct` when the user changes a decision the memory holds, and keeps quiet when none of those is the case.
+
+**Scenarios.** `bench/behavior/set30.json` (SHA-256 `889a954fd9dba79e326e7da49c1b8a708e73bd143f3c1e815f1186add1c0a03d`), 20 of them, written by Claude Sonnet 5.5 in the Claude Code
+session that ran the platform tests. Not an outside reviewer: the writer had read the MCP tool descriptions, the digest
+wording and the 14 cards, and wrote tasks to match or avoid them. Each is a small project (a few files) and one
+user message; none mentions memory, KRouter, lessons or corrections. Groups: `offer` 4 (a task in the same situation as a
+card, another subject: C01, C09, C10, C06), `learn` 4 (a real problem in the files: a BOM, a working-directory
+assumption, float rounding, a hand-split CSV), `correct` 4 (the user changes a decision a page of the memory holds:
+API timeout, branch naming, Node version, the test command), `notcorrect` 4 (a one-off exception, the existing rule
+restated, an open question, a correction of the code's own off-by-one), `quiet` 4 (a flag, a rename, docstrings, an
+explanation whose function name shares a word with a card).
+
+**Memory.** A throwaway copy per scenario: the English layout the installer makes, the 30-page engineering vault of the
+memory-honesty bench, the 14 English cards of the transfer bench (`bench/behavior/make_fixture.py`). The digest comes
+from the SessionStart hook, the tools from the MCP server, both installed by `scripts/bootstrap.py --apps codex` into the
+scenario's own Codex home.
+
+**Hosts.** Codex CLI (`codex exec`, 0.155.0-alpha.9.2, the model the ChatGPT login selects), 20 scenarios, each run once.
+A Claude Code subagent (Sonnet 5.5) and Cursor's agent get a subset or an approximation, said where the numbers are
+reported. A scenario is never rerun and never edited after its first run.
+
+**Rules, mechanical** (`bench/behavior/judge.py`). *offer*: a card id in brackets in any message of the session. *learn*: a
+`krouter_learn` call. *correct*: a `krouter_correct` call. Should: offer = group `offer`, learn = group `learn`,
+correct = group `correct`. Should not: offer and learn = groups `correct`, `notcorrect`, `quiet` (12); correct = every
+group but `correct` (16). Reference line, fixed now: at least 3 of 4 should, at most 1 should-not, per host and
+behaviour. Below it the host does not do it by itself, and the wording of the tool descriptions, the server
+instructions or the hook line gets revised on a new development set (31), not on this one.
+
+### Log, set 30
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. Before it, throwaway smoke prompts (not scenarios) were run to get the Codex runner working; one of them, with the real home folder, let Codex use the maintainer's own knowledge-base skill and read the real vault (`status` and one `search`, read-only); the runner now gives each run a home folder of its own. |
+| 2026-11-10 | **Run once** (Codex CLI 0.155.0-alpha.9.2, model `gpt-5.6-terra`: the first two launches, without `-m` and with `gpt-5.5`, died on "model not supported with a ChatGPT account" before the model saw anything, and were thrown away whole; the two sessions of the first launch that had finished were seen as "no krouter call", no scenario was changed). Claude Code subagent host: Sonnet 5.5, one fresh subagent per scenario. **Codex:** offer should 2 / 4 (C01, C09), should not 0 / 12; learn should 0 / 4, should not 0 / 12; correct should 0 / 4, should not 0 / 16. **Claude Code subagent (approximation: the tools reached through a shell helper, not MCP):** offer 2 / 4 (C09, C10), 0 / 12; learn 0 / 4, 0 / 12; correct 3 / 4 (the fourth, Node version, wrote `krouter_note` after `krouter_ask` found no page), 0 / 16. Below the reference line on both hosts for learn, and for correct on Codex. `bench/behavior/results/set30_*`. |
+| 2026-11-10 | Cause found for Codex, from a probe run (not a scenario): the model is given the SessionStart digest, but no tool definition that mentions krouter (this Codex lists MCP tools only when asked for them) and no server instructions, so nothing in its context says `krouter_correct` or `krouter_learn` exist. The digest's usage line and the tool descriptions are the only wording the model has, and the first never names a tool. |
+| 2026-11-10 | Session opening on this set's fixture vault (`bench/behavior/make_fixture.py`: the template and its sample alias table). From the 2.0 merge of the standing index until this entry, a session there started with an 8-line index of the template's example topics, which these runs never saw. Since this entry the index is not given while the vault's alias table is still the template's (`compile_subconscious.sample_table`), so the opening on this vault is again the one the runs were measured on, word for word, plus one closing sentence on `recall: none` (`kr_cli.py --context` compared against the platform branch's). Nothing was rerun; the registered numbers above stand as they are. |
+| 2026-11-10 | Public version of the scaffold: `bench/behavior/prep_claude.py` no longer spells out this machine's home folder in the line telling the host which folders not to touch; it builds that path from the home folder (`REAL_VAULT`, or `KROUTER_BENCH_REAL_VAULT`), which on the machine the sets ran on gives the same text, so the prompt is byte for byte the one used then. `collect.py` strips any user's home folder, not one. No number changed. |
+
+## Set 31: development set for the wording change after set 30 (registered 2026-11-10, before any scenario was run)
+
+**Why.** Set 30 found the hosts do not call `krouter_learn` (0 / 4 on both) and Codex does not call `krouter_correct` (0 / 4).
+This is the development set to revise the wording on; set 30 is not touched again. `bench/behavior/set31.json`
+(SHA-256 `3c90b98df7a9978b88362bea9f08b6fff36328e2eb1b5ff81d07760dfff4e958`), 12 new scenarios by the same writer (so the same limits as set 30): offer 2 (C05, C02), learn 3 (a
+Makefile with spaces for a tab, CRLF line endings in a script, a mutable default argument), correct 3 (local ports,
+backup schedule, review rule: each a decision a page of the memory holds), notcorrect 2 (a typo, a one-night exception),
+quiet 2. Same memory copy, same rules, same judge as set 30.
+
+**Design.** Codex runs the whole set twice, once on the wording as it stands (baseline), once after the change; each
+scenario once per condition. The Claude Code subagent host runs it once, after the change. The change, fixed now before
+the baseline is run: (1) the SessionStart hook adds one short line naming `krouter_correct` (when the user changes a
+decision or says to do something differently from now on, in the same turn, also when the lookup finds nothing about the
+old one) and `krouter_learn` (before the final reply, when the session met an error or a wrong result and found and
+fixed the cause), printed whenever the hook prints anything; (2) the server instructions' two sentences say the same in
+the same words. The tool descriptions (`LEARN_HELP`, the correct tool's) are not touched: they were tuned over sets 17
+to 23. Better means: should up on learn and correct, should-not not up beyond 1.
+
+### Log, set 31
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered. |
+| 2026-11-10 | Baseline on the old wording, Codex (12 of 12 valid): offer 1 / 2, should not 0 / 7; learn 0 / 3, 0 / 7; correct 0 / 3, 0 / 9. Claude subagent (Sonnet 5.5, shell-helper approximation, old wording): offer 1 / 2, 0 / 7; learn 1 / 3, 0 / 7; correct 3 / 3, 0 / 9. |
+| 2026-11-10 | The wording changed (`589dffd`): the hook's tools line and the two server instruction sentences, as registered. Claude subagent after: offer 1 / 2, 0 / 7; learn 2 / 3, 0 / 7; correct 3 / 3, 0 / 9. **Codex after: void.** The account's usage limit was reached during the run (11 of 12 sessions failed with "You've hit your usage limit" before the model saw the task; the twelfth, S31-L2, ran and called nothing). The change is **not verified on Codex**, the host it was made for; it cannot be rerun before 2026-12-09. Cursor agent CLI (free account, `auto`, after wording): S31-K1 `krouter_correct` called; S31-L1 no `krouter_learn`; S31-Q1 two lookups, no write. Set 31 is not held out and is now spent as a development set for this wording. |
+| 2026-11-10 | Session opening on this set's fixture vault (`bench/behavior/make_fixture.py`: the template and its sample alias table). From the 2.0 merge of the standing index until this entry, a session there started with an 8-line index of the template's example topics, which these runs never saw. Since this entry the index is not given while the vault's alias table is still the template's (`compile_subconscious.sample_table`), so the opening on this vault is again the one the runs were measured on, word for word, plus one closing sentence on `recall: none` (`kr_cli.py --context` compared against the platform branch's). Nothing was rerun; the registered numbers above stand as they are. |
+| 2026-11-10 | Public version of the scaffold: `bench/behavior/prep_claude.py` no longer spells out this machine's home folder in the line telling the host which folders not to touch; it builds that path from the home folder (`REAL_VAULT`, or `KROUTER_BENCH_REAL_VAULT`), which on the machine the sets ran on gives the same text, so the prompt is byte for byte the one used then. `collect.py` strips any user's home folder, not one. No number changed. |
+
+## Set 32: mention it and it comes to mind — does the prompt hook bring the right page, and only then? (registered 2026-11-10, before any case was split or run)
+
+**Why.** Until 2.0 the lock and the trigger words ran only when the agent chose to call `krouter_ask`: whether the
+vault "came to mind" depended on the agent. `session_hook.py prompt` now looks every message up (`recollect.py`: no
+model call) and hands the agent at most two pages, marked as memory. This set asks whether it brings the right page
+when a message mentions something the vault knows, brings the newer page when the rule changed, and stays silent
+otherwise. Silence matters most: this runs on every message.
+
+**Vault.** `bench/memory_honesty/vault3` (frozen, 110 pages, English and Chinese, 18 old/new page pairs), copied to a
+temporary folder at run time with `bench/subconscious/overlay/` laid into `90 系统文件/`: an alias table of 63 rows
+(some rows still point at a page that was later superseded, as a table nobody updated would; three topics have a row
+for both pages) and two trigger sidecars (20 generated lines, 7 learned questions). The overlay was written before any
+case existed, by the session that writes the matcher.
+
+**Cases.** 120, written by Sonnet 5.5 in a fresh Claude Code subagent that read one input file (every Handbook and
+团队手册 page with its status and text, and the alias names of the pages that have them) and nothing else: not the
+trigger sidecars, not the anchors, not any code. Told to write the way people write to a coding assistant mid-work
+and neither to use nor to avoid the names. Per language (zh, en): 24 *recall* (a message that mentions something one
+active page covers; the expected page), 24 *quiet* (6 each: unrelated; a name meant in another sense; a name or key
+word as an everyday word in a longer sentence; a name only inside pasted code, a log, a diff or command output, at
+least half unfenced), 12 *changed* (a topic with an old and a new page; the new page expected, the old one recorded).
+Not edited. Split at seed 20261132, stratified by language, kind and subkind, half to each side:
+`bench/subconscious/dev.jsonl` (60) is where the matcher, the paste filter and the routes may be tuned;
+`bench/subconscious/heldout.jsonl.gz` (60) is sealed and run once. The writer's raw file stays out of the repository.
+
+**System.** `recollect.recollect()` as the hook calls it, with the routes chosen on development. Choice rule, fixed
+now: maximise recalled (recall + changed cases bringing the expected page) − 3 × (quiet cases bringing anything +
+wrong pages brought on recall and changed cases), ties to fewer routes. Full-text recall (`recall`, `high` confidence
+only) may enter the default only if on development it adds no quiet delivery and no wrong page.
+
+**Scored mechanically** (`bench/subconscious/run.py`): *brought* = the pages handed over (at most two). Recall case:
+right if the expected page is brought; any other page brought is a wrong page. Changed case: right if the new page is
+brought; the old page brought as a page is a wrong page *and* an old-page delivery (naming the old page in the
+"an earlier page said otherwise" note is expected, not a delivery). Quiet case: any page brought counts against it.
+
+**Pass line (fixed now), held-out, both languages together:** quiet cases bringing anything ≤ 1 / 24; wrong pages on
+recall and changed cases ≤ 1; old-page deliveries 0; changed cases bringing the new page ≥ 6 / 12; recall cases
+bringing the right page ≥ 12 / 24, and ≥ 5 / 12 in each language. All five must hold for the hook to be on by
+default (together with set 33's line below); otherwise it ships off (`KROUTER_RECALL_PROMPT=1` to try it) and the
+numbers are reported as they are.
+
+**Known limits, said with any number.** One writer model; the writer saw the alias names (it was told neither to use
+nor to avoid them, so recall depends on how often people say a page's name); the matcher's author wrote the alias
+table and triggers, knowing the pages; vault3 is small; the cases are single messages, not conversations.
+
+### Log, set 32
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`b5254b2`); split committed (`676e829`), held-out sealed (SHA-256 of the text `5ba6f5ed…fbe649c6`). |
+| 2026-11-10 | **Development.** First run, alias and trigger routes only, before any tuning: recall 2 / 24, changed 4 / 12, **quiet cases bringing something 8 / 24** (other sense 2, everyday word 3, pasted 3), wrong pages 0. Full-text recall at `high` confidence added nothing: on vault3 no page is in the rule tier, so `high` never happens. Changes, each justified on development only: (1) the paste filter learned three formats it missed (docker compose log prefixes `name_1  \| …`, merge-conflict markers, indented or diffed YAML): pasted 3 → 0; (2) a second key for a name match: recall over the whole message must not refuse it, or its top page must match at least 4 of the message's content words (every loud name match had recall refusing with ≤ 3 matched words; every right one had recall answering or ≥ 4 words): quiet 5 → 0, no right hit lost; (3) a `recall` route at `medium` or `high` confidence with the top page at least 2.5 × the second, never a log page. Sweep of the second key (3, 4, 5 words) × margin (1.3–2.5) × confidence set: best choice score 10 at 4 words for every margin ≥ 1.75; ties went to the strictest (2.5, medium/high). **Frozen** (`b6cfb53`): routes alias, trigger, recall; development **recall 5 / 24 (zh 2, en 3), changed 5 / 12, quiet 0 / 24, wrong pages 0, old-page deliveries 0.** The trigger sidecars brought nothing right or wrong on development. Reading the misses: most recall cases share no word with their page ("Dana's prod DB login vanished" against "access unused for 60 days is removed"); a lexical lookup cannot bridge them. |
+| 2026-11-10 | **Held-out, run once** (routes and thresholds as frozen; the first invocation stopped on a missing output folder while saving, before printing anything, and was re-run unchanged; the lookup is deterministic). **Quiet cases bringing something 1 / 24** (one name in another sense: 「iOS 里相机的权限申请弹窗」 brought 权限申请), **wrong pages 0, old-page deliveries 0, changed 4 / 12, recall 7 / 24 (zh 6 / 12, en 1 / 12).** Against the line: quiet ≤ 1 holds, wrong ≤ 1 holds, old 0 holds; changed ≥ 6 fails; recall ≥ 12 and ≥ 5 per language fails (English). **Fails. As registered, the prompt hook ships off by default** (`KROUTER_RECALL_PROMPT=1` turns it on). What it shows: on every message it stays quiet as required (1 of 24 over everything thrown at it, 0 of 12 pasted), and when it speaks it is right (11 pages brought on recall and changed cases, all the expected page, none old); what it cannot do is notice a mention said in other words, which is most mentions people make. |
+
+## Set 33: does the host use what the hook brought, and ignore what does not fit? (registered 2026-11-10, before any host was run)
+
+**Why.** Set 32 measures what the hook hands over. This set measures what the host model does with it: whether it
+uses a page that was brought and says where it came from, and whether a page that does not fit the message pulls it
+off course.
+
+**Cases.** From set 32's held-out file, after its single run: up to 16 recall and changed cases (8 per language, the
+first in file order) on which the hook brought the expected page. Each message is given to the host three ways, as
+the prompt hook would give it: (A) with the hook's own memory note; (B) with the memory note the hook gave a
+different case of the same language (the next one in the list, wrapping), so a page that does not fit; (C) with no
+note. The wording of the note is the one shipped in `recollect.render` at registration; it is not revised on this set.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, run as sets 12 and 15 ran theirs: a Claude Code subagent on the named model
+answers a batch of prompts, each as the only one, writing only the start of the reply (at most five sentences, no
+tools). No API key and no stored login are used.
+
+**Scored mechanically.** Each case lists one or two key terms of the expected page's rule (a number, a product name),
+taken from the page before any host run. (A) *used* = the reply contains a key term; *cited* = it names the page
+(its path or file name). (B) *pulled* = the reply contains a key term or the name of the page that was brought but
+does not fit. (C) the same key-term check, reported to show what the host knows without the note.
+
+**Pass line (fixed now), per host:** (A) used ≥ 12 / 16 and cited ≥ 8 / 16; (B) pulled ≤ 2 / 16. Both hosts must
+pass for the hook to be on by default (with set 32). When nothing is brought the hook prints nothing, so the host's
+input is byte for byte what it was before 2.0; that is checked by the hook tests, not by a host run.
+
+### Log, set 33
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | **Run** (`bench/subconscious/host.py`; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`; 33 prompts each in one batch, opaque ids, shuffled). Only **11** of set 32's held-out recall and changed cases had the right page brought (8 zh, 3 en), so 11 cases, not the 16 the line was written for. **Haiku 5.5: (A) used 10 / 11, cited 11 / 11; (B) pulled 0 / 11; (C) key term without the note 3 / 11. Sonnet 5.5: (A) 10 / 11, 11 / 11; (B) 0 / 11; (C) 1 / 11.** In proportion both pass (10 / 11 ≥ 12 / 16, 11 / 11 ≥ 8 / 16, 0 ≤ 2); in the registered counts "used ≥ 12" cannot be met with 11 cases. Read after scoring: the one (A) miss per host is the same case (third-party scripts), and both replies state the page's rule in full, in Chinese (the batch was mostly Chinese and the agents answered this English message in Chinese), so the English key terms did not match: in substance 11 / 11. Replies in `bench/subconscious/results/set33/`. Limits: 11 cases, all ones the hook got right; one batch per host; short replies. |
+
+## Set 34: does it reach the app, and is it fast enough to run on every message? (registered 2026-11-10, before any timing run)
+
+**Delivery.** For each app, whether the memory note the hook prints reaches the model: Claude Code
+(`UserPromptSubmit`, `hookSpecificOutput.additionalContext`), Codex (`UserPromptSubmit`, the same JSON, which Codex's
+hooks documentation says is added as developer context) and Cursor (`beforeSubmitPrompt`, whose documented output is
+only `continue` / `user_message`: no context can be added). Checked with the real Codex CLI in a throwaway
+`CODEX_HOME`; where the login does not carry over, against a local mock of the Responses API, and the report says so.
+
+**Speed.** The whole hook process (`python3 session_hook.py prompt`, from start to exit, as the app runs it) on a
+message that matches and one that does not, 200 runs each, on vault3 with the overlay and on a 10,000-page vault
+(`bench/scale/gen.py 10000`, with an alias table of 2,000 rows and 10,000 trigger lines added). Cold = the first run
+after the page cache of the vault folder is not warmed by a previous run (a fresh copy of the vault); warm = the rest.
+Reported: p50 and p95. **Line (fixed now):** warm p95 ≤ 250 ms on both vaults; if not, the lookup moves to a cached
+index or a resident process before the default is decided.
+
+### Log, set 34
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | **Delivery.** Codex: codex-cli 0.155.0-alpha.9.2 (the app's own binary, not the shell wrapper on this machine), throwaway `CODEX_HOME` and `HOME`, a local mock of the Responses API (no login carries over to a throwaway home, so no real model was called), hooks run with `--dangerously-bypass-hook-trust`: for 「新项目的仓库我就建在公司自己的 GitLab 上吧」 the hook ran and the memory note (代码托管.md, with the earlier page named) arrived in the request as a **developer message right after the user message**; for a message naming nothing, no note was sent. Claude Code: output format per its hooks documentation (`hookSpecificOutput.additionalContext` on `UserPromptSubmit`) and the hook tests; not run inside the Claude Code app here. Cursor: not available (`beforeSubmitPrompt` can only allow or block); the hook does not run the lookup there. |
+| 2026-11-10 | **Speed** (`bench/subconscious/speed.py`, results in `bench/subconscious/results/set34-speed.txt`; Apple laptop shared with other sessions, load average 5–6). A first run set `PYTHONPYCACHEPREFIX` for cold starts, which turned out to add about 90 ms to every run (the same hook: 62 → 154 ms) and was discarded; cold now means the scripts' bytecode cache deleted and the phrase table not yet compiled. Whole hook process, routes as frozen (alias, trigger, recall), 200 warm and 20 cold runs each. **vault3 + overlay: warm p50 / p95 87 / 124 ms (a message that names a page) and 83 / 102 ms (one that names nothing); cold 91 / 126 and 94 / 121. 10,000 pages, 2,000 alias rows, 10,000 trigger lines: warm 126 / 144 and 116 / 139; cold 221 / 246 and 214 / 327.** Alias and trigger routes only: 10,000 pages warm 129 / 149 and 72 / 82. The hook with the lookup off: 62 / 73 ms on either vault. **Line (warm p95 ≤ 250 ms on both vaults): holds.** Two changes made before this run, on development timings only: the phrase table is compiled once and kept next to the recall index (`marshal`, 9 ms to load 26,000 phrases instead of re-reading the files: the JSON form took 38 ms), and related-page titles are resolved without walking the vault. Set 32's held-out pages brought were checked to be identical before and after each change (compared, not re-scored). |
+
+## Set 35: the subconscious as a whole — the prompt hook, then the host reading a standing index (registered 2026-11-10, before any case existed)
+
+**Why.** Set 32: the prompt hook alone stays quiet but brings the right page for only 7 of 24 mentions, because people
+mostly mention a thing in other words. Set 15 met the same wall with experience cards (0 / 14 by words) and got past
+it by putting the cards in front of the host (14 / 14). Here the session-start hook hands the host a standing index
+(`compile_subconscious.standing_index`: one line per live topic of the alias table, name / one other name / what was
+decided / page; replaced pages counted under the page that replaced them; rule pages first, then most recently used or
+updated; at most 60 lines and 5,400 characters; then one usage line that says how to fetch a page with `krouter_ask`,
+the route command or the file path, since some hosts show the model no tool list). A message then counts as
+remembered when either layer brings the right page.
+
+**Vault and hook.** Set 32's: vault3 with `bench/subconscious/overlay/`, the prompt hook exactly as frozen there
+(`b6cfb53`, routes alias, trigger, recall). The index on it: 60 topics, all listed.
+
+**Cases.** 120 new messages, written by Sonnet 5.5 in a fresh Claude Code subagent that reads the same one input file
+as set 32's writer (pages, statuses, alias names) and nothing else; it has not seen set 32's cases, the index, its
+wording or any code. Per language (zh, en): 24 *recall*, of which at least 16 must not use any of the page's listed
+names (the writer marks each `named`); 24 *quiet* (6 each: unrelated; a name in another sense; a name or key word as
+an everyday word; a name only inside pasted code or logs); 12 *changed* (the newer page expected). Not edited. Split
+at seed 20261135, stratified by language, kind, subkind and `named`: `bench/subconscious/set35_dev.jsonl` (60), where
+the index's usage line may be revised at most once; `bench/subconscious/set35_heldout.jsonl.gz` (60), run once per host.
+
+**Hosts.** Haiku 5.5 and Sonnet 5.5, as Claude Code subagents (`model: haiku` / `sonnet`), one agent per host and
+split. The batch file gives the session-start context once at the top (exactly the index the hook would print) and
+then each message as a separate session, with the prompt hook's note above it when the hook brought something. The
+host writes the start of its reply; a fetch it would make is written as a first line `CALL krouter_ask: …`,
+`CALL shell: …` or `CALL read: …` instead of being run. No API key, no stored login.
+
+**Scored mechanically** (`bench/subconscious/both.py`). A fetch is resolved by running it for real on the bench vault
+(`route_knowledge.py search` with the question or the command's query: the lock's page, else recall's first page when
+recall answers; a `read` path as written). The host *recalls* a page when it fetches it or names its path in the reply.
+Recall or changed case **right** when the hook brought the expected page or the host recalled it; **wrong page** when
+the hook brought, or the host fetched or named, any other page; **old-page delivery** when the superseded page was
+brought, fetched or named. Quiet case **loud** when the hook brought anything or the host fetched anything or named any
+page. Reported per host and language, with what each layer contributed (hook right; host right where the hook was not).
+
+**Pass line (fixed now), held-out, each host:** recall cases right ≥ 18 / 24 and ≥ 8 / 12 in each language; changed
+cases right ≥ 9 / 12; quiet cases loud ≤ 2 / 24; wrong pages ≤ 2; old-page deliveries 0. Both hosts must pass for the
+prompt hook and the standing index to be on by default.
+
+**Scale check (development only, not a pass condition).** (a) Crowded: the index with 240 distractor topics added
+(synthetic pages with alias rows on subjects the cases never touch), all 300 lines listed regardless of the budget, to
+see whether a long list makes the host fetch wrongly or speak on quiet cases; both hosts. (b) At the shipped budget
+with the same 240 distractors dated newer than the real pages: how many real topics stay listed, and the hook-plus-host
+numbers with Haiku 5.5.
+
+**Known limits, said with any number.** One writer model, also one of the hosts; the writer saw the alias names;
+batches show the host every case of a split at once; the host is told to write fetches instead of making them, so a
+real session's tool use may differ; token counts are the registered estimate (one per CJK character, one per three
+other characters).
+
+### Log, set 35
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`77aeb94`). Cases written (Sonnet 5.5): recall named / not named zh 7 / 17, en 6 / 18; changed named zh 1, en 3. Split: the first stratified split left odd-sized strata unbalanced (held-out 23 recall, 14 changed), so before any case was read it was redone with the odd case of each language-and-kind alternating between the sides: 60 / 60, each side 12 recall, 12 quiet and 6 changed per language. Held-out sealed, SHA-256 of the text `945ac5f6…f94a6b1`. |
+| 2026-11-10 | **Development, first wording** (agents reported `claude-haiku-5-5`, `claude-sonnet-5-5`). Sonnet 5.5: recall 23 / 24, changed 12 / 12, quiet loud 2 / 24 (both by the frozen hook: 「笔记本（记事那种纸质的）」, and a pasted `FAIL test_sms.py … 验证码短信` line the hook's paste filter does not treat as pasted), wrong pages 3 (a neighbouring page fetched as well), old 0. Haiku 5.5, as first scored: recall 22 / 24, changed 12 / 12, quiet loud 6 / 24, wrong 5. **Scoring clarified before held-out:** of Haiku's 6, three were `CALL read: package.json`, `README.md` and a Java file the user mentioned: ordinary work, not a fetch from the memory. A quiet case is now loud on a *memory* fetch (`krouter_ask`, the route command, reading a file inside the vault) or a named vault page, which is what the registration meant by "fetched" (the same rule resolves fetches); Haiku's quiet loud is then 3 / 24 (one host fetch on a pasted merge conflict, the two hook cases). **The one allowed wording revision:** the usage line now says to fetch only the one page that bears on the message most, and that a word inside pasted code, logs or output is not a mention (`compile_subconscious.INDEX_TAIL`). Haiku re-run on development once with it; then frozen. |
+| 2026-11-10 | **Development, revised wording, Haiku 5.5 re-run once** (`claude-haiku-5-5`): recall 22 / 24 (zh 11, en 11; hook 6, host 16), changed 12 / 12, quiet loud 3 / 24 (two by the frozen hook, one host fetch on a pasted merge conflict), wrong pages 1 (was 5), old 0. Sonnet's development run used the first wording and was not repeated. **Frozen** (`58f0437`); held-out next, once per host. |
+| 2026-11-10 | **Held-out, run once per host** (wording as frozen; agents reported `claude-haiku-5-5` and `claude-sonnet-5-5`; replies in `bench/subconscious/results/set35/b35held/`). **Sonnet 5.5: recall 24 / 24 (zh 12 / 12, en 12 / 12; the hook 7, the host where the hook was silent 17; mentions without the page's names 17 / 17), changed 12 / 12 (hook 5, host 7), quiet loud 1 / 24 (by the hook: a pasted line), wrong pages 0, old 0. Haiku 5.5: recall 23 / 24 (zh 11 / 12, en 12 / 12; hook 7, host 16; without names 16 / 17), changed 12 / 12 (hook 5, host 7), quiet loud 2 / 24 (one by the hook, one host fetch on an everyday word), wrong pages 0, old 0.** Against the line (recall ≥ 18 / 24 and ≥ 8 per language, changed ≥ 9 / 12, quiet ≤ 2 / 24, wrong ≤ 2, old 0): **both hosts pass. As registered, the prompt hook and the standing index are on by default** (`recollect.DEFAULT_ON`; `KROUTER_RECALL_PROMPT=0`, `KROUTER_RECALL_INDEX=0`, `KROUTER_INJECT=0` turn them off). Index: 60 topics, all as full lines, 5,600 characters, about 2,630 tokens by the registered estimate. |
+| 2026-11-10 | **Scale check, development only.** Before it ran, preparing (b) showed the index as first written would have listed **0 of the 60 real topics**: 240 newer distractors filled the line budget and the oldest, never-used real pages were cut. Changed then, on development only and without touching the 60-topic index (byte-identical on vault3): when the topics do not fit, every topic keeps its name in one "also known" line and the remaining budget goes to full lines for the first ones (`INDEX_FULL_MIN`); at 300 topics that is 16 full lines and all 300 names in 5,644 characters, about 2,510 tokens. (a) **Crowded, all 300 topics as full lines** (24,495 characters, about 10,690 tokens, over the shipped budget): Sonnet 5.5 recall 23 / 24, changed 12 / 12, quiet loud 1 / 24, wrong 2; Haiku 5.5 21 / 24, 11 / 12, 2 / 24, wrong 2 (development, against 23 / 24, 12 / 12, 2, 3 and 22 / 24, 12 / 12, 3, 1 with the 60 real topics). (b) **Shipped budget, distractors dated newer, real topics as names only**: Haiku 5.5 recall 19 / 24, changed 9 / 12, quiet loud 1 / 24, wrong 1. A long list did not make either host noisier; losing the one-line conclusion costs Haiku about 3 of 24 mentions. |
+| 2026-11-10 | Defaults switched as registered (prompt hook and standing index on; learning off after set 36). Found while switching: with no alias table of its own a vault fell back to the sample table shipped with the code; the index now uses only the vault's own table (or `KROUTER_MAP`). Session-start hook with the index: 115 ms median on vault3 (101 without), 430 ms at 10,000 pages with 2,000 alias rows (109 without); it runs once per session. |
+
+## Set 36: does it get better with use — learning a mention from what the host fetched (registered 2026-11-10, before any case existed)
+
+**Why.** When the hook says nothing and the host fetches a page itself and uses it, the turn hook notes the message and
+the page; the nightly `learn_mentions` step turns the message's most distinctive phrase into a provisional trigger word
+for that page. The question: does the hook then bring that page by itself the next time the team says it that way,
+without getting louder?
+
+**Cases.** Written in the same sitting as set 35 by the same writer: per language 8 *pairs* (two messages on one
+topic that share a team expression the pages and names do not contain, as teams have nicknames for their own rules;
+the first is the learning message, the second the test message, written so it would not share the expression by
+accident with any other page), and 4 *lookalike* quiet messages (the same team expression's ordinary words used about
+something unrelated). `bench/subconscious/set36.jsonl`, not split (nothing is tuned on it).
+
+**Procedure.** Learning: each first message goes through the hook (frozen) and Sonnet 5.5 with the index, as in set
+35; where the hook brought nothing and the host fetched and named the right page, that is a learning event, exactly as
+the turn hook would write it; `learn_mentions.run` then writes the trigger file. Test: the prompt hook alone, before
+and after learning, on the 16 second messages, on the 8 lookalikes, and on set 35's 24 held-out quiet messages.
+
+**Pass line (fixed now):** after learning, the hook alone brings the right page for at least half of the second
+messages whose first message produced a learning event (before learning: counted and reported); quiet messages (the
+lookalikes and set 35's held-out quiet ones) bringing something: no more than before learning; no wrong page brought
+on a second message. If it fails, the nightly step stays in the code but is reported as not shown to work.
+
+### Log, set 36
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered (`77aeb94`); cases written with set 35's (`bench/subconscious/set36.jsonl`). **Run once** (learning messages answered by Sonnet 5.5, `claude-sonnet-5-5`; replies in `bench/subconscious/results/set36/`). On the 16 first messages the hook brought the right page 3 times (Chinese) and the host fetched it on the other 13: **13 learning events** (zh 5, en 8). `learn_mentions` learned one phrase per event. **Second messages, the hook alone: before learning 0 / 16; after, right on 6 of the 13 whose first message was learned (zh 1 / 5, en 5 / 8); wrong pages 0. Quiet (8 lookalikes + set 35's 24 held-out quiet messages) bringing something: 1 before, 1 after.** Against the line (≥ half of 13, i.e. 7; quiet no worse; no wrong page): **fails by one**; quiet holds. Reading the learned phrases: English ones were the team expressions or close to them ("dusty-keys sweep", "white-hat queue", "lunch-break reaper strikes"); Chinese ones mostly were not (「回家加班」「昨晚连上」, or the expression with a word attached, 「每日洗牌刷掉」): without real Chinese word segmentation the picker cuts in the wrong places. As registered, the nightly step stays in the code, reported as not shown to work; it is **off by default** (`KROUTER_RECALL_LEARN=1`), because it also keeps the latest message's words in the state folder. |

@@ -1,24 +1,50 @@
 # KRouter in detail
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v1.3.0, 2026-11-09). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.0.0, 2026-11-10). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
 >   wrong citations, 47 of 80 unanswerable questions refused, 102 of 120 answerable right. At their defaults claude-mem
 >   64% and basic-memory 78%, 72 and 45 right; neither can refuse. BM25 given KRouter's two rules (skip replaced
 >   pages, refuse a weak match) is level with KRouter: the lead is those rules being on by default, not the ranker.
+> - **Answer accuracy** (LongMemEval S, the number other projects publish; measured on 1.3.0, which gave three pages):
+>   400 of 500 right, 80.0% [76.4, 83.4], with KRouter's top three pages as the only context; reader and judge Claude Sonnet 5.5 with the benchmark's own
+>   prompts, not the GPT-4o most projects use. Weakest on questions that add up several sessions (69 of 121).
+>   The same reader given plain BM25's top three sessions gets 405 right (81.0%): no difference shown (paired −1.0
+>   points [−2.8, +0.8]); given nothing it gets 0 of the 470 answerable. On this benchmark the lookup is level with
+>   BM25, not ahead. Given the benchmark's own answer sessions (perfect retrieval) the reader gets 492 (98.4%), so
+>   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader. 2.0 gives five pages, two of them
+>   ones the vault connects to the hits: every answer session among them for 210 of 235 held-out questions (BM25's
+>   top five 198), multi-session 40 of 47 (31) ([set 18](https://github.com/398894496-arch/KRouter/blob/main/bench/memory_honesty/HELDOUT.md)).
+>   Answer accuracy at five pages is not measured yet (set 22, registered).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
->   cited for 439 of 470 answerable questions, 3 of 30 unanswerable refused; LoCoMo, evidence first for 991 of 1,540,
+>   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
+>   "3 of 30" quoted before was 1.1.1); LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
 > - **Who wrote the held-out questions:** Claude Opus in separate claude.ai sessions, not a person. A person-written
 >   set is planned.
-> - **Releases:** 1.3.0 (2026-11-09): capture keeps the memory current without a confirmation step, and every run is
->   logged and can be undone. Minor releases at most once a week, patches when ready; `KROUTER_TAG` pins one.
-> - **Nightly job:** the one-line install is lookup only and asks nothing; `--ask` asks about importing sessions and
->   the nightly job. The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
+> - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
+>   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
+>   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
+> - **Releases:** 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
+>   over between tasks and grow into skills; five pages with the ones the vault connects; a change of mind holds
+>   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
+>   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
+>   `KROUTER_TAG` pins one.
+> - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
+>   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
+>   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
+>   The Kubernetes manifest and systemd unit are checked by tests, not yet run on a cluster or host.
+> - **Install and capture:** the one-line install asks nothing, connects every app it finds (Claude Code with its
+>   plugin, Codex, Cursor, Claude Desktop, VS Code, Copilot CLI, Gemini CLI, Kiro, Zed, Cline CLI), lists every settings
+>   file it changed (a copy of each kept), and imports nothing from the past (`--all` imports the last 7 days, locally,
+>   no model call; `--minimal` is lookup only and connects only the apps you name). From then on, Claude Code, Codex and Cursor each
+>   record every turn as it ends through their session hooks (local, no model call; Codex runs them once you trust them
+>   in `/hooks`; Cursor's run in its agent CLI, where a typed correction is not noted). Distilling with a model and the nightly job
+>   ask first (`--ask`). The manual `install.sh` installs the job (`KROUTER_NO_TIMER=1` skips). Queries never leave the machine.
 > - **Nightly writer lanes:** an API key runs nothing locally; grok (kernel sandbox) and claude (tool allow-list) are
 >   limited to the vault; Codex can read the whole account and writes only the vault, so it is used only when you name
 >   it or set `KROUTER_ALLOW_CODEX=1`; other CLIs are unconfined and are never picked unless you set
@@ -46,8 +72,11 @@ Everything the front page leaves out: install options, what leaves the machine, 
   observations become pages under `05 时间日志/claude-mem/`, and each project's `decision` observations become one
   page under `02 经验与方法/从 claude-mem 导入/` (`status: candidate`). `--distill` sorts them into still in force
   and replaced.
-- **Session hooks** (Claude Code plugin, `session_hook.py`): `SessionEnd` imports the session that ended, in the
-  background; `SessionStart` adds up to 8 recent decisions for this repository (matched by its git top level, never by folder
+- **Session hooks** (`session_hook.py`; Claude Code through its plugin, Codex through `~/.codex/hooks.json`, Cursor
+  through `~/.cursor/hooks.json`, the last two merged in by the installer once you said yes to importing): the turn-end
+  hook (`Stop`, Cursor's `stop`) writes the session so far to its page, locally with no model call;
+  `SessionEnd` imports the session that ended, in the
+  background, and distills it if you said yes to that; `SessionStart` adds up to 8 recent decisions for this repository (matched by its git top level, never by folder
   name), each naming its page, corrections first: every distilled line, with no confirmation gate (what distilling
   wrote is in `90 系统文件/自动化/记忆变更记录.md`, and `import_sessions.py --undo <run>` takes a run back).
   `UserPromptSubmit` (`session_hook.py prompt`) writes a typed correction down at once as a candidate, settled by the
@@ -58,16 +87,24 @@ Everything the front page leaves out: install options, what leaves the machine, 
 ## Install — one line, nothing to know
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.sh | sh
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
 ```
 
 Windows (PowerShell, no admin):
 
 ```powershell
-irm https://raw.githubusercontent.com/398894496-arch/KRouter/main/scripts/bootstrap.ps1 | iex
+irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex
 ```
 
-It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` (`Documents/第二大脑` with the Chinese template when the system language is Chinese), installs the router and the agent rules, and opens the vault in Obsidian. That is all by default: lookup only, no questions, nothing leaves the machine. `--ask` asks whether to import recent agent sessions and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v1.3.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`… | sh -s -- --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
+It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` with English folder and file names (`Documents/第二大脑` with the Chinese template when the language is Chinese: `--lang` first, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's), installs the router and the agent rules, connects every app it finds (the table in the README: each app's own MCP settings file, plus the Claude Code plugin from the same release), lists every settings file it changed (a copy of each kept as `*.krouter-bak`), records sessions from then on and imports nothing from the past (`--all`, or the one command its last lines give, imports the last 7 days as pages: locally, redacted, no model call, listed in the change ledger), and, when run from a terminal, opens the vault in Obsidian (`--open` always, `--no-open` never; run by an agent, it does not). That is all by default: no questions, nothing leaves the machine; `--no-import` leaves out the import; `--minimal` installs lookup only (no import, plugin, hooks or Cursor rules) and connects only the apps named with `--apps`. `--ask` asks before importing, whether to distill with your model and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v2.0.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`sh /tmp/krouter-install.sh --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
+
+### The Claude Code plugin
+
+The one-line install adds the plugin from the same checksummed release. To add it by hand,
+`/plugin install krouter --marketplace 398894496-arch/KRouter` needs Claude Code 2.1.275 or later; from a shell,
+`claude plugin install krouter --marketplace 398894496-arch/KRouter` needs 2.1.292. Third-party marketplaces do not
+auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable
+auto-update.
 
 ## What leaves your machine, and what it costs
 
@@ -84,9 +121,9 @@ that encrypts the folder. For that you need a copy somewhere else, and one you h
 `backup.py` makes that copy; it is off until you give it a folder.
 
 ```bash
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py init --dir "<a folder that syncs elsewhere>"
+python3 ~/.agents/skills/krouter/scripts/backup.py init --dir "<a folder that syncs elsewhere>"
 # copy KROUTER_BACKUP_PASSPHRASE from ~/.dsh-krouter-keys.env into your password manager, then:
-python3 ~/.agents/skills/krouter-obsidian/scripts/backup.py saved
+python3 ~/.agents/skills/krouter/scripts/backup.py saved
 ```
 
 From then on the nightly job writes one archive a night and opens it again before counting it as good; `status` (and
@@ -118,6 +155,86 @@ machine. What makes it reliable, and why each choice:
 - **Test it once yourself.** `backup.py verify --latest` opens the newest archive in a temporary folder and changes
   nothing; do a real `restore` into a new folder once, and open it in Obsidian.
 
+## See what it remembers: `krouter why` and `krouter view`
+
+Both only read. Neither writes a page, a log line or a setting; the only thing either touches is the recall cache
+(`~/.cache/krouter/`, rebuildable, outside your memory folder), which `ask` refreshes the same way. They need the memory
+folder like every other command: `--vault`, `KROUTER_VAULT`, or the folder the install recorded.
+
+### `krouter why "<a sentence>"`
+
+Explains how a lookup came out, in seven short sections. It asks the same code `krouter ask` asks, then says:
+
+1. **The alias lock.** The alias that matched and how (the question is the alias, contains it, or is most of it), the
+   page the alias table gives and its one-line answer; or why there was no lock: nothing close, a tie between two pages
+   (a lock never guesses), or an alias that matches whose page is replaced or gone. A lock answers at once, so when it
+   did, the ranked search is shown "for reference" and did not decide anything.
+2. **The words.** The words recall ranks with, and which of them no page contains.
+3. **The pages, in order.** For each: the question's words it holds and where (title, aliases or triggers, text), and
+   the score as *text relevance × tier weight* (× the boost for a topic page the question names, or for a question that
+   is the page's name). It prints that product only when it reproduces recall's own number. A replaced page is listed
+   with who replaced it and is never the answer; a page that replaced another says so.
+4. **Why this confidence.** `high` needs the top page at least 1.5× the second and a rule or topic page; `medium` is a
+   clear lead without that; `low` is two pages close together, only one matching word, or nothing but clipped web
+   pages. `none` lists the checks that refused: the question names something no page mentions, its central word never
+   appears, most of its real words are outside the memory, the best page matched no real word, or the score is under
+   the bar. These are recomputed from recall's own helpers, and a test keeps them in step with `recall`.
+5. **Pages that came along a connection.** Each with its edges and the page each came from: a link, a replace, the
+   same session, cited together before, or shared rare words (which words).
+6. **Old and new.** When two top pages say the same thing at different dates and the newer one says it changed: which
+   replaced which, and that the newer is listed first.
+7. **Experience cards.** Cards are not matched to a question (the agent gets the whole digest at session start and
+   judges the situation), so this says how many there are and names the ones whose situation shares words with the
+   question, or that were taken from one of the pages shown.
+
+### Clipped pages and other people's writing
+
+A page counts as a clipping (someone else's writing, not your notes) when a folder on its path has `剪藏`,
+`Clippings` or `Web clips` in its name, or its frontmatter has a `source:` URL, a `clippings` tag or `type: clipping`.
+To have a research folder treated that way, name it accordingly (say `Research (clippings)`) or add `tags: [clippings]`
+to its pages. When every one of the top three pages is a clipping, confidence is at most `low` and the receipt says
+the pages are someone else's writing; it is `recall: none` only when the question also has a word the vault never
+contains in any form. A clipping among pages of your own changes nothing.
+
+Output is in the memory's language (English for a memory whose `krouter-zones.psv` says `@lang|en`, else Chinese);
+`--lang en|zh` overrides it, `--json` prints the structure instead. A `why` is not logged: the nightly job learns
+from your real questions and must not learn from these.
+
+### `krouter view`
+
+```bash
+krouter view                  # prints http://127.0.0.1:<free port>/ and waits; Ctrl-C stops it
+krouter view --port 8765      # a fixed port (still 127.0.0.1)
+krouter view --open           # also open it in your default browser; nothing opens without this
+krouter view --demo [--lang zh]   # a throwaway sample memory (made up, deleted on exit) instead of yours
+```
+
+| Tab | What it shows |
+|---|---|
+| Memory | every page, paged 40 at a time, filter by tier and status, sort by path or by last change, search by path, title or words; a page shows its text (secret pages show their path only, keys are masked as everywhere else), what replaced it or it replaced, and what it connects to |
+| Connections | the pages around one page, each edge with its kind, direction and strength: the number recall's associative path would add from that page, before its hub split and the question's weight. Same-day pages are listed but do not count in ranking |
+| Experience | the cards in the order the session-start digest gives them, with times offered, adopted and met again, and the recent use records; skill drafts and skills are listed if the memory has pages with `type: skill…` frontmatter, and the block is simply empty when it has none |
+| Last night | the latest nightly report (each step: ran, skipped, off, with the reason), the steps that are not switched on and why, earlier nights from the folder's git history, what each run added and replaced (from the change ledger), corrections made to hold, learned triggers |
+| Try a sentence | the explanation `krouter why` prints, for the sentence you type |
+
+What it guarantees, each checked by `tests/test_view.py` without a browser:
+
+- It listens on `127.0.0.1` only; there is no option for another address, and it answers a request only when the `Host`
+  header is that address, so a web page on another site cannot read it through your browser.
+- GET and HEAD only. Every other method gets `405`; the server has no endpoint that writes.
+- Nothing is loaded from outside: no script, font, style or image from another address, no request to any other, and a
+  `Content-Security-Policy` that allows none (no inline script or style either). The page is three hand-written files
+  in `sdk/krouter/view_ui/`; the server is Python's standard library. No new dependency.
+- A list is always one screen of it: 40 rows a request (200 at most), however large the memory.
+
+Measured on one M2 laptop with a synthetic memory of 10,000 pages (`krouter.sample.build_big`): the first start
+indexes it in 6–7 s, a later start in 0.06 s; from loading the page to the first 40 rows on screen 0.05–0.3 s (three loads in a
+browser pane: 52, 109 and 311 ms; 79 ms on the 35-page sample); one `why` about 0.1 s. Pages edited while it runs show up within about 20 s.
+
+What it does not do: edit, delete or move a page, send anything anywhere, or call a model. The nightly report and the
+change ledger are written in Chinese by the job; with the page in English the fixed phrases are put into English and
+page names, quoted sentences and commands stay as they are.
+
 ## Evidence at a glance
 
 | What | Result | Read it as |
@@ -137,7 +254,7 @@ Details, methods and what still fails: [`docs/VERIFY.md`](VERIFY.md).
 weeks shipped many versions a day; that pace was development, not a support promise.
 
 
-1.x follows semantic versioning. Stable — changed only in a major release, with a migration: the vault layout and zone file, the alias table format, the receipt fields agents read (`retrieval_status`, `canonical_match`, `canonical_source`, `recall:`, `how`, `host_action`), the routes, the MCP tools `krouter_ask` / `krouter_status`, the `KROUTER_*` variables, and the page markers the importers write (`source: krouter-import`, `source: krouter-claude-mem`). Minor releases may add steps and options, and may retune scoring; every scoring change ships with before / after numbers on the public benches ([`CONTRIBUTING.md`](../CONTRIBUTING.md)). Minor releases at most weekly, patch releases when ready. The one-line install fetches the latest **release**, never `main`; to stay on one, run `curl … | KROUTER_TAG=v1.3.0 sh` (Windows: `$env:KROUTER_TAG="v1.3.0"` first). [`CHANGELOG.md`](../CHANGELOG.md) says what changed and why, including what an outside review found.
+From 1.0 the version follows semantic versioning (2.0 changed the receipt and the install path: [`CHANGELOG.md`](../CHANGELOG.md)). Stable — changed only in a major release, with a migration: the vault layout and zone file, the alias table format, the receipt fields agents read (`retrieval_status`, `canonical_match`, `canonical_source`, `recall:`, `how`, `host_action`), the routes, the MCP tools `krouter_ask` / `krouter_status`, the `KROUTER_*` variables, and the page markers the importers write (`source: krouter-import`, `source: krouter-claude-mem`). Minor releases may add steps and options, and may retune scoring; every scoring change ships with before / after numbers on the public benches ([`CONTRIBUTING.md`](../CONTRIBUTING.md)). Minor releases at most weekly, patch releases when ready. The one-line install fetches the latest **release**, never `main`; to stay on one, run `KROUTER_TAG=v2.0.0 sh /tmp/krouter-install.sh` (Windows: `$env:KROUTER_TAG="v2.0.0"` first). [`CHANGELOG.md`](../CHANGELOG.md) says what changed and why, including what an outside review found.
 
 ## Core and extras
 
@@ -277,7 +394,7 @@ export OBSIDIAN_VAULT=/path/to/YourVault
 ./scripts/install.sh            # later: ./scripts/install.sh --upgrade · undo: ./scripts/uninstall.sh
 ```
 
-The alias table is yours and lives **in the vault** (`90 系统文件/canonical_sources.psv`), so it syncs with the vault and survives upgrades; install seeds it with ten sample nouns once and never touches it again. To start your own nouns, `python3 ~/.agents/skills/krouter-obsidian/scripts/propose_aliases.py` drafts rows from your vault into `90 系统文件/自动化/别名候选.md` — tick the ones you want, then run it with `--apply`. Nothing reaches the table unticked. Pin a release tag rather than tracking `main`.
+The alias table is yours and lives **in the vault** (`90 系统文件/canonical_sources.psv`), so it syncs with the vault and survives upgrades; install seeds it with ten sample nouns once and never touches it again. To start your own nouns, `python3 ~/.agents/skills/krouter/scripts/propose_aliases.py` drafts rows from your vault into `90 系统文件/自动化/别名候选.md` — tick the ones you want, then run it with `--apply`. Nothing reaches the table unticked. Pin a release tag rather than tracking `main`.
 
 **API key first:** keys live in `~/.dsh-krouter-keys.env` (chmod 600), never in the vault. Pasting one on [`90 系统文件/自动化/自进化钥匙.md`](../template/90%20系统文件/自动化/自进化钥匙.md) still works — the next run moves it into that file and leaves a note on the page — because anything in the vault is readable by a CLI writer and synced wherever the vault syncs. The writer locks that provider’s flagship before it distills + promotes.
 
@@ -291,7 +408,7 @@ The alias table is yours and lives **in the vault** (`90 系统文件/canonical_
 - Set `OBSIDIAN_VAULT` **before** `install.sh`, or the timer will not load
 - `dsh plugin add` is a mount, not this writer. `lamp: unused` means you turned the timer off
 
-Installs `~/.agents/skills/krouter-obsidian`, `~/.cursor/rules/krouter-obsidian.mdc`, and `~/.cursor/rules/ask-product.mdc`. The Cursor rule runs `status` first and **must tell the host** if `host_action` is present. If `~/.agents/skills/krouter-obsidian` already exists, install exits 1 without `--upgrade` (`--force` is the same); either replaces the code and keeps the alias table, its ledgers and links. `uninstall.sh` removes the timer, the Cursor rules, the hook and the skill, saves an alias table that is not in the vault yet, and leaves the vault alone (`--dry-run` first; `--purge` also clears the rebuildable cache and query log). Does not overwrite a live `obsidian-knowledge-router`. The timer pins this clone’s `krouter-obsidian` router. The ask matcher is L3: at most one provisional page per utterance; `record` never writes `active`; `promote` does after adopt + this task accepted. Triggers are yours, on the page or `ask-triggers.json`. Codex / Claude still paste [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md).
+Installs `~/.agents/skills/krouter`, `~/.cursor/rules/krouter.mdc`, and `~/.cursor/rules/ask-product.mdc`. The Cursor rule runs `status` first and **must tell the host** if `host_action` is present. If `~/.agents/skills/krouter` already exists, install exits 1 without `--upgrade` (`--force` is the same); either replaces the code and keeps the alias table, its ledgers and links. `uninstall.sh` removes the timer, the Cursor rules, the hook and the skill, saves an alias table that is not in the vault yet, and leaves the vault alone (`--dry-run` first; `--purge` also clears the rebuildable cache and query log). Does not overwrite a live `obsidian-knowledge-router`. The timer pins this clone’s `skill/krouter` router. The ask matcher is L3: at most one provisional page per utterance; `record` never writes `active`; `promote` does after adopt + this task accepted. Triggers are yours, on the page or `ask-triggers.json`. Codex / Claude still paste [`extras/codex/AGENTS.snippet.md`](../extras/codex/AGENTS.snippet.md).
 
 Subscription lane if a CLI is already logged in: grok in the kernel sandbox profile `krouter` (vault and router only), claude with `--permission-mode dontAsk` and an allow-list (the vault and the router), Codex `exec --sandbox workspace-write`. See [`SECURITY.md`](../SECURITY.md).
 
@@ -307,7 +424,7 @@ Sharing is the vault — the alias table lives in it — not a second protocol. 
 
 | Mount | What ships |
 |---|---|
-| Cursor | `extras/cursor/krouter-obsidian.mdc` via `install.sh` |
+| Cursor | `extras/cursor/krouter.mdc` via `install.sh` |
 | Codex | `extras/codex/AGENTS.snippet.md` |
 | Claude Code | `extras/claude-code/CLAUDE.snippet.md` |
 | DeepSeek Harness | DSH socket. Clone: `dsh plugin add /path/to/this/repo`. Catalog: `dsh plugin --profile web add github:398894496-arch/KRouter`. Read-only tools: status, preference, **correction**, memory (vault route, not chat memory), project, search, suggest. Uninstall does not delete notes. |

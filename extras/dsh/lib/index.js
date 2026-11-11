@@ -34,7 +34,7 @@ function keyPresent() {
       if (isKeyName(name) && usable(val)) return true;
     }
   }
-  const vault = process.env.OBSIDIAN_VAULT || "";
+  const vault = process.env.KROUTER_VAULT || process.env.OBSIDIAN_VAULT || "";
   const page = join(vault, "90 系统文件", "自动化", "自进化钥匙.md");
   if (vault && existsSync(page)) {
     for (const raw of readFileSync(page, "utf8").split("\n")) {
@@ -49,12 +49,12 @@ export const Config = z.object({
   vaultPath: z
     .string()
     .default("")
-    .description("Absolute Obsidian vault path. Empty uses OBSIDIAN_VAULT."),
+    .description("Absolute path of the memory folder. Empty uses KROUTER_VAULT, then OBSIDIAN_VAULT."),
   routerScript: z
     .string()
     .default("")
     .description(
-      "Absolute path to route_knowledge.sh. Empty uses KROUTER_ROUTER, then ~/.agents/skills/krouter-obsidian.",
+      "Absolute path to route_knowledge.sh. Empty uses KROUTER_ROUTER, then ~/.agents/skills/krouter.",
     ),
 });
 

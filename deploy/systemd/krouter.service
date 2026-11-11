@@ -1,0 +1,44 @@
+# KRouter team server as a systemd service on a Linux host, for vaults that live on the host (a git checkout kept
+# current by your own pull job, or a synced folder). The server only reads them.
+#
+#   sudo useradd --system --home /var/lib/krouter --shell /usr/sbin/nologin krouter
+#   sudo git clone https://github.com/398894496-arch/KRouter /opt/krouter     # or unpack a release tarball
+#   sudo install -d -o krouter -m 700 /etc/krouter
+#   openssl rand -hex 24 | sudo tee /etc/krouter/team.token >/dev/null; sudo chown krouter /etc/krouter/team.token
+#   sudo chmod 600 /etc/krouter/team.token
+#   sudo cp /opt/krouter/deploy/systemd/krouter.service /etc/systemd/system/ && sudo systemctl enable --now krouter
+#
+# Put TLS in front of it (Caddy, nginx) before it faces the internet; docs/TEAM.md has the reverse-proxy lines.
+[Unit]
+Description=KRouter team memory (MCP over HTTP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=krouter
+Group=krouter
+Environment=KROUTER_CACHE_DIR=/var/cache/krouter
+Environment=KROUTER_STATE_DIR=/var/lib/krouter
+Environment=KROUTER_NO_QUERY_LOG=1
+ExecStart=/usr/bin/python3 /opt/krouter/skill/krouter/scripts/mcp_server.py --http 0.0.0.0:8787 \
+    --bank team=/srv/krouter/team --bank-token team=/etc/krouter/team.token --workers 4 --refresh-every 2
+Restart=on-failure
+RestartSec=2
+CacheDirectory=krouter
+StateDirectory=krouter
+# 只读库、只写自己的缓存和状态目录
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ReadOnlyPaths=/srv/krouter /etc/krouter
+
+[Install]
+WantedBy=multi-user.target

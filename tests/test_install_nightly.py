@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPTS = REPO / "skill/krouter-obsidian/scripts"
+SCRIPTS = REPO / "skill/krouter/scripts"
 SAMPLE = SCRIPTS / "canonical_sources.psv"
 MY_ROW = "Q99|我的名词;my noun|02 经验与方法/经验与方法.md|Methods\n"
 
@@ -24,8 +24,8 @@ def _env(tmp: Path, vault: Path | None) -> dict:
         "HOME": str(tmp / "home"),
         "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
         "LANG": "en_US.UTF-8",
-        "KROUTER_SKILL_HOME": str(tmp / "home/.agents/skills/krouter-obsidian"),
-        "KROUTER_CURSOR_RULE": str(tmp / "home/.cursor/rules/krouter-obsidian.mdc"),
+        "KROUTER_SKILL_HOME": str(tmp / "home/.agents/skills/krouter"),
+        "KROUTER_CURSOR_RULE": str(tmp / "home/.cursor/rules/krouter.mdc"),
         "KROUTER_ASK_RULE": str(tmp / "home/.cursor/rules/ask-product.mdc"),
         "KROUTER_KEYS_ENV": str(tmp / "home/keys.env"),
         "KROUTER_SKIP_LAUNCHD": "1",
@@ -46,7 +46,7 @@ def _sh(script: str, env: dict, *args: str) -> subprocess.CompletedProcess:
 def test_upgrade_keeps_the_table_and_moves_it_into_the_vault(tmp_path):
     vault = tmp_path / "vault"
     shutil.copytree(REPO / "template", vault)
-    skill = tmp_path / "home/.agents/skills/krouter-obsidian"
+    skill = tmp_path / "home/.agents/skills/krouter"
     # an old install whose table the host edited, before tables lived in the vault
     first = _sh("install.sh", _env(tmp_path, None))
     assert first.returncode == 0, first.stderr
@@ -148,8 +148,8 @@ def test_nightly_dry_run_calls_nothing_and_writes_nothing(tmp_path):
     assert res.returncode == 0, res.stderr
     plan = json.loads(res.stdout)
     steps = {s["step"]: s for s in plan["steps"]}
-    assert set(steps) == {"import_sessions", "import_claude_mem", "compile_subconscious", "reconsolidate", "consolidate_topics", "answer_cards",
-                          "checkup", "backup"}
+    assert set(steps) == {"import_sessions", "import_claude_mem", "compile_subconscious", "learn_mentions", "reconsolidate",
+                          "consolidate_topics", "answer_cards", "skills", "checkup", "cocite", "backup"}
     assert steps["backup"]["sends"] == "nothing (no model)"
     assert steps["import_sessions"]["chars"] == 0  # 没同意过：不导入、不发
     assert steps["answer_cards"]["chars"] > 0 and "90 系统文件/自动化/下意识问答.jsonl" in steps["answer_cards"]["writes"]
@@ -164,7 +164,7 @@ def test_run_py_matches_run_sh_contract(tmp_path):
     env = _nightly_env(tmp_path, tmp_path / "unused")
     env.pop("OBSIDIAN_VAULT")
     res = subprocess.run([sys.executable, str(run_py)], env=env, capture_output=True, text=True, timeout=60)
-    assert res.returncode == 0 and "OBSIDIAN_VAULT is not set" in res.stderr
+    assert res.returncode == 0 and "KROUTER_VAULT (or OBSIDIAN_VAULT) is not set" in res.stderr
     vault = tmp_path / "vault"
     shutil.copytree(REPO / "template", vault)
     before = {p.relative_to(vault).as_posix(): p.stat().st_mtime_ns for p in vault.rglob("*") if p.is_file()}
