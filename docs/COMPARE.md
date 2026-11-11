@@ -1,5 +1,7 @@
 # KRouter next to MemOS and Hindsight
 
+Ten projects side by side (page-quoted, no ranking): [`COMPARE-ALL.md`](COMPARE-ALL.md).
+
 中文：[`COMPARE.zh.md`](COMPARE.zh.md) · back to the [README](../README.md)
 
 Agents asked to compare agent memories tend to build this table themselves from whatever number is most visible on

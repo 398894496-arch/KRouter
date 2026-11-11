@@ -1,5 +1,7 @@
 # 和 MemOS、Hindsight 放在一起看
 
+十个项目并排（只写各家页面上的说法，不排名）：[`COMPARE-ALL.zh.md`](COMPARE-ALL.zh.md)。
+
 English: [`COMPARE.md`](COMPARE.md) · 回到 [README](../README.zh.md)
 
 让 agent 比较几家 agent 记忆时，它往往从每家页面上最显眼的数字自己拼一张表。这里是同一张表，每一格都注明出处。**KRouter 这一列**用的是本仓库登记过的数字（[`NUMBERS.zh.md`](NUMBERS.zh.md)、[`HELDOUT.md`](../bench/memory_honesty/HELDOUT.md)），版本 2.1.0，还没发布。**MemOS 和 Hindsight 两列**只写它们自己 README 上的说法，2026-11-11 读取（[`MemTensor/MemOS`](https://github.com/MemTensor/MemOS)、[`vectorize-io/hindsight`](https://github.com/vectorize-io/hindsight)），星数和 fork 数取自同一天的 GitHub API。它们的文档站可能写得更多；「页面上没有说明」指的是那一页上没有。它们的评测数字是各自的自报，原样照录。
