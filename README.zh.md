@@ -42,7 +42,7 @@ KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Mar
 
 ### 托底：你能核对的那一层
 
-每个回答都注明出自哪一页；查不到时，回执直接写「没有」，不拿一条差不多的凑数（实测与已知的例外见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md#found-on-the-maintainers-vault)）；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
+每个回答都注明出自哪一页；查不到时，回执直接写「没有」，不拿一条差不多的凑数（实测见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)）；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
 
 ### 它不会做什么
 

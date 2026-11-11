@@ -61,8 +61,7 @@ fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](b
 ### Underneath, what you can check
 
 Every answer comes with the page it came from; when a lookup finds nothing, the receipt says so outright rather than
-handing over something close (what was measured, and the known exceptions:
-[`docs/NUMBERS.md`](docs/NUMBERS.md#found-on-the-maintainers-vault)); a correction replaces the old answer instead of competing with it; and you can see all of
+handing over something close (measured: [`docs/NUMBERS.md`](docs/NUMBERS.md)); a correction replaces the old answer instead of competing with it; and you can see all of
 it: the memory is a folder of plain Markdown you can open and edit, in [Obsidian](https://obsidian.md) or any editor,
 and `krouter view` / `krouter why` show what it holds and why it answered. It works with the AI you already use, and
 one is enough.
