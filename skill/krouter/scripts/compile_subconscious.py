@@ -229,6 +229,36 @@ def last_used(vault: Path) -> dict[str, str]:
     return seen
 
 
+# 模板自带的别名表（中文模板那份的指纹；英文的由样例表按英文名字换算，见 sample_table）：库里还是这份，说明里面只有
+# 模板的示例页，会话开始不把它们当成用户定过的事列出来。改了中文模板的别名表，tests/test_session_start.py 会提醒更新这里
+TEMPLATE_ZH_TABLE_SHA256 = "b29d30c975741f8390b55c8ab36a898e0c2c9db918020bf31b008ccf4b0be70c"
+
+
+def _norm_sha(text: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(text.replace("\r\n", "\n").strip().encode("utf-8")).hexdigest()
+
+
+def sample_table(vault: Path, mp: Path) -> bool:
+    """The vault's alias table is still the one the install laid down from the template: the code's sample, the same
+    with the English names (an English vault), or the Chinese template's. Then it names only the template's example
+    pages."""
+    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
+    try:
+        mine = _norm_sha(mp.read_text(encoding="utf-8"))
+        base = sample.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    known = {_norm_sha(base), TEMPLATE_ZH_TABLE_SHA256}
+    try:
+        known.add(_norm_sha(zones.map_aliases(base, zones._rows(zones.EN_TABLE))))
+        known.add(_norm_sha(zones.map_aliases(base, zones.pairs(vault))))
+    except Exception:  # noqa: BLE001
+        pass
+    return mine in known
+
+
 def index_topics(vault: Path, today: date | None = None) -> list[dict]:
     """One topic per live page the alias table names: [{rel, name, others, how, rule, when}], best first (rule pages,
     then the newest of last used and last updated). A row on a replaced page counts for the page that replaced it."""
@@ -242,6 +272,8 @@ def index_topics(vault: Path, today: date | None = None) -> list[dict]:
     sample = Path(__file__).resolve().with_name("canonical_sources.psv")
     if not mp.is_file() or (mp.resolve() == sample.resolve() and not os.environ.get("KROUTER_MAP")):
         return []  # 代码目录里那份是样例，不是这个库的知识：库里没有自己的别名表就不给索引
+    if sample_table(vault, mp) and not os.environ.get("KROUTER_MAP"):
+        return []  # 刚装好、还只有模板的示例页：示例主题不是用户定过的事，不列
     try:
         rows = load_rows(mp)
     except ValueError:

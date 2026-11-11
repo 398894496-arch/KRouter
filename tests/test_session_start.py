@@ -129,3 +129,25 @@ def test_a_vault_with_nothing_to_say_starts_with_nothing(hook, tmp_path, monkeyp
     shutil.copytree(REPO / "template", vault)
     assert hook.start_text({}, vault) == ""
 
+
+
+def test_a_vault_with_only_the_templates_examples_lists_no_index(hook, tmp_path):
+    """A fresh install's alias table names only the template's example pages: they are not things the user decided."""
+    import compile_subconscious
+    import zones
+
+    zh = tmp_path / "zh"
+    shutil.copytree(REPO / "template-zh", zh)
+    en = tmp_path / "en"
+    zones.lay_out(REPO / "template", en, alias_sample=REPO / "skill/krouter/scripts/canonical_sources.psv")
+    for vault in (zh, en):
+        assert compile_subconscious.standing_index(vault) == "" and hook.start_text({}, vault) == ""
+        own_row(vault)
+        assert "Q98" not in compile_subconscious.standing_index(vault) and compile_subconscious.standing_index(vault)
+
+
+def test_the_template_table_fingerprint_matches_the_template():
+    import compile_subconscious
+
+    text = (REPO / "template-zh/90 系统文件/canonical_sources.psv").read_text(encoding="utf-8")
+    assert compile_subconscious._norm_sha(text) == compile_subconscious.TEMPLATE_ZH_TABLE_SHA256
