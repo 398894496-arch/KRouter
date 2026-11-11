@@ -11,7 +11,7 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+Docs: the ten-project comparison table (what each project's own page says, no ranking) is now on the README's front page, in both languages, with links from DETAILS and the README's document list; the full version stays in `docs/COMPARE-ALL.md`.
 
 ## 2.1.0 — 2026-11-11
 

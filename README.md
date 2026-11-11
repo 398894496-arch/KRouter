@@ -245,6 +245,26 @@ never on a rule page, as one git commit you can revert.
 
 Every cell's source and date, and why these numbers cannot be ranked against each other: [`docs/COMPARE.md`](docs/COMPARE.md).
 
+
+## Ten projects side by side
+
+Ten open-source memory projects, each cell only what that project's own GitHub page says (fetched 2026-11-11); "not stated" means the README does not say it, not that the project cannot.
+
+|  | How it runs | Key for core function? | Recall without being asked | Answer carries a source | Evaluation numbers on the page | Stars |
+|---|---|---|---|---|---|---|
+| **basic-memory** | Local `uv tool install`, files on disk; cloud version too | Local: page names no key; cloud: sign-in | Claude Code plugin: session-start briefing; others: not stated | Not stated | No numbers | 4,550 |
+| **claude-mem** | `npx claude-mem install`; local SQLite | Pick a provider: its own observer (30-day trial), your OpenRouter/Gemini key, or your Anthropic plan | "Automatically appear in new sessions" | Each observation has an ID you can cite | No benchmark numbers (only "~10x token savings") | 115,909 |
+| **cognee** | pip install; Docker; cloud | Local quickstart: none; a key only for generated answers | Not stated (Claude Code and Codex plugins listed) | "Can inspect the retrieved evidence" | Self-reported BEAM: 0.79 (100K, 20 questions), 0.67 (10M, exploratory) | 33,232 |
+| **graphiti** | Python framework; bring your own graph DB (Neo4j, FalkorDB, Neptune) and LLM | OpenAI by default; `OPENAI_API_KEY` | Not stated | Each fact traces to its source episode | No numbers (paper link) | 32,727 |
+| **Hindsight** | Server (Docker, pip, Helm), Python embedded, cloud | Quick start needs an LLM key; page says local models work | Coding-agent package injects at start; LLM wrapper stores and retrieves each call | Observations keep exact quotes and a proof count | Chart only (LongMemEval, 2026-01); says reproduced by others; no numbers | 60,340 |
+| **KRouter** | A folder of Markdown + SQLite; one install line; no server | Lookup needs none; only optional distilling uses a model | Every message looked up locally, no model, about 90 ms | Every answer names its page, with a receipt | Self-reported: LongMemEval held-out half 210/235 (BM25 198, retrieval only); LoCoMo 991/1,540 | 49 |
+| **Letta** | npm install of a terminal tool; `letta server`; cloud | Not stated | Not stated | Not stated | No numbers | 25,413 |
+| **mem0** | Library (pip/npm), self-hosted (docker compose), cloud | Needs an LLM (OpenAI by default); cloud needs a key | Not stated (example searches by hand in code) | Not stated | Self-reported (managed platform): LoCoMo 92.5, LongMemEval 94.4, BEAM 64.1/48.6 | 68,777 |
+| **MemOS** | Four entry points: cloud API, self-host (Neo4j+Qdrant), cloud plugin, local plugin (Node.js, SQLite) | Cloud: key; self-host: keys in .env; local plugin: not stated | DeepSeek Harness plugin: automatic recall; OpenClaw cloud plugin: recalls before each run | Not stated | Self-reported (OmniMemEval): LoCoMo 88.83, LongMemEval 89.20 and eight more | 12,352 |
+| **Supermemory** | Cloud (plugins, hosted MCP), local single binary, Docker | Local: embeddings need no key, first boot makes a local key; cloud: not stated | "Runs in the background; next conversation your AI already knows you" | Not stated | Self-reported: "#1" on three benchmarks (no scores); LongMemEval Recall@15 95% | 31,592 |
+
+Every cell's source and date, and the full version: [`docs/COMPARE-ALL.md`](docs/COMPARE-ALL.md). The others' numbers are for other questions and other models, so they cannot be ranked against each other or against KRouter's; this table does not rank and does not say who is first.
+
 ## Day one: bring in your past sessions
 
 Once, if you like, bring in your past sessions, so on day one your agent knows what you settled before. The first two
@@ -318,6 +338,7 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 ## More
 
 - [`docs/COMPARE.md`](docs/COMPARE.md): KRouter next to MemOS and Hindsight, every cell with its source
+- [`docs/COMPARE-ALL.md`](docs/COMPARE-ALL.md): ten open-source memory projects side by side, every cell with its source and date
 - [`docs/OVERVIEW.md`](docs/OVERVIEW.md): the rest of this page in full: a writer's example, every benchmark section, every app's test notes, what happens after the install and on its own, who it is for, how it differs, the words used, the honest-numbers table
 - [How it works, every option](docs/DETAILS.md): install flags, the nightly writer, exact match and ranked recall, the four agent mounts
 - [`docs/NUMBERS.md`](docs/NUMBERS.md): every number with its method
