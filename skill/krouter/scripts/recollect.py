@@ -849,8 +849,9 @@ def render(hits: list[dict]) -> str:
             extra.append(RELATED[lang].format(t="、".join(h["related"]) if lang == "zh" else ", ".join(h["related"])))
         tail = ("；" if lang == "zh" else "; ").join(extra)
         q = f"「{h['word']}」" if lang == "zh" else f"\"{h['word']}\""
-        body.append(f"- {q} → {h['how']} 〔{h['rel']}，{VIA[lang][h['route']]}〕" if lang == "zh"
-                    else f"- {q} → {h['how']} [{h['rel']}, {VIA[lang][h['route']]}]")
+        page = h.get("real") or h["rel"]  # 给宿主看库里真实的路径（英文库是 02 Methods/…）；recalled.jsonl 仍记逻辑路径
+        body.append(f"- {q} → {h['how']} 〔{page}，{VIA[lang][h['route']]}〕" if lang == "zh"
+                    else f"- {q} → {h['how']} [{page}, {VIA[lang][h['route']]}]")
         if tail:
             body.append(f"  {tail}")
     body.append(TAIL[lang])

@@ -296,7 +296,8 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
         how = re.sub(r"\s+", " ", t["how"]).strip()
         how = how if len(how) <= n else how[: n - 1].rstrip() + "…"
         names = "／".join([t["name"]] + t["others"][:INDEX_NAMES]) if cjk else " / ".join([t["name"]] + t["others"][:INDEX_NAMES])
-        rows.append((t, redact(f"- {names}：{how}〔{t['rel']}〕" if cjk else f"- {names}: {how} [{t['rel']}]")))
+        page = zones.real(vault, t["rel"])  # 库里真实的路径：宿主照着读 {vault}/[page]（英文库是 02 Methods/…）
+        rows.append((t, redact(f"- {names}：{how}〔{page}〕" if cjk else f"- {names}: {how} [{page}]")))
     fits = sum(len(r) + 1 for _t, r in rows[:lines]) <= chars and len(rows) <= lines
     # 放不下时：先给每个主题的名字留位置（一个几个字），剩下的预算再按排序给前面的主题整行
     names_len = len(INDEX_NAMES_HEAD[lang]) + sum(len(t["name"]) + 1 for t in topics)
