@@ -1,0 +1,69 @@
+name: publish-pypi
+
+# 把 Python 包 krouter 发到 PyPI。手动触发（Actions 页 → publish-pypi → Run workflow，或 `gh workflow run publish.yml`）。
+# 不用令牌：PyPI 上登记了这个仓库的这个流程文件和 `pypi` environment 为可信发布者，发布时用 GitHub 的 OIDC 身份。
+# PyPI 的版本号发出去就不能再用：pyproject.toml 的版本必须已经有同名的 v<版本> 标签（GitHub release 先发）。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The version has its release tag
+        run: |
+          v=$(python3 -c "import re;print(re.search(r'^version = \"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
+          git ls-remote --exit-code --tags origin "refs/tags/v$v" >/dev/null || { echo "no tag v$v: publish the GitHub release first"; exit 1; }
+          echo "building krouter $v"
+      - name: README links point at the tagged files (PyPI has no repository next to the page)
+        run: python3 scripts/pypi_readme.py README.md
+      - name: Build sdist and wheel
+        run: |
+          python3 -m pip install --upgrade build twine
+          python3 -m build
+          python3 -m twine check --strict dist/*
+      - name: The long description keeps the MCP registry marker
+        run: |
+          python3 - <<'CHECK'
+          import glob, json, sys, zipfile
+          name = json.load(open("server.json"))["name"]
+          (whl,) = glob.glob("dist/*.whl")
+          meta = next(n for n in zipfile.ZipFile(whl).namelist() if n.endswith(".dist-info/METADATA"))
+          if f"mcp-name: {name}" not in zipfile.ZipFile(whl).read(meta).decode():
+              sys.exit("wheel METADATA lacks mcp-name: " + name)
+          print("mcp-name marker present:", name)
+          CHECK
+      - name: The wheel runs in a clean environment
+        run: |
+          python3 -m venv /tmp/clean
+          /tmp/clean/bin/pip install dist/*.whl
+          mkdir -p /tmp/clean-home && cd /tmp
+          KROUTER_NO_QUERY_LOG=1 HOME=/tmp/clean-home /tmp/clean/bin/krouter --version
+          KROUTER_NO_QUERY_LOG=1 HOME=/tmp/clean-home /tmp/clean/bin/krouter demo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/krouter/
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
