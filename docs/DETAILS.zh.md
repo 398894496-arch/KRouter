@@ -41,6 +41,8 @@
 >   只写库，所以只有你点名或设 `KROUTER_ALLOW_CODEX=1` 才用；其他 CLI 没有约束，不设 `KROUTER_ALLOW_UNCONFINED=1` 就不会被选用。对照表见 [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md)。
 <!-- krouter-status:end -->
 
+十个项目并排看，每一格都有出处：[`COMPARE-ALL.zh.md`](COMPARE-ALL.zh.md)。
+
 首页没写的都在这里：安装选项、什么会离开本机、证据、版本、夜间写手怎么工作、四个挂载、和常见 agent 记忆的对比。回到[首页](../README.zh.md)。
 
 ## 导入你已经有的东西

@@ -62,6 +62,8 @@
 >   [SECURITY.md](https://github.com/398894496-arch/KRouter/blob/main/SECURITY.md) has the table.
 <!-- krouter-status:end -->
 
+Ten projects side by side, every cell sourced: [`COMPARE-ALL.md`](COMPARE-ALL.md).
+
 Everything the front page leaves out: install options, what leaves the machine, the evidence, versions, how the nightly writer works, the four mounts, and the comparison with typical agent memory. Back to the [front page](../README.md).
 
 ## Importing what you already have

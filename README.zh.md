@@ -179,6 +179,26 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 
 每一格的出处和日期，以及为什么这些数字不能比大小：[`docs/COMPARE.zh.md`](docs/COMPARE.zh.md)。
 
+
+## 十个项目并排看
+
+十个开源记忆项目，每一格只写那家自己 GitHub 页面上的说法（2026-11-11 抓取）；“页面上没有说明”只表示 README 没写，不代表做不到。
+
+|  | 怎么跑 | 核心功能要 key 吗 | 不问也想起 | 回答带出处 | 页面上的评测数字 | 星数 |
+|---|---|---|---|---|---|---|
+| **basic-memory** | 本地 `uv tool install`，文件在本机；另有云版 | 本地：页面没提 key；云：登录 | Claude Code 插件：会话开始简报；其余页面上没有说明 | 页面上没有说明 | 无评测数字 | 4,550 |
+| **claude-mem** | `npx claude-mem install`；本机 SQLite | 要选提供方：自家 observer（30 天试用）、自己的 OpenRouter/Gemini key、或 Anthropic 订阅 | “会自动出现在新会话里” | 每条观察有 ID，可引用 | 无基准数字（只写“约 10 倍 token 节省”） | 115,909 |
+| **cognee** | pip 安装；Docker；云 | 本地快速上手不要；要“生成回答”才设 LLM key | 页面上没有说明（有 Claude Code、Codex 插件） | “可检查召回到的证据” | 自报 BEAM：0.79（100K，20 题）、0.67（10M，探索性） | 33,232 |
+| **graphiti** | Python 框架；自备图数据库（Neo4j、FalkorDB、Neptune）和 LLM | 默认 OpenAI，需 `OPENAI_API_KEY` | 页面上没有说明 | 每个事实可追溯到原始 episode | 无数字（有论文链接） | 32,727 |
+| **Hindsight** | 服务器（Docker、pip、Helm）、Python 内嵌、云 | 快速上手要 LLM key；页面写可用本地模型 | 编码 agent 包启动时注入；LLM 包装每次调用自动存取 | 观察附原文引用和证据计数 | 只有图表（LongMemEval，2026-01）；写“已被他人复现”，无数字 | 60,340 |
+| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 每条消息本机查一遍，不调模型，约 90 ms | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LoCoMo 991/1,540 | 49 |
+| **Letta** | npm 装终端工具；`letta server`；云 | 页面上没有说明 | 页面上没有说明 | 页面上没有说明 | 无数字 | 25,413 |
+| **mem0** | 库（pip/npm）、自托管（docker compose）、云 | 要 LLM（默认 OpenAI）；云要注册 key | 页面上没有说明（示例是代码里手动检索） | 页面上没有说明 | 自报（托管平台）：LoCoMo 92.5，LongMemEval 94.4，BEAM 64.1/48.6 | 68,777 |
+| **MemOS** | 四个入口：云 API、自托管（Neo4j+Qdrant）、云插件、本地插件（Node.js，SQLite） | 云：要 key；自托管：.env 里填 key；本地插件：页面上没有说明 | DeepSeek Harness 插件：自动召回；OpenClaw 云插件：每次运行前召回 | 页面上没有说明 | 自报（OmniMemEval）：LoCoMo 88.83，LongMemEval 89.20 等十项 | 12,352 |
+| **Supermemory** | 云（插件、托管 MCP）、本地一个二进制、Docker | 本地：嵌入无需 key，首次启动生成本地 key；云：页面上没有说明 | “后台运行，下次对话你的 AI 已经认识你” | 页面上没有说明 | 自报：三个基准都写 “#1”（无分数）；LongMemEval Recall@15 95% | 31,592 |
+
+每一格的出处和日期、完整版：[`docs/COMPARE-ALL.zh.md`](docs/COMPARE-ALL.zh.md)。别家的数是别的题、别的模型，不能互相排名，也不能和 KRouter 的排名；这张表不排名，也不说谁第一。
+
 ## 第一天：把过去的会话带进来
 
 做一次就行：让 agent 把你以前的会话导进来，它第一天就认识你以前定过的事。前两步不调模型、内容不离开本机；第三步用你 agent 的订阅额度（每个会话至少一次调用，默认只做最新的 40 个，不会一次把全部历史做完）：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#把以前的会话导进来)。
@@ -236,6 +256,7 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 ## 更多
 
 - [`docs/COMPARE.zh.md`](docs/COMPARE.zh.md)：和 MemOS、Hindsight 放在一起看，每一格都有出处
+- [`docs/COMPARE-ALL.zh.md`](docs/COMPARE-ALL.zh.md)：十个开源记忆项目并排看，每一格都有出处和日期
 - [`docs/OVERVIEW.zh.md`](docs/OVERVIEW.zh.md)：这一页挪出去的部分，原样保留：写东西的例子、各套评测的长说明、每个应用的实测记录、装完之后和它自己跟上、适不适合你、和常见记忆的区别、用到的词、老实的数字
 - [工作原理和全部选项](docs/DETAILS.zh.md)：安装参数、夜间写手、精确命中和排序召回、四种 agent 接入
 - [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)：每个数字和它的测法
