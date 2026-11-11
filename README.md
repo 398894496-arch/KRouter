@@ -113,8 +113,11 @@ default) treats `related` as `none`; on a memory of session pages that means it 
 - Windows was not tested for 2.0.
 - A question about something near what your memory holds still gets an answer, usually at `low` or `medium`. Paragraph
   evidence (set 39) refuses more on LoCoMo (18 → 61 of 223) but not on LongMemEval (9 → 10 of 30): off by default.
-- Reference material is recognised page by page without declaring (set 40: 30 of 32 held-out articles, 0 of 43 of
-  your own pages taken for one), on a synthetic vault only; `krouter kb mine PAGE` corrects a wrong call.
+- Reference material you declare (`krouter kb add FOLDER`) and web clippings are listed apart. Recognising it page by page
+  without declaring exists but is **off by default**: on a synthetic vault it found 30 of 32 held-out articles and took 0 of 43
+  own pages for one (set 40), but on one real vault (1,473 pages, read once, read-only) it found 74 of 84 research pages and
+  also took about 80 of the owner's own pages for outside material (about 5.8%, an estimate), over the 2% line set for it.
+  Switch it on with `KROUTER_KB_AUTO=1`; `krouter kb mine PAGE` corrects a wrong call.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
@@ -238,7 +241,7 @@ never on a rule page, as one git commit you can revert.
 | Runs as | a Markdown folder and a local index; standard-library Python, one install line, no server, no key | cloud (API key), self-hosted (Neo4j + Qdrant) or a local plugin (Node.js) | a server on PostgreSQL + pgvector with an LLM key, or Hindsight Cloud |
 | Recalls without being asked | every message looked up on the machine, no model call, about 90 ms; an index at session start | plugins recall "before a task" / "before each agent run" | the coding-agent package injects memory "as it starts working" |
 | Answers name their source | every answer, with a receipt | not stated on its page | observations keep quotes and a proof count |
-| Knowledge base | reference pages recognised by themselves (or declared), listed apart, importable from PDF / Word / HTML; no vector search | "Multi-Cube Knowledge Base Management" | not stated as a separate layer |
+| Knowledge base | reference folders you declare (and web clippings), listed apart; recognising pages by themselves exists, off by default, importable from PDF / Word / HTML; no vector search | "Multi-Cube Knowledge Base Management" | not stated as a separate layer |
 | Says it does not know | **whole chain (set 41, 2026-11-11, Haiku 5.5 and Sonnet 5.5 as readers): of 30 LongMemEval unanswerable questions 29 / 28 said the memory does not have it; of 60 LoCoMo adversarial ones 55 / 38; on 40 answerable controls 11 / 7 wrongly refused; the bar set beforehand was not met; the same Haiku given nothing said it for 39 of 40.** Retrieval layer: receipt 9 / 30 `none`, 21 `related` (only related pages), 0 `direct`; with a reader 29 / 30 earlier, but 30 / 30 given nothing | no figure on its page | no figure on its page |
 | Benchmarks | retrieval, scored from the authors' labels; not yet in a side-by-side run | self-reported (OmniMemEval): LongMemEval 89.20, LoCoMo 88.83 | LongMemEval state of the art (vendor chart, January 2026), partly reproduced by others |
 | Size (GitHub, 2026-11-11) | 49 stars, one maintainer | 12,352 stars | 60,340 stars; hosted, 99.9% SLA |

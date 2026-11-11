@@ -75,7 +75,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 - 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
 - 2.0 没有在 Windows 上实测。
 - 问的是记忆里某件事的近邻时，它还是会作答，多半是 `low` 或 `medium`。段落级证据（第 39 套）在 LoCoMo 上多拒了（223 道里 18 → 61），在 LongMemEval 上没有（30 道里 9 → 10），所以默认关。
-- 参考资料不用声明，逐页自动认（第 40 套：留出的 32 篇外来资料认出 30 篇，你自己的 43 页误判 0 页），只在合成库上测过；认错了用 `krouter kb mine 页面` 改。
+- 声明过的参考资料文件夹（`krouter kb add 文件夹`）和网页剪藏单独列出。不声明、逐页自动认也做了，但**默认关**：合成库留出部分外来资料认出 30/32、自己的页误判 0/43（第 40 套），而在一个真实库上（1473 页，只读测一次）项目研究资料 84 页认出 74 页，自己的页却有约 80 页被当成外来资料（约 5.8%，推算），超过为它定的 2% 线。要开：`KROUTER_KB_AUTO=1`；认错了用 `krouter kb mine 页面` 改。
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 
@@ -172,7 +172,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | 怎么跑、要装什么 | 一个 Markdown 文件夹加本地索引；只用 Python 标准库，一条命令装好，不用服务、不要 key | 云（API key）、自部署（Neo4j + Qdrant）或本地插件（Node.js） | PostgreSQL + pgvector 上的一个服务加一个 LLM key，或 Hindsight Cloud |
 | 不问也想起 | 每句话都在本机查一遍，不调模型，约 90 毫秒；会话开始还有一份索引 | 插件在「任务开始前」「每次 agent 运行前」召回 | 给 coding agent 的包在 agent「开始工作时」注入记忆 |
 | 结论带出处 | 每个回答都带，附回执 | 页面上没有说明 | observation 保留原话引文和证据数 |
-| 知识库 | 参考资料逐页自动认出（也可声明），单独列出，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
+| 知识库 | 参考资料：声明的文件夹和网页剪藏单独列出；逐页自动认也有，默认关，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
 | 敢说不知道 | **整条链（第 41 套，2026-11-11，读题模型 Haiku 5.5 和 Sonnet 5.5）：LongMemEval 30 道不可答题里 29 / 28 道说了记忆里没有；LoCoMo 陷阱题 60 道里 55 / 38；40 道可答题对照里分别误拒 11 / 7 道；事先定的过关线没达到；同一个 Haiku 什么都不给时 40 道里 39 道这样说。** 检索层：回执 30 道：9 道 `none`、21 道 `related`（只有相关的页）、0 道 `direct`；早先加读题模型 29 / 30，但不给材料时也是 30 / 30 | 页面上没有数字 | 页面上没有数字 |
 | 标准评测 | 只测检索，按作者标注评分；还没参加同台评测 | 自报（OmniMemEval）：LongMemEval 89.20、LoCoMo 88.83 | LongMemEval 最好成绩（厂商图表，2026-01），部分由别人复现 |
 | 规模（GitHub，2026-11-11） | 49 星，一个维护者 | 12 352 星 | 60 340 星；有托管，承诺 99.9% 可用 |
