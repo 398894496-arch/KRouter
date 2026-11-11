@@ -135,6 +135,8 @@ python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distil
     "args": ["/Users/you/.agents/skills/krouter/scripts/mcp_server.py"] } } }
 ```
 
+已登记在官方 MCP Registry，名字是 `io.github.398894496-arch/krouter`（[登记条目](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.398894496-arch/krouter)），指向发布页上的 `KRouter.mcpb`，从注册表里找 MCP 服务的应用能搜到它。
+
 路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python`）。这个服务只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实）。这一行写进当天的笔记页，只当线索，不会写进规则页；它是一次单独的 git 提交，可以撤回。
 
 ## 装完五分钟

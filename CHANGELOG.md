@@ -11,7 +11,8 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+- KRouter 2.0.0 is in the official MCP Registry as `io.github.398894496-arch/krouter`; `server.json` names the
+  release's `KRouter.mcpb` (with its SHA-256) instead of a PyPI package, since KRouter is not on PyPI.
 
 ## 2.0.0 — 2026-11-10
 
