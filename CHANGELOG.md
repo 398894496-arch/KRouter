@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -10,6 +10,113 @@ semantic versioning; what counts as the stable surface is listed in [`docs/DETAI
 notice, then the details.
 
 ## Unreleased
+
+Nothing yet.
+
+## 2.1.0 — 2026-11-11
+
+**Windows: the commands the install prints now run as printed ([#74](https://github.com/398894496-arch/KRouter/issues/74)).** The closing lines used to print `set "PYTHONPATH=…" && python -m krouter.cli doctor`, which failed in PowerShell 5.1 (`&&`) and PowerShell 7 (`set` does not set an environment variable, so the module could not be imported), and `… search "question"`, which the Python command line rejects (its command is `ask`). They now print `python "<…>\scripts\krouter_run.py" doctor` and `… ask "question"`: one command, no `&&`, no variable to set. The same `ask` replaces `search` in the lines printed on macOS and Linux. Tests check the printed line and that the command line's own argument parser accepts the printed arguments; **a real PowerShell 5.1, PowerShell 7 and cmd have not run it yet** (that waits for CI's Windows machine after the push).
+
+**Paragraph-level evidence (set 39): built, measured both ways, off by default because it missed the bar.** Pages
+are now cut into paragraphs (a session into its turns) at index time, and every lookup records the best paragraph of
+each of the first 20 pages; the receipt marks it on the first quoted line: `L8 (passage L6-L8): …`. Questions that add
+up or list (`how many times`, `in total`, `都有哪些`) get 8 pages instead of 5 (the 3 extra come after the usual 5, under `more:`): that part is **on** (LongMemEval held-out
+half, every labelled session handed over 203 → 205 of 235, 16% more pages; nothing else moves). The rest is **off**,
+behind `KROUTER_EVIDENCE=1` or `evidence|on` in `krouter-settings.psv`: the first 20 pages re-ranked by their best
+paragraph, pages inside a time cue's window (`last Saturday`, `in March`, `三个月前`) counted double, and two refusals —
+the first page's best paragraph holds under a quarter of the question, or the question names a speaker (or asks about
+"I") and what that speaker said holds under 0.4 of what the other speaker said. Chosen on development data, held-out
+halves run once: **LoCoMo improved on both sides** (adversarial questions answered `none` 18 → 61 of 223; answerable
+questions whose page is handed over 613 → 619 of 768), but **LongMemEval's 30 unanswerable questions moved 9 → 10**
+(the bar was 14), its held-out half handed over 211 of 235 (212 before), and `heldout3` gained one wrong citation
+(36 → 37), so by the bar registered before the run it does not ship on. The answer-type check (does the best
+paragraph hold a number, a duration, a date, an amount, a frequency, an age when the question asks for one) does not
+separate (AUC 0.50 / 0.46) and is unused.
+
+**Reference material recognised without declaring (set 40).** Pages not in a declared folder are sorted by where they
+came from (KRouter's own folders and frontmatter, alias-table targets and `krouter kb mine` marks are your memory) and
+then page by page by how they read (a source or byline line, an article's title and shape, another language, the
+folder's majority; decision structure and your own annotations count against). Labelled synthetic vaults, held out and
+run once: 30 of 32 outside pages recognised, 0 of 43 of your own pages taken for reference material; on by default
+(`KROUTER_KB_AUTO=0` or `kb_auto|off` turns it off). On one real vault (1,473 pages, read once, read-only, declarations removed) it found 74 of 84 research pages, but about 80 of the owner's own pages (about 5.8%, an estimate; 12 sampled, all own) were taken for reference material, above the 2% line; `krouter kb mine PAGE` corrects a wrong call, and `kb_auto|off` turns it off. `krouter kb mine` / `unmine` mark a page or folder as yours;
+`krouter why` and `krouter view` say why a page is reference material; the nightly report counts the pages recognised
+and lists the new ones. On set 37's synthetic set with nothing declared, of the 6 questions only an article answers, the
+memory now refuses 5 (was 2) and the article is listed for 5 (was 3); the 15 memory questions stay 15 of 15.
+
+- `skill/krouter/scripts/evidence.py` (new): paragraphs, speakers, answer types, time windows, aggregation questions,
+  the re-ranking and the two refusals; its constants are the chosen values. Index schema `recall-v18` (rebuilt once).
+- Set 18's coverage count (LongMemEval held-out half, every answer session among k pages) is 187 / 210 / 215 at k = 3 / 5 / 8, as at 44c041f.
+- `bench/evidence/study.py`, `bench/kb_auto/make.py`, `bench/kb_auto/run.py`, `tests/test_evidence.py`.
+
+What you will notice: the memory folder now has a **knowledge base**, a layer of its own for reference material
+(articles, clippings, research, documents someone else wrote). Declare a folder with `krouter kb add FOLDER` (or one
+line in `krouter-kb.txt` at the memory folder's root); clipping folders and web-clipper pages count without it, as in
+2.0. Its pages are still found, with their source, but a lookup lists them in a `knowledge_base:` block of their own
+and they never set the confidence: when only reference material matches, the receipt's first line is
+`memory: none` and the memory's answer is `recall: none`. `krouter kb suggest` (and `krouter doctor`) name folders
+that look like reference material and are not declared (a suggestion only); `krouter kb import FILE` turns a PDF, Word
+or HTML file into a Markdown page in the knowledge base with the converter already on the machine (`markitdown`,
+`pandoc`, `pdftotext`; plain HTML without any), and says which to install when there is none.
+
+A second change was **researched and not shipped**: a rule that would refuse more near misses (questions about
+something close to what the memory holds). Registered first as set 37; of 216 candidate rules on development data none
+refused at least 10 more of LongMemEval's and LoCoMo's unanswerable questions within a 1-point loss of answers (the best
+refused 3 more), so the held-out halves were not opened and the gate is unchanged
+([`HELDOUT.md`](bench/memory_honesty/HELDOUT.md#set-37-reference-material-apart-from-your-memory-and-saying-the-memory-does-not-have-this-more-often-registered-2026-11-10-before-any-development-number-was-looked-at),
+[`docs/NUMBERS.md`](docs/NUMBERS.md)). The retrieval-layer refusal numbers stay what they were.
+
+- `skill/krouter/scripts/kb.py` (new): declaring, recognising, suggesting and importing. Recognising clippings moved
+  here from `recall_index.py` (same rules).
+- Recall ranks and gates your memory and the knowledge base separately. A knowledge-base page never raises the memory's
+  confidence: the memory's lead is still measured against the best reference page, and when the top three are all
+  reference pages the 2.0 cap for clippings applies (at most `low`; `none` when the question has a word the memory
+  never holds). Associated pages never come from the knowledge base; the literal-search fallback does not print its
+  lines; the prompt hook and the session-start index never bring its pages.
+- With no folder declared and no clippings, every lookup of the six memory-honesty sets gives the same result and the
+  same printed receipt as 2.0.1 (405 lookups, compared byte for byte); set 18's held-out count reproduces (210 of 235 at
+  five pages); the prompts of sets 15, 16 and 35 are unchanged.
+- `krouter why` lists the reference pages apart and says when only they matched; `krouter view` marks them; the
+  Python `Answer` has `.references` and `.memory_none`; `krouter_ask`'s description, the server instructions and
+  `SKILL.md` say how to read the block.
+- `bench/refusal/study.py` and `bench/refusal/synthetic.py` (set 37): the rule study and a synthetic set (a Chinese
+  memory with English reference articles, declared and not; 41 questions in three configurations).
+- `recall_index.coverage_signals` (the signals the study measured) is in the code, unused by the gate.
+- README (en/zh) reordered so the install is the fourth thing on the page (line 41 / 33): headline, one line on
+  what it is, the shortest example, the install, the three points, what you can check, what it does not do, then
+  the rest. The second example, the long benchmark sections, each app's full test notes and the reference
+  sections moved word for word to [`docs/OVERVIEW.md`](docs/OVERVIEW.md) / `OVERVIEW.zh.md` (464 → 321 lines in
+  English). The agent table names DeepSeek Harness, Hermes and OpenClaw with what was tried in each: Hermes's MCP
+  connection and tool list in a separate config folder (no question asked); OpenClaw run in real use as a skill
+  (1.2.x; 2.x not yet). How to connect both: `docs/INSTALL.md`.
+- **Three states on the receipt's first line** (set 38): `memory: direct` (an alias lock or `high`), `memory: related`
+  (only related pages: answer only from a sentence that states it outright, else say the memory does not have it),
+  `memory: none`; the same pages and confidence as before. **Strict mode** (`KROUTER_STRICT=1` or `strict|on` in
+  `krouter-settings.psv`, off by default) hands `related` over as `none`; on memories of session pages it answers
+  almost nothing (LongMemEval held-out: 0 of 235 answers handed over), so it is for curated memories with rule pages.
+  `docs/NUMBERS.md` adds the cost curve of refusing more, from set 37's development data.
+- [`docs/COMPARE.md`](docs/COMPARE.md) / `COMPARE.zh.md` (new): KRouter next to MemOS and Hindsight on ten rows,
+  KRouter's cells from the registered numbers, theirs only from their own READMEs (read 2026-11-11), with how to
+  read it (the three were never measured under the same conditions); a five-row version in the README.
+
+Also in this release (prepared as 2.0.1, never released on its own): the README puts the team server and its ten-people test back on the first page, keeps the
+install to its shortest path (importing past sessions is its own section), says plainly that KRouter is also for any
+app that speaks MCP (a Claude Desktop + Obsidian example, with a receipt actually run on a sample vault), and states
+the refusal numbers in two layers: of LongMemEval's 30 unanswerable questions KRouter's receipt refuses 9; the reader
+model answers "not mentioned" for 29, but also for all 30 when given nothing, so that layer is mostly the model's.
+One small code change: when the confidence is not `high` and a content word of the question never appears on the top
+page, the receipt adds a `recall_note:` naming those words and saying that, unless the page states the answer
+outright, the question is not covered (in the vault's language). Ranking, confidence and the refusal gate are
+unchanged: the memory-honesty questions run against their three vaults (1,215 lookups) give results byte-identical to `main` before the change; only the printed receipt gains the line. **Its effect on a reader's refusal rate is not
+measured** ([`docs/NUMBERS.md`](docs/NUMBERS.md)).
+
+- Added `docs/examples/writer-vault` and `writer-vault-zh` (three notes each) and `tests/test_readme_example.py`, which
+  checks that the receipt printed in each README is what the sample vault gives.
+- README (en/zh): a section on using KRouter as a knowledge base over an existing Markdown folder (Markdown only, no
+  vector search, how to mark reference material), an "Engineering facts" list of things that can be checked now, and a
+  link to the new [`ROADMAP.md`](ROADMAP.md) / `ROADMAP.zh.md`.
+- `server.json` (the registry entry) still names v2.0.0 and its `KRouter.mcpb` hash until 2.1.0 is released; the two
+  version tests now allow that while the top changelog section is unreleased.
+- `krouter_ask`'s tool description, the server instructions and `SKILL.md` say how to read the new line.
 
 - KRouter 2.0.0 is in the official MCP Registry as `io.github.398894496-arch/krouter`; `server.json` names the
   release's `KRouter.mcpb` (with its SHA-256) instead of a PyPI package, since KRouter is not on PyPI.

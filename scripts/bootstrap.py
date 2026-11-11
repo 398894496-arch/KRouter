@@ -102,8 +102,10 @@ MSG = {
         "capture_how_timer": "其他 agent 的会话由每晚任务导入前一天的",
         "plugin_hint": "用 Claude Code 的话，装上插件还能在会话结束时自动记下、开会话时自动带上本项目的决定："
         "/plugin install krouter --marketplace 398894496-arch/KRouter",
-        "cli": "命令行（给你和 agent）：{cli} doctor 一条命令给结论（正常，或缺什么、怎么补）；{cli} search \"问题\" 查询；"
+        "cli": "命令行（给你和 agent）：{cli} doctor 一条命令给结论（正常，或缺什么、怎么补）；{cli} ask \"问题\" 查询；"
         "卸载：sh {uninstall}",
+        "cli_win": "命令行（给你和 agent，cmd、PowerShell 5.1 和 7 里照抄就能跑）：{cli} doctor 一条命令给结论（正常，或缺什么、怎么补）；"
+        "{cli} ask \"问题\" 查询；卸载（在 Git Bash 或 WSL 里）：sh \"{uninstall}\"",
         "minimal": "最小安装：只装查找。没有导入会话、没有夜间任务、没有插件和钩子；只接了你点名的应用：{apps}。",
         "desktop_running": "Claude Desktop 正在运行，所以没有改它的配置文件：它开着的时候把设置留在内存里，退出时整份写回去，"
         "现在写进去的条目一重启就没了。两条路任选：① 退出 Claude Desktop 后运行 {cmd}；② 不用退出，双击这个扩展包，在 Claude Desktop "
@@ -187,7 +189,10 @@ MSG = {
         "plugin_hint": "On Claude Code, the plugin also records each session when it ends and brings this project's "
         "decisions when one starts: /plugin install krouter --marketplace 398894496-arch/KRouter",
         "cli": "Command line (for you and your agents): {cli} doctor gives one verdict (OK, or what is missing and how to "
-        "fix it); {cli} search \"question\" looks up. Uninstall: sh {uninstall}",
+        "fix it); {cli} ask \"question\" looks up. Uninstall: sh {uninstall}",
+        "cli_win": "Command line (for you and your agents; copy as is into cmd, PowerShell 5.1 or 7): {cli} doctor gives one verdict "
+        "(OK, or what is missing and how to fix it); {cli} ask \"question\" looks up. Uninstall (in Git Bash or WSL): "
+        "sh \"{uninstall}\"",
         "minimal": "Minimal install: lookup only. No session import, no nightly job, no plugin, no hooks; connected only "
         "the apps you named: {apps}.",
         "desktop_running": "Claude Desktop is running, so its settings file was left alone: while it is open it keeps its "
@@ -1164,8 +1169,18 @@ def cli_path() -> str:
     if shutil.which("krouter"):
         return "krouter"
     if WINDOWS:
-        return f'set "PYTHONPATH={stable_root() / "sdk"}" && python -m krouter.cli'
+        # One command, no `&&` and no `set`: the same line runs in cmd, PowerShell 5.1 and PowerShell 7. The launcher puts
+        # sdk/ on the path itself (the old `set "PYTHONPATH=…" && python -m krouter.cli` failed in all three but cmd).
+        return f'python "{stable_root() / "scripts" / "krouter_run.py"}"'
     return str(stable_root() / "scripts" / "krouter")
+
+
+def cli_line(t: dict) -> str:
+    """The closing line that names the command line, in the form that runs in the shell this install is running in."""
+    uninstall = stable_root() / "scripts" / "uninstall.sh"
+    if WINDOWS:
+        return t["cli_win"].format(cli=cli_path(), uninstall=uninstall.as_posix())  # Git Bash and WSL want forward slashes
+    return t["cli"].format(cli=cli_path(), uninstall=uninstall)
 
 
 def remembering_timer() -> bool:
@@ -1375,7 +1390,7 @@ def main() -> int:
         print(t["changed"] + "".join(f"\n  {p}" for p in CHANGED))
     print(t["done"].format(vault=vault, router=router))
     print(t["try"].format(q=try_question(vault, lang)))
-    print(t["cli"].format(cli=cli_path(), uninstall=stable_root() / "scripts" / "uninstall.sh"))
+    print(cli_line(t))
     if state == "new" and not args.no_open:
         if should_open(args):
             print(t["obsidian"] if open_in_obsidian(vault) else t["obsidian_none"].format(vault=vault))

@@ -50,19 +50,27 @@ sys.path.insert(0, str(HERE))
 from krouter_home import vault_path  # noqa: E402
 import team  # noqa: E402
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 PROTOCOLS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 INSTRUCTIONS = (
     "KRouter answers from the user's own Obsidian vault: decisions, rules, corrections and past sessions. "
     "Call krouter_ask before answering a question about how this user does things, what was decided before, or what "
-    "was corrected. Answer from the `how` line and cite the page path; open the page only when `how` does not close "
+    "was corrected. The receipt's first line says what the memory has: `memory: direct` (answer from the page and cite "
+    "it), `memory: related` (no direct answer, only related pages. Answer only if one of the pages below has a sentence that answers the question outright: quote that sentence and its page. If none does, tell the user the memory does not have it.), `memory: none` (say the memory "
+    "does not have it). Answer from the `how` line and cite the page path; open the page only when `how` does not close "
     "the question. A page marked superseded is out of force. `recall: none` means the vault does not know: say so "
-    "instead of guessing; `recall_note:` means only part of the question matched: say that too. "
+    "instead of guessing; `recall_note:` means only part of the question matched: say that too. When it says the top "
+    "page does not mention some of the question's words, read the page for them: unless it states the answer outright, "
+    "answer that the memory does not cover it. "
     "`recall_conflict:` means an earlier page says otherwise: answer from the page listed first (the newer one) and "
     "say the decision was changed; when it says `possible`, read both pages before answering. Pages under "
     "`associated:` are connected to the hits but were not named by the question: read one only when the hits leave "
     "part of the question open, and never cite one as the answer by itself. "
+    "Pages under `knowledge_base:` are reference material in the user's knowledge base (articles, clippings, documents "
+    "someone else wrote; declared, or `kb=auto`: recognised by how they read): cite them as a source with the path, "
+    "never as something the user decided; `memory: none` "
+    "means the user's own memory has nothing on the question, whatever reference material matched. "
     "If a receipt has `host_action:`, tell the user that line."
 )
 CORRECT_INSTRUCTION = (" When the user corrects a decision or says to do something differently from now on, call "
@@ -74,8 +82,14 @@ LEARN_INSTRUCTION = (" When this session ran into an error or a wrong result and
 TOOLS = [
     {
         "name": "krouter_ask",
-        "description": "Look up the user's vault for one question. Returns the best page with a one-line answer "
-                       "(`how`), the matching lines and a receipt, or `recall: none` when the vault has nothing on it.",
+        "description": "Look up the user's vault for one question. The first line is `memory: direct`, `memory: "
+                       "related` or `memory: none`; for `related`: Answer only if one of the pages below has a sentence that answers the question outright: quote that sentence and its page. If none does, tell the user the memory does not have it. "
+                       "Returns the best page with a one-line answer "
+                       "(`how`), the matching lines and a receipt, or `recall: none` when the vault has nothing on it. A "
+                       "`recall_note:` naming words the top page does not mention means: unless the page states the "
+                       "answer outright, treat the question as not covered. Pages under `knowledge_base:` are "
+                       "reference material (someone else's writing), listed apart: a source to cite, not the user's "
+                       "decision; `memory: none` first means only reference material matched.",
         "inputSchema": {
             "type": "object",
             "properties": {

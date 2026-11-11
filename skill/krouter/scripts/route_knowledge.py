@@ -252,6 +252,12 @@ def canonical_lookup(query: str, vault: Path, map_path: Path, route: str) -> boo
     if not source.is_file():
         print(f"Canonical source missing: {source}", file=sys.stderr)
         return False
+    try:
+        import recall_index as _ri
+
+        print(_ri.state_line(vault, None, query, locked=True))  # 别名锁命中：记忆里有直接依据
+    except Exception:  # noqa: BLE001
+        pass
     emit_receipt(source, "canonical-match", route, query, vault, map_path)
     log_query(route, query, "canonical-match", relative, "lock")
     print("route: canonical")
@@ -304,6 +310,24 @@ def literal_candidates(needle: str, scope: Path, vault: Path) -> list[str] | Non
         return None
     base = "" if scope == vault else scope.relative_to(vault).as_posix().rstrip("/") + "/"
     return sorted(str(vault / rel) for rel in rels if rel.startswith(base))
+
+
+_KB_SEEN: dict[str, bool] = {}
+
+
+def _in_kb(vault: Path, line: str, hit) -> bool:
+    """Whether a literal-search output line comes from a knowledge-base page (kb.py)."""
+    m = hit.match(line)
+    if not m:
+        return False
+    full = m.group(1)
+    if full not in _KB_SEEN:
+        import kb
+
+        base = str(vault).rstrip("/\\") + os.sep
+        rel = full[len(base):].replace(os.sep, "/") if full.startswith(base) else ""
+        _KB_SEEN[full] = bool(rel) and bool(kb.reason(vault, rel))
+    return _KB_SEEN[full]
 
 
 def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 24, vault: Path | None = None,
@@ -377,6 +401,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
         if skip:  # 召回判成「只对上你以前的提问」的会话摘录：字面搜索也不再把那句提问当结果打出来
             drop = tuple(str(vault / r) for r in skip)
             lines = [ln for ln in lines if not ln.startswith(drop)]
+        lines = [ln for ln in lines if not _in_kb(vault, ln, hit)]  # 知识库的页只在 knowledge_base 那一块里出现
     for i, line in enumerate(lines):
         if i >= max_lines:
             print("[truncated after 24 lines]")
@@ -384,17 +409,30 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
         print(redact(line))  # 字面搜索打出来的原文行也不能带出密钥；机密页的行整行不出
 
 
-def print_recall(res: dict, vault: Path, lines: int) -> None:
-    from recall_index import PARTIAL_NOTE, best_lines, print_extras
+def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
+    from recall_index import PARTIAL_NOTE, best_lines, print_extras, print_kb, unseen_note
 
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
     if res.get("partial"):
         print(PARTIAL_NOTE)
+    if query and (note := unseen_note(vault, res, query)):
+        print(note)
     print_extras(res, "conflict")
     print("recall:")
-    for h in res["hits"]:
+    _print_hits(res["hits"], res, vault, lines)
+    print_extras(res, "assoc")
+    if res.get("more"):
+        print("more: further direct hits for a question that adds up or lists (after the pages above)")
+        _print_hits(res["more"], res, vault, lines)
+    print_kb(vault, res, query)
+
+
+def _print_hits(hits: list[dict], res: dict, vault: Path, lines: int) -> None:
+    from recall_index import best_lines
+
+    for h in hits:
         flag = f" status={h['status']}" if h["status"] else ""
         flag += f" conflict={h['conflict']}" if h.get("conflict") else ""
         print(f"- {h['rel']} tier={h['tier']}{flag} score={h['score']}")
@@ -402,9 +440,12 @@ def print_recall(res: dict, vault: Path, lines: int) -> None:
             print(f"  answer (generated): {redact(h['answer'])}")
         if h["how"]:
             print(f"  how: {h['how']}")
-        for ln, text in best_lines(vault / h["rel"], res["query_tokens"], lines):
-            print(f"  L{ln}: {text}")
-    print_extras(res, "assoc")
+        ev = h.get("ev") or {}
+        span = (ev["l0"], ev["l1"]) if ev.get("l0") and ev.get("pc", 0) > 0 else None
+        for i, (ln, text) in enumerate(best_lines(vault / h["rel"], res["query_tokens"], lines, span)):
+            # 段落证据：最好的那一段是哪几行（只标在第一行上，回执不加行）
+            where = f" (passage L{span[0]}-L{span[1]})" if i == 0 and span and span[1] > span[0] else ""
+            print(f"  L{ln}{where}: {text}")
 
 
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
@@ -417,6 +458,7 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     except Exception:  # 召回缓存不可用时退回字面检索
         res = None
     widened = False
+    wide = None
     if (res is None or not res["hits"] or res.get("confidence") == "none") and scope != vault:
         # 路由范围（单个偏好/纠错页、01 项目）里没有答案：扩到全库，规则页优先，并如实标出
         try:
@@ -425,7 +467,17 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
                 res, widened = wide, True
         except Exception:
             pass
-    if res and res["hits"] and res.get("confidence") != "none":
+    if res is not None and not res.get("kb") and wide and wide.get("kb"):
+        res = {**res, "kb": wide["kb"], "kb_confidence": wide.get("kb_confidence")}  # 记忆里没有：资料从全库找
+    try:
+        import recall_index as _ri
+    except Exception:  # noqa: BLE001 - 召回不可用：照老办法只做字面检索
+        _ri = None
+    strict = _ri is not None and _ri.strict_on(vault)
+    # 严格模式：只有直接依据算答案；「只有相关的页」按记忆里没有交给宿主，相关页折成一行
+    folded = strict and _ri.answer_state(res) == "related"
+    if res and res["hits"] and res.get("confidence") != "none" and not folded:
+        print(_ri.state_line(vault, res, query))
         emit_receipt(scope, "ranked-recall-complete", route, query, vault, map_path)
         log_query(route, query, "ranked-recall-complete" + ("+widened" if widened else ""), res["hits"][0]["rel"],
                   res.get("confidence", ""), [h["rel"] for h in res["hits"][:3]])
@@ -434,9 +486,12 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         print(f"scope: {scope}")
         if widened:
             print("scope_widened: vault (the route scope had no page covering this question)")
-        print_recall(res, vault, 4 if (scope.is_file() and not widened) else 1)
+        print_recall(res, vault, 4 if (scope.is_file() and not widened) else 1, query)
         print("open_page: only the top recall hit, and only if its how does not close the question")
         return
+    if _ri is not None:
+        # 记忆里没有（只有知识库对得上时这一行这样说）；严格模式下「只有相关的页」也走这里
+        print(_ri.state_line(vault, res, query, strict=strict))
     emit_receipt(scope, "bounded-literal-search-complete", route, query, vault, map_path)
     log_query(route, query, "bounded-literal-search-complete")
     emit_suggestions(query, vault, map_path)
@@ -444,10 +499,13 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     print(f"scope: {scope}")
     if res is not None:
         if res.get("asked"):
-            import recall_index as _ri
-
             print(_ri.ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
+        if folded:
+            print(_ri.RELATED_PAGES[_ri._note_lang(vault, query)].format(pages="; ".join(_ri.page_list(res))))
+        _ri.print_kb(vault, res, query, 2)
+    if folded:
+        return  # 相关页已经点名，不再把字面检索的原文行当结果打出来
     # 索引这次没用上（recall 抛了错）就别拿它挑候选页：它可能缺页或过期，整个范围照老办法扫
     md_search(query, scope, vault=vault if res is not None else None, skip=(res or {}).get("asked") or [])
 

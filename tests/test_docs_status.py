@@ -24,6 +24,10 @@ def test_status_version_is_the_shipped_version():
     import re
 
     version = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"]
+    # 顶部是「未发布」的一节时，STATUS 写的是上一个已发布的版本（最新发布版），不是还没发的这一个
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    if re.search(r"^## " + re.escape(version) + r" — unreleased", changelog, re.M):
+        version = re.search(r"^## (\d+\.\d+\.\d+) — \d{4}-", changelog, re.M).group(1)
     for lang, text in _status_texts().items():
         assert re.search(r"v(\d+\.\d+\.\d+)", text).group(1) == version, f"docs/STATUS{lang}.md names another version"
 

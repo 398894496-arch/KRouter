@@ -1,7 +1,7 @@
 # KRouter in detail
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v2.0.0, 2026-11-10). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.1.0, 2026-11-11). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
@@ -20,7 +20,8 @@
 >   Answer accuracy at five pages is not measured yet (set 22, registered).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
->   "3 of 30" quoted before was 1.1.1); LoCoMo, evidence first for 991 of 1,540,
+>   "3 of 30" quoted before was 1.1.1; with a reader model on top, 29 of 30 are answered "not mentioned", but the same
+>   reader given nothing says so for all 30, so that layer is mostly the model's: [`NUMBERS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/NUMBERS.md)); LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
@@ -29,11 +30,20 @@
 > - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
 >   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
 >   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
-> - **Releases:** 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
+> - **Releases:** 2.1.0 (2026-11-11, the bullet after this one); 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
 >   over between tasks and grow into skills; five pages with the ones the vault connects; a change of mind holds
 >   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
 >   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
 >   `KROUTER_TAG` pins one.
+> - **New in 2.1.0 (2026-11-11):** a knowledge-base layer: folders declared in `krouter-kb.txt` (and clippings,
+>   as before) are reference material, listed apart under `knowledge_base:` and never setting the confidence; when only
+>   they match, the receipt starts `memory: none` (tests, and set 37's synthetic set). `krouter kb add / suggest /
+>   import` (PDF, Word, HTML with a converter already on the machine). A rule to refuse more near misses was studied
+>   on development data (set 37) and **not shipped**: none of 216 candidates refused 10 more within a 1-point loss
+>   (the best: 3), so the refusal numbers above are unchanged. Instead the receipt's first line says `memory: direct`,
+>   `related` (only related pages) or `none` (LongMemEval's 30: 0 / 21 / 9); an optional strict mode treats `related`
+>   as `none` and on session-only memories answers almost nothing (set 38). Also: the README's team section and two-layer refusal
+>   numbers, and a `recall_note:` naming question words the top page never uses (its effect **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
@@ -96,7 +106,7 @@ Windows (PowerShell, no admin):
 irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex
 ```
 
-It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` with English folder and file names (`Documents/第二大脑` with the Chinese template when the language is Chinese: `--lang` first, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's), installs the router and the agent rules, connects every app it finds (the table in the README: each app's own MCP settings file, plus the Claude Code plugin from the same release), lists every settings file it changed (a copy of each kept as `*.krouter-bak`), records sessions from then on and imports nothing from the past (`--all`, or the one command its last lines give, imports the last 7 days as pages: locally, redacted, no model call, listed in the change ledger), and, when run from a terminal, opens the vault in Obsidian (`--open` always, `--no-open` never; run by an agent, it does not). That is all by default: no questions, nothing leaves the machine; `--no-import` leaves out the import; `--minimal` installs lookup only (no import, plugin, hooks or Cursor rules) and connects only the apps named with `--apps`. `--ask` asks before importing, whether to distill with your model and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v2.0.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`sh /tmp/krouter-install.sh --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
+It fetches the latest release (a tag, never `main`) and checks its SHA-256 against the release's `SHA256SUMS`, makes a vault in `Documents/Second Brain` with English folder and file names (`Documents/第二大脑` with the Chinese template when the language is Chinese: `--lang` first, then `LC_ALL` / `LC_MESSAGES` / `LANG`, then the system's), installs the router and the agent rules, connects every app it finds (the table in the README: each app's own MCP settings file, plus the Claude Code plugin from the same release), lists every settings file it changed (a copy of each kept as `*.krouter-bak`), records sessions from then on and imports nothing from the past (`--all`, or the one command its last lines give, imports the last 7 days as pages: locally, redacted, no model call, listed in the change ledger), and, when run from a terminal, opens the vault in Obsidian (`--open` always, `--no-open` never; run by an agent, it does not). That is all by default: no questions, nothing leaves the machine; `--no-import` leaves out the import; `--minimal` installs lookup only (no import, plugin, hooks or Cursor rules) and connects only the apps named with `--apps`. `--ask` asks before importing, whether to distill with your model and whether to install the nightly job, saying in one sentence which CLI will run, with what permissions, and how many pages (and tokens) it will send — the numbers come from a dry run on your new vault. No terminal to ask on means no; `--timer` and `--import` say yes up front. An upgrade keeps whatever you said yes to before. `KROUTER_TAG=v2.1.0` (before `sh`, or `$env:KROUTER_TAG` on Windows) stays on one release. An existing vault (`sh /tmp/krouter-install.sh --vault ~/MyVault`) keeps every file; only missing skeleton files are added. Run the same line again to upgrade. Python 3 is the only requirement (the Windows script installs it with winget when missing). The last thing it prints is the one step left, if any: log in to an AI coding CLI, or paste an API key. After that nothing needs maintaining — a lock noun is an optional shortcut, not a prerequisite; recall answers from page titles and text on its own, and refuses rather than guesses. If a night's work did not happen, a desktop notification says why. Where data goes and what a CLI writer can see: [`SECURITY.md`](../SECURITY.md).
 
 ### The Claude Code plugin
 
@@ -187,14 +197,51 @@ Explains how a lookup came out, in seven short sections. It asks the same code `
    judges the situation), so this says how many there are and names the ones whose situation shares words with the
    question, or that were taken from one of the pages shown.
 
+### Three states, and strict mode
+
+The receipt's first line says what the memory has on the question: `memory: direct` (an alias lock, or confidence
+`high`: answer from the page and cite it), `memory: related` (`medium` or `low`: no direct answer, only related pages;
+answer only if one of them has a sentence that answers the question outright, quoting it and its page, else tell the
+user the memory does not have it; the `recall_note:` naming words the top page does not mention says where to look),
+or `memory: none`. Nothing else changes: the same pages, the same confidence. The Python `Answer` has it as `.state`.
+
+**Strict mode** hands `related` to the host as `memory: none`, the pages named on one `related_pages:` line instead of
+listed as evidence, and keeps the prompt hook to `high` pages. Switch it on with `KROUTER_STRICT=1` (`0` turns it off
+and wins over the file), or with a line `strict|on` in `krouter-settings.psv` at the memory folder's root. It is **off
+by default**, and it suits a memory you have organised, with rule pages and aliases: `high` needs a rule or topic page
+leading the next by 1.5×, so on a folder of session records almost nothing is `direct` and strict mode answers almost
+nothing (set 38: 0 of 235 LongMemEval and 0 of 768 LoCoMo answers handed over; on a synthetic memory with rule pages
+39 of 51).
+
 ### Clipped pages and other people's writing
 
-A page counts as a clipping (someone else's writing, not your notes) when a folder on its path has `剪藏`,
-`Clippings` or `Web clips` in its name, or its frontmatter has a `source:` URL, a `clippings` tag or `type: clipping`.
-To have a research folder treated that way, name it accordingly (say `Research (clippings)`) or add `tags: [clippings]`
-to its pages. When every one of the top three pages is a clipping, confidence is at most `low` and the receipt says
-the pages are someone else's writing; it is `recall: none` only when the question also has a word the vault never
-contains in any form. A clipping among pages of your own changes nothing.
+The memory folder's pages are of two kinds: your memory (what you decided, rules, corrections, distilled sessions) and
+the **knowledge base**, reference material someone else wrote. A page is in the knowledge base when a folder on its path
+is listed in `krouter-kb.txt` at the memory folder's root (one folder per line, relative to the memory folder; `krouter
+kb add FOLDER` writes it, `krouter kb remove` takes a line out, or edit it by hand), when a folder on its path has
+`剪藏`, `Clippings` or `Web clips` in its name, or when its frontmatter has a `source:` URL, a `clippings` tag or
+`type: clipping` (the last two rules are 2.0's clipping rules and need no declaration; a folder named exactly
+`Clippings` is not indexed at all).
+
+A lookup ranks and gates the two kinds separately. Your memory's pages give the answer and the confidence, exactly as
+before; the memory's lead over the next page is still measured against the best knowledge-base page, so taking
+reference pages out never makes the memory look surer, and when the top three pages of all are reference pages the
+memory is at most `low` (`none` when the question has a word the vault never contains in any form). Knowledge-base
+pages that pass the same gate on their own are listed after the memory's, under `knowledge_base:`, at most three, each
+with `kb=declared` or `kb=clippings`, its title, its source (`source:`, `url:` or an imported file's `source_file:`)
+and its best line. When the memory refuses and the knowledge base has pages, the receipt's first line is
+`memory: none`. Associated pages never come from the knowledge base, the literal-search fallback does not print its
+lines, and the prompt hook and the session-start index never bring its pages.
+
+**Recognised without declaring (2.1.0, [set 40](../bench/memory_honesty/HELDOUT.md)).** Every page not in a declared folder is sorted by where it came from first: KRouter's own folders and frontmatter (session excerpts, the time log, experience cards, skills, rule folders, topic files, `status:` / `how:` / `type: session-excerpt`), pages the alias table points to, and pages or folders marked with `krouter kb mine PATH` (an `!PATH` line in `krouter-kb.txt`) are your memory, whatever they look like. Every other page is scored on what can be checked in it: a source address or a `Source:` / `来源：` line near the top or bottom (+3.5), an `author:` that is not you (+2), a byline, translator or copyright line (+2), a title that reads like an article's (+1), long (+1), narrative without lists (+1), few first-person words (+1), another language than the vault's (+1.5), most pages in its folder scoring the same way (+1); decision structure (`决定：`, `- [ ]`, `we decided`) counts −2, your own annotations (`我的批注`, `my take`) −3, many first-person words −1.5. At 3.0 or more the page is reference material, `kb=auto`, and the receipt lists the signals (`krouter why`, `krouter view`). On set 40's labelled synthetic vaults (Chinese and English, own pages and outside material mixed in the same folders, own long essays and annotated excerpts among them), held out and run once: 30 of 32 outside pages recognised, 0 of 43 own pages taken for reference. `KROUTER_KB_AUTO=0` or `kb_auto|off` in `krouter-settings.psv` turns it off; a declared folder and a `krouter kb mine` mark both win over the score (a declared folder wins over a mark inside it). The nightly report counts the pages recognised and lists the new ones.
+
+`krouter kb suggest` (and a note in `krouter doctor`) names folders that look like reference material and are not
+declared: at least three pages, few with KRouter's own markers (`status`, `how`, a decision or session type), and most
+with a source address near the top, or most long (4,000+ characters) and titled like articles. Nothing is declared for
+you. `krouter kb import FILE [--to FOLDER]` converts a PDF, Word, HTML (and EPUB, ODT, RTF, …) file to a page in the
+knowledge base (the declared folder, or a new `Knowledge base` / `知识库` folder it declares) with `markitdown`,
+`pandoc` or, for PDF, `pdftotext` when one is installed, and a plain converter for HTML when none is; the page's
+frontmatter records the source file, the time of the import and the tool. KRouter installs nothing for this.
 
 Output is in the memory's language (English for a memory whose `krouter-zones.psv` says `@lang|en`, else Chinese);
 `--lang en|zh` overrides it, `--json` prints the structure instead. A `why` is not logged: the nightly job learns
@@ -254,7 +301,7 @@ Details, methods and what still fails: [`docs/VERIFY.md`](VERIFY.md).
 weeks shipped many versions a day; that pace was development, not a support promise.
 
 
-From 1.0 the version follows semantic versioning (2.0 changed the receipt and the install path: [`CHANGELOG.md`](../CHANGELOG.md)). Stable — changed only in a major release, with a migration: the vault layout and zone file, the alias table format, the receipt fields agents read (`retrieval_status`, `canonical_match`, `canonical_source`, `recall:`, `how`, `host_action`), the routes, the MCP tools `krouter_ask` / `krouter_status`, the `KROUTER_*` variables, and the page markers the importers write (`source: krouter-import`, `source: krouter-claude-mem`). Minor releases may add steps and options, and may retune scoring; every scoring change ships with before / after numbers on the public benches ([`CONTRIBUTING.md`](../CONTRIBUTING.md)). Minor releases at most weekly, patch releases when ready. The one-line install fetches the latest **release**, never `main`; to stay on one, run `KROUTER_TAG=v2.0.0 sh /tmp/krouter-install.sh` (Windows: `$env:KROUTER_TAG="v2.0.0"` first). [`CHANGELOG.md`](../CHANGELOG.md) says what changed and why, including what an outside review found.
+From 1.0 the version follows semantic versioning (2.0 changed the receipt and the install path: [`CHANGELOG.md`](../CHANGELOG.md)). Stable — changed only in a major release, with a migration: the vault layout and zone file, the alias table format, the receipt fields agents read (`retrieval_status`, `canonical_match`, `canonical_source`, `recall:`, `how`, `host_action`), the routes, the MCP tools `krouter_ask` / `krouter_status`, the `KROUTER_*` variables, and the page markers the importers write (`source: krouter-import`, `source: krouter-claude-mem`). Minor releases may add steps and options, and may retune scoring; every scoring change ships with before / after numbers on the public benches ([`CONTRIBUTING.md`](../CONTRIBUTING.md)). Minor releases at most weekly, patch releases when ready. The one-line install fetches the latest **release**, never `main`; to stay on one, run `KROUTER_TAG=v2.1.0 sh /tmp/krouter-install.sh` (Windows: `$env:KROUTER_TAG="v2.1.0"` first). [`CHANGELOG.md`](../CHANGELOG.md) says what changed and why, including what an outside review found.
 
 ## Core and extras
 

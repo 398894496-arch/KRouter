@@ -374,11 +374,13 @@ def test_english_question_matched_only_by_clippings_is_refused(tmp_path):
     assert "recall: none" in out and "recall_confidence: medium" not in out
 
 
-def test_a_question_about_a_clipping_is_answered_low_with_a_note(ri, tmp_path):
+def test_a_question_about_a_clipping_lists_it_as_reference(ri, tmp_path):
+    """2.0 answered this `low` with a note; since 2.1 a clipping is in the knowledge base (kb.py): the memory has
+    nothing on it (`none`, stricter), and the clipping is listed apart as reference material."""
     v = _clip_vault(tmp_path)
     res = ri.recall(v, "How did Stripe move its billing service to production?")  # `moved` is there: not absent
-    assert res["confidence"] == "low" and res.get("clipped")
-    assert res["hits"][0]["rel"].endswith("How Stripe scaled billing.md")
+    assert res["confidence"] == "none" and not res["hits"]
+    assert res["kb"][0]["rel"].endswith("How Stripe scaled billing.md") and res["kb"][0]["kb"] == "clippings"
     # a clippings folder by name is enough, without clipper frontmatter
     w = _clip_vault(tmp_path / "b", folder="03 资料与证据/Web clips", clipper_fm=False)
     assert ri.recall(w, "What is the production database password of the billing service?")["confidence"] == "none"

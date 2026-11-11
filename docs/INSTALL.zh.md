@@ -79,6 +79,24 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 它会停掉并删除夜间任务、路由器、规则、KRouter 的 MCP 条目和钩子、Claude Code 插件（插件市场指向本机文件夹时一并删）和记下的库路径；你的记忆文件夹和钥匙文件一律不动。`--purge` 另外删缓存、状态和 `~/.dsh-krouter`。
 
 
+### Hermes 和 OpenClaw
+
+**Hermes**（Hermes Agent）把 KRouter 当作一个 stdio 的 MCP 服务接入。安装脚本不写 Hermes 的设置，自己加一次：
+
+```bash
+hermes mcp add krouter --command python3 --args ~/.agents/skills/krouter/scripts/mcp_server.py
+hermes mcp test krouter      # 连上并列出 krouter_ask、krouter_status、krouter_note 等工具
+```
+
+这会在 Hermes 的 `config.yaml` 里写一条 `mcp_servers.krouter`（`HERMES_HOME` 可以让 Hermes 用另一个配置目录）。记忆文件夹和别的应用一样从 `~/.config/krouter/vault` 读，也可以在 `--args` 前加 `--env KROUTER_VAULT=<文件夹>`。Hermes 只拿到查询工具：KRouter 没有给它的会话钩子，所以没有每句话那一层，也没有会话开始的索引。在 Hermes Agent 0.18.2 上试过（2026-11-10，单独的 `HERMES_HOME`）：服务连上，五个工具都列出来了；在那里没有问问题（那份配置里没有登录任何模型）。
+
+**OpenClaw** 从 `~/.agents/skills` 读技能（它的「个人 agent 技能」目录，[OpenClaw 文档：Skills](https://docs.openclaw.ai/tools/skills)），安装脚本正好把 KRouter 放在那里（`~/.agents/skills/krouter/`）。不用再做别的：agent 读那里的 `SKILL.md`，通过技能里的路由脚本查记忆，`sh ~/.agents/skills/krouter/scripts/route_knowledge.sh search "<问题>"`（回执和 `krouter_ask` 一样）。KRouter 1.2.x 已经用这种方式在真实使用中跑过；2.x 还没有在 OpenClaw 里跑过。OpenClaw 也能接 MCP 服务（[OpenClaw 文档：MCP](https://docs.openclaw.ai/tools/mcp)），这条我们没试过：
+
+```bash
+openclaw mcp add krouter --command python3 --arg ~/.agents/skills/krouter/scripts/mcp_server.py
+openclaw mcp probe krouter
+```
+
 ## 把以前的会话导进来
 
 建议装完做一次：让 agent 把这台机器上已有的会话（Claude Code、Codex、Cursor）导进来，这样它第一天就认识你以前定过的事。分三步，前两步都不调模型。

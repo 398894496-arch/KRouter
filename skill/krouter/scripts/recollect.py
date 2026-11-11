@@ -32,7 +32,8 @@ on only 7 of 24 mentions: people mostly say a thing in other words. With the ind
 two together remembered 23 or 24 of 24 mentions and 12 of 12 changed rules on held-out, with 1 or 2 of 24 quiet
 messages moving either layer, for both Haiku 5.5 and Sonnet 5.5.
 
-Never brought: a page marked superseded (or retired, rejected, …), expired, not yet valid, or secret. A mention of an
+Never brought: a page marked superseded (or retired, rejected, …), expired, not yet valid, or secret, and a page in
+the knowledge base (`kb.py`: reference material, not something you decided; the standing index leaves it out too). A mention of an
 old page brings the page that replaced it (`superseded_by`) and says an earlier page said otherwise; a page that
 `supersedes` another says so too; a page with a later "⚠ 已改" line says what changed. Pages the brought page links to
 come along as titles only.
@@ -388,11 +389,15 @@ def secret(vault: Path, rel: str, fm: dict) -> bool:
 def current(vault: Path, rel: str, today: date) -> tuple[str, str] | None:
     """(page to bring, the older page it stands in for or ""): a live page is itself; a replaced page is the page that
     replaced it (`superseded_by`, followed at most three steps), when that one is live; anything else is None."""
+    import kb
+
     seen = []
     for _ in range(4):
         got = page(vault, rel)
         if got is None:
             return None
+        if kb.reason(vault, rel):
+            return None  # 知识库的页是参考资料，不当成「定过的事」递给宿主（kb.py）
         fm = got[0]
         if alive(fm, today):
             return (rel, seen[0] if seen else "") if not secret(vault, rel, fm) else None
@@ -541,7 +546,10 @@ def _ranked(vault: Path, said: str) -> dict | None:
 
 
 def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> list[dict]:
-    if not res or not res.get("hits") or res.get("partial") or res.get("confidence") not in RECALL_CONF:
+    import recall_index as ri
+
+    allowed = ("high",) if ri.strict_on(vault) else RECALL_CONF  # 严格模式：全文召回只递有直接依据的页
+    if not res or not res.get("hits") or res.get("partial") or res.get("confidence") not in allowed:
         return []
     top = res["hits"][0]
     if top.get("tier") in ("log", "dead") or (res.get("margin") or 0) < RECALL_MARGIN:

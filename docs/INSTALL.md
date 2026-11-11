@@ -100,6 +100,34 @@ It stops and removes the nightly job, the router, the rules, KRouter's MCP entri
 memory folder or your keys file. `--purge` also removes the cache, the state and `~/.dsh-krouter`.
 
 
+### Hermes and OpenClaw
+
+**Hermes** (Hermes Agent) takes KRouter as a stdio MCP server. The installer does not write Hermes's settings; add it once:
+
+```bash
+hermes mcp add krouter --command python3 --args ~/.agents/skills/krouter/scripts/mcp_server.py
+hermes mcp test krouter      # connects and lists krouter_ask, krouter_status, krouter_note, …
+```
+
+This writes an `mcp_servers.krouter` entry in Hermes's `config.yaml` (`HERMES_HOME` points Hermes at another config
+folder). The memory folder comes from `~/.config/krouter/vault` as for every app, or add `--env KROUTER_VAULT=<folder>`
+before `--args`. Hermes gets the lookup tools only: KRouter has no session hooks for it, so neither the per-message
+layer nor the session-start index. Tried on Hermes Agent 0.18.2 (2026-11-10) in a separate `HERMES_HOME`: the server
+connected and its five tools were listed; no question was asked there (no model was logged in to that config).
+
+**OpenClaw** reads skills from `~/.agents/skills` (its "personal agent skills" folder, [OpenClaw docs:
+Skills](https://docs.openclaw.ai/tools/skills)), which is where the installer puts KRouter
+(`~/.agents/skills/krouter/`). Nothing else is needed: the agent reads `SKILL.md` there and asks the memory through
+the skill's router script, `sh ~/.agents/skills/krouter/scripts/route_knowledge.sh search "<question>"` (the
+same receipt as `krouter_ask`). KRouter 1.2.x has run this way in real use;
+2.x has not been run in OpenClaw yet. OpenClaw also takes MCP servers
+([OpenClaw docs: MCP](https://docs.openclaw.ai/tools/mcp)); not tried by us:
+
+```bash
+openclaw mcp add krouter --command python3 --arg ~/.agents/skills/krouter/scripts/mcp_server.py
+openclaw mcp probe krouter
+```
+
 ## Bring in your past sessions
 
 Recommended once, right after installing: let your agent bring in the sessions already on this machine (Claude Code,

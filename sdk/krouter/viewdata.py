@@ -50,6 +50,7 @@ def mods() -> SimpleNamespace:
         import capture_ledger
         import compile_subconscious
         import experience
+        import kb
         import krouter_redact
         import recall_index
         import recollect
@@ -58,7 +59,7 @@ def mods() -> SimpleNamespace:
 
         _MODS = SimpleNamespace(ri=recall_index, associate=associate, cl=canonical_lookup, ledger=capture_ledger,
                                 experience=experience, redact=krouter_redact, zones=zones, skills=skills,
-                                recollect=recollect, cs=compile_subconscious)
+                                recollect=recollect, cs=compile_subconscious, kb=kb)
     return _MODS
 
 
@@ -174,7 +175,8 @@ class Store:
     def _decorate(self, rel: str, tier: str, status: str, mtime_ns: int = 0, size: int = 0) -> dict:
         meta, body = head_of(self.vault / rel, 3000)
         return {"rel": rel, "title": meta.get("title") or first_heading(body) or Path(rel).stem, "tier": tier,
-                "status": status, "date": meta.get("date", ""), "modified": iso(mtime_ns), "size": size}
+                "status": status, "date": meta.get("date", ""), "modified": iso(mtime_ns), "size": size,
+                "kb": self.m.kb.reason(self.vault, rel)}  # 知识库的页（参考资料）：列表里标出来
 
     def stats(self) -> dict:
         with self.con() as con:
@@ -184,7 +186,7 @@ class Store:
             built = (con.execute("SELECT v FROM meta WHERE k='built_at'").fetchone() or [""])[0]
             edges = con.execute("SELECT count(*) FROM edges").fetchone()[0]
         return {"vault": str(self.vault), "lang": self.lang, "pages": total, "tiers": tiers, "statuses": statuses,
-                "edges": edges, "indexed_at": built}
+                "edges": edges, "indexed_at": built, "kb_folders": self.m.kb.declared(self.vault)}
 
     def pages(self, q: str = "", tier: str = "", status: str = "", sort: str = "path", offset: int = 0,
               limit: int = 50) -> dict:
@@ -308,11 +310,19 @@ class Store:
             if body_text:
                 for target in dict.fromkeys(self.m.associate.WIKILINK.findall(body_text)):
                     links[target] = self.resolve(con, target)
+            origin = {}
+            try:
+                origin = self.m.kb.origin_rows(con, self.vault, [rel]).get(rel, {})
+            except Exception:  # noqa: BLE001 - 旧缓存没有来历表
+                origin = {}
             sides = self.supersede_sides(con, rel)
             sup = {k: [self._decorate_known(con, r) for r in v] for k, v in sides.items()}
             return {"rel": rel, "title": meta.get("title") or first_heading(body_text) or Path(rel).stem, "tier": tier,
                     "status": status, "date": meta.get("date", ""), "modified": iso(mtime), "size": size,
-                    "secret": secret, "truncated": size > BODY_MAX,
+                    "secret": secret, "truncated": size > BODY_MAX, "kb": self.m.kb.reason(self.vault, rel),
+                    # 归到哪一类、为什么：kb 是 declared / clippings / auto / 空（你的记忆）；signals 是自动判断看到的特征
+                    "origin": {"signals": origin.get("why", ""), "score": origin.get("score"),
+                               "marked_mine": bool(origin.get("marked_mine"))},
                     "meta": {k: self.m.redact.redact(v) for k, v in meta.items()} if not secret else {},
                     "body": body_text, "links": links, **sup}
 

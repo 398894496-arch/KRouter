@@ -1,7 +1,7 @@
 # KRouter Obsidian architecture
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v2.0.0, 2026-11-10). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.1.0, 2026-11-11). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
@@ -20,7 +20,8 @@
 >   Answer accuracy at five pages is not measured yet (set 22, registered).
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
->   "3 of 30" quoted before was 1.1.1); LoCoMo, evidence first for 991 of 1,540,
+>   "3 of 30" quoted before was 1.1.1; with a reader model on top, 29 of 30 are answered "not mentioned", but the same
+>   reader given nothing says so for all 30, so that layer is mostly the model's: [`NUMBERS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/NUMBERS.md)); LoCoMo, evidence first for 991 of 1,540,
 >   37 of 446 adversarial refused. Page found, not answer accuracy; plain BM25 finds about as many.
 > - **Real-traffic blind test on fresh queries** ([VERIFY.md](https://github.com/398894496-arch/KRouter/blob/main/docs/VERIFY.md)
 >   layer 4): not run yet; it waits for 50 new queries (30 logged by 2026-11-09).
@@ -29,11 +30,20 @@
 > - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
 >   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
 >   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
-> - **Releases:** 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
+> - **Releases:** 2.1.0 (2026-11-11, the bullet after this one); 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
 >   over between tasks and grow into skills; five pages with the ones the vault connects; a change of mind holds
 >   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
 >   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
 >   `KROUTER_TAG` pins one.
+> - **New in 2.1.0 (2026-11-11):** a knowledge-base layer: folders declared in `krouter-kb.txt` (and clippings,
+>   as before) are reference material, listed apart under `knowledge_base:` and never setting the confidence; when only
+>   they match, the receipt starts `memory: none` (tests, and set 37's synthetic set). `krouter kb add / suggest /
+>   import` (PDF, Word, HTML with a converter already on the machine). A rule to refuse more near misses was studied
+>   on development data (set 37) and **not shipped**: none of 216 candidates refused 10 more within a 1-point loss
+>   (the best: 3), so the refusal numbers above are unchanged. Instead the receipt's first line says `memory: direct`,
+>   `related` (only related pages) or `none` (LongMemEval's 30: 0 / 21 / 9); an optional strict mode treats `related`
+>   as `none` and on session-only memories answers almost nothing (set 38). Also: the README's team section and two-layer refusal
+>   numbers, and a `recall_note:` naming question words the top page never uses (its effect **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).

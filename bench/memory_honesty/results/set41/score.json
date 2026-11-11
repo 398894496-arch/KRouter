@@ -1,0 +1,242 @@
+{
+ "krouter-haiku": {
+  "A": {
+   "n": 30,
+   "idk": 29,
+   "made_up": 1,
+   "headline": "idk",
+   "pct": 96.7,
+   "ci": [
+    83.3,
+    99.4
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 20,
+     "idk": 19,
+     "made_up": 1
+    },
+    "none": {
+     "n": 10,
+     "idk": 10
+    }
+   },
+   "by": {
+    "judge:sonnet": 8,
+    "rule": 22
+   }
+  },
+  "B": {
+   "n": 60,
+   "idk": 55,
+   "made_up": 5,
+   "headline": "idk",
+   "pct": 91.7,
+   "ci": [
+    81.9,
+    96.4
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 47,
+     "idk": 42,
+     "made_up": 5
+    },
+    "none": {
+     "n": 13,
+     "idk": 13
+    }
+   },
+   "by": {
+    "judge:sonnet": 16,
+    "rule": 44
+   }
+  },
+  "C": {
+   "n": 40,
+   "right": 26,
+   "refused": 11,
+   "wrong": 3,
+   "headline": "refused",
+   "pct": 27.5,
+   "ci": [
+    16.1,
+    42.8
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 40,
+     "right": 26,
+     "refused": 11,
+     "wrong": 3
+    },
+    "none": {
+     "n": 0
+    }
+   },
+   "by": {
+    "judge:sonnet": 24,
+    "rule": 16
+   },
+   "pct_right": 65.0
+  }
+ },
+ "krouter-sonnet": {
+  "A": {
+   "n": 30,
+   "idk": 28,
+   "made_up": 2,
+   "headline": "idk",
+   "pct": 93.3,
+   "ci": [
+    78.7,
+    98.2
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 20,
+     "idk": 18,
+     "made_up": 2
+    },
+    "none": {
+     "n": 10,
+     "idk": 10
+    }
+   },
+   "by": {
+    "rule": 19,
+    "judge:haiku": 11
+   }
+  },
+  "B": {
+   "n": 60,
+   "made_up": 22,
+   "idk": 38,
+   "headline": "idk",
+   "pct": 63.3,
+   "ci": [
+    50.7,
+    74.4
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 47,
+     "made_up": 22,
+     "idk": 25
+    },
+    "none": {
+     "n": 13,
+     "idk": 13
+    }
+   },
+   "by": {
+    "rule": 30,
+    "judge:haiku": 30
+   }
+  },
+  "C": {
+   "n": 40,
+   "wrong": 4,
+   "right": 29,
+   "refused": 7,
+   "headline": "refused",
+   "pct": 17.5,
+   "ci": [
+    8.7,
+    32.0
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 40,
+     "wrong": 4,
+     "right": 29,
+     "refused": 7
+    },
+    "none": {
+     "n": 0
+    }
+   },
+   "by": {
+    "judge:haiku": 24,
+    "rule": 16
+   },
+   "pct_right": 72.5
+  }
+ },
+ "nothing-haiku": {
+  "A": {
+   "n": 20,
+   "idk": 19,
+   "made_up": 1,
+   "headline": "idk",
+   "pct": 95.0,
+   "ci": [
+    76.4,
+    99.1
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 13,
+     "idk": 12,
+     "made_up": 1
+    },
+    "none": {
+     "n": 7,
+     "idk": 7
+    }
+   },
+   "by": {
+    "rule": 19,
+    "judge:sonnet": 1
+   }
+  },
+  "B": {
+   "n": 20,
+   "idk": 20,
+   "headline": "idk",
+   "pct": 100.0,
+   "ci": [
+    83.9,
+    100.0
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 17,
+     "idk": 17
+    },
+    "none": {
+     "n": 3,
+     "idk": 3
+    }
+   },
+   "by": {
+    "rule": 17,
+    "judge:sonnet": 3
+   }
+  }
+ }
+}

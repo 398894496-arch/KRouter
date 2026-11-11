@@ -1,0 +1,32 @@
+23:54  up 1 day, 22:58, 1 user, load averages: 4.93 4.59 4.25
+== OLD hook vault v3
+index build: 0.1 s
+hit: printed=[False]  cold p50 105 ms p95 114 ms (n=10)  warm p50 94 ms p95 109 ms (n=100)
+miss: printed=[False]  cold p50 101 ms p95 108 ms (n=10)  warm p50 94 ms p95 105 ms (n=100)
+== OLD lookup vault v3
+{"pages": 110, "vault_mb": 0.0, "first_lookup_s": 0.14, "lookups": 30, "p50_s": 0.094, "p95_s": 0.105, "peak_rss_mb": 38.0, "index_mb": 0.4, "python": "3.14.6", "platform": "darwin", "answered": 9, "refused": 21}
+23:54  up 1 day, 22:58, 1 user, load averages: 4.41 4.49 4.22
+== OLD hook vault v10k
+index build: 6.2 s
+hit: printed=[False]  cold p50 124 ms p95 291 ms (n=10)  warm p50 94 ms p95 103 ms (n=100)
+miss: printed=[False]  cold p50 112 ms p95 167 ms (n=10)  warm p50 95 ms p95 105 ms (n=100)
+== OLD lookup vault v10k
+{"pages": 10017, "vault_mb": 7.2, "first_lookup_s": 6.18, "lookups": 30, "p50_s": 0.168, "p95_s": 0.186, "peak_rss_mb": 44.4, "index_mb": 38.1, "python": "3.14.6", "platform": "darwin", "answered": 20, "refused": 10}
+23:55  up 1 day, 22:59, 1 user, load averages: 3.61 4.27 4.15
+== NEW hook vault v3
+index build: 0.2 s
+hit: printed=[False]  cold p50 117 ms p95 124 ms (n=10)  warm p50 113 ms p95 125 ms (n=100)
+miss: printed=[False]  cold p50 121 ms p95 125 ms (n=10)  warm p50 117 ms p95 159 ms (n=100)
+== NEW lookup vault v3
+{"pages": 110, "vault_mb": 0.0, "first_lookup_s": 0.17, "lookups": 30, "p50_s": 0.113, "p95_s": 0.132, "peak_rss_mb": 39.0, "index_mb": 0.4, "python": "3.14.6", "platform": "darwin", "answered": 9, "refused": 21}
+23:55  up 1 day, 23 hrs, 1 user, load averages: 4.07 4.32 4.18
+== NEW hook vault v10k
+index build: 9.3 s
+hit: printed=[False]  cold p50 126 ms p95 178 ms (n=10)  warm p50 113 ms p95 131 ms (n=100)
+miss: printed=[False]  cold p50 131 ms p95 168 ms (n=10)  warm p50 112 ms p95 129 ms (n=100)
+== NEW lookup vault v10k
+{"pages": 10017, "vault_mb": 7.2, "first_lookup_s": 9.76, "lookups": 30, "p50_s": 0.199, "p95_s": 0.269, "peak_rss_mb": 46.2, "index_mb": 47.9, "python": "3.14.6", "platform": "darwin", "answered": 20, "refused": 10}
+== OLD build vault v3: 0.2 s, cache 312 KB
+== OLD build vault v10k: 6.4 s, cache 37952 KB
+== NEW build vault v3: 0.2 s, cache 372 KB
+== NEW build vault v10k: 9.9 s, cache 47168 KB

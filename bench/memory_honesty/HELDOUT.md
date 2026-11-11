@@ -1414,3 +1414,337 @@ on a second message. If it fails, the nightly step stays in the code but is repo
 | Date | Event |
 |---|---|
 | 2026-11-10 | Registered (`77aeb94`); cases written with set 35's (`bench/subconscious/set36.jsonl`). **Run once** (learning messages answered by Sonnet 5.5, `claude-sonnet-5-5`; replies in `bench/subconscious/results/set36/`). On the 16 first messages the hook brought the right page 3 times (Chinese) and the host fetched it on the other 13: **13 learning events** (zh 5, en 8). `learn_mentions` learned one phrase per event. **Second messages, the hook alone: before learning 0 / 16; after, right on 6 of the 13 whose first message was learned (zh 1 / 5, en 5 / 8); wrong pages 0. Quiet (8 lookalikes + set 35's 24 held-out quiet messages) bringing something: 1 before, 1 after.** Against the line (≥ half of 13, i.e. 7; quiet no worse; no wrong page): **fails by one**; quiet holds. Reading the learned phrases: English ones were the team expressions or close to them ("dusty-keys sweep", "white-hat queue", "lunch-break reaper strikes"); Chinese ones mostly were not (「回家加班」「昨晚连上」, or the expression with a word attached, 「每日洗牌刷掉」): without real Chinese word segmentation the picker cuts in the wrong places. As registered, the nightly step stays in the code, reported as not shown to work; it is **off by default** (`KROUTER_RECALL_LEARN=1`), because it also keeps the latest message's words in the state folder. |
+
+## Set 37: reference material apart from your memory, and saying "the memory does not have this" more often (registered 2026-11-10, before any development number was looked at)
+
+**Why.** An outside review put the refusal side at "30%" and said KRouter has no knowledge-base layer. Both come from
+one gap: a page someone else wrote (an article, a clipping, a report kept for research) was ranked as if it were the
+user's own memory, and a near match, from any page, was handed over at `medium` or `low` rather than as `recall: none`.
+In the maintainer's own vault the question *"What is the production database password of the billing service?"* got
+`recall_confidence: medium`, the top page an English news article in a project research folder. Two changes are
+measured here, separately: (A) the knowledge-base layer (`kb.py`): pages in a declared folder, and the clippings 2.0
+already recognised, are ranked and gated apart, listed in a `knowledge_base:` block, and never set the confidence;
+(B) a coverage rule on top of the shipped gate ("also refuse when ...").
+
+**(A) is a fact of the code, not a statistic.** With a folder declared, a question that only the folder's pages match
+gets `recall: none` from the memory, and the receipt's first line is `memory: none`; the knowledge-base pages are listed
+with their path, title and source. Judged by tests and by the synthetic set below, and by one byte-identity check:
+with no folder declared and no clippings, every lookup of the six memory-honesty sets gives the same result and the
+same printed receipt as before the change.
+
+**(B) data.** Development: LongMemEval's 30 `_abs` questions (seen in sets 7 and 14), set 14's dev half (235
+answerable) and that half with its answer sessions removed; LoCoMo (set 10's conversion) split by seed 20261110 over the
+sorted question ids, the 446 adversarial (category 5) and the 1 536 answerable with evidence drawn separately, half
+each to *dev*; the memory-honesty sets `dev`, `dev2`, `dev3`. Held out, opened once for the one rule chosen on dev:
+LongMemEval's held-out half (and the same with answer sessions removed), LoCoMo's held-out half, `heldout`, `heldout2`,
+`heldout3`, and a synthetic set written before any rule is chosen (`bench/refusal/synthetic.py`: a Chinese memory
+with long English reference articles, some declared as the knowledge base and some not; questions it answers, questions
+near something it holds that it does not answer, and questions about things it never mentions, in Chinese and English).
+
+**(B) candidates, fixed now** (`bench/refusal/study.py`, `candidates()`): the signals of
+`recall_index.coverage_signals` on the gate's own top pages — the rarest question word the memory holds is missing from
+the first page / from all three (`rare_miss1`, `rare_miss3`); the share of the question's idf weight on the first page,
+on the three, on the best single line (`cov1` < 0.4 / 0.5 / 0.6, `cov3` < 0.4 … 0.7, `line_cov` < 0.3 / 0.4 / 0.5);
+a named person or thing never on one line with the question's rarest other words (`bind_fail`); two or more question
+words the first page never uses (2.0.1's receipt line, `unseen`); one or more words the memory never holds (`nabsent`).
+Each alone and every AND of two, with the gate either at any confidence or only below `high`. A rule can only turn an
+answer into a refusal.
+
+**(B) pass bar, fixed now.** On dev, a rule qualifies when it loses at most 1 point of right answers on each of the
+LongMemEval dev half and LoCoMo's dev half (a right answer: a labelled page among the three cited), none on `dev`,
+`dev2`, `dev3` (gold page first), and newly refuses at least 10 of the dev unanswerable questions of LongMemEval `_abs`
+and LoCoMo's adversarial dev half together. Of the qualifying rules the one with the most new refusals there goes to the
+held-out halves, once (ties: fewer answers lost, then fewer signals). It ships on by default only if on the held-out
+halves: (1) LoCoMo's adversarial half: at least 10 more of its 223 refused than the shipped gate refuses; (2) right
+answers lost at most 1 point on LongMemEval's held-out half and on LoCoMo's held-out answerable half; (3) `heldout`,
+`heldout2`, `heldout3`: no fewer correction or current hits, no more wrong citations, no fewer refusals; (4) the
+synthetic set: no answerable case the shipped gate gets right is lost. If no rule qualifies on dev, the held-out halves
+are not opened for (B) and the report says so; if the chosen rule fails, it stays off and its numbers are reported as
+they are. Every number is reported, the ones that miss included. No model is called anywhere in this set.
+
+### Log, set 37
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered, with the candidate list and the signals written and no development number looked at. |
+| 2026-11-10 | **(B) development data, said as it happened** (`bench/refusal/study.py collect`, then `rules`). The shipped gate first, reproducing earlier counts: LongMemEval `_abs` 9 of 30 refused; dev half right 225 of 235 (3 refused); dev half with answer sessions removed 103 of 235 refused (set 14: the same three); LoCoMo dev half: adversarial 19 of 223 refused, answerable right 591 of 768 (80 refused); `dev` / `dev2` / `dev3`: refusals 10/10, 23/25, 14/20, right 17/20, 8/25, 26/30. **No candidate qualifies: 0 of 216.** Within the 1-point budget (at most 2 LongMemEval and 7 LoCoMo right answers lost, none on the three memory-honesty sets) 78 rules fit, and the best of them refuses **3 more** of the 234 dev unanswerable questions still answered (`cov3` < 0.5: 1 `_abs`, 2 LoCoMo; 4 more of the ablated vaults; loses 1 + 6 right answers); the bar asked for 10. The strongest single signals cost far more than they gain: `nabsent` ≥ 1 refuses 4 + 81 more and loses 30 + 163 right answers; 2.0.1's `unseen` ≥ 2 refuses 10 + 47 more and loses 97 + 103; `line_cov` < 0.5: 7 + 35 for 60 + 87; `rare_miss1`: 5 + 27 for 57 + 77; `bind_fail` (written for LoCoMo's adversarial questions, which ask about the other speaker): 4 + 8 for 13 + 12. As set 14 found on LongMemEval, the signals that see a near miss see it about as often on questions the memory does answer. **So the held-out halves are not opened for (B), and the gate is unchanged.** (A) is judged as registered. |
+| 2026-11-10 | **(A), said as it happened.** The synthetic set (`bench/refusal/synthetic.py`, 41 questions × three configurations: `none` nothing declared, `ref` the clipped `参考资料` folder declared, `all` the undeclared research folder declared as well) was run on the layer's first version and on 2.0.1's code (`git archive 51ba95d`). That run showed a flaw: with reference pages taken out of the ranking, the memory's top page led the next memory page by more than it had led the article, so the confidence *rose* (`ref:kb-en-02` low → high, `all:near-en-01` low → medium). Fixed before any number below: the memory's lead is measured against the best reference page too, and when the top three of all pages are reference pages the 2.0 clipping cap applies. The set was then run again; it is therefore a development set for (A) from here on, not a held-out one. **Final (`all`):** of the 6 questions only an article answers, 2.0.1 cited the article as the memory's answer for 5 and refused 1; now the memory refuses 4 (3 with `memory: none` first and the article listed; for one the reference block finds nothing either) and answers 2 at `low` from a memory page on a nearby subject; the knowledge-base block lists the right article for 5 of 6. Memory questions 15 of 15 right before and after (all configurations). Near misses refused 4 of 12 → 5 of 12; absent 8 of 8 → 8 of 8. No question in any configuration got a higher confidence than under 2.0.1 without being a right memory answer. `ref` and `none` behave alike (the `参考资料` pages carry clipper frontmatter): the 3 article questions there, 2.0.1 cited the article for 3; now 1 refused, 2 answered `low` from memory pages, the article listed for 3. The maintainer's case, `near-en-01` (*What is the production database password of the billing service?*): `low`, top page `Billing service deploys` (a memory page), before and after in every configuration; the layer moves the articles into the knowledge-base block but does not refuse a near page of the memory's own. Its exact shape from the maintainer's vault (the article first) is covered by `tests/test_knowledge_base.py`. Byte identity: the six memory-honesty sets, 405 lookups, results and printed receipts identical to 2.0.1. |
+
+## Set 38: two working points — the three-state receipt, and strict mode (registered 2026-11-11, before any count)
+
+**Why.** Set 37 found no rule that refuses more near misses without losing answers: answering more from a fuzzy match
+and refusing more are one trade-off. This set does not move it; it makes it visible and switchable. The receipt's first
+line now says one of three things: `memory: direct` (an alias lock, or confidence `high`), `memory: related` (`medium` or
+`low`: no direct answer, only related pages, with the instruction to answer only from a sentence that states it outright),
+`memory: none`. Strict mode (`KROUTER_STRICT=1`, or `strict|on` in the memory folder's `krouter-settings.psv`; the
+variable wins) hands `related` to the host as `none`, the pages named on one line. Ranking, the pages given and the
+confidence are unchanged; strict mode is off by default. Nothing is tuned: the state is a fixed function of what recall
+already returns, so the counts below are reports, not a test of a chosen rule.
+
+**Data.** Unanswerable: LongMemEval's 30 `_abs` (seen in sets 7, 14 and 37: development data); LoCoMo's adversarial
+held-out half (223, set 37's split; **not opened in set 37**, where no rule qualified; LoCoMo's 446 were counted as a
+whole once in set 10); the synthetic set's `near` and `absent` questions and its `kb` questions whose article is in the
+knowledge base (seen in set 37 (A)). Answerable: LongMemEval's held-out half (235; its rankings were counted in set 18
+and its refusals in set 14), LoCoMo's answerable held-out half (768, not opened in set 37), the six memory-honesty sets
+(aggregates), the synthetic set's answerable questions. The state with an alias lock is counted where the vault has its
+own alias table (none of the benchmark vaults does, so there it is recall's confidence alone).
+
+**Reported, for the default and for strict mode, three states apart:** unanswerable questions by state (direct /
+related / none); answerable questions by state, and the share whose labelled page is among the pages handed over as
+evidence (default: among the three cited whenever the state is not `none`; strict: only when the state is `direct`).
+No pass bar: strict mode stays off by default unless these numbers show answerable questions almost untouched, and
+then the decision is the maintainer's.
+
+### Log, set 38
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered, before any count. |
+| 2026-11-11 | **Counted once** (`bench/refusal/study.py states`; strict mode is a function of the same lookups, so one run gives both). Unanswerable, direct / related / none at the default: LongMemEval `_abs` 0 / 21 / 9 of 30; LoCoMo adversarial held-out half 0 / 205 / 18 of 223; the six memory-honesty sets 0 / 54 / 111 of 165; synthetic 15 / 14 / 43 of 72. Strict mode hands every `related` over as `none`: 30 of 30, 223 of 223, 165 of 165, 57 of 72. Answerable, direct / related / none: LongMemEval held-out half 0 / 224 / 11 of 235, the labelled page handed over for 212 (default) and 0 (strict); LoCoMo answerable held-out half 0 / 714 / 54 of 768, 613 and 0; memory-honesty sets 0 / 193 / 47 of 240, 190 and 0; synthetic 39 / 10 / 2 of 51, 49 and 39. **Why strict mode is near zero on the benchmarks:** `high` needs a rule or topic page leading the next by 1.5×, and these vaults hold only session pages and plain pages, so nothing there is ever `direct`. On the synthetic memory, which has rule pages, strict mode refuses 14 more of 72 unanswerable questions and hands over the answer for 10 fewer of 51 answerable ones; and 15 of its unanswerable questions are `direct` (a near miss on a rule page at `high`), which strict mode does not catch. Answerable questions are not "almost untouched", so **strict mode stays off by default.** The effect of the `related` instruction on a reader's answers is not measured. |
+
+## Set 39: paragraph-level evidence — more answers handed over and more `none`, both at once (registered 2026-11-11, before any rule was chosen)
+
+**Why.** Sets 14 and 37 found that whole-page word signals cannot tell a near miss (the session about the subject is in
+the memory, the asked detail is not) from an answer: any rule that refused more also lost answers. This set changes the
+signal, not the threshold. Each page is cut into paragraphs (a session into its turns) at index time
+(`skill/krouter/scripts/evidence.py`, in the rebuildable cache), and recall looks at the best paragraph of each of the
+first 20 ranked pages: (1) how much of the question's idf weight one paragraph (or two adjacent ones) holds together;
+(2) speaker binding: when the question names a speaker of the page (`What did Caroline …`), or asks about "I / my" on a
+page with `user` / `assistant` turns, how much of it that speaker's own turns hold; (3) answer type: when the question
+asks for a count, a duration, a date, an amount of money, a frequency or an age (rules and regular expressions, Chinese
+and English; any other question is not checked), whether the best paragraphs hold that kind of thing at all; (4) time
+cues (a date, a weekday, `last week`, `三个月前`) weighed against the page's own date; (5) questions that add up or
+list (`how many times`, `in total`, `都有哪些`) hand over more pages.
+
+**Seen before this registration, said plainly.** A read-only probe on set 37's development records (the pages the
+shipped gate cited for LongMemEval `_abs`, the dev half, the dev half with answer sessions removed, LoCoMo's dev half
+and `dev` / `dev2` / `dev3`) computed signals (1)–(3) before anything was built; speaker binding separated LoCoMo's
+adversarial dev questions from its answerable ones (60 of 203 against 25 of 579 at a half-coverage ratio), the others
+less. No held-out record was read.
+
+**Data.** Development: LongMemEval's 30 `_abs` (seen in sets 7, 14, 37, 38), set 14's dev half (235) and that half with
+its answer sessions removed (235, unanswerable), LoCoMo's dev half (set 37's split: 223 adversarial, 768 answerable),
+`dev`, `dev2`, `dev3`, and set 37's synthetic set (a development set since set 37). Held out, run once with the code as
+chosen on dev: LongMemEval's held-out half (235) and the same with answer sessions removed, LoCoMo's held-out half (223
+adversarial, 768 answerable), `heldout`, `heldout2`, `heldout3`. **These held-out halves were counted in set 38** (the
+three states and whether the labelled page was handed over; nothing was tuned on them); the memory-honesty held-out
+sets have been reported in many earlier sets. Rules, thresholds and page counts are set on development data only.
+
+**Counts** (`bench/evidence/study.py`, set 38's definitions): unanswerable questions whose receipt says `none`;
+answerable questions whose labelled page is among the three cited and whose state is not `none` ("handed over"); on the
+memory-honesty sets also wrong citations (an answer whose first page is not the labelled one). The baseline is the code
+at 44c041f, counted with the same script.
+
+**Pass bar, fixed now.** Built in and on by default only if all of these hold on the held-out data: (1) more `none`:
+LoCoMo's adversarial held-out half at least 38 of 223 (set 38: 18); LongMemEval `_abs` at least 14 of 30 (set 38: 9;
+development data, reported as such); the six memory-honesty sets at least 111 of 165; (2) no fewer handed over:
+LongMemEval held-out half at least 212 of 235, LoCoMo answerable held-out half at least 613 of 768, the six
+memory-honesty sets at least 190 of 240; (3) no memory-honesty set with more wrong citations than the baseline. If a
+part only raises one side and lowers the other, the whole does not pass; it is reported as measured, and any part that
+stands on its own (raises hand-overs without fewer `none` and without more wrong citations, or raises `none` without
+fewer hand-overs) may be switched on alone, its numbers reported apart. Timing (the prompt hook's warm p95 must stay at
+or under 250 ms, set 34), index build time and cache size, on a small vault and a 10 000-page one, are reported.
+
+## Set 40: telling reference material from your own pages with nothing declared (registered 2026-11-11, before the labelled set was written)
+
+**Why.** Set 37's knowledge base needs a declaration (`krouter kb add`), and `krouter kb suggest` judges whole folders:
+in the maintainer's vault it suggested one folder and missed a batch of outside articles kept under a project folder
+(plain text, no clipper frontmatter, nothing in the path that says so). This set measures a per-page rule that needs no
+declaration (`kb.page_origin`): a page is your memory when where it came from says so (KRouter's own folders and
+frontmatter, a page the alias table points to, a page or folder marked with `krouter kb mine`); every other page is
+scored on deterministic features (a source address or a reprint / translator / byline marker near the top or bottom, a
+title that reads like an article's, a long narrative without decision or to-do structure, an `author:` that is not
+you, a main language other than the vault's, most pages in its folder scoring the same way; decision structure and
+your own annotations count against). A declaration in `krouter-kb.txt` wins over the score either way.
+
+**Data.** A labelled synthetic vault written for this set (`bench/kb_auto/make.py`), Chinese and English: your own
+rule pages, distilled session pages, personal notes and project notes, and outside material — plain-text articles with
+no frontmatter, clippings with a source, research excerpts, translations, meeting notes taken from someone else's
+meeting, mixed into the same folders as your pages; and the hard cases: long essays you wrote yourself, and excerpts
+you copied and annotated (labelled as yours). Each page is assigned to *dev* or *heldout* by a fixed seed before any
+rule is run. Thresholds and weights are set on *dev* only; *heldout* is scored once.
+
+**Reported:** the share of outside pages recognised as reference material, and the share of your own pages wrongly
+taken for reference material, each on *dev* and *heldout*. Wrongly taking your page for reference is the costlier
+error: the threshold is set so that on *dev* no own page is misjudged if that is reachable, and the held-out numbers
+are reported as they come. Whether automatic recognition is on by default is decided from the held-out numbers: it is
+on if no more than 2% of your own held-out pages are misjudged.
+
+### Log, set 39
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered (above). |
+| 2026-11-11 | **Development data, said as it happened** (`bench/evidence/study.py collect dev`, then offline rules on the recorded candidates). Baseline (44c041f's ranking and gate, counted with this script): LongMemEval `_abs` 9 of 30 `none`; dev half handed over 225 of 235; dev half with answer sessions removed 103 of 235 `none`; LoCoMo dev half: adversarial 19 of 223 `none`, answerable handed over 591 of 768; `dev` / `dev2` / `dev3`: `none` 10/10, 23/25, 14/20, handed 17/20, 8/25, 27/30, wrong citations 0, 3, 7. **Separation of each signal** on the questions the shipped gate answers (AUC: the chance that an unanswerable question looks worse than an answerable one that was handed over; 0.5 is none). LongMemEval (153 unanswerable / 225 answerable): page score 0.79, best paragraph's coverage on the first page 0.77, on the best of three 0.76, speaker binding (the user's own turns) 0.83, binding gap 0.77, answer type in the best paragraphs 0.50, answer type in the user's own best turn 0.57, rarest word in the best paragraph 0.60. LoCoMo (204 / 591): page score 0.46, paragraph coverage 0.50, speaker binding 0.70, binding gap (the named person's own turns against the other speaker's) 0.79, answer type 0.46, numbers 0.51, rarest word 0.49. So paragraph coverage separates on LongMemEval and not at all on LoCoMo; speaker binding separates on both; **the answer-type check does not separate** (it stays in the code as a recorded signal and is not used to refuse). |
+| 2026-11-11 | **Chosen on dev** (the best of the combinations that lose no hand-over on any dev source, add no wrong citation, and refuse no fewer anywhere; 15 of 1 600 qualified): rerank the first 20 pages by page score × (0.3 + best paragraph's coverage); pages dated inside a time cue's window ×2; refuse when the first page's best paragraph holds under 0.25 of the question's weight; refuse when the question names a speaker of the top pages (or asks about "I" on pages with user / assistant turns) and that speaker's own best turn holds under 0.4 of what the other speakers' best turn holds. Real run with the code as built (`cand1`): LongMemEval `_abs` **10** of 30 (+1); dev half handed over **225** (±0); answer sessions removed **143** of 235 (+40); LoCoMo adversarial **61** of 223 (+42), answerable handed over **593** of 768 (+2); `dev` / `dev2` / `dev3` unchanged on every count. The offline simulation gave the same numbers within one question. Not used: rescuing questions the gate refused when one turn of the named speaker covers them (LoCoMo +13 handed over, but 4 fewer `none` there and on LongMemEval), the answer-type and number checks (each loses answers for the questions it refuses). Aggregation questions (`how many times`, `in total`, `都有哪些`, 81 of the LongMemEval dev half's answerable questions): handing over 8 pages instead of 5 raises the questions whose every labelled session is handed over from 196 to 203 of 235, for 236 more pages handed (1 138 → 1 374) and no change to any count above; LoCoMo unchanged (562). |
+| 2026-11-11 | **Found by the test suite, fixed before any held-out run.** The first-page coverage rule refused 8 of 9 Chinese questions of the template vault's recall bench (`tests/test_recall_bench.py`; it needs 9): the paragraph coverage counted cross-word character pairs (`么判`, `天封`) in the question's weight and did not count the page's title and trigger words, so a rule page found by its title, or by a trigger card, had a low best paragraph. Now the paragraph check uses the question words recall itself takes as words (`qtok`: Chinese pairs only when they read like words), and every paragraph carries its page's title, file name and trigger words. Also from the suite: `tests/test_docs_status.py` scores `heldout3` on every run and compares it with `docs/STATUS.md`, so the first run after the change showed `heldout3`'s right answers at 101 of 120 (the docs say 102) before the held-out run; nothing was tuned on it. Development numbers with the fix (`cand3`, the code that goes to the held-out run): LongMemEval `_abs` **10** of 30; dev half handed over **225** of 235; answer sessions removed **135** of 235; LoCoMo adversarial **60** of 223, answerable handed over **592** of 768; `dev` / `dev2` / `dev3` unchanged on every count; the parameters were not changed. |
+| 2026-11-11 | **Held out, run once with the chosen configuration** (`study.py collect heldout final`, code at 506f64c; baseline = 44c041f counted with the same script on the same halves, `baseline`). Against the bar: (1) more `none`: LoCoMo adversarial held-out **61** of 223 (baseline 18; bar 38) — met; LongMemEval `_abs` **10** of 30 (9; bar 14) — **not met**; six memory-honesty sets **111** of 165 (111) — met (equal). (2) Hand-overs: LongMemEval held-out half **211** of 235 (212) — **not met, one short**; LoCoMo answerable held-out half **619** of 768 (613) — met; six memory-honesty sets **190** of 240 (190) — met (equal). (3) Wrong citations per set, held-out: `heldout` 2 (3), `heldout2` 12 (12), `heldout3` **37 (36)** — **not met**; dev sets unchanged. Also: answer sessions removed, held-out half, `none` 134 of 235 (117); every labelled session handed over: LongMemEval 206 of 235 (203), LoCoMo 560 (559). **So the whole does not pass and is not on by default.** Parts, counted offline from the same held-out records (the baseline's gate decisions with the new records' candidates and evidence; on dev this reproduces the real run within two questions), as (unanswerable `none`, handed over, wrong citations): re-ranking alone LongMemEval 213 (+1), LoCoMo 626 (+13), no `none` change, wrong citations `heldout` 2 (−1) and `heldout3` 37 (+1); with the time weight LongMemEval 214; the two refusals alone LoCoMo 61 `none` (+43) but 602 handed over (−11), LongMemEval 210 (−2), `heldout` 9 handed over (−1). Neither stands on its own by the registered rule (re-ranking adds a wrong citation on `heldout3`; the refusals lose hand-overs). Handing aggregation questions 8 pages changes nothing in the first three pages, the refusals or the first page, so it stands on its own and ships on; the rest ships off, behind `KROUTER_EVIDENCE=1` / `evidence|on`, with these numbers. |
+| 2026-11-11 | **The default that ships, counted on dev and on the held-out halves** (a second held-out run, logged in the run marker with its reason: the full configuration missed the bar, and this counts what ships; nothing was changed between the two runs except switching the paragraph re-ranking, the time weight and the two refusals off). Every registered count is the baseline's on every source, dev and held out (LongMemEval 212 of 235 handed over, `_abs` 9 of 30; LoCoMo 18 of 223 `none`, 613 of 768 handed over; six memory-honesty sets 111 of 165 and 190 of 240, wrong citations 3 / 12 / 36 held out), except that aggregation questions get 8 pages: every labelled session handed over, LongMemEval held-out half 203 → **205** of 235 (dev 210 → 212), LoCoMo 559 → **560**; pages handed over, LongMemEval held-out 1 108 → 1 288 (+16%), LoCoMo 4 586 → 4 604. Automatic reference recognition (set 40) is on in this count; on the benchmark vaults it recognises nothing that changes a count (their pages are session excerpts and the memory-honesty vaults' notes). |
+| 2026-11-11 | **Timing** (`bench/evidence/results/set39-speed.txt`; old = 44c041f and new measured one after the other in the same quarter hour, Apple laptop shared with other sessions, load average 4.5–5; the prompt hook run as the app runs it by `bench/subconscious/speed.py`, 100 warm and 10 cold runs per message; a lookup in its own process by `bench/scale/run.py`, 30 questions). vault3 + overlay (110 pages): hook warm p50 / p95 94 / 105–109 ms → **113–117 / 125–159**, cold 101–105 / 108–114 → 117–121 / 124–125; one lookup p50 / p95 0.094 / 0.105 s → 0.113 / 0.132 s; index build 0.2 s both, cache 312 → 372 KB. 10,000 pages (`bench/scale/gen.py`, no alias or trigger tables, unlike set 34's): hook warm 94–95 / 103–105 → **112–113 / 129–131**, cold 112–124 / 167–291 → 126–131 / 168–178; one lookup 0.168 / 0.186 → 0.199 / 0.269 s; **index build 6.4 → 8.7 s, cache 38.0 → 47.2 MB (+24%)**. With `KROUTER_EVIDENCE=1` (first run): 10,000 pages, hook warm p95 141–146 ms. The registered line (warm p95 ≤ 250 ms) holds in every row. Before the second run the default was changed to compute paragraph evidence only for the pages handed over (up to 8) when re-ranking is off; the first run's new-code rows are kept in `set39-speed-run1.txt`. |
+| 2026-11-11 | **Set 18's coverage count, rerun** (`bench/longmemeval/assoc.py --half heldout`, k = 3 / 5 / 8, every answer session among the pages): krouter+assoc at 44c041f **187 / 210 / 215** (set 18's log says 190 / 210 / 218 at 6dedefd; the k = 3 and k = 8 counts had already moved before this work), with this work first **187 / 201 / 215**: an aggregation question's extra direct hits were listed before the associated pages, pushing those out of the first five. Fixed (the extra pages now come after the associated ones, under `more:` in the receipt, so the first five pages are what they were): **187 / 210 / 215**, identical to 44c041f. The aggregation counts above do not change (they count every page handed over). |
+
+### Log, set 40
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered (above); the labelled vaults written after (`bench/kb_auto/make.py`, 151 pages: dev 41 own / 35 outside, held-out 43 / 32, split by a hash of the path). Said plainly: the pages of both splits come from the same text banks and kinds, written by the same author as the rule, so the held-out half is a check against overfitting thresholds, not an independent sample of real vaults. |
+| 2026-11-11 | **Development.** First version: 12 of 35 outside pages recognised, 0 of 41 own misjudged. Changed on dev only: length counted in words (Chinese 1.5 characters a word) instead of characters, the decision signal narrowed to decision structure (`决定：`, `- [ ]`, `we decided`; plain `必须` / `must` occur in articles), the folder majority made to add only (a mixed folder must not hide an article), a first-person rate signal (low: `impersonal` +1; high: `-personal` −1.5), and threshold 4.0 → 3.0 (own pages top out at 1.5 on dev). Final dev: **35 of 35 recognised, 0 of 41 misjudged.** |
+| 2026-11-11 | **Held out, run once** (`bench/kb_auto/run.py DIR heldout`): **outside pages recognised 30 of 32 (93.8%); own pages misjudged 0 of 43 (0%).** Missed: a library README copied into the Chinese vault (score 1.5: other language only) and an English article in the English vault with no source, byline or article-like title (2.0). The bar (at most 2% of own held-out pages misjudged) is met: automatic recognition is **on by default** (`KROUTER_KB_AUTO=0`, or `kb_auto|off` in `krouter-settings.psv`, turns it off; `krouter kb mine` and `krouter kb add` win over it). |
+
+
+## Set 41: "dares to say it does not know", the whole chain — receipt and pages, then a reader model (registered 2026-11-11, before any reader or judge call)
+
+**Why.** The number KRouter has published for "dares to say it does not know" is a retrieval-layer one: of LongMemEval's 30
+unanswerable questions, the receipt says `none` for 9 (30%). Other memory projects' numbers are for a whole chain, the memory
+plus a language model that answers. KRouter is always used with a host agent's model, so the number that describes use is the
+chain's: the receipt and pages go to a reader, the reader answers, and we count how often it says "the memory does not have
+this" and how often it invents an answer. Set 11/12 ran the whole chain once, before the three-state receipt (Sonnet read
+LongMemEval's 30 `_abs` questions: 29 said "not mentioned"; with nothing at all to read it also said so 30 of 30).
+
+**Questions, drawn once with seed 20261111 and sealed in `bench/memory_honesty/results/set41/sample.json`** (the draw order is
+in `endtoend.py sample`: B, C-LongMemEval, C-LoCoMo, then the two condition-2 draws):
+- **A, unanswerable:** all 30 `_abs` questions of LongMemEval-S (30).
+- **B, unanswerable:** 60 of the 223 adversarial questions in LoCoMo's held-out half (set 37's split).
+- **C, answerable control:** 20 of LongMemEval's 235 held-out-half questions and 20 of LoCoMo's 768 answerable held-out-half
+  questions (40). It shows the readers are not scoring by saying "I don't know" to everything.
+- Condition 2 uses 20 of A and 20 of B (drawn from the sealed lists by the same seed).
+
+**What each question was seen for, said plainly.** A is development data (seen in sets 7, 14, 37, 38, 39; its receipts and the
+reader's answers of set 11/12 were read). B and C come from the held-out halves of LoCoMo and LongMemEval: their retrieval-layer
+state (`direct` / `related` / `none`) and what was handed over were counted in sets 38 and 39 and nothing was tuned on them;
+**nobody has read a reader model's answer on them**, and the reader models have not been run on them. LoCoMo's adversarial
+questions are the benchmark's own label (category 5); this set follows it and does not re-judge it.
+
+**Engine.** This checkout's `skill/krouter/scripts` at `506f64c`, unchanged; not edited between this registration and the
+scoring. Each question is asked once as `route_knowledge.py search "<question>"` against a copy of its own benchmark vault
+(copies are named by hash; none of the vaults has an alias table of its own; `KROUTER_NO_QUERY_LOG=1`, the study's own cache and
+state directories, `*_API_KEY` removed from the environment, `KROUTER_STRICT` unset: strict mode off, the shipped default;
+`KROUTER_TODAY` = the question's date for LongMemEval, as in sets 14, 37–39, unset for LoCoMo). The receipt is kept as printed. Not
+the user's real knowledge base, not the user's agent configuration.
+
+**What the reader gets (condition 1, "with KRouter").** One prompt per question: a frame sentence ("You are the assistant of a
+user. Before replying you looked in the user's memory (a folder of notes) with KRouter, a local memory tool. Its result is below,
+followed by the user's message."), `Today's date:` for LongMemEval questions only, the receipt as printed, the text of the first
+three pages of the receipt's `recall:` list (each page cut at 14 000 characters; none when the state is `none` or the list is
+empty; a host that opens pages sees at most these; pages beyond the third are named in the receipt but not opened), the question,
+and "Reply to the user.". Nothing else: no usage rules beyond what the receipt itself says (its `related` line, "answer only if
+one of the pages below has a sentence that answers the question outright: quote that sentence and its page; if none does, tell
+the user the memory does not have it", is left as the engine prints it). **Display edits, listed:** the vault's path in the receipt
+becomes `/home/user/memory` (LongMemEval's vault folders carry `_abs`); the scripts' path becomes `/opt/krouter/scripts`;
+LongMemEval's `observed_at` becomes the question's own date; the prefix `answer_` and the suffix `_abs` are removed from session
+names (LongMemEval's answer sessions and the sessions of its unanswerable questions carry them; the `_abs` one was found by
+reading the prompts before any reader ran, and fixed then). Page text and the rest of the receipt are untouched. Pages carry their original frontmatter, which
+includes `source: longmemeval` or `source: locomo`. The full templates are in `bench/memory_honesty/endtoend.py` at this commit.
+**Condition 2, "nothing":** the frame "You are the assistant of a user. Reply to the user's message." (with the date for
+LongMemEval), the question, "Reply to the user."; no memory, no receipt.
+
+**Readers.** Claude Haiku 5.5 and Claude Sonnet 5.5, as Claude Code subagents on the maintainer's subscription (no API key; the
+model each agent reports is logged). Condition 1: both models, every question of A, B and C (130 each, 260 prompts). Condition 2:
+Haiku only, the 40 questions (20 of A, 20 of B); the two conditions share the exact frame sentence only up to the last two lines.
+Total reader prompts **300**, a hard ceiling. Prompts are named by a hash (`sha1("set41:<condition>:<question id>")`) and sorted
+by it, so unanswerable and answerable questions are mixed in every batch; batches hold at most 10 prompts or 150 000 characters
+(set 11 used 12 / 200 000). Each prompt is one text file (lines over 1 500 characters soft-wrapped at spaces, because the agents' file reader cuts
+longer lines); an agent gets the folder of one batch and writes each reply as plain text to a file of the same name in its replies
+folder, told to treat each file as a separate message, to use no tool but reading those files and writing those replies, and to keep
+each reply to about 150 words (a harness note outside the prompts, as set 15's). **Deviation, said in advance:** a Claude Code
+subagent cannot be started in an empty folder from inside a session; they start in this worktree and are told to touch only
+the two folders; the benchmark answers are not in this worktree except in set 11/12's result files, which the agents are told not to
+open. Each condition runs once; a batch whose file comes back unreadable is asked again (counted and reported), no reply is
+re-drawn because of its content.
+
+**Scoring, fixed now.** Mechanical first (`endtoend.py mech`). *Unanswerable:* **idk** = the reply matches a refusal phrase
+(not mentioned / no information / don't know / cannot find / 没有, 不知道 … see the `IDK` pattern) and none of the softeners
+(however, but, likely, seems, 可能, 不过 … the `HEDGE` pattern); **made up** = no refusal phrase and no question mark. *Answerable:*
+**right** = the normalised gold answer (4 or more characters) occurs in the normalised reply; **refused** = a refusal phrase and no
+softener. Everything the rules do not settle goes to a judge model that is **not the reader that wrote the reply** (Sonnet judges
+Haiku's replies, Haiku judges Sonnet's), in batches of 20, with one prompt each: unanswerable, it sees only the question and the
+reply and answers A (says it does not know / the information is not in the memory, no answer offered), B (offers a specific answer,
+even tentatively or with caveats), C (neither clearly: a clarifying question, off topic); answerable, it also sees the labelled
+answer and writes two lines, yes/no (the benchmark's own wording, off-by-one allowed for temporal-reasoning) and A/B/C. Final labels:
+unanswerable A → **said "don't know"**, B → **made one up**, C → **vague**; answerable yes → **right**, no with A → **refused**,
+no otherwise → **wrong**. The judge prompts are in `endtoend.py` at this commit; judge calls are outside the 300 and reported
+separately. Every reply is kept with who labelled it (`rows.jsonl`).
+
+**Reported, whatever it shows:** per reader and group, the three counts with the share and a Wilson 95% interval; the same split
+by the receipt's state (`direct` / `related` / `none`) for each; the condition-2 row; how many labels were by rule and by judge.
+The `related` state's row is the answer to whether the receipt's "quote the sentence" instruction works on its own.
+
+**Pass bar, fixed now (a suggestion handed in with the task, adopted as is).** Both readers say "don't know" for at least 76.67% of
+A and at least 76.67% of B (four cells; 76.67% is the figure an outside write-up quoted for another project: it is the line we
+set ourselves here, not a comparison), and both refuse at most 15% of C. A cell below the line is reported as it is; the
+line does not move.
+
+**Not claimed.** Other projects' published numbers use other questions, other readers and other judges and cannot be
+compared with these; this set does not run any other system. The sample is small (A 30, B 60, C 40), so the intervals are wide.
+LongMemEval has been public since 2024 and the readers may have seen it in training.
+
+### Log, set 41
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered (above); the sample sealed first. |
+| 2026-11-11 | **Engine run once per question, then the prompts** (`endtoend.py prepare`; the engine at `506f64c`, unchanged). Receipt states of the 130 questions: A (LongMemEval `_abs`) 0 `direct` / 20 `related` / 10 `none`; B (LoCoMo adversarial, 60) 0 / 47 / 13; C (answerable, 40) 0 / 40 / 0. Same 10 of 30 `none` as set 39's development count for these 30. Reading the prompts before any reader ran, `_abs` was found in LongMemEval's session names (the sessions of unanswerable questions carry it) and stripped from the displayed names (the registration above says so). Batches: Haiku 19, Sonnet 20, nothing 4 (10 prompts or 150 000 characters at most). |
+| 2026-11-11 | **Readers.** First try: the four *nothing* agents wrote no reply: a subagent restricted to the file reader cannot list a folder (it said so and asked for the names); no prompt was answered. The batch folders got an `INDEX.txt` listing the file names and the same four batches were handed out again, unchanged. After that: *nothing* 40 / 40 replies, Haiku with KRouter 130 / 130, Sonnet with KRouter 130 / 130; every agent reported its model (`claude-haiku-5-5`, `claude-sonnet-5-5`). **300 reader prompts**, none asked twice for its content. |
+| 2026-11-11 | **Found while checking the labels, and corrected.** Two subagents filed replies under the wrong prompts' names: in Sonnet's batch 7, `conv-41-163` and the question of `gpt4_c27434e8` (their replies were each other's); in *nothing*'s batch 2, `eeda8a6d` and `conv-41-163`. The replies' contents (a reply about Maria's blog under a question about a fish tank) and a check of every reply against its own and its batch-mates' questions found these four and no others. They were put under the questions they answer (`results/set41/swaps.json`) and the labels computed again (one went to a judge a second time; the other three were settled by rule). **This moved Sonnet's B from 65.0% to 63.3%** and A from 90.0% to 93.3%. Not found by this check: a swap between two replies on near-identical questions. |
+| 2026-11-11 | **Judges.** 183 labels by rule, 117 by a judge model that was not the reader (Sonnet on Haiku's replies, Haiku on Sonnet's; 7 agents; one more prompt for the re-labelled reply above). No judge reply was unparseable. Read in full, one Haiku judge batch (20 verdicts) matched its replies. Said plainly: a Haiku judge on Sonnet's replies is a weaker judge than the Sonnet judge on Haiku's, and it tends to call "the notes do not say, but the closest is ..." an answer (B); this bears on Sonnet's B column. |
+
+### Result, set 41 (2026-11-11, labels as registered)
+
+Reader models Claude Haiku 5.5 and Claude Sonnet 5.5, each run once. "Don't know" = the reply said it does not know or that the memory does not have it; "made up" = gave a specific answer; no reply was labelled vague. Intervals are Wilson 95%. The reader given nothing is Haiku only, 20 questions of A and 20 of B drawn by the seed.
+
+| Reader | A: LongMemEval unanswerable (30): don't know / made up | B: LoCoMo adversarial (60): don't know / made up | C: answerable (40): right / refused / wrong |
+|---|---|---|---|
+| Haiku 5.5 with KRouter | **29** / 1 (96.7%, [83.3, 99.4]) | **55** / 5 (91.7%, [81.9, 96.4]) | 26 / **11** / 3 (refused 27.5%, [16.1, 42.8]) |
+| Sonnet 5.5 with KRouter | **28** / 2 (93.3%, [78.7, 98.2]) | **38** / 22 (63.3%, [50.7, 74.4]) | 29 / **7** / 4 (refused 17.5%, [8.7, 32.0]) |
+| Haiku 5.5 given nothing | 19 / 1 of 20 (95.0%) | 20 / 0 of 20 (100%) | not run |
+
+**By the receipt's state** (the state is the engine's for that question; the *nothing* reader never saw it):
+
+| | `direct` | `related` | `none` |
+|---|---|---|---|
+| Questions (A / B / C) | 0 / 0 / 0 | 20 / 47 / 40 | 10 / 13 / 0 |
+| Haiku with KRouter, unanswerable: don't know / made up | none | A 19 / 1; B 42 / 5 | A 10 / 0; B 13 / 0 |
+| Sonnet with KRouter, unanswerable: don't know / made up | none | A 18 / 2; B 25 / 22 | A 10 / 0; B 13 / 0 |
+| Haiku / Sonnet, answerable: right / refused / wrong | none | Haiku 26 / 11 / 3; Sonnet 29 / 7 / 4 | none |
+| Haiku given nothing (A, B) | none | A 12 / 1; B 17 / 0 | A 7 / 0; B 3 / 0 |
+
+**Pass bar (fixed in the registration): not met.** Both readers at 76.67% or more on A and on B: A yes for both (96.7%, 93.3%), B yes for Haiku (91.7%), **no for Sonnet (63.3%)**. Both refusing at most 15% of C: **no for both** (27.5%, 17.5%). Reported as it is; the line did not move.
+
+*What it says.* (1) When the receipt says `none` (23 of the 90 unanswerable questions), every reply said so: 23 of 23 for both readers. That is what the first line of the receipt buys. (2) In `related` (67 unanswerable questions), Haiku said "not in the memory" 61 times and Sonnet 43 times; Haiku given nothing, on the 30 of its 40 questions that are `related`, said so 29 times. So for Haiku the receipt's "only if one sentence answers outright" instruction does not make it worse than having nothing and does not show a gain; for Sonnet the "made up" count is the largest, see the post-hoc check below. The instruction visibly shapes the replies (they quote a sentence and its page, or say none does), but this set has no row that isolates its effect: only one condition per reader, and a *nothing* row only for Haiku. (3) On answerable questions every one of the 40 was `related` (none `direct`: these vaults hold only session pages, set 38), and the readers refused 11 (Haiku) and 7 (Sonnet) of them: the wording that protects the unanswerable ones costs answers here, and Haiku more than Sonnet. (4) The *nothing* row is the model's own habit: Haiku with no memory said "I don't have that" for 39 of 40, so most of the headline numbers in the first two rows come from the model, not from KRouter, as in sets 11 and 12.
+
+### Post-hoc check, not registered (the numbers above stand)
+
+Reading the labelled replies turned up two kinds of label that the registered rules get wrong in KRouter's disfavour, so the rows each concerned were judged once more (34 prompts, judge never the reader).
+- **LoCoMo's adversarial questions name the wrong person** ("Why did Maria start blogging about politics?"; the notes say John). Many replies say exactly that: "it was John, not Maria", quoting John's sentence. The registered rule labels a reply with no refusal phrase as `made_up`. Of the 5 (Haiku) and 22 (Sonnet) B replies labelled `made_up`, a judge asked whether the reply asserts an answer for the person asked (P) or reports that the notes attribute it to someone else (Q) found **P 1, Q 4 for Haiku and P 2, Q 20 for Sonnet**. Read as "did not assert an answer for the person asked", Sonnet's B would be 58 of 60 and Haiku's 59 of 60. Whether a correction counts as "knowing" or as "answering" is a judgement the registration did not make; the registered label is the one in the table, and the idk replies were not audited the other way.
+- **Rules called a reply that computes an answer from the pages a refusal** (`doesn't state a total outright, so this count is my own: three events`). The 7 answerable replies the rules labelled `refused` were judged again: of Haiku's 4, 3 contain the right answer; of Sonnet's 3, 2. That would make Haiku's refused 7 of 40 (17.5%) and Sonnet's 5 of 40 (12.5%), right 29 and 31. **The bar on C would then be met for Sonnet and not for Haiku.** The 11 `refused` labels that came from judges were not re-judged.
+
+Deviations, said together: the four empty agent starts and the `INDEX.txt` fix; the `_abs` display edit; the four re-filed replies; subagents start in this worktree rather than an empty folder (told to read and write only their own files, and no reader or judge reported touching another file); one Haiku judge said it matched answers to files by the order of its reads, and the batch was read in full against its replies afterwards. Prompt counts: **reader 300** (130 + 130 + 40); judge 117 + 1 re-label + 34 post-hoc = 152, outside the 300. Files: `bench/memory_honesty/results/set41/` (`sample.json`, `rows.jsonl` with every reply, label and who gave it, `score.json`, `swaps.json`, `posthoc.json`); `bench/memory_honesty/endtoend.py`.
+
+**Not claimed.** A, B and C are small (30, 60, 40), so the intervals are wide; one reader model of each size and no repeat run. LoCoMo's adversarial label is the benchmark's, and a reply that corrects the person is neither right nor wrong under it. LongMemEval has been public since 2024. **Other projects' numbers are for other questions, readers and judges: these cannot be ranked against them.** The retrieval-layer figure (9 of 30 `none`, set 7 / 38) is unchanged and stays alongside.
+
+
+### Set 41, addendum: a third reader, Claude Opus 5.5 (registered 2026-11-11, before any Opus reply)
+
+**Why.** The maintainer asked for the same chain read by Opus as well, run once, to put next to Haiku 5.5 and Sonnet 5.5.
+
+**What is the same, exactly.** The 130 sealed questions (A 30, B 60, C 40); **the prompt files that were already generated for the Sonnet condition, not one character
+changed** (the receipts and pages were produced by the engine at `506f64c`; the engine on this branch is now newer, and is *not* run again for this row); the batches (20,
+at most 10 prompts or 150 000 characters each); the reply length note (about 150 words); the scoring rules, the judge prompts, the pass bar (A and B at least 76.67% "don't know",
+C at most 15% refused) and the main labels, all as registered above. No separate bar for Opus. A fingerprint of the 130 prompt files (SHA-256 over the sorted file hashes, first 16 hex):
+`f4639348c11d929f`; it is checked again before the Opus replies are scored.
+
+**What changes.** Only the reader: Claude Opus 5.5 as Claude Code subagents (`opus`); every agent reports its model id, which should be `claude-opus-5-5`, and a different one is
+reported and stops the run. Each prompt is asked once; no prompt is asked again, none is added; a batch that fails stops the run and is reported before anything else is done. Replies
+go to their own folder (`replies/krouter-opus`). The *nothing* row is **not run for Opus** (to save quota). Prompts for Opus: 130, in addition to the 300 above. Replies are checked
+for filing under the wrong prompt the way they were for the others (against each reply's own question and its batch-mates'), and any re-filing is listed.
+
+**Judging.** Rules first, as registered. What the rules do not settle goes to **Sonnet 5.5** (the judge is not the reader), in batches of 20, with the same two prompts.
+
+**Side columns, registered now (the other two readers' versions of these were done after the fact and said so).** Beside the main labels, never in place of them:
+(1) of the B replies the main rule labels `made_up`, how many assert an answer for the person asked (P) and how many point out that the notes say it of someone else (Q), by the
+same judge prompt as the post-hoc check of the first two readers; (2) of the C replies the *rules* label `refused`, how many in fact contain the right answer, by the registered
+answerable judge prompt. The main columns stay the registered rule's; the side columns are listed next to them, and a pass or fail is decided on the main ones.
+
+**Reported, whatever it shows:** the three counts for A, B and C, by receipt state, the two side columns, who labelled how many, and the three readers side by side.
+
+**Status: not run when 2.1.0 was released (2026-11-11).** No Opus reply exists, and no Opus number appears anywhere in the docs.
