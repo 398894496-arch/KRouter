@@ -94,7 +94,8 @@ def lookup(ri, it: dict, dates: dict) -> dict:
     rec = {k: v for k, v in it.items() if k != "vault"}
     rec.update({"vault": it["vault"], "conf": res["confidence"], "refused": refused,
                 "cited": [] if refused else [h["rel"] for h in res["hits"][:3]],
-                "handed": [] if refused else [h["rel"] for h in res["hits"]] + [p["rel"] for p in res.get("assoc") or []],
+                "handed": [] if refused else [h["rel"] for h in res["hits"]] + [p["rel"] for p in res.get("assoc") or []]
+                + [h["rel"] for h in res.get("more") or []],
                 "ev1": (res["hits"][0].get("ev") if res["hits"] else None), "partial": bool(res.get("partial")),
                 "study": res.get("study"), "ms": round(ms, 1), "kb": [h["rel"] for h in res.get("kb") or []]})
     if hasattr(ri, "kb_only"):
@@ -169,9 +170,13 @@ def main(argv: list[str]) -> int:
         tag = argv[2] if len(argv) > 2 else argv[1]
         if argv[1] == "heldout" and own_code():  # 基线代码（44c041f）在留出部分上数一遍不算打开：它不调任何参数
             marker = STATE / "heldout.opened"
-            if marker.exists():
-                raise SystemExit(f"held-out halves already run once ({marker.read_text().strip()})")
-            marker.write_text(time.strftime("%Y-%m-%dT%H:%M:%S") + " " + tag + "\n")
+            why = os.environ.get("KROUTER_HELDOUT_REASON", "").strip()
+            if marker.exists() and not why:
+                raise SystemExit(f"held-out halves already run ({marker.read_text().strip()}); a later run needs "
+                                 "KROUTER_HELDOUT_REASON (logged next to the first, and said in HELDOUT.md)")
+            with marker.open("a", encoding="utf-8") as fh:
+                fh.write(time.strftime("%Y-%m-%dT%H:%M:%S") + f" {tag} evidence={os.environ.get('KROUTER_EVIDENCE', '')}"
+                         + (f" reason: {why}" if why else "") + "\n")
         collect({k: v for k, v in which.items() if not only or k in only}, tag)
         return 0
     if argv[0] == "report":

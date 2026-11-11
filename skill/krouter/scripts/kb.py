@@ -523,8 +523,8 @@ def _lines(vault: Path) -> list[str]:
 
 
 def mark_mine(vault: Path, paths: list[str]) -> list[str]:
-    """Mark pages or folders as your own (`!path` in krouter-kb.txt). A declared knowledge-base folder still wins for
-    the pages under it unless the mark is the page itself or a folder inside it."""
+    """Mark pages or folders as your own (`!path` in krouter-kb.txt). Automatic recognition leaves them alone; a
+    declared knowledge-base folder still wins for the pages under it."""
     have = mine_marked(vault)
     new = []
     for raw in paths:

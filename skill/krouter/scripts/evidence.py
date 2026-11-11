@@ -530,6 +530,33 @@ RESCUE_PC = None    # 门槛拒了、但首条有一段完整覆盖、而且是�
 RESCUE_BIND = 0.9
 
 
+def enabled(vault=None) -> bool:
+    """Re-ranking by paragraph, the time-cue weight and the two paragraph refusals: off by default (set 39: two-sided on
+    LoCoMo, but LongMemEval's held-out half lost one hand-over and `heldout3` gained one wrong citation, so the bar was
+    not met). `KROUTER_EVIDENCE=1`, or `evidence|on` in the memory folder's `krouter-settings.psv`, turns them on; the
+    variable wins. Aggregation questions get more pages either way."""
+    import os
+
+    raw = os.environ.get("KROUTER_EVIDENCE", "").strip().lower()
+    if raw in ("1", "on", "true", "yes"):
+        return True
+    if raw in ("0", "off", "false", "no"):
+        return False
+    if vault is None:
+        return False
+    try:
+        from pathlib import Path
+
+        text = (Path(vault) / "krouter-settings.psv").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    for line in text.splitlines():
+        key, _, val = line.partition("|")
+        if key.strip().lower() == "evidence" and val.strip().lower() in ("on", "1", "true", "yes"):
+            return True
+    return False
+
+
 def rank_key(h: dict, window=None) -> float:
     ev = h.get("ev") or {}
     s = h["score"] * (EV_EPS + ev.get("pc", 0.0)) ** EV_BETA
@@ -538,8 +565,10 @@ def rank_key(h: dict, window=None) -> float:
     return s
 
 
-def rerank(hits: list[dict], n: int, window=None) -> list[dict]:
-    """前 n 页按段落证据重排（其余照旧排在后面）。没有证据的页（ev 为空）按覆盖 0 算。"""
+def rerank(hits: list[dict], n: int, window=None, on: bool = True) -> list[dict]:
+    """前 n 页按段落证据重排（其余照旧排在后面）。没有证据的页（ev 为空）按覆盖 0 算。`on=False`：原样返回。"""
+    if not on:
+        return list(hits)
     head = sorted(hits[:n], key=lambda h: -rank_key(h, window))
     return head + hits[n:]
 

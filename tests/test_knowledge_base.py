@@ -310,3 +310,14 @@ def test_standing_index_lists_memory_topics_only(vault):
     assert rels() == {"Rules/Code review.md", f"{RESEARCH}/Token bucket rate limiting.md"}
     kb.add(vault, [RESEARCH])
     assert rels() == {"Rules/Code review.md"}
+
+
+def test_nightly_counts_recognised_reference_pages(vault, tmp_path, monkeypatch):
+    monkeypatch.setenv("KROUTER_STATE_DIR", str(tmp_path / "state"))
+    import nightly
+
+    allp, new = kb.auto_news(vault)
+    assert f"{RESEARCH}/Billing outage at a fintech.md" in allp and new == allp
+    assert kb.auto_news(vault)[1] == []  # 第二次：没有新认出的
+    lines = nightly.kb_lines(vault)
+    assert lines and "比上次新增 0 页" in lines[0]
