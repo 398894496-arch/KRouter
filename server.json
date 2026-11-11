@@ -11,28 +11,12 @@
   },
   "packages": [
     {
-      "registryType": "pypi",
-      "registryBaseUrl": "https://pypi.org",
-      "identifier": "krouter",
-      "version": "2.0.0",
-      "runtimeHint": "uvx",
+      "registryType": "mcpb",
+      "identifier": "https://github.com/398894496-arch/KRouter/releases/download/v2.0.0/KRouter.mcpb",
+      "fileSha256": "de6069779141a50596b082232520f1a834b72b273f374e7536aa7ea9a3cebff0",
       "transport": {
         "type": "stdio"
-      },
-      "packageArguments": [
-        {
-          "type": "positional",
-          "value": "mcp"
-        }
-      ],
-      "environmentVariables": [
-        {
-          "name": "OBSIDIAN_VAULT",
-          "description": "The memory folder (plain Markdown). Leave unset to use the one the KRouter installer set up.",
-          "isRequired": false,
-          "format": "filepath"
-        }
-      ]
+      }
     }
   ]
 }
