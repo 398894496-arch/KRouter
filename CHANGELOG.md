@@ -44,6 +44,16 @@ refused 3 more), so the held-out halves were not opened and the gate is unchange
 - `bench/refusal/study.py` and `bench/refusal/synthetic.py` (set 37): the rule study and a synthetic set (a Chinese
   memory with English reference articles, declared and not; 41 questions in three configurations).
 - `recall_index.coverage_signals` (the signals the study measured) is in the code, unused by the gate.
+- README (en/zh) reordered so the install is the fourth thing on the page (line 41 / 33): headline, one line on
+  what it is, the shortest example, the install, the three points, what you can check, what it does not do, then
+  the rest. The second example, the long benchmark sections, each app's full test notes and the reference
+  sections moved word for word to [`docs/OVERVIEW.md`](docs/OVERVIEW.md) / `OVERVIEW.zh.md` (464 → 321 lines in
+  English). The agent table names DeepSeek Harness, Hermes and OpenClaw with what was tried in each: Hermes's MCP
+  connection and tool list in a separate config folder (no question asked); OpenClaw run in real use as a skill
+  (1.2.x; 2.x not yet). How to connect both: `docs/INSTALL.md`.
+- [`docs/COMPARE.md`](docs/COMPARE.md) / `COMPARE.zh.md` (new): KRouter next to MemOS and Hindsight on ten rows,
+  KRouter's cells from the registered numbers, theirs only from their own READMEs (read 2026-11-11), with how to
+  read it (the three were never measured under the same conditions); a five-row version in the README.
 
 Also in this release (prepared as 2.0.1, never released on its own): the README puts the team server and its ten-people test back on the first page, keeps the
 install to its shortest path (importing past sessions is its own section), says plainly that KRouter is also for any

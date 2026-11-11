@@ -1,4 +1,4 @@
-"""The Claude Desktop + Obsidian example in both READMEs is the receipt the sample vault really gives."""
+"""The Claude Desktop + Obsidian example (moved from the READMEs to docs/OVERVIEW*.md) is the receipt the sample vault really gives."""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 ROUTE = REPO / "skill/krouter/scripts/route_knowledge.py"
 CASES = [
-    ("README.md", "docs/examples/writer-vault", "Going to open this week's newsletter with a question to the reader."),
-    ("README.zh.md", "docs/examples/writer-vault-zh", "这周的周报我想用提问开头。"),
+    ("docs/OVERVIEW.md", "docs/examples/writer-vault", "Going to open this week's newsletter with a question to the reader."),
+    ("docs/OVERVIEW.zh.md", "docs/examples/writer-vault-zh", "这周的周报我想用提问开头。"),
 ]
 
 

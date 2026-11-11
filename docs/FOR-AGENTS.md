@@ -242,4 +242,4 @@ is flat. Quote them that way.
 
 - Cursor's older chat history (kept only in its SQLite store, before agent transcripts) is not imported; Cursor
   agent sessions are.
-- One maintainer, few outside users so far; pin a release with `KROUTER_TAG` rather than following `main`.
+- One maintainer; pin a release with `KROUTER_TAG` rather than following `main`.

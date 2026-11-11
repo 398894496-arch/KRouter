@@ -90,7 +90,7 @@ hermes mcp test krouter      # 连上并列出 krouter_ask、krouter_status、kr
 
 这会在 Hermes 的 `config.yaml` 里写一条 `mcp_servers.krouter`（`HERMES_HOME` 可以让 Hermes 用另一个配置目录）。记忆文件夹和别的应用一样从 `~/.config/krouter/vault` 读，也可以在 `--args` 前加 `--env KROUTER_VAULT=<文件夹>`。Hermes 只拿到查询工具：KRouter 没有给它的会话钩子，所以没有每句话那一层，也没有会话开始的索引。在 Hermes Agent 0.18.2 上试过（2026-11-10，单独的 `HERMES_HOME`）：服务连上，五个工具都列出来了；在那里没有问问题（那份配置里没有登录任何模型）。
 
-**OpenClaw** 从 `~/.agents/skills` 读技能（它的「个人 agent 技能」目录，[OpenClaw 文档：Skills](https://docs.openclaw.ai/tools/skills)），安装脚本正好把 KRouter 放在那里（`~/.agents/skills/krouter/`）。不用再做别的：agent 读那里的 `SKILL.md`，通过技能里的路由脚本查记忆，`sh ~/.agents/skills/krouter/scripts/route_knowledge.sh search "<问题>"`（回执和 `krouter_ask` 一样）。这条路有人在用：一台外部用户的机器（维护者帮忙装的）自 2026-10-26 起用这种方式跑 KRouter 1.2.1；2.x 还没有在 OpenClaw 里跑过。OpenClaw 也能接 MCP 服务（[OpenClaw 文档：MCP](https://docs.openclaw.ai/tools/mcp)），这条我们没试过：
+**OpenClaw** 从 `~/.agents/skills` 读技能（它的「个人 agent 技能」目录，[OpenClaw 文档：Skills](https://docs.openclaw.ai/tools/skills)），安装脚本正好把 KRouter 放在那里（`~/.agents/skills/krouter/`）。不用再做别的：agent 读那里的 `SKILL.md`，通过技能里的路由脚本查记忆，`sh ~/.agents/skills/krouter/scripts/route_knowledge.sh search "<问题>"`（回执和 `krouter_ask` 一样）。KRouter 1.2.x 已经用这种方式在真实使用中跑过；2.x 还没有在 OpenClaw 里跑过。OpenClaw 也能接 MCP 服务（[OpenClaw 文档：MCP](https://docs.openclaw.ai/tools/mcp)），这条我们没试过：
 
 ```bash
 openclaw mcp add krouter --command python3 --arg ~/.agents/skills/krouter/scripts/mcp_server.py

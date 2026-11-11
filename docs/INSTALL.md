@@ -119,8 +119,8 @@ connected and its five tools were listed; no question was asked there (no model 
 Skills](https://docs.openclaw.ai/tools/skills)), which is where the installer puts KRouter
 (`~/.agents/skills/krouter/`). Nothing else is needed: the agent reads `SKILL.md` there and asks the memory through
 the skill's router script, `sh ~/.agents/skills/krouter/scripts/route_knowledge.sh search "<question>"` (the
-same receipt as `krouter_ask`). That path is in use: one outside user's machine, set up by the maintainer, has run
-KRouter 1.2.1 this way since 2026-10-26; 2.x has not been run in OpenClaw yet. OpenClaw also takes MCP servers
+same receipt as `krouter_ask`). KRouter 1.2.x has run this way in real use;
+2.x has not been run in OpenClaw yet. OpenClaw also takes MCP servers
 ([OpenClaw docs: MCP](https://docs.openclaw.ai/tools/mcp)); not tried by us:
 
 ```bash
