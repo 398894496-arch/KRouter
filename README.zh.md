@@ -1,8 +1,42 @@
 # KRouter
 
-**让你的 AI 记住你定过什么，也记住后来改成了什么。**
+**让 agent 拥有下意识：提到就想起，联想到相关的一片，还能举一反三。**
 
-你现在用的 AI 就能接，有一个就够。记忆是一个纯 Markdown 文件夹，你能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、阅读、修改。问一句「封面标题我们是怎么定的」，答案会注明出自哪一页。纠错之后，新结论直接取代旧结论，不会两个一起冒出来。记忆里没有的，AI 会被明确告知「没有」，而不是拿一条差不多的凑数。写代码、写稿、做视频、学习、工作，凡是定过又会改的事都适用。
+```text
+你   > 下午我要把剪藏原件挪到归档文件夹里。
+钩子 > KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：
+       - 「剪藏原件」 → 不要移动剪藏原件 〔02 经验与方法/Agent/用户偏好与工作约束.md，别名〕
+       用到就注明出处页。
+你   > 楼里的咖啡机又坏了。
+钩子 > （什么都没加）
+```
+
+上面是提问钩子在中文样例库上实际跑出来的输出，随你的那句话一起交给 agent；agent 接下来怎么回，取决于它的模型，这里没有列。「下意识」是个比喻，说的是不用你开口问就自动想起：在你本机查一下，不调模型，什么都不发出去。
+
+### 提到就想起
+
+每一句话都在本机查一遍，会话开始时还先给一份「定过的事」的索引，所以换了说法也接得住。留出集 24 次提及（三分之二没说页面上的名字）：**Sonnet 5.5 想起 24 / 24，Haiku 5.5 23 / 24**；本该什么都不变的话，分别有 1 / 24 和 2 / 24 让它出了声（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）。
+
+### 联想到相关的一片
+
+一次查询交 5 页：3 页和问题对得上，再加最多 2 页是库里和它们相关联的（互相链接、新页取代旧页、同一段会话、共有的少见词、常被一起引用）。LongMemEval 留出的一半、各交 5 页：答案需要的会话全在里面的，**235 道里 210 道，关键词搜索 198 道；跨多段会话的题 40 对 31**（[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。
+
+### 举一反三
+
+一件事里得到的经验，换一件处境相同的事时会被提出来；反复被证实的经验会长成技能，事情对得上时 agent 自己去取。留出集：换了题材的任务，提出对的经验 **14 / 14（Sonnet 5.5）和 11 / 14（Haiku 5.5）**，英文 **14 / 14 和 13 / 14**（第 15、16 套）；技能起草对了 16 / 16，取用并照做 12 / 12（第 24、25 套，[`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)）。
+
+### 它不会做什么
+
+- 样本量小：每一套只有几十例。
+- 这些评测里，宿主是把要取哪一页写出来，没有真的去调工具。
+- 真实会话里，宿主几乎不会主动写经验卡（第 30、31 套：两个宿主都是 4 次里 0 次）；学习靠钩子和夜间整理。
+- Cursor 上每句话那一层用不了（它的钩子加不了上下文），只有会话开始的索引。
+- 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
+- 2.0 没有在 Windows 上实测。
+
+### 托底：你能核对的那一层
+
+每个回答都注明出自哪一页；记忆里没有的，agent 会被明确告知「没有」，而不是拿一条差不多的凑数；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 
@@ -37,7 +71,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 **找没找对页**（更早的 3 页版本），同样机械评分。LongMemEval（KRouter 1.1.1）：470 道能答的题里，439 道 KRouter 引用的页面里有答案所在的那段（BM25 是 447 道）；72 道「事实后来变了」的题里，70 道引到了最新那次。LoCoMo（ACL 2024；10 段长对话，1 986 道题）：1 540 道能答的题里，991 道第一条引用就是证据所在的那段（BM25 是 968 道）。
 
-**弱点**：如果问的是记忆里某件事的「近邻」，它还是会作答。LongMemEval 里 30 道没有答案的题只拒了 3 道，LoCoMo 446 道陷阱题只拒了 37 道。在 LoCoMo 那种短对话上，连着的那 2 页得不偿失：5 页把证据会话交齐的是 1 536 道里 1 185 道，5 页全给直接命中是 1 204 道。
+**弱点**：如果问的是记忆里某件事的「近邻」，它还是会作答。LongMemEval 里 30 道没有答案的题，拒答门槛拒了 9 道（第 14 套；以前常引的「3 道」是 1.1.1 的），LoCoMo 446 道陷阱题只拒了 37 道。在 LoCoMo 那种短对话上，连着的那 2 页得不偿失：5 页把证据会话交齐的是 1 536 道里 1 185 道，5 页全给直接命中是 1 204 道。
 
 **我们自己的 200 道留出题**（中英文，从没拿来调过分，由 Claude Opus 在单独会话里出题）：KRouter 引错 26%，claude-mem 64%，basic-memory 78%。80 道记忆里答不了的题，KRouter 拒答 47 道，另外两个一道都不拒。60 道「决定后来改过」的题，KRouter 答对 50 道，它们是 34 和 16 道。这个差距有一部分是结构决定的：给纯全文检索加上 KRouter 那两条规则（跳过已被取代的旧页、匹配太弱就拒答），它就和 KRouter 打平。
 

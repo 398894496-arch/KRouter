@@ -2,13 +2,59 @@
 
 <!-- mcp-name: io.github.398894496-arch/krouter -->
 
-**Your AI remembers what you decided — and what you changed your mind about.**
+**Give your agent a subconscious: mention it and it comes to mind, with what is connected to it, and the lessons carry over.**
 
-Works with the AI you already use, and one is enough. Your memory is a folder of plain Markdown pages you can open,
-read and edit, in [Obsidian](https://obsidian.md) or any editor. Ask "what did we decide about the cover title?" and
-the answer comes with the page it came from. A correction replaces the old answer instead of competing with it. When
-the memory does not know, your AI is told so, rather than handed something close. Code, writing, video, study or
-work: anything you decide and later change.
+```text
+you  > Going to move the clippings originals into the archive folder this afternoon.
+hook > KRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):
+       - "clippings originals" → Do not move Clippings originals [02 Methods/Agent/User preferences.md, alias]
+       If you use it, cite the page.
+you  > The coffee machine on our floor is broken again.
+hook > (nothing)
+```
+
+That is the prompt hook's real output on the English sample memory, handed to the agent with each message; what the
+agent replies is up to its model and is not shown. "Subconscious" is a figure of speech for recall that happens
+without being asked: a lookup on your machine, no model, nothing sent.
+
+### Mention it and it comes to mind
+
+Every message is looked up locally, and the session starts with an index of what has been settled, so the agent also
+catches a thing said in other words. Held out, 24 mentions (two thirds without the page's names): **Sonnet 5.5 24 / 24,
+Haiku 5.5 23 / 24**; messages that should change nothing moved it 1 / 24 and 2 / 24
+([set 35](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)).
+
+### With what is connected to it
+
+A lookup gives five pages: three that match, then up to two the memory connects to them (a link, a replacement, the
+same session, rare words they share, being cited together). Held-out half of LongMemEval, five pages each: every
+session the answer needs for **210 of 235 questions, keyword search 198; multi-session 40 against 31**
+([set 18](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)).
+
+### The lessons carry over
+
+A lesson from one task is offered on another in the same situation, and lessons that keep coming back grow into
+skills the agent fetches when they fit. Held out: the right lesson for **14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku
+5.5)** tasks with a new subject, **14 / 14 and 13 / 14** in English (sets 15, 16); skills drafted right 16 / 16 and
+fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)).
+
+### What it does not do
+
+- The samples are small: a few dozen cases per set.
+- In these evaluations the host wrote down which page it would fetch; it did not call the tools for real.
+- In real sessions hosts almost never write a lesson card on their own (0 of 4 on both hosts, sets 30 and 31):
+  learning comes from the hooks and the nightly run.
+- On Cursor the per-message layer is not available (its hook cannot add context); it gets the session-start index.
+- Answer accuracy has not been rerun for the five-page version (set 22 is registered, not run).
+- Windows was not tested for 2.0.
+
+### Underneath, what you can check
+
+Every answer comes with the page it came from; when the memory does not know, the agent is told so instead of
+handed something close; a correction replaces the old answer instead of competing with it; and you can see all of
+it: the memory is a folder of plain Markdown you can open and edit, in [Obsidian](https://obsidian.md) or any editor,
+and `krouter view` / `krouter why` show what it holds and why it answered. It works with the AI you already use, and
+one is enough.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
@@ -62,7 +108,8 @@ fact changed later the newest one is cited. LoCoMo (ACL 2024; 1,986 questions ov
 page cited holds the evidence for 991 of 1,540 answerable questions (BM25: 968).
 
 **Where it is weak:** a question about a near neighbour of something the memory does mention still gets an answer.
-It refuses 3 of 30 LongMemEval questions that have no answer, and 37 of 446 LoCoMo trick questions. On LoCoMo's
+Its refusal gate turns down 9 of 30 LongMemEval questions that have no answer (set 14; the "3 of 30" quoted
+before was 1.1.1), and 37 of 446 LoCoMo trick questions. On LoCoMo's
 short conversations the two connected pages cost more than they bring: the five pages hold every evidence session for
 1,185 of 1,536 questions, five pages of direct matches would for 1,204.
 
