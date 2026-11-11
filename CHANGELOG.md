@@ -15,10 +15,12 @@ Nothing yet.
 
 ## 2.0.0 — in progress (not released; `main` and the one-line install are still 1.3.0)
 
-What you will notice so far (more lands before it is released): a lesson from one task is offered on another in the same situation; a lookup gives five
-pages, two of them ones the vault connects to the answer; a change of mind holds with no key; the default install
+What you will notice so far (more lands before it is released): mention something and the agent recalls what was
+decided about it, with its page; a lesson from one task is offered on another in the same situation, and lessons that
+keep coming back grow into skills; a lookup gives five pages, two of them ones the vault connects to the answer; a change of mind holds with no key; the default install
 is lighter, says what it changed and is English end to end on an English machine; the memory is a plain folder,
-Obsidian optional; `krouter why` explains how a lookup came out and `krouter view` shows what the memory holds on a read-only page of its own; Codex, Cursor and Claude Desktop were tested inside the apps. 2.0 because the receipt and the
+Obsidian optional; `krouter why` explains how a lookup came out and `krouter view` shows what the memory holds on a read-only page of its own; a team server knows who wrote what and holds ten callers at once; LangGraph can keep its long-term memory in the
+folder; Codex, Cursor and Claude Desktop were tested inside the apps, and Linux in a clean container. 2.0 because the receipt and the
 install path change (below).
 
 ### Mention it and it comes to mind (on by default)
@@ -58,28 +60,14 @@ install path change (below).
   messages that reused a team expression (English 5 / 8, Chinese 1 / 5) and quiet messages were no louder (1 of 32
   before and after); the line was 7 of 13, so it stays off. Chinese phrases are cut in the wrong places without word
   segmentation.
-
-### Platform and real-session tests (2026-11-10)
-
-- **A nightly job that did not install is no longer reported as installed.** On a machine with no systemd user session
-  and no crontab (a container, a minimal server) `--timer` printed "HOST ACTION: no systemd … and no crontab" and then
-  went on to say, in its summary line and on the health page, that the job was running, and `krouter doctor` failed
-  with "no job is installed". The install now checks that a job exists after asking for one and says "The nightly job
-  was NOT installed". The "keeps up by itself" line also no longer comes out empty when the nightly job is on and no app
-  has hooks.
-- **Linux tested in a clean `python:3.12-slim` container** from the release package: install, upgrade from the pre-2.0
-  folder (the old path becomes a link to the new one), lookup, refusal, `doctor`, `krouter mcp`, uninstall, cold
-  install. **Windows was not tested for 2.0** (no reachable Windows host); the junction fallback of the folder move is
-  covered by a test that runs on any OS. [`docs/VERIFY.md`](docs/VERIFY.md#platforms-and-real-sessions-200-candidate-2026-11-10)
-- **Real sessions, measured for the first time** (sets 30 and 31): Codex CLI, a Claude Sonnet 5.5 subagent and the Cursor
-  agent CLI, given small tasks that never mention the memory. They mention a stored lesson when the situation matches
-  (2 of 4 on both full runs) and never when it does not; they rarely call `krouter_learn` (0 of 4 on both hosts) and
-  Codex never called `krouter_correct` (0 of 4; the Claude subagent 3 of 4). Cause on Codex: this version shows the model
-  no krouter tool and none of the server's instructions. **Changed:** the session hook now ends with one line naming
-  `krouter_ask`, `krouter_correct` and `krouter_learn` and when to call each, and the server's instruction sentences for
-  the last two say the same. On a development set the Claude subagent went from 1 of 3 to 2 of 3 on `krouter_learn`
-  and stayed at 3 of 3 on `krouter_correct`; the Codex check could not run (its usage limit was reached), so the change is
-  not verified on the host it was made for.
+- **What a session starts with, in one order and under one cap.** This project's decisions (at most 1,600
+  characters), the experience digest (at most 3,000: fewer card lines when longer), the skills list (at most 2,000:
+  drafts, then the last skills left out), the standing index (what is left, at most 5,400; left out under 800), then
+  one line on the write tools and on `recall: none`; 9,400 characters in all, under the 10,000 Claude Code shows in
+  full. How to call each tool is said once: `krouter_ask` by the index's closing line, `krouter_skill` by the skills
+  list, `krouter_correct` and `krouter_learn` by the last line (with no index, that line names `krouter_ask` too). The
+  prompts the development sets were written on (sets 15, 16, 24, 25, 33, 35) are unchanged by this, word for word;
+  the real-session sets 30 and 31 saw the opening before it. `tests/test_session_start.py`.
 
 ### Lessons that carry over to other tasks
 
@@ -97,9 +85,6 @@ install path change (below).
   12 tasks it fits, nothing said on 12 it does not**; follow-ups recorded as adopted 4 of 5, falsely 0 of 13. The
   adoption cues were widened on development to get there ("已经把…发给他了", "the fan is quiet again"), which also
   applies to experience cards. `docs/SKILLS.md`, `bench/skills/`.
-- **An English vault's session pages say Q and A.** Imported session pages in an English vault now label turns
-  `**Q**` / `**A**` under `## Excerpt` instead of the Chinese 问 / 答 / 摘录; every parser reads both, so existing pages
-  and Chinese vaults are unchanged.
 - **Experience cards are on by default when your vault has some.** The digest at session start, the use records and
   `krouter_learn` now default on (`KROUTER_EXPERIENCE=0` turns them off; extraction through the model lane stays
   opt-in). Cards no longer carry `when` phrases; the agent names the session's subject and a lesson that still uses it
@@ -265,8 +250,10 @@ install path change (below).
 - **Corrections in an English vault link the vault's own pages.** `krouter_correct` / `corrections.py apply` wrote
   links and reported paths with the default layout's names (`05 时间日志/会话摘录/…`) where the page is
   `05 Journal/Sessions/…`; they now use the vault's own path, as do the import's `writes` list and a secret page's
-  `how` line (English in an English vault). Found by the no-key change-of-mind check in a throwaway home. Still in
-  Chinese in an English vault: the `问` / `答` labels inside imported session pages (other readers parse them).
+  `how` line (English in an English vault). Found by the no-key change-of-mind check in a throwaway home.
+- **An English vault's session pages say Q and A.** Imported session pages in an English vault now label turns
+  `**Q**` / `**A**` under `## Excerpt` instead of the Chinese 问 / 答 / 摘录; every parser reads both, so existing pages
+  and Chinese vaults are unchanged.
 
 ### Independent of Obsidian
 
@@ -299,6 +286,11 @@ install path change (below).
   of rows 0.05–0.3 s after the page loads, one explanation about 0.1 s ([how to read it](docs/DETAILS.md#see-what-it-remembers-krouter-why-and-krouter-view)).
 - `krouter.sample` builds the sample memory (and, for timing, a synthetic memory of any size) the page, its tests and
   the README screenshot use.
+- **`krouter view` and `krouter why` show what the hook and the skills did.** The viewer lists skills and drafts
+  with how often each was offered and adopted, and a "Brought to mind" tab lists every page the prompt hook brought
+  (from `recalled.jsonl`; empty when there is none). `krouter why` says, for a sentence, whether the prompt hook would
+  bring the page itself and by which route, whether the page is in the session-start index (so an agent that used it
+  without the hook fetched it after reading the index), and when the hook brought it before.
 
 ### Tested inside the apps
 
@@ -375,6 +367,10 @@ install path change (below).
   `docs/FRAMEWORKS.md#langgraph-store-long-term-memory`.
 - **Try it in your app.** `CONTRIBUTING.md` lists every app, framework and deployment still marked "not yet run by
   us", and a "Works in my app" issue form takes the report that moves it to tested.
+- **Linux tested in a clean `python:3.12-slim` container** from the release package: install, upgrade from the pre-2.0
+  folder (the old path becomes a link to the new one), lookup, refusal, `doctor`, `krouter mcp`, uninstall, cold
+  install. **Windows was not tested for 2.0** (no reachable Windows host); the junction fallback of the folder move is
+  covered by a test that runs on any OS. [`docs/VERIFY.md`](docs/VERIFY.md#platforms-and-real-sessions-200-candidate-2026-11-10)
 
 ### Team server
 
@@ -472,6 +468,17 @@ install path change (below).
 
 ### Measured, and what the numbers say
 
+- **Real sessions, measured for the first time** (sets 30 and 31): Codex CLI, a Claude Sonnet 5.5 subagent and the Cursor
+  agent CLI, given small tasks that never mention the memory. They mention a stored lesson when the situation matches
+  (2 of 4 on both full runs) and never when it does not; they rarely call `krouter_learn` (0 of 4 on both hosts) and
+  Codex never called `krouter_correct` (0 of 4; the Claude subagent 3 of 4). Cause on Codex: this version shows the model
+  no krouter tool and none of the server's instructions. **Changed:** the session hook now ends with one line naming
+  `krouter_ask`, `krouter_correct` and `krouter_learn` and when to call each, and the server's instruction sentences for
+  the last two say the same (after the merge with the standing index, that line names only the two write tools, since
+  the index's own closing line says how to call `krouter_ask`; sets 30 and 31 were measured on the opening before that
+  merge). On a development set the Claude subagent went from 1 of 3 to 2 of 3 on `krouter_learn`
+  and stayed at 3 of 3 on `krouter_correct`; the Codex check could not run (its usage limit was reached), so the change is
+  not verified on the host it was made for.
 - **An answer-accuracy number you can set next to other projects'.** LongMemEval S, all 500 questions: a
   reader given only the pages KRouter 1.3.0 cites answered 400 right (80.0%, 95% interval 76.4–83.4), with the
   benchmark's own reader and judge prompts; reader and judge are Claude Sonnet 5.5, not GPT-4o. Registered before the
@@ -519,6 +526,12 @@ install path change (below).
 
 ### Fixes
 
+- **A nightly job that did not install is no longer reported as installed.** On a machine with no systemd user session
+  and no crontab (a container, a minimal server) `--timer` printed "HOST ACTION: no systemd … and no crontab" and then
+  went on to say, in its summary line and on the health page, that the job was running, and `krouter doctor` failed
+  with "no job is installed". The install now checks that a job exists after asking for one and says "The nightly job
+  was NOT installed". The "keeps up by itself" line also no longer comes out empty when the nightly job is on and no app
+  has hooks.
 - **An English question in a mostly Chinese vault no longer comes back `medium` from English web clippings that
   only share its common words.** Seen on a real vault (reproduced on a synthetic one, a test now): "What is the
   production database password of the billing service?" matched three clipped articles on `production`, `billing` and
@@ -566,6 +579,9 @@ install path change (below).
   language is the terminal's (`--lang`, then `LC_ALL` / `LC_MESSAGES` / `LANG`), not the system's; the experience
   digest is on when the vault has cards (`KROUTER_EXPERIENCE=0`); with no key, the nightly steps run on a logged-in
   agent CLI and spend its subscription, at most 30 calls a day, each listed (`KROUTER_HOST_CLI=0` turns it off).
+  Every message is now looked up on this machine by the prompt hook and the session starts with the standing index
+  (`KROUTER_RECALL_PROMPT=0`, `KROUTER_RECALL_INDEX=0`); skills are listed and drafted overnight when there are cards
+  to grow them from (`KROUTER_SKILLS=0`); a team server started with `--users` needs each caller's own token.
 - **`KROUTER_VAULT`** names the memory folder; `OBSIDIAN_VAULT` still works.
 - **To upgrade,** run the install line again (from a clone, `python3 scripts/bootstrap.py`), then `krouter doctor`.
   It keeps the memory folder it recorded, every file in it, and what you said yes to before.
