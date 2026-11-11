@@ -89,8 +89,9 @@ fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](b
 
 ### Underneath, what you can check
 
-Every answer comes with the page it came from; when a lookup finds nothing, the receipt says so outright rather than
-handing over something close; a correction replaces the old answer instead of competing with it; and you can see all of
+Every answer comes with the page it came from; when your memory has nothing on a question, the receipt says so
+outright, when it has only something close it says how sure it is instead of passing that off as the answer, and
+reference material you keep never stands in for what you decided; a correction replaces the old answer instead of competing with it; and you can see all of
 it: the memory is a folder of plain Markdown you can open and edit, in [Obsidian](https://obsidian.md) or any editor,
 and `krouter view` / `krouter why` show what it holds and why it answered. It works with the AI you already use, and
 one is enough.
@@ -100,8 +101,10 @@ own receipt says `recall: none` for 9. With a reader model on top, 29 of the 30 
 same reader given nothing at all said so for all 30, so that second number is mostly the model's doing. What KRouter does:
 when nothing in the memory matches, it says so outright; when only something close matches, it hands the model the page
 and a confidence level instead of passing a near match off as the answer. Not a guarantee without exceptions: for 22 of
-those 30 the best page is a real session about something near what was asked. Method and the other benches:
-[`docs/NUMBERS.md`](docs/NUMBERS.md).
+those 30 the best page is a real session about something near what was asked. Reference material you declare as
+your [knowledge base](#it-is-also-your-knowledge-base) never counts as the memory's answer: when only it matches, the
+receipt's first line is `memory: none`. A rule to refuse more near matches was looked for on development data (set 37)
+and none was good enough, so the numbers above stand. Method and the other benches: [`docs/NUMBERS.md`](docs/NUMBERS.md).
 
 ### What it does not do
 
@@ -112,6 +115,10 @@ those 30 the best page is a real session about something near what was asked. Me
 - On Cursor the per-message layer is not available (its hook cannot add context); it gets the session-start index.
 - Answer accuracy has not been rerun for the five-page version (set 22 is registered, not run).
 - Windows was not tested for 2.0.
+- A question about something near what your memory holds still gets an answer, usually at `low` or `medium`, not
+  `recall: none`. A rule to refuse more of them was looked for (set 37) and none was good enough.
+- A folder of reference material you have not declared counts as your memory (only clipping folders and clipper
+  pages are recognised by themselves); `krouter kb suggest` points out likely ones.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
@@ -184,11 +191,36 @@ numbers: [`docs/TEAM.md`](docs/TEAM.md#5-ten-people-at-once).
 ## It is also your knowledge base
 
 Point KRouter at a folder of Markdown you already have (an Obsidian vault, a docs repository, a notes directory) and
-every page in it can be found with the page it came from. Other people's writing (web clippings, research material) can
-be marked as reference, so it is not taken for something you decided: a folder named with `Clippings` or a page tagged
-`clippings` is treated that way ([how](docs/DETAILS.md#clipped-pages-and-other-peoples-writing)). **What it does not do:**
-it reads Markdown only; a PDF, a Word file or a web page has to be converted to Markdown first (with a converter such as
-pandoc or markitdown, not part of KRouter), and there is no vector search ([measured, not shipped](docs/DENSE-OPTIN.md)).
+every page in it can be found with the page it came from. The folder holds two kinds of page: **your memory** (what you
+decided, your rules and corrections, what sessions were distilled into) and **your knowledge base** (reference
+material: articles, clippings, research, documents someone else wrote). Both are searched; only your memory counts as
+what you decided.
+
+```bash
+krouter kb add "Research"          # declare a folder as the knowledge base (one line in krouter-kb.txt, next to your pages)
+krouter kb suggest                 # folders that look like reference material and are not declared (nothing changes)
+krouter kb import report.pdf       # a PDF, Word or HTML file → a Markdown page in the knowledge base
+```
+
+Clipping folders (`Clippings`, `剪藏`, `Web clips`) and pages with a web clipper's frontmatter count without being
+declared. A lookup lists knowledge-base pages in a block of their own, each with its title, source and the matching
+line, and they never set the confidence; when only they match, the receipt starts with `memory: none`:
+
+```text
+memory: none (your memory has nothing on this; only reference material in your knowledge base matched, listed under knowledge_base)
+…
+recall: none (no page covers enough of the question; do not guess)
+knowledge_base: reference material in your knowledge base (articles, clippings, documents: someone else's writing, not something you decided). Cite it as a source with its path; never give it as your decision
+- Research/Billing outage at a fintech.md kb=declared score=…
+  title: Billing outage at a fintech
+  L5: The billing service database ran out of connections during a schema migration. …
+```
+
+**What it does not do:** it searches Markdown only; `import` converts other files with a tool already on your machine
+(`markitdown`, `pandoc`, or `pdftotext` for PDF; plain HTML needs none) and says which one to install when there is
+none. There is no vector search ([measured, not shipped](docs/DENSE-OPTIN.md)), and a folder you have not declared is
+treated as your memory: `krouter doctor` and `krouter kb suggest` point out the ones that look like reference material
+([details](docs/DETAILS.md#clipped-pages-and-other-peoples-writing)).
 
 ## From your own code
 

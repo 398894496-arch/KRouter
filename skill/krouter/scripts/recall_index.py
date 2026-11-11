@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import sqlite3
@@ -23,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import zones  # noqa: E402
 import krouter_redact  # noqa: E402
 import associate  # noqa: E402
+import kb  # noqa: E402
 
 redact = krouter_redact.redact
 is_secret_page = krouter_redact.is_secret_page  # 其他夜间脚本经 ri.is_secret_page 用它
@@ -580,9 +582,57 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         hits.append({"rid": rid, "rel": rel, "tier": tier, "status": status, "how": how,
                      "score": round(-s * boost, 3)})
     hits.sort(key=lambda h: -h["score"])
+    # 知识库（kb.py）：参考资料单独排、单独过门槛，不算「你定过什么」的证据，也不影响记忆这一块的置信度。
+    # 没有知识库的页时，下面和以前一模一样
+    lib_map = kb.classify(con, vault, [h["rel"] for h in hits]) if hits else {}
+    lib = [h for h in hits if h["rel"] in lib_map]
+    if lib:
+        hits = [h for h in hits if h["rel"] not in lib_map]
+    args = (con, vault, query, limit, stats, qtok, raw, df, present, named, titled, single, gate, scope, own_cards,
+            cards_dir, skills_dir)
+    # 资料页不算证据，但也不能因为把它们拿走，记忆的首条就显得领先更多：差距照旧和排在旁边的资料页比；
+    # 前三名全是资料页时，沿用 2.0 对剪藏的封顶（最多 low，问题里还有整库没有的词就是库里没有）
+    rival = lib[0]["score"] if lib else None
+    crowded = bool(lib) and len(lib) >= min(DIRECT_FIRST, len(lib) + len(hits)) and all(
+        h["rel"] in lib_map for h in sorted(lib + hits, key=lambda h: -h["score"])[:DIRECT_FIRST])
+    out = _decide(*args, hits, assoc, conflict, rival=rival, crowded=crowded)
+    if lib:
+        ref = _decide(*args[:3], KB_PAGES, *args[4:], lib, False, False, library=True)
+        if ref["hits"] and ref["confidence"] != "none":
+            out["kb"] = [kb_entry(vault, h, lib_map[h["rel"]]) for h in ref["hits"]]
+            out["kb_confidence"] = ref["confidence"]
+    return out
+
+
+KB_PAGES = 3  # 知识库那一块最多列几页
+
+
+def kb_entry(vault: Path, h: dict, why: str) -> dict:
+    """One knowledge-base hit for the receipt: path, why it is reference material, score, its title and source."""
+    title, source = Path(h["rel"]).stem, ""
+    try:
+        meta, _body = split_frontmatter((vault / h["rel"]).read_text(encoding="utf-8", errors="replace")[:8000])
+    except OSError:
+        meta = {}
+    title = meta.get("title") or title
+    for key in ("source", "url", "source_url", "link", "original", "source_file", "来源", "原文"):
+        if meta.get(key):
+            source = redact(meta[key])
+            break
+    return {"rel": h["rel"], "kb": why, "tier": h["tier"], "status": h["status"], "score": h["score"],
+            "title": redact(title), "source": source}
+
+
+def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats: dict, qtok: list[str], raw: list[str],
+            df: dict[str, int], present: list[str], named: set[str], titled: set[str], single: bool, gate: bool,
+            scope: str, own_cards: bool, cards_dir: str, skills_dir: str, hits: list[dict], assoc: bool,
+            conflict: bool, library: bool = False, rival: float | None = None, crowded: bool = False) -> dict:
+    """The gate, the confidence and the pages for one ranked list: your memory's (`library=False`), or the knowledge
+    base's (`library=True`: no answer cards, no associated pages, no conflict tie-break, no asked-before check)."""
+    qset = set(raw)
     # 自己以前问过、那次没有记下答案的会话摘录：对上的只是你自己的提问，不是知识，不当证据（真实库里发现）
     asked = []
-    for h in hits[:ASKED_CHECK]:
+    for h in ([] if library else hits[:ASKED_CHECK]):
         if h["status"] == "imported" and asked_only(vault, h["rel"], qset):
             asked.append(h["rel"])
     if asked:
@@ -596,6 +646,8 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     strong = strong_matches(con, hits[0]["rid"], present, df, titled, small=n_docs < SMALL_VAULT, known=named)
     top = hits[0]["score"]
     second = hits[1]["score"] if len(hits) > 1 else 0.0
+    if rival is not None:
+        second = max(second, rival)  # 最接近的对手也可能是知识库的页
     margin = top / second if second else 9.9
     # bm25 的量级随库大小变化：小库按文档数等比缩放下限，千篇以上用满额
     scale = min(1.0, n_docs / 1000)
@@ -628,8 +680,10 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     else:
         conf = "low"
     # 前几条全是网页剪藏（别人写的参考材料，不是你的笔记）：最多 low；问题里还有整库都没有的词，就是库里没有
-    clipped = conf != "none" and all_clippings(con, hits[:DIRECT_FIRST])
+    clipped = conf != "none" and not library and all_clippings(con, hits[:DIRECT_FIRST])
     if clipped:
+        conf = "none" if gate and absent_stems(con, raw, df) else "low"
+    if crowded and conf != "none":
         conf = "none" if gate and absent_stems(con, raw, df) else "low"
     if asked and gate and conf == "low":
         conf = "none"  # 排在前面的只是你以前的提问，剩下的又只是弱匹配：库里没有
@@ -646,13 +700,16 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
         keep = min(DIRECT_FIRST, len(ranked))
         n = max(0, limit - keep) if assoc and not partial else 0
         if n:
-            picks = [p for p in associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)
-                     if own_cards or not p["rel"].startswith((cards_dir, skills_dir))][:n]  # 联想也不带出经验卡和技能
+            spread = associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)
+            # 联想也不带出经验卡和技能；也不从记忆扩散到知识库的页，占掉记忆的位置
+            away = kb.classify(con, vault, [p["rel"] for p in spread]) if spread else {}
+            picks = [p for p in spread if (own_cards or not p["rel"].startswith((cards_dir, skills_dir)))
+                     and p["rel"] not in away][:n]
         taken = {p["rel"] for p in picks}
         hits = ranked[:keep] + [h for h in ranked[keep:] if h["rel"] not in taken][: limit - keep - len(picks)]
     for h in ranked:
         h.pop("rid", None)
-    if hits and conf != "none" and not partial:
+    if hits and conf != "none" and not partial and not library:
         attach_answers(vault, hits, raw, df)  # 只对上一个词时不给生成的答案：那一行读起来像定论
     out = {"hits": hits, "stats": stats, "query_tokens": qtok, "margin": round(margin, 2),
            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
@@ -714,9 +771,8 @@ def asked_only(vault: Path, rel: str, qset: set[str]) -> bool:
     return seen
 
 
-CLIP_PATH = re.compile(r"(^|/)[^/]*(剪藏|clippings?|web ?clips?)[^/]*/", re.I)
-CLIP_FM = re.compile(r"^source:\s*[\"']?https?://|^type:\s*[\"']?(web[- ]?)?clip|^tags:.*\bclippings?\b|^\s*-\s*clippings?\s*$",
-                     re.M)
+CLIP_PATH = kb.CLIP_PATH  # 剪藏识别挪到 kb.py：剪藏自动算知识库
+CLIP_FM = kb.CLIP_FM
 CLIP_NOTE = ("recall_note: every page found is a clipped web page (reference someone else wrote, not your own notes). "
              "Say what it says and where it came from, not as something decided; if it does not answer the question, "
              "say the vault does not cover it.")
@@ -788,6 +844,38 @@ def print_extras(res: dict, kind: str) -> None:
             print(f"  via: {via_text(a['via'])}")
             if a["how"]:
                 print(f"  how: {a['how']}")
+
+
+# 知识库那一块的回执（kb.py）。只有知识库对得上、记忆里没有时，回执第一行先说「你的记忆里没有这件事」
+KB_HEAD = {
+    "en": ("knowledge_base: reference material in your knowledge base (articles, clippings, documents: someone else's "
+           "writing, not something you decided). Cite it as a source with its path; never give it as your decision"),
+    "zh": "knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是别人写的，不是你定过的事）。作为资料引用、给出处；不要说成你的决定",
+}
+MEMORY_NONE = {
+    "en": ("memory: none (your memory has nothing on this; only reference material in your knowledge base matched, "
+           "listed under knowledge_base)"),
+    "zh": "memory: none（你的记忆里没有这件事；只有知识库里的参考资料对得上，列在 knowledge_base 下面）",
+}
+
+
+def kb_only(res: dict | None) -> bool:
+    """Your memory refused, and the knowledge base has pages for the question."""
+    return bool(res and res.get("kb") and (not res.get("hits") or res.get("confidence") == "none"))
+
+
+def print_kb(vault: Path, res: dict, query: str, lines: int = 1) -> None:
+    """The knowledge-base block: each page with why it is reference material, its title, source and best lines."""
+    if not res.get("kb"):
+        return
+    print(KB_HEAD[_note_lang(vault, query)])
+    for h in res["kb"]:
+        print(f"- {h['rel']} kb={h['kb']} score={h['score']}")
+        print(f"  title: {h['title']}")
+        if h.get("source"):
+            print(f"  source: {h['source']}")
+        for ln, text in best_lines(vault / h["rel"], res.get("query_tokens") or [], max(1, lines)):
+            print(f"  L{ln}: {text}")
 
 
 def strong_matches(con: sqlite3.Connection, rid: int, terms: list[str], df: dict[str, int],
@@ -909,6 +997,113 @@ def absent_names(query: str, df: dict[str, int]) -> list[str]:
         if len(t) < 2 or t in EN_FUNCTION or t in CALENDAR or _known_latin(t, df):
             continue
         out.append(t)
+    return out
+
+
+# ---------- 「记忆里没有」的近似题：确定性的覆盖信号（第 37 套研究用；规则见 near_miss_refuse） ----------
+
+NAME_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*")
+
+
+def question_raw(query: str) -> list[str]:
+    """The question's words as recall ranks with them (`raw` in `_recall`): no single Chinese character, no stop pair,
+    English function words dropped unless nothing else is left."""
+    raw: list[str] = []
+    for t in tokens(query):
+        if len(t) == 1 and CJK_RE.fullmatch(t):
+            continue
+        if t not in QUERY_STOP and t not in raw:
+            raw.append(t)
+    return [t for t in raw if t not in EN_FUNCTION] or raw
+
+
+def _on(t: str, page: set[str], page_latin: list[str]) -> bool:
+    """Whether a page (its token set) holds question word `t`: the word, a plural / singular, or for Latin words of 5+
+    letters a word that starts the same way (`migrate` ~ `migration`), as `unseen_words` counts it."""
+    if t in page:
+        return True
+    if is_cjk_bigram(t):
+        return False
+    if any(f in page for f in latin_forms(t)):
+        return True
+    if len(t) < 5:
+        return False
+    stem = t[: max(4, len(t) - 2)]
+    return any(w.startswith(stem) for w in page_latin)
+
+
+def named_words(query: str) -> list[str]:
+    """Capitalised Latin words not at the start of a sentence (`Caroline`, `Seattle`), lowercased."""
+    text = unicodedata.normalize("NFKC", query or "")
+    out = []
+    for m in NAME_RE.finditer(text):
+        word = m.group(0)
+        if not word[0].isupper() or (word.isupper() and len(word) <= 2):
+            continue
+        before = text[: m.start()].rstrip()
+        if not before or before[-1] in ".?!。？！:：":
+            continue
+        t = word.lower()
+        if t not in EN_FUNCTION and t not in CALENDAR and t not in out:
+            out.append(t)
+    return out
+
+
+def coverage_signals(con: sqlite3.Connection, vault: Path, query: str, rels: list[str]) -> dict:
+    """How much of the question the given pages (your memory's top hits, best first) hold. Deterministic, no model:
+
+    - `cov1` / `cov3`: the share of the question's idf weight on the first page / on the first three together;
+    - `rare_miss1` / `rare_miss3`: the question's rarest word that the memory holds at all is not on the first page /
+      on none of the first three (the word that tells this question from its neighbours);
+    - `line_cov`: the best single line's share of the idf weight (a near miss holds the words on different lines);
+    - `bind_fail`: the question names someone or something (`named_words`) the memory knows, and no line of the first
+      three pages holds that name together with one of the question's two rarest other words;
+    - `nterms`, `nabsent`: the question's content words, and how many of them the memory never holds in any form."""
+    raw = [t for t in question_raw(query) if not t.isdigit()]
+    if not raw or not rels:
+        return {}
+    forms = {t: [t] + ([] if is_cjk_bigram(t) else latin_forms(t)) for t in raw}
+    df = term_df(con, [f for fs in forms.values() for f in fs])
+    n_docs = con.execute("SELECT count(*) FROM files").fetchone()[0] or 1
+
+    def dfx(t: str) -> int:
+        return max(df.get(f, 0) for f in forms[t])
+
+    kept = [t for t in raw if dfx(t) > 0 and (not is_cjk_bigram(t) or not set(t) & FUNCTION_CHARS)]
+    absent = [t for t in raw if dfx(t) == 0]
+    out = {"nterms": len(raw), "nabsent": len(absent)}
+    if not kept:
+        return {**out, "cov1": 0.0, "cov3": 0.0, "line_cov": 0.0, "rare_miss1": False, "rare_miss3": False,
+                "bind_fail": False}
+    idf = {t: math.log((n_docs - dfx(t) + 0.5) / (dfx(t) + 0.5) + 1) for t in kept}
+    total = sum(idf.values()) or 1.0
+    pages, lines = [], []
+    for rel in rels[:3]:
+        try:
+            text = (vault / rel).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            text = ""
+        _meta, body = split_frontmatter(text)
+        toks = set(tokens(body)) | set(tokens(Path(rel).stem))
+        pages.append((toks, [w for w in toks if not is_cjk_bigram(w)]))
+        for line in body.splitlines():
+            lt = set(tokens(line))
+            if lt:
+                lines.append((lt, [w for w in lt if not is_cjk_bigram(w)]))
+    on = [{t for t in kept if _on(t, pt, pl)} for pt, pl in pages]
+    union = set().union(*on) if on else set()
+    rarest = max(kept, key=lambda t: (idf[t], t))
+    best_line = 0.0
+    for lt, ll in lines:
+        best_line = max(best_line, sum(idf[t] for t in kept if _on(t, lt, ll)) / total)
+    names = [t for t in named_words(query) if t in idf]
+    others = sorted((t for t in kept if t not in names), key=lambda t: (-idf[t], t))[:2]
+    bind_fail = bool(names) and bool(others) and not any(
+        _on(nm, lt, ll) and any(_on(o, lt, ll) for o in others) for nm in names for lt, ll in lines)
+    out.update({"cov1": round(sum(idf[t] for t in on[0]) / total, 4) if on else 0.0,
+                "cov3": round(sum(idf[t] for t in union) / total, 4), "line_cov": round(best_line, 4),
+                "rare_miss1": bool(on) and rarest not in on[0], "rare_miss3": rarest not in union,
+                "bind_fail": bind_fail, "rarest": rarest})
     return out
 
 
@@ -1172,6 +1367,8 @@ def main() -> int:
     if args.json:
         print(json.dumps(res, ensure_ascii=False))
         return 0
+    if kb_only(res):
+        print(MEMORY_NONE[_note_lang(vault, args.query)])
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
     print(f"recall_strong_terms: {res.get('strong', 0)}")
@@ -1183,6 +1380,7 @@ def main() -> int:
         if res.get("asked"):
             print(ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
+        print_kb(vault, res, args.query, 2)
         return 0
     print_extras(res, "conflict")
     print("recall:")
@@ -1197,6 +1395,7 @@ def main() -> int:
         for ln, text in best_lines(vault / h["rel"], res["query_tokens"], args.lines):
             print(f"  L{ln}: {text}")
     print_extras(res, "assoc")
+    print_kb(vault, res, args.query)
     return 0
 
 

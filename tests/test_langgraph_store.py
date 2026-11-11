@@ -450,3 +450,19 @@ def test_a_long_key_works_where_the_disk_refuses_long_names(store, monkeypatch):
     assert store.get(A, key).value == {"content": "long"}
     store.put(A, key, {"content": "longer"})
     assert store.get(A, key).value == {"content": "longer"} and store.purge(A, key) >= 1
+
+
+def test_a_knowledge_base_in_the_memory_folder_changes_no_search(store, tmp_path):
+    """2.1's knowledge base (kb.py): reference material declared in the same folder neither enters a namespace's
+    search nor changes what it returns."""
+    facts(store)
+    before = {q: [(h.key, h.confidence) for h in store.search(A, query=q)]
+              for q in ("what is the dog called", "does alice eat fish", "which car does she drive")}
+    root = tmp_path / "memory"
+    (root / "Research").mkdir()
+    (root / "Research" / "Dogs.md").write_text("# Dogs afraid of thunder\n\nSource: https://example.org/dogs\n\nMany a dog "
+                                               "called Biscuit is afraid of thunder; vegetarian owners never feed fish.\n",
+                                               encoding="utf-8")
+    (root / "krouter-kb.txt").write_text("Research\n", encoding="utf-8")
+    after = {q: [(h.key, h.confidence) for h in store.search(A, query=q)] for q in before}
+    assert after == before

@@ -35,10 +35,13 @@
 >   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
 >   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
 >   `KROUTER_TAG` pins one.
-> - **On `main`, unreleased (2.0.1):** the README is back to showing the team server on its first page, with a Claude
->   Desktop + Obsidian example and the refusal numbers in two layers; the receipt adds a `recall_note:` naming question
->   words the top page never uses when the confidence is not `high` (ranking, confidence and refusal unchanged; its
->   effect on a reader's refusals is **not measured**).
+> - **On `main`, unreleased (2.1.0):** a knowledge-base layer: folders declared in `krouter-kb.txt` (and clippings,
+>   as before) are reference material, listed apart under `knowledge_base:` and never setting the confidence; when only
+>   they match, the receipt starts `memory: none` (tests, and set 37's synthetic set). `krouter kb add / suggest /
+>   import` (PDF, Word, HTML with a converter already on the machine). A rule to refuse more near misses was studied
+>   on development data (set 37) and **not shipped**: none of 216 candidates refused 10 more within a 1-point loss
+>   (the best: 3), so the refusal numbers above are unchanged. Also: the README's team section and two-layer refusal
+>   numbers, and a `recall_note:` naming question words the top page never uses (its effect **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).
@@ -194,12 +197,31 @@ Explains how a lookup came out, in seven short sections. It asks the same code `
 
 ### Clipped pages and other people's writing
 
-A page counts as a clipping (someone else's writing, not your notes) when a folder on its path has `剪藏`,
-`Clippings` or `Web clips` in its name, or its frontmatter has a `source:` URL, a `clippings` tag or `type: clipping`.
-To have a research folder treated that way, name it accordingly (say `Research (clippings)`) or add `tags: [clippings]`
-to its pages. When every one of the top three pages is a clipping, confidence is at most `low` and the receipt says
-the pages are someone else's writing; it is `recall: none` only when the question also has a word the vault never
-contains in any form. A clipping among pages of your own changes nothing.
+The memory folder's pages are of two kinds: your memory (what you decided, rules, corrections, distilled sessions) and
+the **knowledge base**, reference material someone else wrote. A page is in the knowledge base when a folder on its path
+is listed in `krouter-kb.txt` at the memory folder's root (one folder per line, relative to the memory folder; `krouter
+kb add FOLDER` writes it, `krouter kb remove` takes a line out, or edit it by hand), when a folder on its path has
+`剪藏`, `Clippings` or `Web clips` in its name, or when its frontmatter has a `source:` URL, a `clippings` tag or
+`type: clipping` (the last two rules are 2.0's clipping rules and need no declaration; a folder named exactly
+`Clippings` is not indexed at all).
+
+A lookup ranks and gates the two kinds separately. Your memory's pages give the answer and the confidence, exactly as
+before; the memory's lead over the next page is still measured against the best knowledge-base page, so taking
+reference pages out never makes the memory look surer, and when the top three pages of all are reference pages the
+memory is at most `low` (`none` when the question has a word the vault never contains in any form). Knowledge-base
+pages that pass the same gate on their own are listed after the memory's, under `knowledge_base:`, at most three, each
+with `kb=declared` or `kb=clippings`, its title, its source (`source:`, `url:` or an imported file's `source_file:`)
+and its best line. When the memory refuses and the knowledge base has pages, the receipt's first line is
+`memory: none`. Associated pages never come from the knowledge base, the literal-search fallback does not print its
+lines, and the prompt hook and the session-start index never bring its pages.
+
+`krouter kb suggest` (and a note in `krouter doctor`) names folders that look like reference material and are not
+declared: at least three pages, few with KRouter's own markers (`status`, `how`, a decision or session type), and most
+with a source address near the top, or most long (4,000+ characters) and titled like articles. Nothing is declared for
+you. `krouter kb import FILE [--to FOLDER]` converts a PDF, Word, HTML (and EPUB, ODT, RTF, …) file to a page in the
+knowledge base (the declared folder, or a new `Knowledge base` / `知识库` folder it declares) with `markitdown`,
+`pandoc` or, for PDF, `pdftotext` when one is installed, and a plain converter for HTML when none is; the page's
+frontmatter records the source file, the time of the import and the tool. KRouter installs nothing for this.
 
 Output is in the memory's language (English for a memory whose `krouter-zones.psv` says `@lang|en`, else Chinese);
 `--lang en|zh` overrides it, `--json` prints the structure instead. A `why` is not logged: the nightly job learns

@@ -32,10 +32,13 @@
 >   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
 >   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
 >   `KROUTER_TAG` pins one.
-> - **On `main`, unreleased (2.0.1):** the README is back to showing the team server on its first page, with a Claude
->   Desktop + Obsidian example and the refusal numbers in two layers; the receipt adds a `recall_note:` naming question
->   words the top page never uses when the confidence is not `high` (ranking, confidence and refusal unchanged; its
->   effect on a reader's refusals is **not measured**).
+> - **On `main`, unreleased (2.1.0):** a knowledge-base layer: folders declared in `krouter-kb.txt` (and clippings,
+>   as before) are reference material, listed apart under `knowledge_base:` and never setting the confidence; when only
+>   they match, the receipt starts `memory: none` (tests, and set 37's synthetic set). `krouter kb add / suggest /
+>   import` (PDF, Word, HTML with a converter already on the machine). A rule to refuse more near misses was studied
+>   on development data (set 37) and **not shipped**: none of 216 candidates refused 10 more within a 1-point loss
+>   (the best: 3), so the refusal numbers above are unchanged. Also: the README's team section and two-layer refusal
+>   numbers, and a `recall_note:` naming question words the top page never uses (its effect **not measured**).
 > - **Team server** (self-hosted; no KRouter cloud): several isolated memories per server, a token each, Prometheus
 >   `/metrics`; Docker, Compose, Kubernetes and systemd files. Over HTTP on one M2 laptop: 10,000 pages 13 ms a lookup
 >   and 301 answers/s with 32 callers, 50,000 pages 54 ms and 75/s (synthetic vaults, `bench/scale/serve_load.py`).

@@ -1414,3 +1414,58 @@ on a second message. If it fails, the nightly step stays in the code but is repo
 | Date | Event |
 |---|---|
 | 2026-11-10 | Registered (`77aeb94`); cases written with set 35's (`bench/subconscious/set36.jsonl`). **Run once** (learning messages answered by Sonnet 5.5, `claude-sonnet-5-5`; replies in `bench/subconscious/results/set36/`). On the 16 first messages the hook brought the right page 3 times (Chinese) and the host fetched it on the other 13: **13 learning events** (zh 5, en 8). `learn_mentions` learned one phrase per event. **Second messages, the hook alone: before learning 0 / 16; after, right on 6 of the 13 whose first message was learned (zh 1 / 5, en 5 / 8); wrong pages 0. Quiet (8 lookalikes + set 35's 24 held-out quiet messages) bringing something: 1 before, 1 after.** Against the line (≥ half of 13, i.e. 7; quiet no worse; no wrong page): **fails by one**; quiet holds. Reading the learned phrases: English ones were the team expressions or close to them ("dusty-keys sweep", "white-hat queue", "lunch-break reaper strikes"); Chinese ones mostly were not (「回家加班」「昨晚连上」, or the expression with a word attached, 「每日洗牌刷掉」): without real Chinese word segmentation the picker cuts in the wrong places. As registered, the nightly step stays in the code, reported as not shown to work; it is **off by default** (`KROUTER_RECALL_LEARN=1`), because it also keeps the latest message's words in the state folder. |
+
+## Set 37: reference material apart from your memory, and saying "the memory does not have this" more often (registered 2026-11-10, before any development number was looked at)
+
+**Why.** An outside review put the refusal side at "30%" and said KRouter has no knowledge-base layer. Both come from
+one gap: a page someone else wrote (an article, a clipping, a report kept for research) was ranked as if it were the
+user's own memory, and a near match, from any page, was handed over at `medium` or `low` rather than as `recall: none`.
+In the maintainer's own vault the question *"What is the production database password of the billing service?"* got
+`recall_confidence: medium`, the top page an English news article in a project research folder. Two changes are
+measured here, separately: (A) the knowledge-base layer (`kb.py`): pages in a declared folder, and the clippings 2.0
+already recognised, are ranked and gated apart, listed in a `knowledge_base:` block, and never set the confidence;
+(B) a coverage rule on top of the shipped gate ("also refuse when ...").
+
+**(A) is a fact of the code, not a statistic.** With a folder declared, a question that only the folder's pages match
+gets `recall: none` from the memory, and the receipt's first line is `memory: none`; the knowledge-base pages are listed
+with their path, title and source. Judged by tests and by the synthetic set below, and by one byte-identity check:
+with no folder declared and no clippings, every lookup of the six memory-honesty sets gives the same result and the
+same printed receipt as before the change.
+
+**(B) data.** Development: LongMemEval's 30 `_abs` questions (seen in sets 7 and 14), set 14's dev half (235
+answerable) and that half with its answer sessions removed; LoCoMo (set 10's conversion) split by seed 20261110 over the
+sorted question ids, the 446 adversarial (category 5) and the 1 536 answerable with evidence drawn separately, half
+each to *dev*; the memory-honesty sets `dev`, `dev2`, `dev3`. Held out, opened once for the one rule chosen on dev:
+LongMemEval's held-out half (and the same with answer sessions removed), LoCoMo's held-out half, `heldout`, `heldout2`,
+`heldout3`, and a synthetic set written before any rule is chosen (`bench/refusal/synthetic.py`: a Chinese memory
+with long English reference articles, some declared as the knowledge base and some not; questions it answers, questions
+near something it holds that it does not answer, and questions about things it never mentions, in Chinese and English).
+
+**(B) candidates, fixed now** (`bench/refusal/study.py`, `candidates()`): the signals of
+`recall_index.coverage_signals` on the gate's own top pages — the rarest question word the memory holds is missing from
+the first page / from all three (`rare_miss1`, `rare_miss3`); the share of the question's idf weight on the first page,
+on the three, on the best single line (`cov1` < 0.4 / 0.5 / 0.6, `cov3` < 0.4 … 0.7, `line_cov` < 0.3 / 0.4 / 0.5);
+a named person or thing never on one line with the question's rarest other words (`bind_fail`); two or more question
+words the first page never uses (2.0.1's receipt line, `unseen`); one or more words the memory never holds (`nabsent`).
+Each alone and every AND of two, with the gate either at any confidence or only below `high`. A rule can only turn an
+answer into a refusal.
+
+**(B) pass bar, fixed now.** On dev, a rule qualifies when it loses at most 1 point of right answers on each of the
+LongMemEval dev half and LoCoMo's dev half (a right answer: a labelled page among the three cited), none on `dev`,
+`dev2`, `dev3` (gold page first), and newly refuses at least 10 of the dev unanswerable questions of LongMemEval `_abs`
+and LoCoMo's adversarial dev half together. Of the qualifying rules the one with the most new refusals there goes to the
+held-out halves, once (ties: fewer answers lost, then fewer signals). It ships on by default only if on the held-out
+halves: (1) LoCoMo's adversarial half: at least 10 more of its 223 refused than the shipped gate refuses; (2) right
+answers lost at most 1 point on LongMemEval's held-out half and on LoCoMo's held-out answerable half; (3) `heldout`,
+`heldout2`, `heldout3`: no fewer correction or current hits, no more wrong citations, no fewer refusals; (4) the
+synthetic set: no answerable case the shipped gate gets right is lost. If no rule qualifies on dev, the held-out halves
+are not opened for (B) and the report says so; if the chosen rule fails, it stays off and its numbers are reported as
+they are. Every number is reported, the ones that miss included. No model is called anywhere in this set.
+
+### Log, set 37
+
+| Date | Event |
+|---|---|
+| 2026-11-10 | Registered, with the candidate list and the signals written and no development number looked at. |
+| 2026-11-10 | **(B) development data, said as it happened** (`bench/refusal/study.py collect`, then `rules`). The shipped gate first, reproducing earlier counts: LongMemEval `_abs` 9 of 30 refused; dev half right 225 of 235 (3 refused); dev half with answer sessions removed 103 of 235 refused (set 14: the same three); LoCoMo dev half: adversarial 19 of 223 refused, answerable right 591 of 768 (80 refused); `dev` / `dev2` / `dev3`: refusals 10/10, 23/25, 14/20, right 17/20, 8/25, 26/30. **No candidate qualifies: 0 of 216.** Within the 1-point budget (at most 2 LongMemEval and 7 LoCoMo right answers lost, none on the three memory-honesty sets) 78 rules fit, and the best of them refuses **3 more** of the 234 dev unanswerable questions still answered (`cov3` < 0.5: 1 `_abs`, 2 LoCoMo; 4 more of the ablated vaults; loses 1 + 6 right answers); the bar asked for 10. The strongest single signals cost far more than they gain: `nabsent` ≥ 1 refuses 4 + 81 more and loses 30 + 163 right answers; 2.0.1's `unseen` ≥ 2 refuses 10 + 47 more and loses 97 + 103; `line_cov` < 0.5: 7 + 35 for 60 + 87; `rare_miss1`: 5 + 27 for 57 + 77; `bind_fail` (written for LoCoMo's adversarial questions, which ask about the other speaker): 4 + 8 for 13 + 12. As set 14 found on LongMemEval, the signals that see a near miss see it about as often on questions the memory does answer. **So the held-out halves are not opened for (B), and the gate is unchanged.** (A) is judged as registered. |
+| 2026-11-10 | **(A), said as it happened.** The synthetic set (`bench/refusal/synthetic.py`, 41 questions × three configurations: `none` nothing declared, `ref` the clipped `参考资料` folder declared, `all` the undeclared research folder declared as well) was run on the layer's first version and on 2.0.1's code (`git archive 51ba95d`). That run showed a flaw: with reference pages taken out of the ranking, the memory's top page led the next memory page by more than it had led the article, so the confidence *rose* (`ref:kb-en-02` low → high, `all:near-en-01` low → medium). Fixed before any number below: the memory's lead is measured against the best reference page too, and when the top three of all pages are reference pages the 2.0 clipping cap applies. The set was then run again; it is therefore a development set for (A) from here on, not a held-out one. **Final (`all`):** of the 6 questions only an article answers, 2.0.1 cited the article as the memory's answer for 5 and refused 1; now the memory refuses 4 (3 with `memory: none` first and the article listed; for one the reference block finds nothing either) and answers 2 at `low` from a memory page on a nearby subject; the knowledge-base block lists the right article for 5 of 6. Memory questions 15 of 15 right before and after (all configurations). Near misses refused 4 of 12 → 5 of 12; absent 8 of 8 → 8 of 8. No question in any configuration got a higher confidence than under 2.0.1 without being a right memory answer. `ref` and `none` behave alike (the `参考资料` pages carry clipper frontmatter): the 3 article questions there, 2.0.1 cited the article for 3; now 1 refused, 2 answered `low` from memory pages, the article listed for 3. The maintainer's case, `near-en-01` (*What is the production database password of the billing service?*): `low`, top page `Billing service deploys` (a memory page), before and after in every configuration; the layer moves the articles into the knowledge-base block but does not refuse a near page of the memory's own. Its exact shape from the maintainer's vault (the article first) is covered by `tests/test_knowledge_base.py`. Byte identity: the six memory-honesty sets, 405 lookups, results and printed receipts identical to 2.0.1. |

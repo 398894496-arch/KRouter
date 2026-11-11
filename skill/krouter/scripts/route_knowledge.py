@@ -306,6 +306,24 @@ def literal_candidates(needle: str, scope: Path, vault: Path) -> list[str] | Non
     return sorted(str(vault / rel) for rel in rels if rel.startswith(base))
 
 
+_KB_SEEN: dict[str, bool] = {}
+
+
+def _in_kb(vault: Path, line: str, hit) -> bool:
+    """Whether a literal-search output line comes from a knowledge-base page (kb.py)."""
+    m = hit.match(line)
+    if not m:
+        return False
+    full = m.group(1)
+    if full not in _KB_SEEN:
+        import kb
+
+        base = str(vault).rstrip("/\\") + os.sep
+        rel = full[len(base):].replace(os.sep, "/") if full.startswith(base) else ""
+        _KB_SEEN[full] = bool(rel) and bool(kb.reason(vault, rel))
+    return _KB_SEEN[full]
+
+
 def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 24, vault: Path | None = None,
               skip: list[str] | tuple = ()) -> None:
     rg = shutil.which("rg")
@@ -377,6 +395,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
         if skip:  # 召回判成「只对上你以前的提问」的会话摘录：字面搜索也不再把那句提问当结果打出来
             drop = tuple(str(vault / r) for r in skip)
             lines = [ln for ln in lines if not ln.startswith(drop)]
+        lines = [ln for ln in lines if not _in_kb(vault, ln, hit)]  # 知识库的页只在 knowledge_base 那一块里出现
     for i, line in enumerate(lines):
         if i >= max_lines:
             print("[truncated after 24 lines]")
@@ -385,7 +404,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
 
 
 def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
-    from recall_index import PARTIAL_NOTE, best_lines, print_extras, unseen_note
+    from recall_index import PARTIAL_NOTE, best_lines, print_extras, print_kb, unseen_note
 
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")
@@ -407,6 +426,7 @@ def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
         for ln, text in best_lines(vault / h["rel"], res["query_tokens"], lines):
             print(f"  L{ln}: {text}")
     print_extras(res, "assoc")
+    print_kb(vault, res, query)
 
 
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
@@ -419,6 +439,7 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     except Exception:  # 召回缓存不可用时退回字面检索
         res = None
     widened = False
+    wide = None
     if (res is None or not res["hits"] or res.get("confidence") == "none") and scope != vault:
         # 路由范围（单个偏好/纠错页、01 项目）里没有答案：扩到全库，规则页优先，并如实标出
         try:
@@ -427,6 +448,8 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
                 res, widened = wide, True
         except Exception:
             pass
+    if res is not None and not res.get("kb") and wide and wide.get("kb"):
+        res = {**res, "kb": wide["kb"], "kb_confidence": wide.get("kb_confidence")}  # 记忆里没有：资料从全库找
     if res and res["hits"] and res.get("confidence") != "none":
         emit_receipt(scope, "ranked-recall-complete", route, query, vault, map_path)
         log_query(route, query, "ranked-recall-complete" + ("+widened" if widened else ""), res["hits"][0]["rel"],
@@ -439,6 +462,12 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         print_recall(res, vault, 4 if (scope.is_file() and not widened) else 1, query)
         print("open_page: only the top recall hit, and only if its how does not close the question")
         return
+    try:
+        import recall_index as _ri
+    except Exception:  # noqa: BLE001 - 召回不可用：照老办法只做字面检索
+        _ri = None
+    if _ri is not None and _ri.kb_only(res):
+        print(_ri.MEMORY_NONE[_ri._note_lang(vault, query)])  # 只有知识库对得上：回执第一行先说记忆里没有
     emit_receipt(scope, "bounded-literal-search-complete", route, query, vault, map_path)
     log_query(route, query, "bounded-literal-search-complete")
     emit_suggestions(query, vault, map_path)
@@ -446,10 +475,9 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     print(f"scope: {scope}")
     if res is not None:
         if res.get("asked"):
-            import recall_index as _ri
-
             print(_ri.ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
+        _ri.print_kb(vault, res, query, 2)
     # 索引这次没用上（recall 抛了错）就别拿它挑候选页：它可能缺页或过期，整个范围照老办法扫
     md_search(query, scope, vault=vault if res is not None else None, skip=(res or {}).get("asked") or [])
 

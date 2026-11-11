@@ -9,9 +9,43 @@ Minor releases (new features) at most once a week; patch releases (fixes, docs, 
 semantic versioning; what counts as the stable surface is listed in [`docs/DETAILS.md`](docs/DETAILS.md#stability-and-versions). Each entry starts with what you will
 notice, then the details.
 
-## 2.0.1 — unreleased
+## 2.1.0 — unreleased
 
-What you will notice: the README puts the team server and its ten-people test back on the first page, keeps the
+What you will notice: the memory folder now has a **knowledge base**, a layer of its own for reference material
+(articles, clippings, research, documents someone else wrote). Declare a folder with `krouter kb add FOLDER` (or one
+line in `krouter-kb.txt` at the memory folder's root); clipping folders and web-clipper pages count without it, as in
+2.0. Its pages are still found, with their source, but a lookup lists them in a `knowledge_base:` block of their own
+and they never set the confidence: when only reference material matches, the receipt's first line is
+`memory: none` and the memory's answer is `recall: none`. `krouter kb suggest` (and `krouter doctor`) name folders
+that look like reference material and are not declared (a suggestion only); `krouter kb import FILE` turns a PDF, Word
+or HTML file into a Markdown page in the knowledge base with the converter already on the machine (`markitdown`,
+`pandoc`, `pdftotext`; plain HTML without any), and says which to install when there is none.
+
+A second change was **researched and not shipped**: a rule that would refuse more near misses (questions about
+something close to what the memory holds). Registered first as set 37; of 216 candidate rules on development data none
+refused at least 10 more of LongMemEval's and LoCoMo's unanswerable questions within a 1-point loss of answers (the best
+refused 3 more), so the held-out halves were not opened and the gate is unchanged
+([`HELDOUT.md`](bench/memory_honesty/HELDOUT.md#set-37-reference-material-apart-from-your-memory-and-saying-the-memory-does-not-have-this-more-often-registered-2026-11-10-before-any-development-number-was-looked-at),
+[`docs/NUMBERS.md`](docs/NUMBERS.md)). The retrieval-layer refusal numbers stay what they were.
+
+- `skill/krouter/scripts/kb.py` (new): declaring, recognising, suggesting and importing. Recognising clippings moved
+  here from `recall_index.py` (same rules).
+- Recall ranks and gates your memory and the knowledge base separately. A knowledge-base page never raises the memory's
+  confidence: the memory's lead is still measured against the best reference page, and when the top three are all
+  reference pages the 2.0 cap for clippings applies (at most `low`; `none` when the question has a word the memory
+  never holds). Associated pages never come from the knowledge base; the literal-search fallback does not print its
+  lines; the prompt hook and the session-start index never bring its pages.
+- With no folder declared and no clippings, every lookup of the six memory-honesty sets gives the same result and the
+  same printed receipt as 2.0.1 (405 lookups, compared byte for byte); set 18's held-out count reproduces (210 of 235 at
+  five pages); the prompts of sets 15, 16 and 35 are unchanged.
+- `krouter why` lists the reference pages apart and says when only they matched; `krouter view` marks them; the
+  Python `Answer` has `.references` and `.memory_none`; `krouter_ask`'s description, the server instructions and
+  `SKILL.md` say how to read the block.
+- `bench/refusal/study.py` and `bench/refusal/synthetic.py` (set 37): the rule study and a synthetic set (a Chinese
+  memory with English reference articles, declared and not; 41 questions in three configurations).
+- `recall_index.coverage_signals` (the signals the study measured) is in the code, unused by the gate.
+
+Also in this release (prepared as 2.0.1, never released on its own): the README puts the team server and its ten-people test back on the first page, keeps the
 install to its shortest path (importing past sessions is its own section), says plainly that KRouter is also for any
 app that speaks MCP (a Claude Desktop + Obsidian example, with a receipt actually run on a sample vault), and states
 the refusal numbers in two layers: of LongMemEval's 30 unanswerable questions KRouter's receipt refuses 9; the reader
@@ -27,7 +61,7 @@ measured** ([`docs/NUMBERS.md`](docs/NUMBERS.md)).
 - README (en/zh): a section on using KRouter as a knowledge base over an existing Markdown folder (Markdown only, no
   vector search, how to mark reference material), an "Engineering facts" list of things that can be checked now, and a
   link to the new [`ROADMAP.md`](ROADMAP.md) / `ROADMAP.zh.md`.
-- `server.json` (the registry entry) still names v2.0.0 and its `KRouter.mcpb` hash until 2.0.1 is released; the two
+- `server.json` (the registry entry) still names v2.0.0 and its `KRouter.mcpb` hash until 2.1.0 is released; the two
   version tests now allow that while the top changelog section is unreleased.
 - `krouter_ask`'s tool description, the server instructions and `SKILL.md` say how to read the new line.
 

@@ -3,6 +3,7 @@
     import krouter
     a = krouter.ask("how do we ship a release?")
     a.page, a.how, a.refused        # the page it came from, the one-line answer, True when the memory does not know
+    a.references                    # knowledge-base pages (reference material), listed apart from the answer
     krouter.note("Releases are tagged from main only.", kind="decision")
 
 The memory is `vault=`, else `KROUTER_VAULT` (`OBSIDIAN_VAULT`, the older name, also works), else the folder the
@@ -18,7 +19,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-__version__ = "2.0.1"
+__version__ = "2.1.0"
 ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 
 
@@ -63,6 +64,34 @@ class Answer:
             elif not line.startswith(" "):
                 inside = False
         return out
+
+    @property
+    def references(self) -> list[dict]:
+        """Pages of the knowledge base the receipt listed apart (`knowledge_base:`): reference material someone else
+        wrote, never the answer to what you decided. `{"page", "kb", "title", "source"}`, best first."""
+        out: list[dict] = []
+        inside = False
+        for line in self.text.splitlines():
+            if line.startswith("knowledge_base:"):
+                inside = True
+                continue
+            if not inside:
+                continue
+            if line.startswith("- "):
+                head, _, rest = line[2:].partition(" kb=")
+                out.append({"page": head.strip(), "kb": rest.split()[0] if rest else "", "title": "", "source": ""})
+            elif line.startswith("  title: ") and out:
+                out[-1]["title"] = line[len("  title: "):].strip()
+            elif line.startswith("  source: ") and out:
+                out[-1]["source"] = line[len("  source: "):].strip()
+            elif not line.startswith(" "):
+                inside = False
+        return out
+
+    @property
+    def memory_none(self) -> bool:
+        """True when your memory has nothing on the question and only the knowledge base matched."""
+        return self.fields.get("memory", "").startswith("none")
 
     def _top(self) -> dict:
         return next((h for h in self.hits if h["tier"] != "dead" and h["status"] != "superseded"), {})

@@ -65,9 +65,9 @@ KRouter 做的就是这些：把规则、它在哪一页、有多大把握递出
 
 ### 托底：你能核对的那一层
 
-每个回答都注明出自哪一页；查不到时，回执直接写「没有」，不拿一条差不多的凑数；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
+每个回答都注明出自哪一页；你的记忆里没有的，回执直接写「没有」，只对上相近内容时写明有多大把握，不拿一条差不多的冒充答案，你存的参考资料也不会被当成你定过的事；纠错之后新结论直接取代旧结论，不会两个一起冒出来；而且都看得见：记忆是一个纯 Markdown 文件夹，能在 [Obsidian](https://obsidian.md) 或任何编辑器里打开、修改，`krouter view`、`krouter why` 显示它记了什么、为什么这样答。你现在用的 AI 就能接，有一个就够。
 
-**拒答分两层，只有第一层是 KRouter 的。** LongMemEval 的 30 道不可答题，只看 KRouter 自己的回执，9 道直接写 `recall: none`；再加上读题模型，30 道里 29 道回答「没提到」，但什么都不给读题模型时，30 道它也全答「没提到」，所以第二个数主要是模型的功劳。KRouter 做的是：库里完全没有对上的内容时直接写没有；对上的只是相近内容时，把依据和把握等级交给模型，不把一条差不多的当答案。这不是没有例外的保证：这 30 道里有 22 道，排第一的页是一段和所问的事相近的真实会话。方法和其他测试见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
+**拒答分两层，只有第一层是 KRouter 的。** LongMemEval 的 30 道不可答题，只看 KRouter 自己的回执，9 道直接写 `recall: none`；再加上读题模型，30 道里 29 道回答「没提到」，但什么都不给读题模型时，30 道它也全答「没提到」，所以第二个数主要是模型的功劳。KRouter 做的是：库里完全没有对上的内容时直接写没有；对上的只是相近内容时，把依据和把握等级交给模型，不把一条差不多的当答案。这不是没有例外的保证：这 30 道里有 22 道，排第一的页是一段和所问的事相近的真实会话。你声明成[知识库](#它也是你的知识库)的参考资料不算记忆的答案：只有它们对得上时，回执第一行就是 `memory: none`。我们在开发数据上找过一条能多拒近似题的规则（第 37 套），没有一条够好，所以上面的数字不变。方法和其他测试见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
 
 ### 它不会做什么
 
@@ -77,6 +77,8 @@ KRouter 做的就是这些：把规则、它在哪一页、有多大把握递出
 - Cursor 上每句话那一层用不了（它的钩子加不了上下文），只有会话开始的索引。
 - 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
 - 2.0 没有在 Windows 上实测。
+- 问的是记忆里某件事的近邻时，它还是会作答，多半是 `low` 或 `medium`，不是 `recall: none`。我们找过能多拒这类题的规则（第 37 套），没有一条够好。
+- 没声明的参考资料文件夹按你的记忆算（只有剪藏文件夹和剪藏插件写的页能自动认出来）；`krouter kb suggest` 会指出可能是的那些。
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 
@@ -137,7 +139,27 @@ python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distil
 
 ## 它也是你的知识库
 
-把 KRouter 指向你已有的 Markdown 文件夹（Obsidian 库、文档仓库、笔记目录），里面每一页都能被查到，并带出处。别人写的资料（网页剪藏、研究材料）可以标成参考资料，这样它们不会被当成你定过的事：文件夹名字里带 `剪藏`、`Clippings`，或页头标了 `clippings` 标签，就按这个处理（[做法](docs/DETAILS.zh.md#剪藏和别人写的材料)）。**它不做的：** 只认 Markdown；PDF、Word、网页要先转成 Markdown 再放进来（可以用 pandoc、markitdown 这类转换工具，不是 KRouter 自带的）；没有向量检索（[测过，没有上线](docs/DENSE-OPTIN.md)）。
+把 KRouter 指向你已有的 Markdown 文件夹（Obsidian 库、文档仓库、笔记目录），里面每一页都能被查到，并带出处。文件夹里的页分两种：**你的记忆**（你定过的事、规则、纠正、会话提炼出来的东西）和**你的知识库**（参考资料：文章、剪藏、研究材料、别人写的文档）。两种都能查到；只有你的记忆算「你定过什么」。
+
+```bash
+krouter kb add "研究资料"           # 把一个文件夹声明成知识库（就是记忆文件夹里 krouter-kb.txt 的一行）
+krouter kb suggest                 # 看起来像参考资料、还没声明的文件夹（只建议，不改任何东西）
+krouter kb import 报告.pdf          # 把 PDF、Word、HTML 转成知识库里的一页 Markdown
+```
+
+名字带 `剪藏`、`Clippings`、`Web clips` 的文件夹，和页头是网页剪藏插件写的页，不用声明也算知识库。查询时知识库的页单独列一块，每条带标题、出处和命中的那一行，不影响置信度；只有它们对得上时，回执第一行就是 `memory: none`：
+
+```text
+memory: none（你的记忆里没有这件事；只有知识库里的参考资料对得上，列在 knowledge_base 下面）
+…
+recall: none (no page covers enough of the question; do not guess)
+knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是别人写的，不是你定过的事）。作为资料引用、给出处；不要说成你的决定
+- 研究资料/某次账单故障复盘.md kb=declared score=…
+  title: 某次账单故障复盘
+  L5: 迁移过程中账单服务的数据库连接被占满……
+```
+
+**它不做的：** 只检索 Markdown；`import` 用你本机已有的工具转换别的格式（`markitdown`、`pandoc`，PDF 也可以用 `pdftotext`；纯 HTML 不需要任何工具），一个都没有时会告诉你装哪个。没有向量检索（[测过，没有上线](docs/DENSE-OPTIN.md)）。没声明的文件夹按你的记忆算：`krouter doctor` 和 `krouter kb suggest` 会指出看起来像参考资料的那些（[细节](docs/DETAILS.zh.md#剪藏和别人写的材料)）。
 
 ## 从你自己的代码里用
 

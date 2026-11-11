@@ -6,10 +6,10 @@ What is planned next, in no particular order and with no dates: nothing here is 
 only when it ships and its [`CHANGELOG.md`](CHANGELOG.md) entry says so. What does not work yet is listed in the README
 under [What it does not do](README.md#what-it-does-not-do).
 
-- **The knowledge base as a named layer.** Today any Markdown folder you point KRouter at is searched, and a folder can
-  be treated as reference material only by its name or a tag. Planned: declare a folder as reference explicitly.
 - **A better refusal rule.** A question about something near what the memory holds still gets an answer. The gate was
-  analysed and no simple rule beat it ([`NUMBERS.md`](docs/NUMBERS.md), set 14); a different kind of signal is needed.
+  analysed twice and no rule beat it: set 14 on LongMemEval, and set 37, which tried 216 coverage rules on LongMemEval,
+  LoCoMo and our own sets and found the best refusing only 3 more within a 1-point loss of answers
+  ([`NUMBERS.md`](docs/NUMBERS.md)); a different kind of signal is needed.
 - **A public side-by-side evaluation.** Take part in a comparison someone else runs, with questions we did not write.
 - **Backfill everything after the install.** One command that brings in the whole history and distills it in batches,
   instead of the newest 40 by default.
@@ -20,3 +20,10 @@ under [What it does not do](README.md#what-it-does-not-do).
   ([`DENSE-OPTIN.md`](docs/DENSE-OPTIN.md)); the question is whether one can be added without losing the refusals.
 - **PyPI and npm.** Publish the Python package (with the LangGraph store) and the JavaScript client.
 - **Windows, by hand.** Run the install and the apps on a real Windows machine; so far the tests run there in CI only.
+
+## Done
+
+- **The knowledge base as a named layer** (2.1.0, unreleased): `krouter kb add` declares a folder of reference
+  material; the receipt lists it apart under `knowledge_base:`, it sets no confidence, and when only it matches the
+  first line is `memory: none`; `krouter kb suggest` proposes folders, `krouter kb import` brings in PDF, Word and HTML
+  ([`CHANGELOG.md`](CHANGELOG.md)).

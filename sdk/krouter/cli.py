@@ -1,4 +1,4 @@
-"""`krouter ask|why|view|status|doctor|note|demo|mcp`: the same lookups from a terminal, an explanation of one, a read-only page about the memory, a one-verdict check, and the MCP server."""
+"""`krouter ask|why|view|status|doctor|note|kb|demo|mcp`: the same lookups from a terminal, an explanation of one, a read-only page about the memory, a one-verdict check, the knowledge base, and the MCP server."""
 
 from __future__ import annotations
 
@@ -46,6 +46,9 @@ def main(argv: list[str] | None = None) -> int:
     d = sub.add_parser("demo", help="decide, change your mind, ask: on a throwaway memory, no install, no key")
     d.add_argument("--lang", choices=("en", "zh"), default=env_lang())
     d.add_argument("--keep", action="store_true", help="keep the demo memory to look at")
+    k = sub.add_parser("kb", help="the knowledge base: declare reference folders (add / remove / list), see folders that "
+                                  "look like reference material (suggest), import a PDF, Word or HTML file (import)")
+    k.add_argument("rest", nargs=argparse.REMAINDER)
     m = sub.add_parser("mcp", help="run the MCP server (stdio; --http for a team server)")
     m.add_argument("rest", nargs=argparse.REMAINDER)
     args = ap.parse_args(argv)
@@ -78,6 +81,11 @@ def main(argv: list[str] | None = None) -> int:
         return run(args.lang, args.keep)
     elif args.cmd == "note":
         print(note(args.text, args.kind, args.vault))
+    elif args.cmd == "kb":
+        sys.path.insert(0, str(router_dir()))
+        import kb
+
+        return kb.main((["--vault", args.vault] if args.vault else []) + args.rest)
     else:
         sys.path.insert(0, str(router_dir()))
         import mcp_server

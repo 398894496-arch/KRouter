@@ -4,7 +4,8 @@ It asks the same modules `krouter ask` asks (the alias lock, then the ranked rec
 old-versus-new tie-break) and, from what they return, says: what matched first (which alias, which words), why each
 page sits where it does (the words it matched, its tier, the boosts), why the confidence is the one it is, which pages
 came along an edge and from where, which page replaced which, whether an experience card goes with the question, and,
-when the memory does not know, which word it could not find and which check said no.
+when the memory does not know, which word it could not find and which check said no. Pages of the knowledge base
+(`kb.py`: reference material) are listed apart under the pages, and never set the confidence.
 
 Read only: no page is written, no query log line is appended (a `why` is not a question the nightly job should learn
 from), nothing is sent anywhere. The only thing refreshed is the recall cache, outside the memory folder, as with `ask`.
@@ -101,6 +102,12 @@ TEXT = {
         "conf_low_partial": "low: only one word of the question matched the top page, so it may be about something else.",
         "conf_low_clipped": "low (capped): every page found is a clipped web page, reference someone else wrote, not your own notes.",
         "conf_none": "none: the memory refused. Reasons below.",
+        "kb_intro": "In your knowledge base (reference material someone else wrote: listed apart, never counted as something you decided, and it sets no confidence):",
+        "kb_head": "{rel}: {title} ({why}, score {score})",
+        "kb_why_declared": "in a declared knowledge-base folder",
+        "kb_why_clippings": "a clipping",
+        "kb_source": "source: {source}",
+        "kb_only": "Only your knowledge base matched: your memory has nothing on this, and the receipt's first line says so.",
         "r_nothing": "no page contains the question's words ({words})",
         "r_no_words": "the question has only function words, nothing to match",
         "r_unnamed": "the question names {names}, which no page in the memory mentions at all",
@@ -209,6 +216,12 @@ TEXT = {
         "conf_low_partial": "low：问题里只有一个词对上了第一名，它可能说的是别的事。",
         "conf_low_clipped": "low（封顶）：找到的全是网页剪藏，是别人写的参考材料，不是你自己的笔记。",
         "conf_none": "none：库里没有。原因见下。",
+        "kb_intro": "知识库里的页（别人写的参考资料：单列，不算你定过的事，也不影响置信度）：",
+        "kb_head": "{rel}：{title}（{why}，得分 {score}）",
+        "kb_why_declared": "在声明过的知识库文件夹里",
+        "kb_why_clippings": "剪藏",
+        "kb_source": "出处：{source}",
+        "kb_only": "只有知识库对得上：你的记忆里没有这件事，回执第一行就这么说。",
         "r_nothing": "没有哪一页含有问题里的词（{words}）",
         "r_no_words": "问题里只有虚词，没有可匹配的内容",
         "r_unnamed": "问题点了 {names}，整个库里没有哪一页提过",
@@ -481,6 +494,8 @@ def explain(vault, question: str, lang: str | None = None, refresh: bool = True,
                                  "score": a["score"], "title": st.title_of(a["rel"]),
                                  "via": a["via"]})
         out["conflict"] = conflict
+        out["kb"] = [dict(k) for k in res.get("kb") or []]  # 知识库那一块（kb.py）：参考资料，单列
+        out["kb_only"] = ri.kb_only(res)
         out["slots"] = {"n": ri.PAGES, "k": ri.DIRECT_FIRST}
         if conf == "none":
             opened = ri.recall(vault, q, refresh_first=False, gate=False, conflict=False, assoc=False) if q else {}
@@ -646,11 +661,20 @@ def blocks(e: dict) -> list[dict]:
             li(t(L, "page_how", how=pg["how"]), 1)
     if e["pages"] and verdict != "none":
         p(t(L, "slots", **e["slots"]))
+    if e.get("kb"):
+        p(t(L, "kb_intro"))
+        for k in e["kb"]:
+            li(t(L, "kb_head", rel=k["rel"], title=k["title"], why=t(L, "kb_why_" + k["kb"]), score=k["score"]), 0,
+               k["rel"])
+            if k.get("source"):
+                li(t(L, "kb_source", source=k["source"]), 1)
 
     h(t(L, "h_conf"))
     conf, margin = e["confidence"], e["margin"]
     if conf == "none":
         li(t(L, "conf_none"))
+        if e.get("kb_only"):
+            li(t(L, "kb_only"), 1)
         for r in e["refusal"]:
             params = {k: v for k, v in r.items() if k not in ("code", "absent", "stems")}
             sep = ", " if L == "en" else "、"
@@ -753,6 +777,7 @@ def pages_in(e: dict) -> list[str]:
         found.add(pg["rel"])
         found.update(pg.get("replaced_by") or [])
         found.update(pg.get("replaces") or [])
+    found.update(k["rel"] for k in e.get("kb", []))
     for a in e.get("assoc", []):
         found.add(a["rel"])
         found.update(v["from"] for v in a["via"])

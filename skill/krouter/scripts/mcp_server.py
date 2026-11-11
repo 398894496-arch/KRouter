@@ -50,7 +50,7 @@ sys.path.insert(0, str(HERE))
 from krouter_home import vault_path  # noqa: E402
 import team  # noqa: E402
 
-VERSION = "2.0.1"
+VERSION = "2.1.0"
 PROTOCOLS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 INSTRUCTIONS = (
@@ -65,6 +65,9 @@ INSTRUCTIONS = (
     "say the decision was changed; when it says `possible`, read both pages before answering. Pages under "
     "`associated:` are connected to the hits but were not named by the question: read one only when the hits leave "
     "part of the question open, and never cite one as the answer by itself. "
+    "Pages under `knowledge_base:` are reference material in the user's knowledge base (articles, clippings, documents "
+    "someone else wrote): cite them as a source with the path, never as something the user decided; `memory: none` "
+    "means the user's own memory has nothing on the question, whatever reference material matched. "
     "If a receipt has `host_action:`, tell the user that line."
 )
 CORRECT_INSTRUCTION = (" When the user corrects a decision or says to do something differently from now on, call "
@@ -79,7 +82,9 @@ TOOLS = [
         "description": "Look up the user's vault for one question. Returns the best page with a one-line answer "
                        "(`how`), the matching lines and a receipt, or `recall: none` when the vault has nothing on it. A "
                        "`recall_note:` naming words the top page does not mention means: unless the page states the "
-                       "answer outright, treat the question as not covered.",
+                       "answer outright, treat the question as not covered. Pages under `knowledge_base:` are "
+                       "reference material (someone else's writing), listed apart: a source to cite, not the user's "
+                       "decision; `memory: none` first means only reference material matched.",
         "inputSchema": {
             "type": "object",
             "properties": {

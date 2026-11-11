@@ -214,6 +214,18 @@ def run(vault_arg: str | None = None) -> int:
                                  "records it with krouter_correct; distilling, the nightly upkeep and settling correction "
                                  "candidates do not run, so a change worded another way can leave the old answer first. "
                                  f"Fix: log in to claude / codex / grok once, or put an API key in {keys}"))
+        try:  # 知识库（kb.py）：声明了哪些；没声明、但看起来像外来资料的文件夹只作建议，不自动生效
+            import kb
+
+            folders = kb.declared(vault)
+            if folders:
+                rows.append(("ok", "knowledge base: " + ", ".join(folders) + f" ({kb.KB_FILE})"))
+            for sug in kb.suggest(vault, limit=3):
+                rows.append(("note", f"knowledge base: {sug['folder']} looks like reference material ({sug['pages']} "
+                                     f"pages, {sug['url']} with a source address, {sug['long']} long) and is not "
+                                     f"declared. To declare: krouter kb add \"{sug['folder']}\""))
+        except Exception:  # noqa: BLE001 - 建议算不出来不影响结论
+            pass
         installed = _nightly_installed()
         lamp = meta.get("lamp", "")
         if installed:
@@ -280,6 +292,10 @@ ZH = [
      r"模型：没有。查询、出处、拒答、本地导入都照常；新页写明改了主意时会排在前面并标出来，agent 用 krouter_correct "
      r"当轮落实纠正也照常；提炼、夜间整理和纠正候选的判定不跑，所以换了别的说法的改主意，旧答案仍可能排第一。"
      r"修复：登录一次 claude / codex / grok，或者把 API key 写进 \1"),
+    (r"^knowledge base: (.+) looks like reference material \((\d+) pages, (\d+) with a source address, (\d+) long\) and "
+     r"is not declared\. To declare: (.+)$",
+     r"知识库：\1 看起来是外来的参考资料（\2 页，\3 页带来源网址，\4 页是长文），还没声明。要声明：\5"),
+    (r"^knowledge base: (.+) \((krouter-kb\.txt)\)$", r"知识库：\1（\2）"),
     (r"^nightly job: installed$", r"夜间任务：已装"),
     (r"^nightly job: the health page says running, but no job is installed\. Fix: (.+), or set lamp: unused on the health page$",
      r"夜间任务：健康页说在跑，但本机没装任何任务。修复：\1，或者把健康页的 lamp 改成 unused"),
