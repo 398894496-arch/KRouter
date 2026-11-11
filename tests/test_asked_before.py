@@ -102,7 +102,8 @@ def test_what_you_stated_yourself_still_counts(tmp_path):
 def test_a_manual_distill_with_no_model_lane_says_so_and_exits_normally(tmp_path):
     """The backfill's third step on a machine with no key and no logged-in CLI: one clear line, the excerpts written,
     exit 0 (it used to fail once per session)."""
-    vault, env = _vault(tmp_path, "en", {"eeee5555-port": [("Which port does the api use?", "Port 8443.")]})
+    vault, env = _vault(tmp_path, "en", {"eeee5555-port": [("Which port does the api use?", "Port 8443."),
+                                                           ("And the health check?", "GET /health returns 200.")]})
     env = {k: v for k, v in env.items() if not k.endswith("_API_KEY")}
     env.update({"PATH": "/usr/bin:/bin", "KROUTER_KEYS_ENV": str(tmp_path / "no-keys.env"), "HOME": str(tmp_path / "h"),
                 "USERPROFILE": str(tmp_path / "h")})

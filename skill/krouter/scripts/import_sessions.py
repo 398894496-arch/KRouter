@@ -840,14 +840,7 @@ def main() -> int:
         return 0
     distill_on = (args.distill or bool(scheduled and st.get("distill"))) and not args.local
     skipped_distill = ""
-    if distill_on and args.distill and not scheduled and not args.dry_run and not args.cli:
-        import llm
-
-        if not llm.plan(vault):  # 手动要提炼、却没有任何模型通道：说一次没做，摘录照写，不当成失败
-            distill_on = False
-            skipped_distill = ("no model lane (no API key, no logged-in agent CLI): the excerpts were written, nothing "
-                               "was sent; log in to claude / codex / grok or set a key, then run this again")
-            print("distill skipped: " + skipped_distill, file=sys.stderr)
+    manual_distill = bool(args.distill and not scheduled)
     if scheduled and st.get("cli") and not args.cli:
         # 会话结束时在会话自己的环境里跑：shell 里碰巧有哪个 API key 就发给谁，不该由它决定。用同意时点名的那条
         os.environ["KROUTER_LEARN_CLI"] = st["cli"]
@@ -925,8 +918,17 @@ def main() -> int:
                 calls += 1
                 fresh = bool(digest)
             except Exception as exc:  # noqa: BLE001  模型失败不影响本地摘录
-                failed += 1
-                print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
+                import llm
+
+                if manual_distill and isinstance(exc, llm.NoModel):
+                    # 手动要提炼、却没有任何模型通道：说一次没做，后面的会话不再试，摘录照写，不算失败
+                    distill_on = False
+                    skipped_distill = ("no model lane (no API key, no logged-in agent CLI): the excerpts were written, "
+                                       "nothing was sent; log in to claude / codex / grok or set a key, then run this again")
+                    print("distill skipped: " + skipped_distill, file=sys.stderr)
+                else:
+                    failed += 1
+                    print(f"distill {target.name}: {str(exc)[:200]}", file=sys.stderr)
             if (fresh or args.dry_run) and experience.enabled():
                 # 经验卡（实验，KROUTER_EXPERIENCE=1）：同一段摘录再问一次「遇到什么、怎么做、结果如何」；没有模型就安静跳过
                 link = f"[[{zones.canon(vault, str(target.relative_to(vault)).replace(os.sep, '/')).removesuffix('.md')}]]"
