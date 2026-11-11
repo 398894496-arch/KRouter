@@ -432,8 +432,12 @@ def test_a_crontab_that_cannot_run_does_not_break_the_install(tmp_path):
     assert "Traceback" not in res.stderr and out.get("timer") is False
     res, out = _boot(env, "--lang", "en", "--timer")  # asked for: never claimed when it is not there
     assert res.returncode == 0 and "Traceback" not in res.stderr, res.stdout[-1500:] + res.stderr[-1500:]
-    # on macOS the job is launchd's (crontab is only probed); elsewhere a crontab that cannot run means no job
-    assert out.get("timer") is not True or sys.platform == "darwin", res.stdout[-1500:]
+    # "installed" only when a job is really there: launchd's plist (macOS) or a systemd user timer (Linux with a user
+    # session, as on GitHub's runners); with neither, the crontab that cannot run means no job
+    home = Path(env["HOME"])
+    job = ((home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist").is_file()
+           or (home / ".config/systemd/user/dsh-krouter-daily.timer").is_file())
+    assert out.get("timer") is job, res.stdout[-1500:]
 
 
 @POSIX
