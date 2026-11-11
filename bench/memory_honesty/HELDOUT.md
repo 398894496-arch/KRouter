@@ -1586,3 +1586,94 @@ on if no more than 2% of your own held-out pages are misjudged.
 | 2026-11-11 | Registered (above); the labelled vaults written after (`bench/kb_auto/make.py`, 151 pages: dev 41 own / 35 outside, held-out 43 / 32, split by a hash of the path). Said plainly: the pages of both splits come from the same text banks and kinds, written by the same author as the rule, so the held-out half is a check against overfitting thresholds, not an independent sample of real vaults. |
 | 2026-11-11 | **Development.** First version: 12 of 35 outside pages recognised, 0 of 41 own misjudged. Changed on dev only: length counted in words (Chinese 1.5 characters a word) instead of characters, the decision signal narrowed to decision structure (`决定：`, `- [ ]`, `we decided`; plain `必须` / `must` occur in articles), the folder majority made to add only (a mixed folder must not hide an article), a first-person rate signal (low: `impersonal` +1; high: `-personal` −1.5), and threshold 4.0 → 3.0 (own pages top out at 1.5 on dev). Final dev: **35 of 35 recognised, 0 of 41 misjudged.** |
 | 2026-11-11 | **Held out, run once** (`bench/kb_auto/run.py DIR heldout`): **outside pages recognised 30 of 32 (93.8%); own pages misjudged 0 of 43 (0%).** Missed: a library README copied into the Chinese vault (score 1.5: other language only) and an English article in the English vault with no source, byline or article-like title (2.0). The bar (at most 2% of own held-out pages misjudged) is met: automatic recognition is **on by default** (`KROUTER_KB_AUTO=0`, or `kb_auto|off` in `krouter-settings.psv`, turns it off; `krouter kb mine` and `krouter kb add` win over it). |
+
+
+## Set 41: "dares to say it does not know", the whole chain — receipt and pages, then a reader model (registered 2026-11-11, before any reader or judge call)
+
+**Why.** The number KRouter has published for "dares to say it does not know" is a retrieval-layer one: of LongMemEval's 30
+unanswerable questions, the receipt says `none` for 9 (30%). Other memory projects' numbers are for a whole chain, the memory
+plus a language model that answers. KRouter is always used with a host agent's model, so the number that describes use is the
+chain's: the receipt and pages go to a reader, the reader answers, and we count how often it says "the memory does not have
+this" and how often it invents an answer. Set 11/12 ran the whole chain once, before the three-state receipt (Sonnet read
+LongMemEval's 30 `_abs` questions: 29 said "not mentioned"; with nothing at all to read it also said so 30 of 30).
+
+**Questions, drawn once with seed 20261111 and sealed in `bench/memory_honesty/results/set41/sample.json`** (the draw order is
+in `endtoend.py sample`: B, C-LongMemEval, C-LoCoMo, then the two condition-2 draws):
+- **A, unanswerable:** all 30 `_abs` questions of LongMemEval-S (30).
+- **B, unanswerable:** 60 of the 223 adversarial questions in LoCoMo's held-out half (set 37's split).
+- **C, answerable control:** 20 of LongMemEval's 235 held-out-half questions and 20 of LoCoMo's 768 answerable held-out-half
+  questions (40). It shows the readers are not scoring by saying "I don't know" to everything.
+- Condition 2 uses 20 of A and 20 of B (drawn from the sealed lists by the same seed).
+
+**What each question was seen for, said plainly.** A is development data (seen in sets 7, 14, 37, 38, 39; its receipts and the
+reader's answers of set 11/12 were read). B and C come from the held-out halves of LoCoMo and LongMemEval: their retrieval-layer
+state (`direct` / `related` / `none`) and what was handed over were counted in sets 38 and 39 and nothing was tuned on them;
+**nobody has read a reader model's answer on them**, and the reader models have not been run on them. LoCoMo's adversarial
+questions are the benchmark's own label (category 5); this set follows it and does not re-judge it.
+
+**Engine.** This checkout's `skill/krouter/scripts` at `506f64c`, unchanged; not edited between this registration and the
+scoring. Each question is asked once as `route_knowledge.py search "<question>"` against a copy of its own benchmark vault
+(copies are named by hash; none of the vaults has an alias table of its own; `KROUTER_NO_QUERY_LOG=1`, the study's own cache and
+state directories, `*_API_KEY` removed from the environment, `KROUTER_STRICT` unset: strict mode off, the shipped default;
+`KROUTER_TODAY` = the question's date for LongMemEval, as in sets 14, 37–39, unset for LoCoMo). The receipt is kept as printed. Not
+the user's real knowledge base, not the user's agent configuration.
+
+**What the reader gets (condition 1, "with KRouter").** One prompt per question: a frame sentence ("You are the assistant of a
+user. Before replying you looked in the user's memory (a folder of notes) with KRouter, a local memory tool. Its result is below,
+followed by the user's message."), `Today's date:` for LongMemEval questions only, the receipt as printed, the text of the first
+three pages of the receipt's `recall:` list (each page cut at 14 000 characters; none when the state is `none` or the list is
+empty; a host that opens pages sees at most these; pages beyond the third are named in the receipt but not opened), the question,
+and "Reply to the user.". Nothing else: no usage rules beyond what the receipt itself says (its `related` line, "answer only if
+one of the pages below has a sentence that answers the question outright: quote that sentence and its page; if none does, tell
+the user the memory does not have it", is left as the engine prints it). **Display edits, listed:** the vault's path in the receipt
+becomes `/home/user/memory` (LongMemEval's vault folders carry `_abs`); the scripts' path becomes `/opt/krouter/scripts`;
+LongMemEval's `observed_at` becomes the question's own date; the prefix `answer_` is removed from session names (LongMemEval's
+answer sessions carry it). Page text and the rest of the receipt are untouched. Pages carry their original frontmatter, which
+includes `source: longmemeval` or `source: locomo`. The full templates are in `bench/memory_honesty/endtoend.py` at this commit.
+**Condition 2, "nothing":** the frame "You are the assistant of a user. Reply to the user's message." (with the date for
+LongMemEval), the question, "Reply to the user."; no memory, no receipt.
+
+**Readers.** Claude Haiku 5.5 and Claude Sonnet 5.5, as Claude Code subagents on the maintainer's subscription (no API key; the
+model each agent reports is logged). Condition 1: both models, every question of A, B and C (130 each, 260 prompts). Condition 2:
+Haiku only, the 40 questions (20 of A, 20 of B); the two conditions share the exact frame sentence only up to the last two lines.
+Total reader prompts **300**, a hard ceiling. Prompts are named by a hash (`sha1("set41:<condition>:<question id>")`) and sorted
+by it, so unanswerable and answerable questions are mixed in every batch; batches hold at most 10 prompts or 150 000 characters
+(set 11 used 12 / 200 000). Each agent reads its batch file and writes `{id, response}` lines to its replies file, told to
+answer each message on its own, to use no tool but reading the one batch file and writing the one replies file, and to keep each
+reply to about 150 words (a harness note outside the prompts, as set 15's). **Deviation, said in advance:** a Claude Code
+subagent cannot be started in an empty folder from inside a session; they start in this worktree and are told to touch only
+the two files; the benchmark answers are not in this worktree except in set 11/12's result files, which the agents are told not to
+open. Each condition runs once; a batch whose file comes back unreadable is asked again (counted and reported), no reply is
+re-drawn because of its content.
+
+**Scoring, fixed now.** Mechanical first (`endtoend.py mech`). *Unanswerable:* **idk** = the reply matches a refusal phrase
+(not mentioned / no information / don't know / cannot find / 没有, 不知道 … see the `IDK` pattern) and none of the softeners
+(however, but, likely, seems, 可能, 不过 … the `HEDGE` pattern); **made up** = no refusal phrase and no question mark. *Answerable:*
+**right** = the normalised gold answer (4 or more characters) occurs in the normalised reply; **refused** = a refusal phrase and no
+softener. Everything the rules do not settle goes to a judge model that is **not the reader that wrote the reply** (Sonnet judges
+Haiku's replies, Haiku judges Sonnet's), in batches of 20, with one prompt each: unanswerable, it sees only the question and the
+reply and answers A (says it does not know / the information is not in the memory, no answer offered), B (offers a specific answer,
+even tentatively or with caveats), C (neither clearly: a clarifying question, off topic); answerable, it also sees the labelled
+answer and writes two lines, yes/no (the benchmark's own wording, off-by-one allowed for temporal-reasoning) and A/B/C. Final labels:
+unanswerable A → **said "don't know"**, B → **made one up**, C → **vague**; answerable yes → **right**, no with A → **refused**,
+no otherwise → **wrong**. The judge prompts are in `endtoend.py` at this commit; judge calls are outside the 300 and reported
+separately. Every reply is kept with who labelled it (`rows.jsonl`).
+
+**Reported, whatever it shows:** per reader and group, the three counts with the share and a Wilson 95% interval; the same split
+by the receipt's state (`direct` / `related` / `none`) for each; the condition-2 row; how many labels were by rule and by judge.
+The `related` state's row is the answer to whether the receipt's "quote the sentence" instruction works on its own.
+
+**Pass bar, fixed now (a suggestion handed in with the task, adopted as is).** Both readers say "don't know" for at least 76.67% of
+A and at least 76.67% of B (four cells; 76.67% is the figure an outside write-up quoted for another project: it is the line we
+set ourselves here, not a comparison), and both refuse at most 15% of C. A cell below the line is reported as it is; the
+line does not move.
+
+**Not claimed.** Other projects' published numbers use other questions, other readers and other judges and cannot be
+compared with these; this set does not run any other system. The sample is small (A 30, B 60, C 40), so the intervals are wide.
+LongMemEval has been public since 2024 and the readers may have seen it in training.
+
+### Log, set 41
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered (above); the sample sealed first. |
