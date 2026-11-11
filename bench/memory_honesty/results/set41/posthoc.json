@@ -1,0 +1,172 @@
+[
+ {
+  "key": "krouter-sonnet/conv-26-198",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-42-236",
+  "group": "B",
+  "verdict": "P"
+ },
+ {
+  "key": "krouter-sonnet/conv-41-172",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-43-209",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/0a34ad58",
+  "group": "C",
+  "verdict": "yes/B"
+ },
+ {
+  "key": "krouter-sonnet/conv-43-190",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-43-183",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-48-219",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-30-086",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-44-137",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-30-094",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-42-229",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-43-213",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-42-241",
+  "group": "B",
+  "verdict": "P"
+ },
+ {
+  "key": "krouter-sonnet/conv-47-185",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-44-136",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-49-172",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-48-228",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/87f22b4a",
+  "group": "C",
+  "verdict": "yes/B"
+ },
+ {
+  "key": "krouter-sonnet/conv-41-183",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-42-217",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/bc149d6b",
+  "group": "C",
+  "verdict": "no/A"
+ },
+ {
+  "key": "krouter-sonnet/conv-43-224",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-44-130",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-sonnet/conv-41-163",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-haiku/conv-41-154",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-haiku/8077ef71",
+  "group": "C",
+  "verdict": "yes/B"
+ },
+ {
+  "key": "krouter-haiku/2ce6a0f2",
+  "group": "C",
+  "verdict": "no/B"
+ },
+ {
+  "key": "krouter-haiku/87f22b4a",
+  "group": "C",
+  "verdict": "yes/A"
+ },
+ {
+  "key": "krouter-haiku/conv-44-136",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-haiku/conv-44-130",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-haiku/conv-43-000",
+  "group": "C",
+  "verdict": "yes/B"
+ },
+ {
+  "key": "krouter-haiku/conv-42-236",
+  "group": "B",
+  "verdict": "P"
+ },
+ {
+  "key": "krouter-haiku/conv-47-185",
+  "group": "B",
+  "verdict": "Q"
+ }
+]

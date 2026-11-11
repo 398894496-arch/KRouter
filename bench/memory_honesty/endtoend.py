@@ -273,6 +273,7 @@ def write_batches(cond: str, rows: list[dict]) -> int:
                                                          drop_whitespace=False)) or "" if len(ln) > 1500 else ln
                                 for ln in r["prompt"].split("\n"))
             (d / f"{r['id']}.txt").write_text(wrapped, encoding="utf-8")
+        (d / "INDEX.txt").write_text("".join(f"{r['id']}.txt\n" for r in b), encoding="utf-8")  # the agents cannot list a folder
         (out / f"batch_{i:02d}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in b),
                                                   encoding="utf-8")
     return len(batches)
@@ -328,9 +329,14 @@ def replies_of(cond: str) -> dict[str, str]:
     idx = json.loads((STATE / "index.json").read_text(encoding="utf-8"))
     back = {k.split("/", 1)[1]: v["qid"] for k, v in idx.items() if v["cond"] == cond}
     raw = read_dir(STATE / "replies" / cond, "response")
-    for f in (STATE / "replies" / cond).glob("batch_*/*.txt"):
+    for f in (STATE / "replies" / cond).glob("batch_*/p*.txt"):
         raw.setdefault(f.stem, f.read_text(encoding="utf-8", errors="replace").strip())
-    return {back[k]: v for k, v in raw.items() if k in back}
+    out = {back[k]: v for k, v in raw.items() if k in back}
+    sw = STATE / "swaps.json"  # replies a subagent filed under the wrong prompt's name, found by content (HELDOUT.md, set 41)
+    if sw.exists():
+        fix = json.loads(sw.read_text(encoding="utf-8")).get(cond, {})
+        out = {fix.get(q, q): v for q, v in out.items()}
+    return out
 
 
 def mech_one(group: str, reply: str, gold: str) -> str | None:
@@ -412,6 +418,8 @@ def final_rows() -> list[dict]:
         d = STATE / "judged" / jm
         if d.is_dir():
             verdicts.update(read_dir(d, "verdict"))
+            for f in d.glob("batch_*/p*.txt"):
+                verdicts.setdefault(f.stem, f.read_text(encoding="utf-8", errors="replace").strip())
     jmap = {keys[k]: v for k, v in verdicts.items() if k in keys}
     rows = []
     for cond, model in CONDS.items():
@@ -472,11 +480,57 @@ def score() -> None:
     print(json.dumps(out, ensure_ascii=False, indent=1))
 
 
+# ---------- post-hoc re-check (not registered; reported apart, the registered numbers stand) ----------
+
+POSTHOC_B = ("Below are a user's question and an assistant's reply. The assistant had notes to look in. Which describes the "
+             "reply?\nP: it asserts an answer to the question as asked, about the person or thing the question names\n"
+             "Q: it says the question does not match the notes (for example the notes attribute this to a different person "
+             "than the one the question names) and only reports what the notes say about that other person or thing, "
+             "without asserting the answer for the person or thing asked\nR: other\n\nQuestion: {q}\n\nReply: {r}\n\n"
+             "Answer with one letter only: P, Q or R.")
+
+
+def posthoc_prepare() -> None:
+    """Re-check two sets of rule-decided labels: the unanswerable LoCoMo replies labelled `made_up` (is it an answer for
+    the person asked, or a correction of the question's premise?) and the answerable replies the rules labelled `refused`
+    (does the reply in fact answer?)."""
+    rows = [json.loads(x) for x in (RESULTS / "rows.jsonl").read_text(encoding="utf-8").splitlines()]
+    items = items_all()
+    gold = golds([r["qid"] for r in rows if r["group"] == "C"])
+    meta = json.loads((STATE / "meta.json").read_text(encoding="utf-8"))
+    todo: dict[str, list[dict]] = defaultdict(list)
+    keys = {}
+    for r in rows:
+        if r["cond"] == "nothing-haiku":
+            continue
+        pid = opaque("posthoc:" + r["cond"], r["qid"])
+        if r["group"] == "B" and r["label"] == "made_up":
+            prompt = POSTHOC_B.format(q=items[r["qid"]]["q"], r=r["reply"])
+        elif r["group"] == "C" and r["label"] == "refused" and r["by"] == "rule":
+            extra = TEMPORAL_EXTRA if meta[r["qid"]]["type"] == "temporal-reasoning" else ""
+            prompt = JUDGE_ANSWERABLE.format(extra=extra, q=items[r["qid"]]["q"], a=gold[r["qid"]], r=r["reply"])
+        else:
+            continue
+        keys[pid] = f"{r['cond']}/{r['qid']}"
+        todo[JUDGE_OF[r["model"]]].append({"id": pid, "prompt": prompt})
+    out = {}
+    for jm, rs in todo.items():
+        d = STATE / "posthoc_files" / jm / "batch_01"
+        shutil.rmtree(d, ignore_errors=True)
+        d.mkdir(parents=True)
+        for r in rs:
+            (d / f"{r['id']}.txt").write_text(r["prompt"], encoding="utf-8")
+        (d / "INDEX.txt").write_text("".join(f"{r['id']}.txt\n" for r in rs), encoding="utf-8")
+        out[jm] = len(rs)
+    (STATE / "posthoc_keys.json").write_text(json.dumps(keys), encoding="utf-8")
+    print(json.dumps(out))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=("sample", "prepare", "mech", "score"))
+    ap.add_argument("cmd", choices=("sample", "prepare", "mech", "score", "posthoc-prepare"))
     a = ap.parse_args()
-    {"sample": sample, "prepare": prepare, "mech": mech, "score": score}[a.cmd]()
+    {"sample": sample, "prepare": prepare, "mech": mech, "score": score, "posthoc-prepare": posthoc_prepare}[a.cmd]()
     return 0
 
 

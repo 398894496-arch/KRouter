@@ -239,7 +239,7 @@ never on a rule page, as one git commit you can revert.
 | Recalls without being asked | every message looked up on the machine, no model call, about 90 ms; an index at session start | plugins recall "before a task" / "before each agent run" | the coding-agent package injects memory "as it starts working" |
 | Answers name their source | every answer, with a receipt | not stated on its page | observations keep quotes and a proof count |
 | Knowledge base | Markdown folders declared as reference, listed apart, importable from PDF / Word / HTML; no vector search | "Multi-Cube Knowledge Base Management" | not stated as a separate layer |
-| Says it does not know | receipt: 9 / 30 `none`, 21 `related` (only related pages), 0 `direct`; with a reader 29 / 30, but 30 / 30 given nothing | no figure on its page | no figure on its page |
+| Says it does not know | **whole chain (set 41, 2026-11-11, Haiku 5.5 and Sonnet 5.5 as readers): of 30 LongMemEval unanswerable questions 29 / 28 said the memory does not have it; of 60 LoCoMo adversarial ones 55 / 38; on 40 answerable controls 11 / 7 wrongly refused; the bar set beforehand was not met; the same Haiku given nothing said it for 39 of 40.** Retrieval layer: receipt 9 / 30 `none`, 21 `related` (only related pages), 0 `direct`; with a reader 29 / 30 earlier, but 30 / 30 given nothing | no figure on its page | no figure on its page |
 | Benchmarks | retrieval, scored from the authors' labels; not yet in a side-by-side run | self-reported (OmniMemEval): LongMemEval 89.20, LoCoMo 88.83 | LongMemEval state of the art (vendor chart, January 2026), partly reproduced by others |
 | Size (GitHub, 2026-11-11) | 49 stars, one maintainer | 12,352 stars | 60,340 stars; hosted, 99.9% SLA |
 
