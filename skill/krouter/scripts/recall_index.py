@@ -25,11 +25,12 @@ import zones  # noqa: E402
 import krouter_redact  # noqa: E402
 import associate  # noqa: E402
 import kb  # noqa: E402
+import evidence  # noqa: E402
 
 redact = krouter_redact.redact
 is_secret_page = krouter_redact.is_secret_page  # 其他夜间脚本经 ri.is_secret_page 用它
 
-SCHEMA_VERSION = "recall-v15"  # v15：边表（链接、取代、同会话、同一天、共同的词、一起被引用），给联想通路用； v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
+SCHEMA_VERSION = "recall-v18"  # v18：段落证据带每页的标题和触发词； v17：段落表、每页的日期和说话人（段落级证据，evidence.py），每页的来历（kb.py 自动识别）； v15：边表（链接、取代、同会话、同一天、共同的词、一起被引用），给联想通路用； v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
 STRONG_W = 0.5  # 软权重 ≥ 此值才算"有效匹配词"
 MIN_STRONG_MATCH = 2
 SCORE_MIN = 8.5  # bm25×分层权重的绝对下限
@@ -255,7 +256,7 @@ def connect(db: Path) -> sqlite3.Connection:
             -- 每页 frontmatter 的原文（已脱敏、小写），只给字面检索预筛用：frontmatter 不进全文索引
             CREATE TABLE fm(rel TEXT PRIMARY KEY, text TEXT);
             """
-            + associate.DROP + associate.SCHEMA
+            + associate.DROP + associate.SCHEMA + evidence.DROP + evidence.SCHEMA + kb.ORIGIN_DROP + kb.ORIGIN_SCHEMA
         )
         con.execute("INSERT OR REPLACE INTO meta VALUES('schema', ?)", (SCHEMA_VERSION,))
         con.commit()
@@ -324,12 +325,15 @@ def refresh(vault: Path, con: sqlite3.Connection, only=None) -> dict[str, int]:
         known = {rel: (-1, s, rid) for rel, (_m, s, rid) in known.items()}
         con.execute("INSERT OR REPLACE INTO meta VALUES('map_sha', ?)", (map_sha,))
     changed = added = removed = 0
+    vault_lang = zones.lang(vault)
     for rel, (_m, _s, rid) in known.items():
         if rel not in seen:
             con.execute("DELETE FROM docs WHERE rowid=?", (rid,))
             con.execute("DELETE FROM files WHERE rel=?", (rel,))
             con.execute("DELETE FROM fm WHERE rel=?", (rel,))
             associate.forget(con, rel, rid)
+            evidence.forget(con, rid)
+            con.execute("DELETE FROM origin WHERE rel=?", (rel,))
             removed += 1
     for rel, (mtime, size, path) in seen.items():
         old = known.get(rel)
@@ -358,6 +362,7 @@ def refresh(vault: Path, con: sqlite3.Connection, only=None) -> dict[str, int]:
         if old:
             con.execute("DELETE FROM docs WHERE rowid=?", (old[2],))
             associate.forget(con, rel, old[2])
+            evidence.forget(con, old[2])
             changed += 1
         else:
             added += 1
@@ -377,6 +382,9 @@ def refresh(vault: Path, con: sqlite3.Connection, only=None) -> dict[str, int]:
         )
         con.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?)", (rel, mtime, size, cur.lastrowid))
         associate.index_page(con, sys.modules[__name__], rel, cur.lastrowid, text.replace("\r\n", "\n"), meta, body)
+        evidence.index_page(con, tokens, cur.lastrowid, rel, text.replace("\r\n", "\n"), meta, body,
+                            title + " " + path.stem + " " + meta.get("topic_terms", "") + " " + trig)
+        kb.index_origin(con, rel, zones.canon(vault, rel), text.replace("\r\n", "\n"), vault_lang, False)
         head = text.replace("\r\n", "\n")
         end = head.find("\n---", 4) if head.startswith("---\n") else -1
         con.execute("INSERT OR REPLACE INTO fm VALUES(?,?)", (rel, head[:end + 4].lower() if end >= 0 else ""))
@@ -505,6 +513,7 @@ def note_touched(paths) -> None:
 
 PAGES = 5         # 一次查询交给 agent 的页数：前 3 页是直接命中，后 2 页留给联想（没有就给后面的直接命中）
 DIRECT_FIRST = 3
+AGG_PAGES = 8     # 加总题、列举题（evidence.aggregate）交这么多页（第 39 套开发部分定）
 
 
 def recall(vault: Path, query: str, scope: str = "", limit: int = PAGES, refresh_first: bool = True,
@@ -588,6 +597,18 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     lib = [h for h in hits if h["rel"] in lib_map]
     if lib:
         hits = [h for h in hits if h["rel"] not in lib_map]
+    study = None
+    if hits:
+        n_all = con.execute("SELECT count(*) FROM files").fetchone()[0] or 1
+        plan = evidence.question_plan(con, sys.modules[__name__], query, n_all, qtok)
+        if plan:
+            evs = evidence.page_evidence(con, plan, [h["rid"] for h in hits[:EVIDENCE_PAGES]])
+            for h in hits[:EVIDENCE_PAGES]:
+                h["ev"] = evs.get(h["rid"])
+        if os.environ.get("KROUTER_EVIDENCE_STUDY"):
+            study = {"plan": {k: plan[k] for k in ("type", "names", "first", "nums")} if plan else None,
+                     "cands": [{"rel": h["rel"], "score": h["score"], "tier": h["tier"], "ev": h.get("ev")}
+                               for h in hits[:EVIDENCE_PAGES]]}
     args = (con, vault, query, limit, stats, qtok, raw, df, present, named, titled, single, gate, scope, own_cards,
             cards_dir, skills_dir)
     # 资料页不算证据，但也不能因为把它们拿走，记忆的首条就显得领先更多：差距照旧和排在旁边的资料页比；
@@ -595,20 +616,30 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     rival = lib[0]["score"] if lib else None
     crowded = bool(lib) and len(lib) >= min(DIRECT_FIRST, len(lib) + len(hits)) and all(
         h["rel"] in lib_map for h in sorted(lib + hits, key=lambda h: -h["score"])[:DIRECT_FIRST])
-    out = _decide(*args, hits, assoc, conflict, rival=rival, crowded=crowded)
+    order = evidence.rerank(hits, EVIDENCE_PAGES, evidence.time_window(query, evidence.today())) \
+        if hits and any(h.get("ev") for h in hits[:EVIDENCE_PAGES]) else None
+    cap = None
+    if limit == PAGES and order is not None and evidence.aggregate(query):
+        args = args[:3] + (AGG_PAGES,) + args[4:]  # 加总题、列举题：答案散在好几页里，多交几页直接命中
+        cap = PAGES - DIRECT_FIRST  # 联想的位置照旧两个，多出来的都给直接命中
+    out = _decide(*args, hits, assoc, conflict, rival=rival, crowded=crowded, order=order, assoc_cap=cap)
     if lib:
         ref = _decide(*args[:3], KB_PAGES, *args[4:], lib, False, False, library=True)
         if ref["hits"] and ref["confidence"] != "none":
-            out["kb"] = [kb_entry(vault, h, lib_map[h["rel"]]) for h in ref["hits"]]
+            out["kb"] = [kb_entry(vault, h, lib_map[h["rel"]], con) for h in ref["hits"]]
             out["kb_confidence"] = ref["confidence"]
+    if study is not None:
+        out["study"] = study
     return out
 
 
 KB_PAGES = 3  # 知识库那一块最多列几页
+EVIDENCE_PAGES = 20  # 排在前面的这么多页看段落证据
 
 
-def kb_entry(vault: Path, h: dict, why: str) -> dict:
-    """One knowledge-base hit for the receipt: path, why it is reference material, score, its title and source."""
+def kb_entry(vault: Path, h: dict, why: str, con: sqlite3.Connection | None = None) -> dict:
+    """One knowledge-base hit for the receipt: path, why it is reference material, score, its title and source; for a
+    page recognised automatically (`auto`) also the signals behind it (`signals`, e.g. `source,long,other-language`)."""
     title, source = Path(h["rel"]).stem, ""
     try:
         meta, _body = split_frontmatter((vault / h["rel"]).read_text(encoding="utf-8", errors="replace")[:8000])
@@ -619,14 +650,19 @@ def kb_entry(vault: Path, h: dict, why: str) -> dict:
         if meta.get(key):
             source = redact(meta[key])
             break
-    return {"rel": h["rel"], "kb": why, "tier": h["tier"], "status": h["status"], "score": h["score"],
-            "title": redact(title), "source": source}
+    entry = {"rel": h["rel"], "kb": why, "tier": h["tier"], "status": h["status"], "score": h["score"],
+             "title": redact(title), "source": source}
+    if why == "auto" and con is not None:
+        row = con.execute("SELECT why FROM origin WHERE rel=?", (h["rel"],)).fetchone()
+        entry["signals"] = row[0] if row else ""
+    return entry
 
 
 def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats: dict, qtok: list[str], raw: list[str],
             df: dict[str, int], present: list[str], named: set[str], titled: set[str], single: bool, gate: bool,
             scope: str, own_cards: bool, cards_dir: str, skills_dir: str, hits: list[dict], assoc: bool,
-            conflict: bool, library: bool = False, rival: float | None = None, crowded: bool = False) -> dict:
+            conflict: bool, library: bool = False, rival: float | None = None, crowded: bool = False,
+            order: list[dict] | None = None, assoc_cap: int | None = None) -> dict:
     """The gate, the confidence and the pages for one ranked list: your memory's (`library=False`), or the knowledge
     base's (`library=True`: no answer cards, no associated pages, no conflict tie-break, no asked-before check)."""
     qset = set(raw)
@@ -687,6 +723,21 @@ def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats:
         conf = "none" if gate and absent_stems(con, raw, df) else "low"
     if asked and gate and conf == "low":
         conf = "none"  # 排在前面的只是你以前的提问，剩下的又只是弱匹配：库里没有
+    # 段落证据（evidence.py）：门槛照旧按整页排序算；交出去的页按最好的一段重排，再看证据补拒或补答
+    ev_none = rescued = ""
+    if order is not None:
+        first = hits[0]
+        ranked = [h for h in order if h["rel"] not in asked]
+        hits = ranked[:limit]
+        top3 = ranked[:DIRECT_FIRST]
+        if conf != "none" and gate:
+            ev_none = evidence.veto(top3)
+            if ev_none:
+                conf = "none"
+        elif gate and refuse and not clipped and not crowded and not asked and evidence.rescue(top3):
+            conf, rescued = "low", "1"
+        if conf == "high" and hits and hits[0] is not first:
+            conf = "medium"  # 整页排第一的不是证据最好的那页：不说「直接」
     found = None
     picks: list[dict] = []
     if conf != "none":
@@ -699,6 +750,8 @@ def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats:
         # 用不完的位置再给后面的直接命中。拒答时（conf == none）不走这里：联想不会把"库里没有"变成"有"
         keep = min(DIRECT_FIRST, len(ranked))
         n = max(0, limit - keep) if assoc and not partial else 0
+        if assoc_cap is not None:
+            n = min(n, assoc_cap)
         if n:
             spread = associate.spread(con, ranked, {h["rel"] for h in ranked[:keep]}, scope)
             # 联想也不带出经验卡和技能；也不从记忆扩散到知识库的页，占掉记忆的位置
@@ -715,6 +768,10 @@ def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats:
            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
     if clipped and conf != "none":
         out["clipped"] = True
+    if ev_none:
+        out["evidence_none"] = ev_none
+    if rescued:
+        out["evidence_rescued"] = True
     if picks:
         out["assoc"] = picks
     if found:
@@ -1389,13 +1446,30 @@ def wordness(bigram: str, df: dict[str, int]) -> float:
     return pair / base if base else 0.0
 
 
-def best_lines(path: Path, qtok: list[str], k: int = 1) -> list[tuple[int, str]]:
+def best_lines(path: Path, qtok: list[str], k: int = 1, span: tuple[int, int] | None = None) -> list[tuple[int, str]]:
+    """The `k` lines of a page that hold the most question words, in file order. `span` (first, last line, from 1):
+    the best paragraph found by recall (`evidence.page_evidence`); lines are taken from it first."""
+    if span and span[0] > 0:
+        got = best_lines(path, qtok, k)
+        inside = [x for x in (_scored_lines(path, qtok) or []) if span[0] <= x[1] <= span[1]]
+        if inside:
+            inside.sort(key=lambda x: (-x[0], x[1]))
+            return sorted((i, text) for _n, i, text in inside[:k])
+        return got
+    scored = _scored_lines(path, qtok)
+    if scored is None:
+        return []
+    scored.sort(key=lambda x: (-x[0], x[1]))
+    return sorted((i, text) for _n, i, text in scored[:k])
+
+
+def _scored_lines(path: Path, qtok: list[str]) -> list[tuple[int, int, str]] | None:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
-        return []
+        return None
     if is_secret_page(path.name, split_frontmatter(text)[0]):
-        return []  # 机密页只给路径
+        return None  # 机密页只给路径
     lines = text.splitlines()
     scored = []
     for i, line in enumerate(lines, 1):
@@ -1403,8 +1477,7 @@ def best_lines(path: Path, qtok: list[str], k: int = 1) -> list[tuple[int, str]]
         n = sum(1 for t in qtok if t in lt)
         if n:
             scored.append((n, i, redact(line.strip())[:160]))
-    scored.sort(key=lambda x: (-x[0], x[1]))
-    return sorted((i, text) for _n, i, text in scored[:k])
+    return scored
 
 
 def main() -> int:

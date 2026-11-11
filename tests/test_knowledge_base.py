@@ -80,10 +80,42 @@ def _receipt(v: Path, q: str, route: str = "search") -> str:
 Q_ARTICLE = "How did the billing service outage happen?"
 
 
-def test_undeclared_research_is_memory_and_nothing_changes(vault):
+def test_undeclared_research_is_memory_when_automatic_recognition_is_off(vault, monkeypatch):
+    monkeypatch.setenv("KROUTER_KB_AUTO", "0")
     res = ri.recall(vault, Q_ARTICLE)
     assert "kb" not in res
     assert res["hits"] and res["hits"][0]["rel"].startswith(RESEARCH)
+
+
+def test_undeclared_article_is_recognised_without_declaring(vault):
+    """2.1.0: nothing declared, the article (long, impersonal, written like an article) is reference material."""
+    res = ri.recall(vault, Q_ARTICLE)
+    assert res["confidence"] == "none" and not res["hits"]
+    assert res["kb"][0]["rel"] == f"{RESEARCH}/Billing outage at a fintech.md" and res["kb"][0]["kb"] == "auto"
+    assert res["kb"][0]["signals"]
+    text = _receipt(vault, Q_ARTICLE)
+    assert text.splitlines()[0].startswith("memory: none")
+    assert f"- {RESEARCH}/Billing outage at a fintech.md kb=auto" in text
+
+
+def test_marking_a_page_mine_wins_over_recognition(vault, capsys):
+    page = f"{RESEARCH}/Billing outage at a fintech.md"
+    assert kb.main(["--vault", str(vault), "mine", page]) == 0
+    assert "marked as yours" in capsys.readouterr().out
+    assert "!" + page in (vault / kb.KB_FILE).read_text(encoding="utf-8")
+    assert kb.reason(vault, page) == ""
+    res = ri.recall(vault, Q_ARTICLE)
+    assert "kb" not in res and res["hits"][0]["rel"] == page
+    # a declaration of the folder still wins over the score, and add/remove keep the mark
+    kb.add(vault, ["Rules"])
+    assert "!" + page in (vault / kb.KB_FILE).read_text(encoding="utf-8")
+    assert kb.main(["--vault", str(vault), "unmine", page]) == 0
+    assert kb.reason(vault, page) == "auto"
+
+
+def test_own_pages_are_not_recognised(vault):
+    for rel in [f"Rules/{n}.md" for n in RULES]:
+        assert kb.reason(vault, rel) == ""
 
 
 def test_declared_folder_only_match_says_memory_none_first(vault):

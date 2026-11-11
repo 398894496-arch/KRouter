@@ -68,7 +68,8 @@ INSTRUCTIONS = (
     "`associated:` are connected to the hits but were not named by the question: read one only when the hits leave "
     "part of the question open, and never cite one as the answer by itself. "
     "Pages under `knowledge_base:` are reference material in the user's knowledge base (articles, clippings, documents "
-    "someone else wrote): cite them as a source with the path, never as something the user decided; `memory: none` "
+    "someone else wrote; declared, or `kb=auto`: recognised by how they read): cite them as a source with the path, "
+    "never as something the user decided; `memory: none` "
     "means the user's own memory has nothing on the question, whatever reference material matched. "
     "If a receipt has `host_action:`, tell the user that line."
 )

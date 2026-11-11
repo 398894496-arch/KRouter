@@ -83,7 +83,7 @@ def declared(vault: Path | None) -> list[str]:
     out: list[str] = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = line.strip()
-        if not line or line.startswith("#"):
+        if not line or line.startswith("#") or line.startswith(MINE_PREFIX):
             continue
         f = _norm(line)
         if f and f not in out and not f.startswith("..") and not Path(f).is_absolute():
@@ -118,34 +118,350 @@ def reason(vault: Path, rel: str, text: str | None = None) -> str:
     """Why this page is in the knowledge base (`declared`, `clippings`), or `` when it is part of your memory.
     `text`: the page's text when the caller has it; otherwise the page is read."""
     why = path_reason(vault, rel)
+    if why == "declared":
+        return why
+    if _under(rel, mine_marked(vault)):
+        return ""
     if why:
         return why
+    if rel in alias_targets(vault):
+        return ""
+    stored = _stored_origin(vault, rel)
+    if stored is not None:
+        return stored
     if text is None:
         try:
-            text = (Path(vault) / rel).read_text(encoding="utf-8", errors="replace")[:8000]
+            text = (Path(vault) / rel).read_text(encoding="utf-8", errors="replace")[:AUTO_READ]
         except OSError:
             return ""
-    return fm_reason(head_of(text))
+    if fm_reason(head_of(text)):
+        return "clippings"
+    if not auto_on(vault):
+        return ""
+    score, _why, hard = page_origin(rel, text, zones.lang(vault))
+    return "auto" if not hard and score >= AUTO_MIN else ""
+
+
+_ORIGIN: dict[str, tuple[tuple, dict[str, str]]] = {}
+
+
+def _stored_origin(vault: Path, rel: str) -> str | None:
+    """The index's verdict for one page (with its folder's majority), when the index has the page; None otherwise.
+    The verdicts of the whole vault are read once per index change (one query), so listing pages stays cheap."""
+    try:
+        import sqlite3
+
+        import recall_index
+
+        db = recall_index.cache_path(Path(vault))
+        st = db.stat()
+        wal = db.with_name(db.name + "-wal")
+        sig = (st.st_mtime_ns, st.st_size, wal.stat().st_mtime_ns if wal.exists() else 0,
+               tuple(declared(vault)), tuple(mine_marked(vault)), auto_on(vault))
+        cached = _ORIGIN.get(str(db))
+        if not cached or cached[0] != sig:
+            con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=5)
+            try:
+                if not con.execute("SELECT 1 FROM sqlite_master WHERE name='origin'").fetchone():
+                    return None
+                rels = [r for (r,) in con.execute("SELECT rel FROM origin")]
+                got = classify(con, Path(vault), rels)
+            finally:
+                con.close()
+            cached = (sig, {r: got.get(r, "") for r in rels})
+            _ORIGIN[str(db)] = cached
+        return cached[1].get(rel)
+    except Exception:  # noqa: BLE001 - 索引读不了就按这一页自己判断
+        return None
 
 
 def classify(con, vault: Path, rels: list[str]) -> dict[str, str]:
     """{rel: reason} for the knowledge-base pages among `rels`, from the paths and the index's stored frontmatter."""
     folders = declared(vault)
+    mine = mine_marked(vault)
+    named = alias_targets(vault)
     out = {}
     rest = []
     for rel in dict.fromkeys(rels):
         why = path_reason(vault, rel, folders)
-        if why:
+        if why == "declared":
+            out[rel] = why
+        elif _under(rel, mine):
+            continue  # 你标成自己的：不管长什么样都是记忆
+        elif rel in named and not why:
+            continue  # 别名表指向的页：你命名过的主题，是你的记忆
+        elif why:
             out[rel] = why
         else:
             rest.append(rel)
+    auto = auto_on(vault)
     for i in range(0, len(rest), 400):
         chunk = rest[i:i + 400]
         marks = ",".join("?" * len(chunk))
         for rel, text in con.execute(f"SELECT rel, text FROM fm WHERE rel IN ({marks})", chunk):
             if fm_reason(text):
                 out[rel] = "clippings"
+        if not auto:
+            continue
+        try:
+            rows = con.execute(f"SELECT rel, dir, score, hard FROM origin WHERE rel IN ({marks})", chunk).fetchall()
+        except Exception:  # noqa: BLE001 - 旧缓存没有这张表
+            rows = []
+        bonus = dir_bonus(con, {d for _r, d, _s, _h in rows})
+        for rel, d, score, hard in rows:
+            if rel not in out and not hard and score + bonus.get(d, 0.0) >= AUTO_MIN:
+                out[rel] = "auto"
     return out
+
+
+def dir_bonus(con, dirs: set[str]) -> dict[str, float]:
+    """+DIR_BONUS for a folder where most pages (at least DIR_MIN) look like reference material on their own;
+    -DIR_BONUS where almost none do."""
+    out = {}
+    for d in dirs:
+        n, soft = con.execute("SELECT count(*), sum(score >= ?) FROM origin WHERE dir=? AND hard=''", (SOFT, d)).fetchone()
+        if n and n >= DIR_MIN:
+            share = (soft or 0) / n
+            out[d] = DIR_BONUS if share >= DIR_SHARE else 0.0  # 只加不减：一个目录里混着两类时，资料页照样逐页认
+    return out
+
+
+def origin_rows(con, vault: Path, rels: list[str]) -> dict[str, dict]:
+    """{rel: {kb, score, why, hard, dir_bonus}} for `krouter why` / `view`: the verdict and the signals behind it."""
+    got = classify(con, vault, rels)
+    out = {}
+    try:
+        marks = ",".join("?" * len(rels))
+        rows = con.execute(f"SELECT rel, dir, score, why, hard FROM origin WHERE rel IN ({marks})", rels).fetchall()
+    except Exception:  # noqa: BLE001
+        rows = []
+    bonus = dir_bonus(con, {r[1] for r in rows})
+    mine = mine_marked(vault)
+    for rel, d, score, why, hard in rows:
+        out[rel] = {"kb": got.get(rel, ""), "score": score, "why": why, "hard": hard,
+                    "dir_bonus": bonus.get(d, 0.0), "marked_mine": _under(rel, mine)}
+    return out
+
+
+def auto_pages(vault: Path) -> list[str]:
+    """Every page recognised automatically as reference material (`auto`), from the index (refreshed first)."""
+    import recall_index
+
+    con = recall_index.connect(recall_index.cache_path(Path(vault)))
+    try:
+        recall_index.refresh(Path(vault), con)
+        rels = [r for (r,) in con.execute("SELECT rel FROM origin WHERE hard=''")]
+        got = classify(con, Path(vault), rels)
+    finally:
+        con.close()
+    return sorted(r for r, why in got.items() if why == "auto")
+
+
+def auto_news(vault: Path) -> tuple[list[str], list[str]]:
+    """(all auto-recognised pages, the ones new since the last call): for the nightly report. The list of the last
+    call is kept in the state folder (`KROUTER_STATE_DIR`), not in the memory folder."""
+    import hashlib
+    import json
+
+    now = auto_pages(vault)
+    base = Path(os.environ.get("KROUTER_STATE_DIR") or Path.home() / ".local/state/krouter")
+    state = base / f"kb-auto-{hashlib.sha1(str(Path(vault).resolve()).encode('utf-8')).hexdigest()[:12]}.json"
+    try:
+        before = set(json.loads(state.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        before = set()
+    try:
+        state.parent.mkdir(parents=True, exist_ok=True)
+        state.write_text(json.dumps(now, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+    return now, [r for r in now if r not in before]
+
+
+def auto_on(vault: Path | None) -> bool:
+    """Automatic recognition is on unless `KROUTER_KB_AUTO=0`, or `kb_auto|off` in krouter-settings.psv."""
+    raw = os.environ.get("KROUTER_KB_AUTO", "").strip().lower()
+    if raw in ("0", "off", "false", "no"):
+        return False
+    if raw in ("1", "on", "true", "yes"):
+        return True
+    try:
+        text = (Path(vault) / "krouter-settings.psv").read_text(encoding="utf-8", errors="replace") if vault else ""
+    except OSError:
+        text = ""
+    for line in text.splitlines():
+        key, _, val = line.partition("|")
+        if key.strip().lower() == "kb_auto" and val.strip().lower() in ("off", "0", "false", "no"):
+            return False
+    return True
+
+
+def index_origin(con, rel: str, canon: str, text: str, vault_lang: str, aliased: bool) -> None:
+    """`rel`: the page's path in this vault (the key); `canon`: the same path in the default layout (zones.canon),
+    which the folder rules are written for."""
+    score, why, hard = page_origin(canon, text[:AUTO_READ], vault_lang, aliased)
+    d = rel.rsplit("/", 1)[0] if "/" in rel else ""
+    con.execute("INSERT OR REPLACE INTO origin VALUES(?,?,?,?,?)", (rel, d, score, why, hard))
+
+
+# ---------- 自动识别（不用声明）：按来历逐页判断 ----------
+#
+# 「你的记忆」靠来历认：KRouter 自己记下、提炼、纠正出来的页（会话摘录、时间日志、经验卡、技能、规则目录、主题档案、
+# 带 KRouter 自己 frontmatter 标记的页），别名表指向的页，你用 `krouter kb mine` 标成自己的页。其余的页逐页看像不像
+# 别人写的资料：来源网址、转载/译者/署名、像文章的标题、长篇叙述而没有决定和待办、作者不是你、主要语言和库不同，
+# 再加上同一目录里这类页占多数。分数够高才算资料（`auto`）；错把你自己的页当资料代价更大，所以门槛从严。
+
+ORIGIN_SCHEMA = """
+-- 每页的来历判断：hard 是 mine（来历就是你的记忆）/ kb（剪藏）/ 空；score 是「像别人写的资料」的分；why 是理由
+CREATE TABLE origin(rel TEXT PRIMARY KEY, dir TEXT, score REAL, why TEXT, hard TEXT);
+CREATE INDEX origin_dir ON origin(dir);
+"""
+ORIGIN_DROP = "DROP TABLE IF EXISTS origin;"
+MINE_PREFIX = "!"  # krouter-kb.txt 里以 ! 开头的一行：这一页或这个文件夹是你自己的（优先于自动判断）
+OWN_DIRS = ("05 时间日志/", "90 系统文件/", "02 经验与方法/", "Agent记忆/")
+OWN_TYPE = re.compile(r"^type:\s*[\"']?(session-excerpt|decision|correction|method|rule|topic|experience|"
+                      r"experience-card|skill|krouter-skill|log|daily|daily-log|automation-log|agent-notes|imported|"
+                      r"correction-candidates|note)\b", re.M | re.I)
+OWN_KEYS = re.compile(r"^(status|how|supersedes|superseded_by|valid_from|triggers|topic_terms|session|forked_from|"
+                      r"krouter)\s*:", re.M | re.I)
+SOURCE_LINE = re.compile(r"^\s*(?:[>*_-]\s*)*(?:\*\*)?(?:source|original(?:ly published)?|via|from|url|link|来源|出处|原文"
+                         r"(?:链接|地址)?|原载|转载自|转自|本文(?:链接|地址))(?:\*\*)?\s*[:：]\s*\S", re.I | re.M)
+REPRINT = re.compile(r"转载|整理[:：]|主办方|译者|译自|翻译[:：]|编译|原作者|作者[:：]|撰文|编辑[:：]|责任编辑|阅读原文|版权(?:所有|归)|"
+                     r"未经授权|公众号|\bwritten by\b|\bposted (?:on|by)\b|\bpublished (?:on|in|by)\b|"
+                     r"\boriginally (?:published|appeared)\b|©|\bcopyright\b|\ball rights reserved\b|\bsubscribe\b|"
+                     r"\bnewsletter\b|\bread more\b|\btranslated (?:by|from)\b|\btranslator\b|\bminute read\b", re.I)
+BYLINE = re.compile(r"^\s*(?:by|written by|posted by)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\s*$", re.M)
+FIRST_PERSON = re.compile(r"我|\b(?:i|me|my|mine|we|us|our|i'm|i've|we're|we've)\b", re.I)
+DECISION = re.compile(r"^\s*(?:[-*]\s*)?(?:\*\*)?(?:决定|结论|待办|下一步|负责人|决议|行动项|TODO|Decision|Decided|"
+                      r"Action items?|Next steps?|Owner)(?:\*\*)?\s*[:：]|- \[[ xX]\]|我们决定|我决定|定下来|以后都|以后统一|"
+                      r"\bwe decided\b|\bi decided\b|\bfrom now on\b|\bgoing forward we\b", re.I | re.M)
+ANNOTATE = re.compile(r"我的(?:批注|看法|想法|笔记|理解|评论)|批注[:：]|按[:：]|我觉得|我认为|我想|对我们|对我来说|"
+                      r"\bmy (?:take|notes?|thoughts|comments?)\b|\bnote to self\b|\bi think\b|\bfor us\b", re.I)
+CJK_CHAR = re.compile(r"[㐀-鿿]")
+LATIN_WORD = re.compile(r"[A-Za-z]{2,}")
+LONG_WORDS = 400    # 大致的词数到这个算长篇
+NARRATIVE_WORDS = 150
+AUTO_READ = 20000   # 判断来历只读每页前这么多字符
+AUTO_MIN = 3.0      # 分数到这个才算资料（第 40 套开发部分定：你自己的页开发部分最高 1.5）
+DIR_SHARE = 0.6     # 同目录里像资料的页占这么多（至少 DIR_MIN 页），每页再加 DIR_BONUS
+DIR_MIN = 3
+DIR_BONUS = 1.0
+SOFT = 3.0          # 目录统计里「像资料」的页：自己的分到这个
+
+
+def text_lang(text: str) -> str:
+    cjk = len(CJK_CHAR.findall(text))
+    latin = len(LATIN_WORD.findall(text))
+    if cjk + latin < 20:
+        return ""
+    return "zh" if cjk >= latin else "en"
+
+
+def page_origin(rel: str, text: str, vault_lang: str, aliased: bool = False) -> tuple[float, str, str]:
+    """(score, why, hard) for one page. `hard`: `mine` when where it came from makes it your memory, `kb` for a
+    clipping (2.0's rule), `` when only the score decides. `why` names the signals, comma-separated."""
+    rel = rel.replace("\\", "/")
+    head = head_of(text)
+    if CLIP_PATH.search(rel) or fm_reason(head):
+        return 9.0, "clipping", "kb"
+    if aliased:
+        return -9.0, "alias", "mine"
+    if rel.startswith(OWN_DIRS) or "/" not in rel and rel in ("AGENTS.md", "Agent第二大脑.md"):
+        return -9.0, "krouter-folder", "mine"
+    if OWN_TYPE.search(head) or OWN_KEYS.search(head):
+        return -9.0, "krouter-frontmatter", "mine"
+    body = text[len(head):] if head else text
+    lines = [ln for ln in body.splitlines() if ln.strip()]
+    edge = "\n".join(lines[:8] + lines[-5:])
+    why, score = [], 0.0
+    if (SOURCE_FM.search(head) and URL_RE.search(head)) or SOURCE_LINE.search(edge) or \
+            any(URL_RE.search(ln) and len(ln.strip()) < 200 for ln in lines[:4]):
+        score += 3.5
+        why.append("source")
+    if re.search(r"^author\s*:", head, re.M | re.I) and not re.search(r"^author\s*:\s*[\"']?(me|我|self)\b", head, re.M | re.I):
+        score += 2.0
+        why.append("author")
+    if REPRINT.search(edge) or BYLINE.search(edge):
+        score += 2.0
+        why.append("byline")
+    stem = rel.rsplit("/", 1)[-1][:-3] if rel.endswith(".md") else rel.rsplit("/", 1)[-1]
+    first_h = next((ln.lstrip("# ").strip() for ln in lines[:3] if ln.startswith("# ")), "")
+    title = first_h or stem
+    n_words = len(LATIN_WORD.findall(title)) + len(CJK_CHAR.findall(title)) / 2
+    if n_words >= 6 or (n_words >= 4 and re.search(r"[:：？?！!《》|]|——|\bhow\b|\bwhy\b|\bwhat\b", title, re.I)):
+        score += 1.0
+        why.append("article-title")
+    size = len(LATIN_WORD.findall(body)) + len(CJK_CHAR.findall(body)) / 1.5  # 大致的词数：中文按 1.5 个字一个词
+    if size >= LONG_WORDS:
+        score += 1.0
+        why.append("long")
+    paras = [p for p in re.split(r"\n\s*\n", body) if p.strip()]
+    listy = sum(1 for ln in lines if re.match(r"\s*([-*+]|\d+\.|\|)\s", ln))
+    if paras and size >= NARRATIVE_WORDS and listy <= 0.2 * len(lines) and size / len(paras) >= 40:
+        score += 1.0
+        why.append("narrative")
+    fp = len(FIRST_PERSON.findall(body)) * 100 / max(size, 1)
+    if size >= NARRATIVE_WORDS and fp < 0.5:
+        score += 1.0
+        why.append("impersonal")
+    elif fp >= 2.0:
+        score -= 1.5
+        why.append("-personal")
+    if DECISION.search(body):
+        score -= 2.0
+        why.append("-decision")
+    if ANNOTATE.search(body):
+        score -= 3.0
+        why.append("-annotated")
+    lang = text_lang(body)
+    if lang and vault_lang and lang != vault_lang:
+        score += 1.5
+        why.append("other-language")
+    return round(score, 2), ",".join(why), ""
+
+
+def mine_marked(vault: Path | None) -> list[str]:
+    """Pages or folders marked as your own (`!path` lines in krouter-kb.txt): never knowledge base, whatever they look
+    like."""
+    if vault is None:
+        return []
+    path = kb_file(vault)
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    return [_norm(ln.strip()[1:]) for ln in text.splitlines() if ln.strip().startswith(MINE_PREFIX) and _norm(ln.strip()[1:])]
+
+
+_ALIAS: dict[str, tuple[tuple, frozenset]] = {}
+
+
+def alias_targets(vault: Path | None) -> frozenset:
+    """Pages the vault's own alias table (`90 系统文件/canonical_sources.psv`) points to: a topic you named is yours.
+    Read live (cached per file time), so a row added a minute ago counts before the index is rebuilt."""
+    if vault is None:
+        return frozenset()
+    path = zones.path(Path(vault), "90 系统文件/canonical_sources.psv")
+    try:
+        st = path.stat()
+    except OSError:
+        return frozenset()
+    sig = (st.st_mtime_ns, st.st_size)
+    hit = _ALIAS.get(str(path))
+    if hit and hit[0] == sig:
+        return hit[1]
+    out = set()
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        parts = line.split("|")
+        if len(parts) == 4 and not line.startswith("#"):
+            out.add(_norm(parts[2]))
+    got = frozenset(out)
+    _ALIAS[str(path)] = (sig, got)
+    return got
+
+
+def _under(rel: str, items: list[str]) -> bool:
+    return any(rel == f or rel.startswith(f + "/") or rel == f + ".md" for f in items)
 
 
 # ---------- 声明 ----------
@@ -157,7 +473,8 @@ def _write(vault: Path, folders: list[str]) -> Path:
     if path.is_file():
         keep_head = [ln for ln in path.read_text(encoding="utf-8", errors="replace").splitlines() if ln.startswith("#")]
     head = "\n".join(keep_head) + "\n" if keep_head else HEADER[lang]
-    path.write_text(head + "".join(f + "\n" for f in folders), encoding="utf-8")
+    marks = [MINE_PREFIX + f for f in mine_marked(vault)]  # 「这是我自己的」那几行原样留着
+    path.write_text(head + "".join(f + "\n" for f in folders + marks), encoding="utf-8")
     _CACHE.pop(str(path), None)
     return path
 
@@ -183,6 +500,53 @@ def add(vault: Path, folders: list[str]) -> list[str]:
     if new:
         _write(vault, have + new)
     return new
+
+
+def _rel_in(vault: Path, raw: str) -> str:
+    f = _norm(raw)
+    p = Path(raw).expanduser()
+    if p.is_absolute():
+        try:
+            f = _norm(p.resolve().relative_to(Path(vault).resolve()).as_posix())
+        except ValueError:
+            raise ValueError(f"{raw} is not inside the memory folder {vault}")
+    if not f or f.startswith(".."):
+        raise ValueError(f"{raw}: give a page or folder inside the memory folder")
+    if not (Path(vault) / f).exists():
+        raise ValueError(f"{f}: no such page or folder in {vault}")
+    return f
+
+
+def _lines(vault: Path) -> list[str]:
+    path = kb_file(vault)
+    return path.read_text(encoding="utf-8", errors="replace").splitlines() if path.is_file() else []
+
+
+def mark_mine(vault: Path, paths: list[str]) -> list[str]:
+    """Mark pages or folders as your own (`!path` in krouter-kb.txt). A declared knowledge-base folder still wins for
+    the pages under it unless the mark is the page itself or a folder inside it."""
+    have = mine_marked(vault)
+    new = []
+    for raw in paths:
+        f = _rel_in(vault, raw)
+        if f not in have and f not in new:
+            new.append(f)
+    if new:
+        lines = _lines(vault) or HEADER["en" if zones.lang(vault) == "en" else "zh"].rstrip("\n").splitlines()
+        kb_file(vault).write_text("\n".join(lines + [MINE_PREFIX + f for f in new]) + "\n", encoding="utf-8")
+        _CACHE.pop(str(kb_file(vault)), None)
+    return new
+
+
+def unmark_mine(vault: Path, paths: list[str]) -> list[str]:
+    drop = {_norm(p) for p in paths}
+    lines = _lines(vault)
+    gone = [ln.strip()[1:] for ln in lines if ln.strip().startswith(MINE_PREFIX) and _norm(ln.strip()[1:]) in drop]
+    if gone:
+        keep = [ln for ln in lines if not (ln.strip().startswith(MINE_PREFIX) and _norm(ln.strip()[1:]) in drop)]
+        kb_file(vault).write_text("\n".join(keep) + "\n", encoding="utf-8")
+        _CACHE.pop(str(kb_file(vault)), None)
+    return gone
 
 
 def remove(vault: Path, folders: list[str]) -> list[str]:
@@ -517,6 +881,10 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("remove", help="stop treating folders as the knowledge base")
     r.add_argument("folders", nargs="+")
     sub.add_parser("suggest", help="folders that look like reference material and are not declared (nothing changes)")
+    m = sub.add_parser("mine", help="mark pages or folders as your own: never reference material, whatever they look like")
+    m.add_argument("paths", nargs="+")
+    u = sub.add_parser("unmine", help="drop a `mine` mark (automatic recognition decides again)")
+    u.add_argument("paths", nargs="+")
     i = sub.add_parser("import", help="convert a PDF, Word, HTML, … file into a Markdown page in the knowledge base")
     i.add_argument("files", nargs="+")
     i.add_argument("--to", default=None, help="the knowledge-base folder (default: the declared one, or a new "
@@ -544,6 +912,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.cmd == "remove":
             gone = remove(vault, args.folders)
             print(("removed: " + ", ".join(gone)) if gone else "none of these is declared")
+        elif args.cmd == "mine":
+            new = mark_mine(vault, args.paths)
+            print(("marked as yours: " + ", ".join(new) + f" -> {kb_file(vault)}") if new else "already marked")
+        elif args.cmd == "unmine":
+            gone = unmark_mine(vault, args.paths)
+            print(("unmarked: " + ", ".join(gone)) if gone else "none of these is marked")
         elif args.cmd == "suggest":
             found = suggest(vault)
             if not found:

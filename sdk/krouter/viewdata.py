@@ -310,11 +310,19 @@ class Store:
             if body_text:
                 for target in dict.fromkeys(self.m.associate.WIKILINK.findall(body_text)):
                     links[target] = self.resolve(con, target)
+            origin = {}
+            try:
+                origin = self.m.kb.origin_rows(con, self.vault, [rel]).get(rel, {})
+            except Exception:  # noqa: BLE001 - 旧缓存没有来历表
+                origin = {}
             sides = self.supersede_sides(con, rel)
             sup = {k: [self._decorate_known(con, r) for r in v] for k, v in sides.items()}
             return {"rel": rel, "title": meta.get("title") or first_heading(body_text) or Path(rel).stem, "tier": tier,
                     "status": status, "date": meta.get("date", ""), "modified": iso(mtime), "size": size,
                     "secret": secret, "truncated": size > BODY_MAX, "kb": self.m.kb.reason(self.vault, rel),
+                    # 归到哪一类、为什么：kb 是 declared / clippings / auto / 空（你的记忆）；signals 是自动判断看到的特征
+                    "origin": {"signals": origin.get("why", ""), "score": origin.get("score"),
+                               "marked_mine": bool(origin.get("marked_mine"))},
                     "meta": {k: self.m.redact.redact(v) for k, v in meta.items()} if not secret else {},
                     "body": body_text, "links": links, **sup}
 

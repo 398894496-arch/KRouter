@@ -6,7 +6,7 @@
     en: {
       readonly: "read only", tab_memory: "Memory", tab_graph: "Connections", tab_experience: "Experience", tab_nightly: "Last night", tab_why: "Try a sentence", tab_recalled: "Brought to mind",
       rec_intro: "Pages the prompt hook brought to the agent with a message, newest first ({n} in all). A page the agent fetched itself after reading the session-start index is not listed here: `krouter why` says which it was.", rec_none: "The prompt hook has not brought any page yet.", rec_off: "The prompt hook is switched off (KROUTER_RECALL_PROMPT=0).", col_when: "When", col_app: "App", col_route: "How", col_word: "Words", col_sentence: "Sentence", route_alias: "a name", route_trigger: "a trigger word", route_recall: "recall", sk_counts: "offered {o}, adopted {a}",
-      kb_chip: "knowledge base: reference, not your decision", pages: "pages", search_ph: "Search pages by path, title or words", all_tiers: "All tiers", all_status: "All statuses", sort_path: "By path", sort_recent: "Recently changed",
+      kb_chip: "knowledge base: reference, not your decision", kb_auto: "recognised automatically", kb_mine: "marked as yours", pages: "pages", search_ph: "Search pages by path, title or words", all_tiers: "All tiers", all_status: "All statuses", sort_path: "By path", sort_recent: "Recently changed",
       col_page: "Page", col_tier: "Tier", col_status: "Status", col_date: "Date", prev: "Previous", next: "Next", range: "{a}–{b} of {n}", range_cap: "{a}–{b} of at least {n}",
       none: "Nothing here.", loading: "Loading…", failed: "Could not load: {e}", pick_page: "Pick a page on the left to read it.",
       replaced_by: "Replaced by", replaces: "Replaces", secret: "This is a secret page: KRouter shows its path only, never its text.",
@@ -28,7 +28,7 @@
     zh: {
       readonly: "只读", tab_memory: "记忆", tab_graph: "关联", tab_experience: "经验", tab_nightly: "昨晚", tab_why: "试一句", tab_recalled: "想起记录",
       rec_intro: "提问钩子随用户的话递给 agent 的页，最新的在前（共 {n} 条）。agent 看了会话开始的索引、自己去取的页不在这里：用 `krouter why` 能看出是哪一种。", rec_none: "提问钩子还没递过任何一页。", rec_off: "提问钩子关着（KROUTER_RECALL_PROMPT=0）。", col_when: "时间", col_app: "应用", col_route: "怎么想起的", col_word: "说的是", col_sentence: "那句话", route_alias: "名字", route_trigger: "触发词", route_recall: "召回", sk_counts: "提出 {o} 次，采纳 {a} 次",
-      kb_chip: "知识库：参考资料，不是你的决定", pages: "页", search_ph: "按路径、标题或词搜索页面", all_tiers: "全部层级", all_status: "全部状态", sort_path: "按路径", sort_recent: "最近改动",
+      kb_chip: "知识库：参考资料，不是你的决定", kb_auto: "自动认出", kb_mine: "标成了你自己的", pages: "页", search_ph: "按路径、标题或词搜索页面", all_tiers: "全部层级", all_status: "全部状态", sort_path: "按路径", sort_recent: "最近改动",
       col_page: "页面", col_tier: "层级", col_status: "状态", col_date: "日期", prev: "上一页", next: "下一页", range: "第 {a}–{b} 条，共 {n}", range_cap: "第 {a}–{b} 条，至少 {n}",
       none: "这里没有内容。", loading: "加载中…", failed: "加载失败：{e}", pick_page: "在左边选一页来读。",
       replaced_by: "被取代于", replaces: "取代了", secret: "这是机密页：KRouter 只显示路径，不显示正文。",
@@ -165,7 +165,7 @@
           return '<li><a href="' + esc(pageHref(n.rel)) + '">' + esc(n.title) + "</a> " + n.edges.map(function (e) { return '<span class="k ' + esc(e.kind) + '">' + esc(t("k_" + e.kind)) + "</span>"; }).join("") + "</li>";
         }).join("") + "</ul>" : '<p class="muted small">' + esc(t("no_links")) + "</p>";
       }
-      box.innerHTML = '<div class="card"><h1 class="mt0">' + esc(pg.title) + "</h1>" + chip(pg.tier) + (pg.status ? chip(pg.status) : "") + (pg.kb ? chip(t("kb_chip"), "kb") : "") + (pg.date ? chip(pg.date, "date") : "") +
+      box.innerHTML = '<div class="card"><h1 class="mt0">' + esc(pg.title) + "</h1>" + chip(pg.tier) + (pg.status ? chip(pg.status) : "") + (pg.kb ? chip(t("kb_chip"), "kb") : "") + (pg.kb === "auto" && pg.origin ? chip(t("kb_auto") + ": " + pg.origin.signals, "kb") : "") + (pg.origin && pg.origin.marked_mine ? chip(t("kb_mine")) : "") + (pg.date ? chip(pg.date, "date") : "") +
         '<div class="path">' + esc(pg.rel) + "</div>" + relList(t("replaced_by"), pg.replaced_by) + relList(t("replaces"), pg.replaces) + conn +
         (pg.secret ? '<p class="muted">' + esc(t("secret")) + "</p>" : '<hr class="rule"><div class="body">' + markdown(pg.body, pg.links, pg.title) + "</div>") +
         (pg.truncated ? '<p class="muted small">' + esc(t("truncated")) + "</p>" : "") +

@@ -106,6 +106,7 @@ TEXT = {
         "kb_head": "{rel}: {title} ({why}, score {score})",
         "kb_why_declared": "in a declared knowledge-base folder",
         "kb_why_clippings": "a clipping",
+        "kb_why_auto": "recognised as reference material by how it reads ({signals}); `krouter kb mine PAGE` says it is yours",
         "kb_source": "source: {source}",
         "kb_only": "Only your knowledge base matched: your memory has nothing on this, and the receipt's first line says so.",
         "r_nothing": "no page contains the question's words ({words})",
@@ -220,6 +221,7 @@ TEXT = {
         "kb_head": "{rel}：{title}（{why}，得分 {score}）",
         "kb_why_declared": "在声明过的知识库文件夹里",
         "kb_why_clippings": "剪藏",
+        "kb_why_auto": "按页面特征自动认作参考资料（{signals}）；`krouter kb mine 页面` 可标成你自己的",
         "kb_source": "出处：{source}",
         "kb_only": "只有知识库对得上：你的记忆里没有这件事，回执第一行就这么说。",
         "r_nothing": "没有哪一页含有问题里的词（{words}）",
@@ -664,7 +666,8 @@ def blocks(e: dict) -> list[dict]:
     if e.get("kb"):
         p(t(L, "kb_intro"))
         for k in e["kb"]:
-            li(t(L, "kb_head", rel=k["rel"], title=k["title"], why=t(L, "kb_why_" + k["kb"]), score=k["score"]), 0,
+            li(t(L, "kb_head", rel=k["rel"], title=k["title"], why=t(L, "kb_why_" + k["kb"], signals=k.get("signals") or "-"),
+                 score=k["score"]), 0,
                k["rel"])
             if k.get("source"):
                 li(t(L, "kb_source", source=k["source"]), 1)

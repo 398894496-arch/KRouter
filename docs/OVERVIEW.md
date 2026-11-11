@@ -16,13 +16,13 @@ recall_strong_terms: 5
 recall:
 - Newsletter/Opening lines.md tier=other status=active score=3.148
   how: Do not open an issue with a question to the reader. Open with the one thing tha…
-  L8: Do not open an issue with a question to the reader. Open with the one thing that happened this week.
+  L8 (passage L6-L8): Do not open an issue with a question to the reader. Open with the one thing that happened this week.
 - Newsletter/Formatting.md tier=other status=active score=0.0
   how: Subject lines and headings in sentence case, no exclamation marks. One link per…
-  L2: title: Newsletter formatting
+  L6: # Newsletter formatting
 - Newsletter/Publishing schedule.md tier=other status=active score=0.0
   how: The newsletter goes out on Friday at 08:00. The draft is frozen on Thursday eve…
-  L8: The newsletter goes out on Friday at 08:00. The draft is frozen on Thursday evening; only typo fixes after that.
+  L8 (passage L6-L8): The newsletter goes out on Friday at 08:00. The draft is frozen on Thursday evening; only typo fixes after that.
 open_page: only the top recall hit, and only if its how does not close the question
 ```
 

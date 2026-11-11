@@ -429,8 +429,12 @@ def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
             print(f"  answer (generated): {redact(h['answer'])}")
         if h["how"]:
             print(f"  how: {h['how']}")
-        for ln, text in best_lines(vault / h["rel"], res["query_tokens"], lines):
-            print(f"  L{ln}: {text}")
+        ev = h.get("ev") or {}
+        span = (ev["l0"], ev["l1"]) if ev.get("l0") and ev.get("pc", 0) > 0 else None
+        for i, (ln, text) in enumerate(best_lines(vault / h["rel"], res["query_tokens"], lines, span)):
+            # 段落证据：最好的那一段是哪几行（只标在第一行上，回执不加行）
+            where = f" (passage L{span[0]}-L{span[1]})" if i == 0 and span and span[1] > span[0] else ""
+            print(f"  L{ln}{where}: {text}")
     print_extras(res, "assoc")
     print_kb(vault, res, query)
 

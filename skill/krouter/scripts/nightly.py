@@ -240,6 +240,24 @@ def skill_lines(results: list[dict]) -> list[str]:
         return []
 
 
+def kb_lines(vault: Path) -> list[str]:
+    """How many pages are recognised automatically as reference material, and how many are new since last night."""
+    try:
+        import kb
+
+        if not kb.auto_on(vault):
+            return []
+        allp, new = kb.auto_news(vault)
+    except Exception:  # noqa: BLE001
+        return []
+    if not allp:
+        return []
+    out = [f"自动认出的参考资料（别人写的文章、剪藏、译稿，不算你定过的事）：共 {len(allp)} 页，比上次新增 {len(new)} 页。"
+           "认错了就 `krouter kb mine 页面或文件夹`；整个文件夹算资料用 `krouter kb add`。", ""]
+    out += [f"- [[{r.removesuffix('.md')}]]" for r in new[:10]]
+    return out + ([""] if new else [])
+
+
 def write_report(vault: Path, results: list[dict], state: str, lane_name: str, at: str) -> None:
     rows = []
     for r in results:
@@ -253,6 +271,7 @@ def write_report(vault: Path, results: list[dict], state: str, lane_name: str, a
         *channel_lines(vault),
         *duplicate_lines(vault),
         *skill_lines(results),
+        *kb_lines(vault),
         "| 步骤 | 结果 | 模型调用 / 发出 | 秒 | 原因 |", "|---|---|---|---|---|", *rows, "",
         "发出的内容：规则页 / 主题页全文（问答卡）、主题证据（主题档案）、路由器没答好的查询原文（夜间学习）；"
         "开了会话导入并选了提炼时，还有昨天会话的脱敏摘录。"

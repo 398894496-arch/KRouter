@@ -13,13 +13,13 @@ recall_strong_terms: 3
 recall:
 - 周报/开头怎么写.md tier=other status=active score=4.416
   how: 周报不要用提问开头，先写这一周发生的一件事。
-  L8: 周报不要用提问开头，先写这一周发生的一件事。
+  L8 (passage L6-L8): 周报不要用提问开头，先写这一周发生的一件事。
 - 周报/发布时间.md tier=other status=active score=0.0
   how: 周五早上 8 点发。周四晚上定稿，之后只改错别字。
-  L2: title: 周报发布时间
+  L6: # 周报发布时间
 - 周报/排版.md tier=other status=active score=0.0
   how: 标题用平实的句子，不加感叹号。每段最多放一个链接，赞助商那一行放最后。
-  L2: title: 周报排版
+  L6: # 周报排版
 open_page: only the top recall hit, and only if its how does not close the question
 ```
 

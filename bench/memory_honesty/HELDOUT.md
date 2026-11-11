@@ -1501,3 +1501,88 @@ then the decision is the maintainer's.
 |---|---|
 | 2026-11-11 | Registered, before any count. |
 | 2026-11-11 | **Counted once** (`bench/refusal/study.py states`; strict mode is a function of the same lookups, so one run gives both). Unanswerable, direct / related / none at the default: LongMemEval `_abs` 0 / 21 / 9 of 30; LoCoMo adversarial held-out half 0 / 205 / 18 of 223; the six memory-honesty sets 0 / 54 / 111 of 165; synthetic 15 / 14 / 43 of 72. Strict mode hands every `related` over as `none`: 30 of 30, 223 of 223, 165 of 165, 57 of 72. Answerable, direct / related / none: LongMemEval held-out half 0 / 224 / 11 of 235, the labelled page handed over for 212 (default) and 0 (strict); LoCoMo answerable held-out half 0 / 714 / 54 of 768, 613 and 0; memory-honesty sets 0 / 193 / 47 of 240, 190 and 0; synthetic 39 / 10 / 2 of 51, 49 and 39. **Why strict mode is near zero on the benchmarks:** `high` needs a rule or topic page leading the next by 1.5×, and these vaults hold only session pages and plain pages, so nothing there is ever `direct`. On the synthetic memory, which has rule pages, strict mode refuses 14 more of 72 unanswerable questions and hands over the answer for 10 fewer of 51 answerable ones; and 15 of its unanswerable questions are `direct` (a near miss on a rule page at `high`), which strict mode does not catch. Answerable questions are not "almost untouched", so **strict mode stays off by default.** The effect of the `related` instruction on a reader's answers is not measured. |
+
+## Set 39: paragraph-level evidence — more answers handed over and more `none`, both at once (registered 2026-11-11, before any rule was chosen)
+
+**Why.** Sets 14 and 37 found that whole-page word signals cannot tell a near miss (the session about the subject is in
+the memory, the asked detail is not) from an answer: any rule that refused more also lost answers. This set changes the
+signal, not the threshold. Each page is cut into paragraphs (a session into its turns) at index time
+(`skill/krouter/scripts/evidence.py`, in the rebuildable cache), and recall looks at the best paragraph of each of the
+first 20 ranked pages: (1) how much of the question's idf weight one paragraph (or two adjacent ones) holds together;
+(2) speaker binding: when the question names a speaker of the page (`What did Caroline …`), or asks about "I / my" on a
+page with `user` / `assistant` turns, how much of it that speaker's own turns hold; (3) answer type: when the question
+asks for a count, a duration, a date, an amount of money, a frequency or an age (rules and regular expressions, Chinese
+and English; any other question is not checked), whether the best paragraphs hold that kind of thing at all; (4) time
+cues (a date, a weekday, `last week`, `三个月前`) weighed against the page's own date; (5) questions that add up or
+list (`how many times`, `in total`, `都有哪些`) hand over more pages.
+
+**Seen before this registration, said plainly.** A read-only probe on set 37's development records (the pages the
+shipped gate cited for LongMemEval `_abs`, the dev half, the dev half with answer sessions removed, LoCoMo's dev half
+and `dev` / `dev2` / `dev3`) computed signals (1)–(3) before anything was built; speaker binding separated LoCoMo's
+adversarial dev questions from its answerable ones (60 of 203 against 25 of 579 at a half-coverage ratio), the others
+less. No held-out record was read.
+
+**Data.** Development: LongMemEval's 30 `_abs` (seen in sets 7, 14, 37, 38), set 14's dev half (235) and that half with
+its answer sessions removed (235, unanswerable), LoCoMo's dev half (set 37's split: 223 adversarial, 768 answerable),
+`dev`, `dev2`, `dev3`, and set 37's synthetic set (a development set since set 37). Held out, run once with the code as
+chosen on dev: LongMemEval's held-out half (235) and the same with answer sessions removed, LoCoMo's held-out half (223
+adversarial, 768 answerable), `heldout`, `heldout2`, `heldout3`. **These held-out halves were counted in set 38** (the
+three states and whether the labelled page was handed over; nothing was tuned on them); the memory-honesty held-out
+sets have been reported in many earlier sets. Rules, thresholds and page counts are set on development data only.
+
+**Counts** (`bench/evidence/study.py`, set 38's definitions): unanswerable questions whose receipt says `none`;
+answerable questions whose labelled page is among the three cited and whose state is not `none` ("handed over"); on the
+memory-honesty sets also wrong citations (an answer whose first page is not the labelled one). The baseline is the code
+at 44c041f, counted with the same script.
+
+**Pass bar, fixed now.** Built in and on by default only if all of these hold on the held-out data: (1) more `none`:
+LoCoMo's adversarial held-out half at least 38 of 223 (set 38: 18); LongMemEval `_abs` at least 14 of 30 (set 38: 9;
+development data, reported as such); the six memory-honesty sets at least 111 of 165; (2) no fewer handed over:
+LongMemEval held-out half at least 212 of 235, LoCoMo answerable held-out half at least 613 of 768, the six
+memory-honesty sets at least 190 of 240; (3) no memory-honesty set with more wrong citations than the baseline. If a
+part only raises one side and lowers the other, the whole does not pass; it is reported as measured, and any part that
+stands on its own (raises hand-overs without fewer `none` and without more wrong citations, or raises `none` without
+fewer hand-overs) may be switched on alone, its numbers reported apart. Timing (the prompt hook's warm p95 must stay at
+or under 250 ms, set 34), index build time and cache size, on a small vault and a 10 000-page one, are reported.
+
+## Set 40: telling reference material from your own pages with nothing declared (registered 2026-11-11, before the labelled set was written)
+
+**Why.** Set 37's knowledge base needs a declaration (`krouter kb add`), and `krouter kb suggest` judges whole folders:
+in the maintainer's vault it suggested one folder and missed a batch of outside articles kept under a project folder
+(plain text, no clipper frontmatter, nothing in the path that says so). This set measures a per-page rule that needs no
+declaration (`kb.page_origin`): a page is your memory when where it came from says so (KRouter's own folders and
+frontmatter, a page the alias table points to, a page or folder marked with `krouter kb mine`); every other page is
+scored on deterministic features (a source address or a reprint / translator / byline marker near the top or bottom, a
+title that reads like an article's, a long narrative without decision or to-do structure, an `author:` that is not
+you, a main language other than the vault's, most pages in its folder scoring the same way; decision structure and
+your own annotations count against). A declaration in `krouter-kb.txt` wins over the score either way.
+
+**Data.** A labelled synthetic vault written for this set (`bench/kb_auto/make.py`), Chinese and English: your own
+rule pages, distilled session pages, personal notes and project notes, and outside material — plain-text articles with
+no frontmatter, clippings with a source, research excerpts, translations, meeting notes taken from someone else's
+meeting, mixed into the same folders as your pages; and the hard cases: long essays you wrote yourself, and excerpts
+you copied and annotated (labelled as yours). Each page is assigned to *dev* or *heldout* by a fixed seed before any
+rule is run. Thresholds and weights are set on *dev* only; *heldout* is scored once.
+
+**Reported:** the share of outside pages recognised as reference material, and the share of your own pages wrongly
+taken for reference material, each on *dev* and *heldout*. Wrongly taking your page for reference is the costlier
+error: the threshold is set so that on *dev* no own page is misjudged if that is reachable, and the held-out numbers
+are reported as they come. Whether automatic recognition is on by default is decided from the held-out numbers: it is
+on if no more than 2% of your own held-out pages are misjudged.
+
+### Log, set 39
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered (above). |
+| 2026-11-11 | **Development data, said as it happened** (`bench/evidence/study.py collect dev`, then offline rules on the recorded candidates). Baseline (44c041f's ranking and gate, counted with this script): LongMemEval `_abs` 9 of 30 `none`; dev half handed over 225 of 235; dev half with answer sessions removed 103 of 235 `none`; LoCoMo dev half: adversarial 19 of 223 `none`, answerable handed over 591 of 768; `dev` / `dev2` / `dev3`: `none` 10/10, 23/25, 14/20, handed 17/20, 8/25, 27/30, wrong citations 0, 3, 7. **Separation of each signal** on the questions the shipped gate answers (AUC: the chance that an unanswerable question looks worse than an answerable one that was handed over; 0.5 is none). LongMemEval (153 unanswerable / 225 answerable): page score 0.79, best paragraph's coverage on the first page 0.77, on the best of three 0.76, speaker binding (the user's own turns) 0.83, binding gap 0.77, answer type in the best paragraphs 0.50, answer type in the user's own best turn 0.57, rarest word in the best paragraph 0.60. LoCoMo (204 / 591): page score 0.46, paragraph coverage 0.50, speaker binding 0.70, binding gap (the named person's own turns against the other speaker's) 0.79, answer type 0.46, numbers 0.51, rarest word 0.49. So paragraph coverage separates on LongMemEval and not at all on LoCoMo; speaker binding separates on both; **the answer-type check does not separate** (it stays in the code as a recorded signal and is not used to refuse). |
+| 2026-11-11 | **Chosen on dev** (the best of the combinations that lose no hand-over on any dev source, add no wrong citation, and refuse no fewer anywhere; 15 of 1 600 qualified): rerank the first 20 pages by page score × (0.3 + best paragraph's coverage); pages dated inside a time cue's window ×2; refuse when the first page's best paragraph holds under 0.25 of the question's weight; refuse when the question names a speaker of the top pages (or asks about "I" on pages with user / assistant turns) and that speaker's own best turn holds under 0.4 of what the other speakers' best turn holds. Real run with the code as built (`cand1`): LongMemEval `_abs` **10** of 30 (+1); dev half handed over **225** (±0); answer sessions removed **143** of 235 (+40); LoCoMo adversarial **61** of 223 (+42), answerable handed over **593** of 768 (+2); `dev` / `dev2` / `dev3` unchanged on every count. The offline simulation gave the same numbers within one question. Not used: rescuing questions the gate refused when one turn of the named speaker covers them (LoCoMo +13 handed over, but 4 fewer `none` there and on LongMemEval), the answer-type and number checks (each loses answers for the questions it refuses). Aggregation questions (`how many times`, `in total`, `都有哪些`, 81 of the LongMemEval dev half's answerable questions): handing over 8 pages instead of 5 raises the questions whose every labelled session is handed over from 196 to 203 of 235, for 236 more pages handed (1 138 → 1 374) and no change to any count above; LoCoMo unchanged (562). |
+| 2026-11-11 | **Found by the test suite, fixed before any held-out run.** The first-page coverage rule refused 8 of 9 Chinese questions of the template vault's recall bench (`tests/test_recall_bench.py`; it needs 9): the paragraph coverage counted cross-word character pairs (`么判`, `天封`) in the question's weight and did not count the page's title and trigger words, so a rule page found by its title, or by a trigger card, had a low best paragraph. Now the paragraph check uses the question words recall itself takes as words (`qtok`: Chinese pairs only when they read like words), and every paragraph carries its page's title, file name and trigger words. Also from the suite: `tests/test_docs_status.py` scores `heldout3` on every run and compares it with `docs/STATUS.md`, so the first run after the change showed `heldout3`'s right answers at 101 of 120 (the docs say 102) before the held-out run; nothing was tuned on it. Development numbers with the fix (`cand3`, the code that goes to the held-out run): LongMemEval `_abs` **10** of 30; dev half handed over **225** of 235; answer sessions removed **135** of 235; LoCoMo adversarial **60** of 223, answerable handed over **592** of 768; `dev` / `dev2` / `dev3` unchanged on every count; the parameters were not changed. |
+
+### Log, set 40
+
+| Date | Event |
+|---|---|
+| 2026-11-11 | Registered (above); the labelled vaults written after (`bench/kb_auto/make.py`, 151 pages: dev 41 own / 35 outside, held-out 43 / 32, split by a hash of the path). Said plainly: the pages of both splits come from the same text banks and kinds, written by the same author as the rule, so the held-out half is a check against overfitting thresholds, not an independent sample of real vaults. |
+| 2026-11-11 | **Development.** First version: 12 of 35 outside pages recognised, 0 of 41 own misjudged. Changed on dev only: length counted in words (Chinese 1.5 characters a word) instead of characters, the decision signal narrowed to decision structure (`决定：`, `- [ ]`, `we decided`; plain `必须` / `must` occur in articles), the folder majority made to add only (a mixed folder must not hide an article), a first-person rate signal (low: `impersonal` +1; high: `-personal` −1.5), and threshold 4.0 → 3.0 (own pages top out at 1.5 on dev). Final dev: **35 of 35 recognised, 0 of 41 misjudged.** |
+| 2026-11-11 | **Held out, run once** (`bench/kb_auto/run.py DIR heldout`): **outside pages recognised 30 of 32 (93.8%); own pages misjudged 0 of 43 (0%).** Missed: a library README copied into the Chinese vault (score 1.5: other language only) and an English article in the English vault with no source, byline or article-like title (2.0). The bar (at most 2% of own held-out pages misjudged) is met: automatic recognition is **on by default** (`KROUTER_KB_AUTO=0`, or `kb_auto|off` in `krouter-settings.psv`, turns it off; `krouter kb mine` and `krouter kb add` win over it). |
