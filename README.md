@@ -75,6 +75,11 @@ one is enough.
 - On Cursor the per-message layer is not available (its hook cannot add context); it gets the session-start index.
 - Answer accuracy has not been rerun for the five-page version (set 22 is registered, not run).
 - Windows was not tested for 2.0.
+- In a vault with many long pages someone else wrote (web clippings, research material) that are not marked as
+  clippings, a question the vault has no answer to, English ones especially, can get an unrelated hit with `medium`
+  confidence instead of `recall: none`. Seen on the maintainer's own vault; a better test for it is for a later
+  version. Marking such pages as clippings caps them at `low`
+  ([`DETAILS.md`](docs/DETAILS.md#clipped-pages-and-other-peoples-writing)).
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 

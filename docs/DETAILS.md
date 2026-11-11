@@ -187,6 +187,15 @@ Explains how a lookup came out, in seven short sections. It asks the same code `
    judges the situation), so this says how many there are and names the ones whose situation shares words with the
    question, or that were taken from one of the pages shown.
 
+### Clipped pages and other people's writing
+
+A page counts as a clipping (someone else's writing, not your notes) when a folder on its path has `剪藏`,
+`Clippings` or `Web clips` in its name, or its frontmatter has a `source:` URL, a `clippings` tag or `type: clipping`.
+To have a research folder treated that way, name it accordingly (say `Research (clippings)`) or add `tags: [clippings]`
+to its pages. When every one of the top three pages is a clipping, confidence is at most `low` and the receipt says
+the pages are someone else's writing; it is `recall: none` only when the question also has a word the vault never
+contains in any form. A clipping among pages of your own changes nothing.
+
 Output is in the memory's language (English for a memory whose `krouter-zones.psv` says `@lang|en`, else Chinese);
 `--lang en|zh` overrides it, `--json` prints the structure instead. A `why` is not logged: the nightly job learns
 from your real questions and must not learn from these.

@@ -52,6 +52,7 @@ KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Mar
 - Cursor 上每句话那一层用不了（它的钩子加不了上下文），只有会话开始的索引。
 - 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
 - 2.0 没有在 Windows 上实测。
+- 库里混着大量别人写的长文（网页剪藏、研究资料）、又没有标成剪藏时，一个库里没有答案的问题（尤其是英文问题）可能拿到一条中等把握（`medium`）的无关命中，而不是 `recall: none`。这是在维护者自己的库上看到的，判据的改进留到后续版本。把这类页标成剪藏，最多给 `low`（[`DETAILS.zh.md`](docs/DETAILS.zh.md#剪藏和别人写的材料)）。
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 

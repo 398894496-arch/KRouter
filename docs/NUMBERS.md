@@ -32,7 +32,11 @@ Methods and what still fails: [`VERIFY.md`](VERIFY.md).
 Two fixes in 2.0 came from the maintainer's own vault, not from a registered set: a question asked before and recorded
 with no answer is no longer its own evidence (`tests/test_asked_before.py`), and messages a machine put into a turn are
 not taken as the user's (`tests/test_machine_input.py`). Neither is a measured number; the sets above are unchanged by
-them.
+them. One more observation from the same vault, not a registered set and not fixed: an English question the vault
+has no answer to (a production database password) got `medium` from an English news article kept in a project's
+research folder, neither in a clippings folder nor with clipper frontmatter, while the question's words appear
+elsewhere in the large vault; the host answered "not in the vault" both times, but the receipt was wrong. 1.3.0
+behaves the same; the refusal test is for a later version.
 
 ### The same reader, three pages (KRouter 1.3.0)
 
