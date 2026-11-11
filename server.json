@@ -3,7 +3,7 @@
   "name": "io.github.398894496-arch/krouter",
   "title": "KRouter",
   "description": "Plain-Markdown memory for your AI: every answer cites its page, and it says when it does not know.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "websiteUrl": "https://398894496-arch.github.io/KRouter/",
   "repository": {
     "url": "https://github.com/398894496-arch/KRouter",
@@ -12,8 +12,8 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/398894496-arch/KRouter/releases/download/v2.0.0/KRouter.mcpb",
-      "fileSha256": "de6069779141a50596b082232520f1a834b72b273f374e7536aa7ea9a3cebff0",
+      "identifier": "https://github.com/398894496-arch/KRouter/releases/download/v2.1.0/KRouter.mcpb",
+      "fileSha256": "d8dad5012437735f79392357ddbca79c5b9769da856f2900da5f3f73c727b4e0",
       "transport": {
         "type": "stdio"
       }
