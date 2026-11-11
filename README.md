@@ -4,6 +4,24 @@
 
 **Give your agent a subconscious: mention it and it comes to mind, with what is connected to it, and the lessons carry over.**
 
+> **You:** Going to move the clippings originals into the archive folder this afternoon.
+>
+> **Agent:** That note says not to move the Clippings originals (from your "User preferences" page under 02 Methods/Agent), so I'd hold off on moving them to the archive this afternoon. If you meant a copy or a different set of files, tell me and we can sort out a safe way to do it.
+>
+> **You:** The coffee machine on our floor is broken again.
+>
+> **Agent:** Sorry to hear that, it's annoying when it keeps happening. I can't fix it from here, but I can help you draft a quick message to facilities if you'd like.
+
+You only mentioned it in passing; KRouter recognised something already settled in what you said and handed it to the
+agent with the page it came from. The second remark touches nothing in the memory, so nothing was added and the
+agent answered as usual. Both agent replies are real: Claude Sonnet 5.5 (a Claude Code subagent, no tools),
+2026-11-10, given exactly what the collapsed block below shows, copied as it answered; with another agent, the reply
+is up to that agent. "Subconscious" is a figure of speech for recall that happens without being asked: a lookup on
+your machine, no model, nothing sent.
+
+<details>
+<summary>What the agent was actually handed (the prompt hook's raw output on the English sample memory)</summary>
+
 ```text
 you  > Going to move the clippings originals into the archive folder this afternoon.
 hook > KRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):
@@ -13,9 +31,7 @@ you  > The coffee machine on our floor is broken again.
 hook > (nothing)
 ```
 
-That is the prompt hook's real output on the English sample memory, handed to the agent with each message; what the
-agent replies is up to its model and is not shown. "Subconscious" is a figure of speech for recall that happens
-without being asked: a lookup on your machine, no model, nothing sent.
+</details>
 
 ### Mention it and it comes to mind
 
@@ -38,6 +54,14 @@ skills the agent fetches when they fit. Held out: the right lesson for **14 / 14
 5.5)** tasks with a new subject, **14 / 14 and 13 / 14** in English (sets 15, 16); skills drafted right 16 / 16 and
 fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)).
 
+### Underneath, what you can check
+
+Every answer comes with the page it came from; when the memory does not know, the agent is told so instead of
+handed something close; a correction replaces the old answer instead of competing with it; and you can see all of
+it: the memory is a folder of plain Markdown you can open and edit, in [Obsidian](https://obsidian.md) or any editor,
+and `krouter view` / `krouter why` show what it holds and why it answered. It works with the AI you already use, and
+one is enough.
+
 ### What it does not do
 
 - The samples are small: a few dozen cases per set.
@@ -47,14 +71,6 @@ fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](b
 - On Cursor the per-message layer is not available (its hook cannot add context); it gets the session-start index.
 - Answer accuracy has not been rerun for the five-page version (set 22 is registered, not run).
 - Windows was not tested for 2.0.
-
-### Underneath, what you can check
-
-Every answer comes with the page it came from; when the memory does not know, the agent is told so instead of
-handed something close; a correction replaces the old answer instead of competing with it; and you can see all of
-it: the memory is a folder of plain Markdown you can open and edit, in [Obsidian](https://obsidian.md) or any editor,
-and `krouter view` / `krouter why` show what it holds and why it answered. It works with the AI you already use, and
-one is enough.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
