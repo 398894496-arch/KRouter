@@ -11,6 +11,8 @@ notice, then the details.
 
 ## 2.1.0 — unreleased
 
+**Windows: the commands the install prints now run as printed ([#74](https://github.com/398894496-arch/KRouter/issues/74)).** The closing lines used to print `set "PYTHONPATH=…" && python -m krouter.cli doctor`, which failed in PowerShell 5.1 (`&&`) and PowerShell 7 (`set` does not set an environment variable, so the module could not be imported), and `… search "question"`, which the Python command line rejects (its command is `ask`). They now print `python "<…>\scripts\krouter_run.py" doctor` and `… ask "question"`: one command, no `&&`, no variable to set. The same `ask` replaces `search` in the lines printed on macOS and Linux. Tests check the printed line and that the command line's own argument parser accepts the printed arguments; **a real PowerShell 5.1, PowerShell 7 and cmd have not run it yet** (that waits for CI's Windows machine after the push).
+
 **Paragraph-level evidence (set 39): built, measured both ways, off by default because it missed the bar.** Pages
 are now cut into paragraphs (a session into its turns) at index time, and every lookup records the best paragraph of
 each of the first 20 pages; the receipt marks it on the first quoted line: `L8 (passage L6-L8): …`. Questions that add

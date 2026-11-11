@@ -18,7 +18,7 @@ def env_lang() -> str:
     return "en"
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="krouter", description="Ask your KRouter memory from a terminal.")
     ap.add_argument("--version", action="version", version=f"krouter {__version__}")
     ap.add_argument("--vault", default=None, help="the memory folder (default: the installed one)")
@@ -51,7 +51,11 @@ def main(argv: list[str] | None = None) -> int:
     k.add_argument("rest", nargs=argparse.REMAINDER)
     m = sub.add_parser("mcp", help="run the MCP server (stdio; --http for a team server)")
     m.add_argument("rest", nargs=argparse.REMAINDER)
-    args = ap.parse_args(argv)
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     if args.cmd == "ask":
         print(ask(args.question, args.route, args.vault))
     elif args.cmd == "status":

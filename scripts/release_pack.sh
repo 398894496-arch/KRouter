@@ -37,7 +37,7 @@ for doc in "$ROOT/README.md" "$ROOT/README.zh.md" "$ROOT"/docs/*.md; do
 done
 # 发布包里要有一行安装真正会跑的东西
 LIST=$(python3 -c 'import sys, tarfile; print("\n".join(tarfile.open(sys.argv[1]).getnames()))' "dsh-krouter-$VER.tgz")  # bsdtar 会转义中文名
-for need in package/scripts/bootstrap.py package/scripts/install.sh package/scripts/uninstall.sh package/scripts/krouter \
+for need in package/scripts/bootstrap.py package/scripts/install.sh package/scripts/uninstall.sh package/scripts/krouter package/scripts/krouter_run.py \
             package/skill/krouter/scripts/route_knowledge.sh package/skill/krouter/scripts/mcp_server.py \
             package/skill/krouter/scripts/zones_en.psv package/sdk/krouter/cli.py package/sdk/krouter/doctor.py \
             package/skill/krouter/scripts/associate.py package/skill/krouter/scripts/cocite.py \
