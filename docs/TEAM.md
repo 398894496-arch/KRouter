@@ -340,3 +340,47 @@ writing the same vault; a real team using it over weeks (nobody has run it in pr
 with real latency or TLS in front; agents other than the scripted clients (the clients are threads speaking MCP over
 HTTP, not Claude Code or Codex sessions); more than 10 clients at once with writes; the server's own commits meeting
 pushes from people to the same git remote.
+
+## The team server at a glance (moved from the README)
+
+One server holds the memories of a team, each one a folder of Markdown in its own git repository; everyone's agent
+asks it over MCP. It is self-hosted: there is no KRouter cloud.
+
+| | |
+|---|---|
+| **Deploy** | `mcp_server.py --http` (standard-library Python, no packages), the Docker image `ghcr.io/398894496-arch/krouter`, [Compose](../deploy/docker-compose.yml) (two memories and a git-pull sidecar), a [Kubernetes manifest](../deploy/kubernetes/krouter.yaml), a hardened [systemd unit](../deploy/systemd/krouter.service) |
+| **Isolation** | several memories ("banks") on one server, each at `/mcp/NAME` with its own index, its own label on every answer and its own token; one bank's lookups never read another's folder |
+| **Auth** | a token per person or agent (`--users`: only hashes kept, read or write, limited to some memories if you like), or one shared token per memory, or both; the server refuses to listen beyond this machine while any memory has none; browser Origins allow-listed; the access log keeps a hash of each question and the person's name, never the text or a token |
+| **Attribution** | every write names who made it: on the page, in the change ledger, in a journal (`krouter_changes`: who changed this, and when) and as the git author; two people correcting one thing in opposite ways: the later holds, the earlier is kept as superseded and named in the reply |
+| **Speed** | below, measured; 4 resident lookup processes per memory (`--workers`), so a lookup does not start Python |
+| **Freshness** | files re-checked at most every 2 s (`--refresh-every`); a note written through the server is found by the very next lookup; Compose and Kubernetes pull each repository every 5 minutes |
+| **Monitoring** | `GET /healthz`; Prometheus `GET /metrics`: calls by memory, tool and outcome, refusals, a latency histogram, index build time, lookup processes |
+| **Writes** | read-only by default; `--allow-write` offers `krouter_note` and `krouter_correct`: one write at a time, one git commit each, listed in the change ledger; a `read` token is not offered them |
+| **Backup, rollback** | the memory is the git repository: back it up like code, take a change back with `git revert`; the index is a cache rebuilt from the folder |
+
+Measured with [`bench/scale/serve_load.py`](../bench/scale/serve_load.py) on synthetic memories, one Apple M2 laptop
+(8 GB), the server and its callers on the same machine, 300 calls per row, none failed:
+
+| Pages | One caller: median, answers/s | 8 callers: answers/s | 32 callers: median, p95, answers/s | Resident memory | Index build at start |
+|---|---|---|---|---|---|
+| 1,000 | 5 ms, 195/s | 646/s | 42 ms, 77 ms, 742/s | 203 MB | 0.5 s |
+| 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
+| 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
+
+Ten people with their own tokens and agents reading and writing at once ([`bench/team/load.py`](../bench/team/load.py);
+asks, notes, concurrent corrections of one page and contradicting corrections of one decision; the same laptop, then
+busy with other test runs): reads p50 / p95 39 / 129 ms on the template, 102 / 284 ms at 10,000 pages,
+446 / 2,010 ms at 50,000; one memory takes about 8, 5 and 2.5 writes a second (one at a time; the git commits are most
+of it); no errors. Every write was attributed to the right person, nothing acknowledged went missing, and each contested
+decision ended with the last correction in force. Thirty minutes of it at 10,000 pages: 0 errors in 21,218 calls, no memory growth (on the third run; the first two
+found three bugs, now fixed). A smaller run of it is a CI test. Not tested: several machines, or a
+real team over weeks.
+
+Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](TEAM.md).
+
+Which apps connect to a team server (from the README's "Works with" table):
+
+| App | How it connects | Status |
+|---|---|---|
+| A team | a self-hosted HTTP server: [the team server at a glance](#the-team-server-at-a-glance-moved-from-the-readme) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
+| Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |

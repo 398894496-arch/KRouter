@@ -2,6 +2,8 @@
 
 **让 agent 拥有下意识：提到就想起，联想到相关的一片，还能举一反三。**
 
+KRouter 是给 Claude Code、Codex、Cursor 这类 coding agent 用的本地 Markdown 记忆：你提到以前定过的事，agent 就想起来，相关的也一起带出；一件事里的经验能换个任务用；改了主意会替换旧答案；每个回答都注明出自哪一页。不用 API key，不用服务器。
+
 > **你：** 下午我要把剪藏原件挪到归档文件夹里。
 >
 > **agent：** 提醒一下：你的偏好页「02 经验与方法/Agent/用户偏好与工作约束.md」里写着不要移动剪藏原件。下午要挪进归档文件夹的话，是想这次例外，还是改成复制一份过去？
@@ -57,7 +59,7 @@
 
 ![周一定了 A，周三改成 B，周四 agent 答 B 并引用那条纠错；库里没有的问题直接拒答](docs/img/demo.gif)
 
-开始用不需要 key：查询、出处、拒答都不调模型；改了主意照样算数：新页排在前面并标出冲突，agent 也能在你纠正的那一轮就把纠正落实（[没有模型时哪些能用](#安装)）。
+开始用不需要 key：查询、出处、拒答都不调模型；改了主意照样算数：新页排在前面并标出冲突，agent 也能在你纠正的那一轮就把纠正落实（[没有模型时哪些能用](docs/INSTALL.zh.md#没有-api-key-时)）。
 
 **不用安装、不用 key，几秒钟亲眼看一遍**：同样的过程，在一个用完即删的临时记忆库上跑。
 
@@ -72,9 +74,22 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 | 给我已经在用的 AI 应用接上记忆 | [安装](#安装)：一行，什么都不问，本机装了哪个应用就接哪个（`--minimal`：只装查询、只接你点名的） |
 | 看能接哪些应用 | [能接哪些应用](#能接哪些应用) |
 | 从自己的代码里调用 | [从你自己的代码里用](#从你自己的代码里用) |
-| 团队共用一份记忆，或者跑好几份 | [`docs/TEAM.md`](docs/TEAM.md) |
 | 自己复现这些数字 | [自己复现](#自己复现) |
 | 弄清楚什么会离开本机 | [什么会离开本机](#什么会离开本机) |
+
+## 安装
+
+```bash
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
+~/.dsh-krouter/current/scripts/krouter doctor                              # 给出结论：OK，或者缺什么、怎么修
+~/.dsh-krouter/current/scripts/krouter search "我们之前 X 是怎么定的？"      # 问第一句
+```
+
+什么都不问，本机装了哪个 AI 应用就接哪个。想把记忆放进你已有的文件夹，比如你的 Obsidian 库：`sh /tmp/krouter-install.sh --vault ~/我的库`。已有的文件夹一个文件都不改，只补缺的；卸载不碰你的记忆。Windows、Claude Code 插件、`--minimal`、它会动哪些文件、不配 key 时哪些能用、怎么卸载：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md)。
+
+### 从你自己的代码里用
+
+`pipx install "git+https://github.com/398894496-arch/KRouter"`，然后在 Python 里 `krouter.ask("我们怎么发版？")` 给出出处页、一句话结论、库里有没有；`krouter.note(…)` 记一笔。LangGraph 的长期记忆也能放在这个文件夹里（`krouter.integrations.langgraph.KRouterStore`）；JavaScript、LlamaIndex 和别的框架的 MCP 客户端：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#从你自己的代码里用) 和 [`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md)。
 
 ## 用数字说话
 
@@ -89,82 +104,6 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 **我们自己的 200 道留出题**（中英文，从没拿来调过分，由 Claude Opus 在单独会话里出题）：KRouter 引错 26%，claude-mem 64%，basic-memory 78%。80 道记忆里答不了的题，KRouter 拒答 47 道，另外两个一道都不拒。60 道「决定后来改过」的题，KRouter 答对 50 道，它们是 34 和 16 道。这个差距有一部分是结构决定的：给纯全文检索加上 KRouter 那两条规则（跳过已被取代的旧页、匹配太弱就拒答），它就和 KRouter 打平。
 
 **所以 KRouter 多出来的**，是顺着记忆库自己的连接去找（上面那个领先，交 5 页时；只看引用的第一页，它和加了两条规则的纯检索持平），这两条规则默认就开着，每条答案带一张回执（出自哪一页、为什么是这页、有多大把握），还有一个你能直接打开、编辑的记忆库。[每个数字和测法](#老实的数字) · [自己复现](#自己复现) · [这页用到的词](#这页用到的词)
-
-## 安装
-
-```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
-```
-
-先把脚本存成文件再运行：下载失败就停在这一步，退出码非零（`curl … | sh` 会拿空脚本跑一遍，还报成功）。Windows（PowerShell）：`irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex`
-· 只装 Claude Code 插件：`/plugin install krouter --marketplace 398894496-arch/KRouter`（[版本要求和更新办法](docs/DETAILS.zh.md#claude-code-插件)）。
-
-唯一的前提是 Python 3；装了 ripgrep 只是让大库的原文搜索快一点。两种装法都什么都不问，选一种（参数跟在脚本后面：`sh /tmp/krouter-install.sh --minimal --apps claude`）：
-
-| | 默认 | `--minimal`（最小安装） |
-|---|---|---|
-| 查询带出处、库里没有就直说 | 有 | 有 |
-| 接哪些应用 | [下面这张表](#能接哪些应用)里本机装了的全部 | 只接你用 `--apps claude,codex,cursor,…` 点名的（不点名就一个都不接） |
-| Claude Code 插件（会话钩子） | 找到 `claude` 就装 | 不装 |
-| Codex、Cursor 的会话钩子 | 找到应用就加 | 不加 |
-| Cursor 规则（`~/.cursor/rules/`） | 写 | 只在 `--apps cursor` 时写 |
-| 记会话 | 从现在起：每一轮结束就记下，只在本机、先脱敏、不调模型 | 不记 |
-| 导入以前的会话（近 7 天） | 不导：安装最后一行给出一条命令，想导再跑；或一开始就加 `--all` | 不导 |
-| 夜间任务、用你的模型提炼（会把文字发出去的两步） | 不开：`--ask` 先问你，`--timer` 直接开夜间任务 | 不开 |
-| 在 Obsidian 里打开新库 | 只在你从终端运行时打开（`--open` 总是打开，`--no-open` 从不）；agent 代跑时不打开 | 同左 |
-
-`--all` 做安装在不调模型时能做的全部事，也就是以前的默认：另外导入近 7 天的会话，有 claude-mem 的话把它的记忆也导进来。
-
-默认安装会建或改的全部文件（`--dry-run` 先按你这台机器列一遍，一处都不改；安装时会逐条列出改过的设置文件，改之前都先留了备份）：
-
-| 位置 | 是什么 |
-|---|---|
-| `~/Documents/第二大脑/`（或你用 `--vault` 指定的文件夹） | 记忆本身，纯 Markdown。已有的文件夹一个文件都不覆盖，只补缺的 |
-| `~/.dsh-krouter/<版本>/`、`~/.dsh-krouter/current` | 下载下来的发布包（从 clone 里装就用 clone 本身） |
-| `~/.agents/skills/krouter/` | 路由器 |
-| `~/.config/krouter/vault` | 记着记忆在哪，给钩子和 MCP 服务用 |
-| `~/.claude.json`（`claude mcp add`）、`~/.claude/settings.json`（插件和它的市场） | Claude Code |
-| `~/.codex/config.toml`（`codex mcp add`）、`~/.codex/hooks.json` | Codex |
-| `~/.cursor/mcp.json`、`~/.cursor/hooks.json`、`~/.cursor/rules/` | Cursor |
-| [下面表里](#能接哪些应用)其他应用各自的 MCP 设置文件 | 只动本机装了的；改过的文件旁边留一份 `*.krouter-bak` |
-| Claude Desktop 的 `claude_desktop_config.json` | 只在应用关着时写（用扩展包的话：点安装后应用会先联网检查几秒，界面没有反应；只点一次、等它好，再点一次可能会把它卸掉）；开着时一个字不改：给你一个 `~/.config/krouter/KRouter.mcpb` 去双击，或者退出应用后跑安装最后打印的那条 `--connect claude-desktop` 命令 |
-| `~/.cache/krouter/`、`~/.local/state/krouter/` | 搜索缓存（可重建）和导入进度 |
-
-2.0 的实测范围：macOS（安装、升级、卸载、在各应用里）；Linux 在干净的 `python:3.12-slim` 容器里（安装、从 2.0 以前的目录升级、查询、拒答、`doctor`、卸载；容器里没有定时器，`--timer` 现在会明说夜间任务**没有**装上）。**Windows 这版没有实测**：没有可连上的 Windows 机器；2026-10-11 那次检查见 [`docs/VERIFY.md`](docs/VERIFY.md)，旧目录搬家的逻辑由一个测试固定。
-
-安装过程中除了下载本身，没有任何内容离开本机。装完：
-
-```bash
-~/.dsh-krouter/current/scripts/krouter doctor     # 一句结论：正常，或缺什么、用哪条命令补
-~/.dsh-krouter/current/scripts/krouter search "上周 X 最后定了什么？"
-```
-
-（在 clone 里用 `./scripts/krouter`；装了 Python 包、`krouter` 在 PATH 上，直接 `krouter`。）记忆文件夹就是纯 Markdown，用任何编辑器打开都行，喜欢的话也可以用 Obsidian。各个工具按这个顺序找它：`KROUTER_VAULT`，其次 `OBSIDIAN_VAULT`（旧名字，照样认；两个都设了以 `KROUTER_VAULT` 为准），最后是安装时记在 `~/.config/krouter/vault` 里的路径。
-
-**没有 API key 时**：查询、带出处的回答、库里没有就直说、本地导入会话、记下读起来像纠正的话，都照常；改了主意有三道保障：
-
-1. **新页排前面。** 两页导入的会话对这个问题都答得差不多，较新的那页写了改动（`改成`、`换成`、`switched … to`、`instead of` 等）而且点到了这件事：新页排第一，回执写 `recall_conflict: an earlier page says otherwise`。不调模型；换别的说法改主意，它认不出来。
-2. **agent 当轮落实。** 你纠正它时，它调 `krouter_correct`：旧页标成已取代，下一次查询就给新答案。前提是 agent 真的去调（MCP 的说明里要求它调）。
-3. **夜间借你已登录的 agent。** 开了夜间任务、又没有 key 时，提炼和纠正候选的判定借用一个已登录的 AI 编程命令行的订阅额度（`claude --print` 等；Codex 要设 `KROUTER_ALLOW_CODEX=1`），每天最多 30 次，每次记在库里；`KROUTER_HOST_CLI=0` 关掉。用 Codex 真跑过一次：会话提炼了，旧页标成了已取代。
-
-既没有 key、也没登录任何命令行时，提炼（每页开头的「定了什么、改了什么」）、其余的夜间整理和纠正候选的判定都不跑；前两道没接住的改动，查询时旧页仍可能排第一。2026-11-10 在临时 HOME 里不配 key 实测：周一定 PostgreSQL、周三改 SQLite，导入、不提炼：SQLite 那页排第一并带冲突提示；调过 `krouter_correct` 之后，旧页已取代，纠正页排第一。安装输出和 `krouter doctor` 都会说你现在是哪种状态。
-
-想先看看再装？下面只有最后一行会改动你的机器：
-
-```bash
-git clone https://github.com/398894496-arch/KRouter.git && cd KRouter
-./scripts/first_run.sh                      # 在示例库的临时副本上出一张回执
-python3 scripts/bootstrap.py --dry-run      # 列出安装会改的每个文件和应用设置，一处都不改
-python3 scripts/bootstrap.py --minimal --apps claude --vault ~/notes   # 只装查询、只接 Claude Code、用你的文件夹
-```
-
-**卸载：**
-
-```bash
-sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/uninstall.sh；加 --dry-run 先列出来
-```
-
-它会停掉并删除夜间任务、路由器、规则、KRouter 的 MCP 条目和钩子、Claude Code 插件（插件市场指向本机文件夹时一并删）和记下的库路径；你的记忆文件夹和钥匙文件一律不动。`--purge` 另外删缓存、状态和 `~/.dsh-krouter`。
 
 ## 能接哪些应用
 
@@ -181,8 +120,6 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 | LangGraph 长期记忆（不走 MCP） | `krouter.integrations.langgraph.KRouterStore`，一个 `BaseStore`：按用户、按线程的命名空间就是一个个 Markdown 页的文件夹，带出处、会拒答：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md#langgraph-存储长期记忆) | 已在真实的图里实测（langgraph 1.0 和 1.2），CI 也跑；还没发到 PyPI |
 | 智能体框架：LlamaIndex、LangChain / LangGraph、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | 自带一个 LlamaIndex 检索器；其他框架用各自的 MCP 客户端：[`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md) | 都已对着服务实测，CI 也跑；其中三个连整个 agent 循环一起跑过 |
 | 其他能跑本地 MCP 服务的应用（Windsurf、opencode、Continue、Roo Code……） | 把下面这段加进应用的 MCP 设置 | 应该能用，我们还没逐个实测：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
-| 团队 | 自己部署的 HTTP 服务：见[给团队用](#给团队用) | 已用 Claude Code、官方 MCP Python SDK 和 JS 客户端通过 HTTP 实测 |
-| 只接受远程 MCP 服务的应用 | 同一个 HTTP 服务，前面加 HTTPS | 应该能用，我们还没实测 |
 | 你自己的代码 | Python 包和 `krouter` 命令；不依赖任何包的 JavaScript / TypeScript 客户端（见下） | 已实测 |
 
 ```json
@@ -191,58 +128,6 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 ```
 
 路径要写到你自己的用户目录（Windows 上是 `C:\\Users\\you\\.agents\\…`，命令常常是 `python`）。这个服务只用 Python 标准库，走 stdio，提供三个工具：`krouter_ask` 和 `krouter_status` 只读；`krouter_note` 让你的 AI 记下一行（一个决定、一处纠正、一个事实）。这一行写进当天的笔记页，只当线索，不会写进规则页；它是一次单独的 git 提交，可以撤回。
-
-### 从你自己的代码里用
-
-Python 3.9+，同样的查询、收据和笔记：
-
-```bash
-pipx install "git+https://github.com/398894496-arch/KRouter"      # 或者：uvx --from git+https://github.com/398894496-arch/KRouter krouter ask "…"
-krouter ask "我们怎么发版？"
-```
-
-```python
-import krouter
-a = krouter.ask("我们怎么发版？")
-print(a.page, a.how, a.refused)          # 出处页、一句话答案、记忆里没有时为 True
-krouter.note("只从 main 打发版标签。", kind="decision")
-```
-
-JavaScript / TypeScript（Node 18+），本机的或团队服务都行（[`sdk/js`](sdk/js)；还没发到 npm）：
-
-```js
-import { KRouter } from "./sdk/js/index.js";
-const a = await KRouter.local().ask("我们怎么发版？");   // 团队服务：KRouter.remote(url, { token })
-console.log(a.page, a.how, a.refused);
-```
-
-## 给团队用
-
-一个服务装下一个团队的几份记忆，每份是一个放 Markdown 的文件夹、在各自的 git 仓库里；每个人的 agent 通过 MCP 问它。要自己部署，没有 KRouter 云服务。
-
-| | |
-|---|---|
-| **部署** | `mcp_server.py --http`（只用 Python 标准库，不装包）、Docker 镜像 `ghcr.io/398894496-arch/krouter`、[Compose](deploy/docker-compose.yml)（两份记忆，加一个定时 git pull 的边车）、[Kubernetes 清单](deploy/kubernetes/krouter.yaml)、加固过的 [systemd 服务](deploy/systemd/krouter.service) |
-| **隔离** | 一个服务挂好几份记忆，各在 `/mcp/NAME`，各有自己的索引、每条回答上的标签和 token；查一份记忆从不读另一份的文件夹 |
-| **鉴权** | 每个人（或每个 agent）一个令牌（`--users`：只存哈希，分读、写，可限定哪几份记忆），或者每份记忆一个共享 token，两种可以并用；只要有一份记忆没有任何令牌，服务就拒绝监听本机以外的地址；浏览器来源按白名单放行；访问日志只记问题的哈希和人名，不记原文和令牌 |
-| **归属** | 每次写入都记下是谁：页面上、变更记录里、一份变更日志（`krouter_changes` 可查"这条是谁在什么时候改的"）、git 提交作者；两个人对同一件事给出相反的纠正，后到的生效，先到的保留为被取代并在回执里点名 |
-| **速度** | 见下面的实测；每份记忆常驻 4 个查询进程（`--workers`），查一次不用重新启动 Python |
-| **新鲜度** | 最多每 2 秒重新检查一次文件（`--refresh-every`）；通过服务写进去的笔记，下一次查询就查得到；Compose 和 Kubernetes 每 5 分钟拉一次各个仓库 |
-| **监控** | `GET /healthz`；Prometheus `GET /metrics`：按记忆、工具、结果分的调用数，拒答数，延迟直方图，启动时建索引的耗时，查询进程数 |
-| **写入** | 默认只读；加 `--allow-write` 才开 `krouter_note` 和 `krouter_correct`：一次只写一个，每条一次 git 提交，记进变更记录；`read` 令牌看不到写入工具 |
-| **备份、回滚** | 记忆就是那个 git 仓库：像代码一样备份，`git revert` 撤回一次改动；索引是从文件夹重建的缓存 |
-
-用 [`bench/scale/serve_load.py`](bench/scale/serve_load.py) 在合成记忆库上实测，一台 Apple M2 笔记本（8 GB），服务和调用方在同一台机器上，每行 300 次调用，没有一次失败：
-
-| 页数 | 1 个调用方：中位数、每秒答几次 | 8 个调用方：每秒答几次 | 32 个调用方：中位数、p95、每秒答几次 | 常驻内存 | 启动时建索引 |
-|---|---|---|---|---|---|
-| 1,000 | 5 ms，195 次 | 646 次 | 42 ms，77 ms，742 次 | 203 MB | 0.5 秒 |
-| 10,000 | 13 ms，77 次 | 267 次 | 104 ms，112 ms，301 次 | 216 MB | 3.5 秒 |
-| 50,000 | 54 ms，17 次 | 72 次 | 377 ms，651 ms，75 次 | 267 MB | 24 秒 |
-
-十个人各用自己的令牌和 agent 同时读写（[`bench/team/load.py`](bench/team/load.py)：同时提问、记笔记、对同一页并发纠正、对同一个决定互相矛盾的纠正；同一台笔记本，测时机器上还在跑别的测试）：读的 p50 / p95 在模板库上是 39 / 129 ms，1 万页 102 / 284 ms，5 万页 446 / 2,010 ms；一份记忆每秒能写约 8、5、2.5 次（一次只写一个，大头是 git 提交）；没有出错。每次写入都记到了对的人名下，确认过的写入一条不少，每个被争的决定最后都是最后到的那条纠正生效。1 万页连跑 30 分钟：21,218 次调用 0 错误，内存不涨（第三次跑；前两次查出三个 bug，已修）。它的小规模版本是一项 CI 测试。没测过：多台机器、真实团队用上几周。
-
-复现办法、部署步骤、token 和 TLS 见 [`docs/TEAM.md`](docs/TEAM.md)。
 
 ## 装完五分钟
 
@@ -366,7 +251,7 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 
 - [工作原理和全部选项](docs/DETAILS.zh.md)：安装参数、夜间写手、精确命中和排序召回、四种 agent 接入
 - [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)：每个数字和它的测法
-- [`docs/TEAM.md`](docs/TEAM.md)：团队共用一份记忆、自己部署的 HTTP 服务和它的 Docker 镜像
+- [`docs/TEAM.zh.md`](docs/TEAM.zh.md)（完整的英文说明在 [`docs/TEAM.md`](docs/TEAM.md)）：团队共用一份记忆、自己部署的 HTTP 服务和它的 Docker 镜像
 - [`SECURITY.md`](SECURITY.md)：每条模型通道能看到什么、能做什么
 - [`docs/FOR-AGENTS.md`](docs/FOR-AGENTS.md)：给 agent 判断 KRouter 适不适合它的用户时参考的事实
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md)：适合新人的 issue 都打了标签

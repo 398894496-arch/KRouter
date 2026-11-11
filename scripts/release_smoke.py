@@ -32,7 +32,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = "398894496-arch/KRouter"
-READMES = ("README.md", "README.zh.md")
+READMES = ("README.md", "README.zh.md", "docs/INSTALL.md", "docs/INSTALL.zh.md")  # 安装的细节挪进了 docs/INSTALL*
 results: list[tuple[bool, str]] = []
 
 

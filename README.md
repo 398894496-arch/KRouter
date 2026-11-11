@@ -4,6 +4,10 @@
 
 **Give your agent a subconscious: mention it and it comes to mind, with what is connected to it, and the lessons carry over.**
 
+KRouter is a local Markdown memory for coding agents such as Claude Code, Codex and Cursor. When something you
+mention was settled before, the agent recalls it, with what is connected to it; a lesson from one task is offered on
+another; a change of mind replaces the old answer; every answer names the page it came from. No API key, no server.
+
 > **You:** Going to move the clippings originals into the archive folder this afternoon.
 >
 > **Agent:** That note says not to move the Clippings originals (from your "User preferences" page under 02 Methods/Agent), so I'd hold off on moving them to the archive this afternoon. If you meant a copy or a different set of files, tell me and we can sort out a safe way to do it.
@@ -82,7 +86,7 @@ attestation (`gh attestation verify <package> --repo 398894496-arch/KRouter`). W
 
 No key is needed to start: lookup, sources and refusals run with no model, and a change of mind still wins: the
 newer page is listed first and flagged, and your agent can make a correction hold in the same turn
-([what works without a model](#install)).
+([what works without a model](docs/INSTALL.md#without-an-api-key)).
 
 **See it for yourself in a few seconds, with nothing installed and no key:** the same story on a throwaway memory,
 deleted afterwards.
@@ -98,9 +102,29 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo      # or,
 | give the AI apps I already use a memory | [Install](#install): one line, asks nothing, wires every app it finds (`--minimal`: lookup only, the apps you name) |
 | check which apps it connects to | [Works with](#works-with) |
 | call it from my own code | [From your own code](#from-your-own-code) |
-| share a memory with my team, or run several | [`docs/TEAM.md`](docs/TEAM.md) |
 | check the numbers myself | [Check it yourself](#check-it-yourself) |
 | know exactly what leaves my machine | [What leaves your machine](#what-leaves-your-machine) |
+
+## Install
+
+```bash
+curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
+~/.dsh-krouter/current/scripts/krouter doctor                                  # OK, or what is missing and how to fix it
+~/.dsh-krouter/current/scripts/krouter search "what did we decide about X?"    # your first question
+```
+
+It asks nothing and connects the AI apps it finds. To keep the memory in a folder you already have, your Obsidian
+vault for instance: `sh /tmp/krouter-install.sh --vault ~/MyVault`. An existing folder keeps every file; only missing
+ones are added, and uninstalling never touches your memory. Windows, the Claude Code plugin, `--minimal`, every file it
+changes, what works without a key, and uninstalling: [`docs/INSTALL.md`](docs/INSTALL.md).
+
+### From your own code
+
+`pipx install "git+https://github.com/398894496-arch/KRouter"`, then in Python `krouter.ask("how do we ship a
+release?")` gives the page, the one-line answer and whether the memory refused, and `krouter.note(…)` writes a line.
+LangGraph can keep its long-term memory in the folder (`krouter.integrations.langgraph.KRouterStore`); JavaScript,
+LlamaIndex and the MCP clients of other frameworks: [`docs/INSTALL.md`](docs/INSTALL.md#from-your-own-code) and
+[`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md).
 
 ## Measured, not claimed
 
@@ -140,103 +164,6 @@ the first page cited it is level with plain search given the two rules), those t
 each answer (the page it came from, why that page, how sure), and a memory you can open and edit.
 [Every number and its method](#honest-numbers) · [rerun them](#check-it-yourself) · [words used here](#words-used-here)
 
-## Install
-
-```bash
-curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.sh -o /tmp/krouter-install.sh && sh /tmp/krouter-install.sh
-```
-
-The script is saved to a file first, so a failed download stops right there with a non-zero exit (`curl … | sh`
-would run an empty script and report success). Windows (PowerShell): `irm https://github.com/398894496-arch/KRouter/releases/latest/download/bootstrap.ps1 | iex`
-· Claude Code plugin only: `/plugin install krouter --marketplace 398894496-arch/KRouter` ([versions, updating](docs/DETAILS.md#the-claude-code-plugin)).
-
-Python 3 is the only requirement; ripgrep, when present, only makes literal search faster on a big vault. Neither way
-asks anything. Pick one (options go after the script: `sh /tmp/krouter-install.sh --minimal --apps claude`):
-
-| | Default | `--minimal` |
-|---|---|---|
-| Lookup with the source page, "not in the memory" instead of a guess | yes | yes |
-| Apps connected | every app on [the list below](#works-with) that it finds | only the ones you name with `--apps claude,codex,cursor,…` (none when you name none) |
-| Claude Code plugin (session hooks) | installed when `claude` is found | no |
-| Codex and Cursor session hooks | added when the app is found | no |
-| Cursor rules (`~/.cursor/rules/`) | yes | only with `--apps cursor` |
-| Records sessions | from now on: each turn as it ends, on this machine, redacted, no model call | no |
-| Imports past sessions (the last 7 days) | no: one command at the end of the install does it, or `--all` up front | no |
-| Nightly job, distilling with your model (the steps that send text out) | no: `--ask` asks, `--timer` turns the job on | no |
-| Opens the new memory in Obsidian | only when you run it from a terminal (`--open` always, `--no-open` never); run by an agent, no | same |
-
-`--all` does everything the install can do without a model, as the default used to: it also imports the last 7 days
-of sessions and claude-mem's memory, if you have one.
-
-Every file the default install creates or changes (`--dry-run` lists them for your machine first, changing nothing;
-the install itself lists each settings file it changed, and keeps a copy of it first):
-
-| Where | What |
-|---|---|
-| `~/Documents/Second Brain/` (or your folder, `--vault`) | the memory: plain Markdown. An existing folder keeps every file; only missing ones are added |
-| `~/.dsh-krouter/<version>/`, `~/.dsh-krouter/current` | the downloaded release (installing from a clone uses the clone) |
-| `~/.agents/skills/krouter/` | the router |
-| `~/.config/krouter/vault` | where the memory is, for hooks and the MCP server |
-| `~/.claude.json` (`claude mcp add`), `~/.claude/settings.json` (plugin and its marketplace) | Claude Code |
-| `~/.codex/config.toml` (`codex mcp add`), `~/.codex/hooks.json` | Codex |
-| `~/.cursor/mcp.json`, `~/.cursor/hooks.json`, `~/.cursor/rules/` | Cursor |
-| each other app's MCP settings file, [listed below](#works-with) | only for apps it finds; a copy of each changed file is kept as `*.krouter-bak` |
-| Claude Desktop's `claude_desktop_config.json` | only when the app is closed (with the extension instead: after you press Install the app checks it online for a few seconds with nothing on screen; press once and wait, a second press can remove it again); while it runs, nothing: you get `~/.config/krouter/KRouter.mcpb` to double-click, or quit the app and run the `--connect claude-desktop` command the install prints |
-| `~/.cache/krouter/`, `~/.local/state/krouter/` | the search cache (rebuildable) and what the import has seen |
-
-Tested for 2.0: macOS (the install, the upgrade, the uninstall, inside the apps); Linux in a clean `python:3.12-slim` container (install, upgrade from the pre-2.0 folder, lookup, refusal, `doctor`, uninstall; a container has no scheduler, and `--timer` there now says the job was **not** installed). **Windows was not tested for 2.0**: no Windows machine was reachable; the 2026-10-11 check is in [`docs/VERIFY.md`](docs/VERIFY.md), and only the logic of the folder move is pinned by a test.
-
-Nothing leaves the machine during the install except the download itself. When it is done:
-
-```bash
-~/.dsh-krouter/current/scripts/krouter doctor     # OK, or what is missing and the command that fixes it
-~/.dsh-krouter/current/scripts/krouter search "what did we decide about X?"
-```
-
-(From a clone, `./scripts/krouter`; with the Python package on your PATH, just `krouter`.) The memory folder is plain
-Markdown: open it in any editor, or in Obsidian if you like. Tools find it through `KROUTER_VAULT`, else
-`OBSIDIAN_VAULT` (the older name, still read; `KROUTER_VAULT` wins when both are set), else the folder the install
-recorded in `~/.config/krouter/vault`.
-
-**Without an API key**, lookup, answers with their source page, refusals, the local session import and noting what
-reads like a correction all work, and a change of mind is handled three ways:
-
-1. **The newer page first.** When two imported pages answer the question about as well and the newer one says it
-   changed the subject (`switched … to`, `instead of`, `改成`, …), the newer page is listed first and the receipt
-   says `recall_conflict: an earlier page says otherwise`. No model; it does not catch a change worded any other way.
-2. **The agent, in the same turn.** When you correct it, it calls `krouter_correct`: the old page is marked
-   superseded and the next lookup gives the new answer. This needs the agent to make the call (the MCP instructions
-   ask it to).
-3. **The nightly job, on an agent you are logged in to.** With the nightly job on and no key, distilling and settling
-   correction candidates borrow an AI coding CLI's subscription (`claude --print`, …; Codex only with
-   `KROUTER_ALLOW_CODEX=1`), at most 30 calls a day, each listed in the vault; `KROUTER_HOST_CLI=0` turns it off.
-   Run for real once, with Codex: it distilled the sessions and the old page was marked superseded.
-
-With no key and no logged-in CLI, distilling (each page's "what was decided, what changed"), the rest of the nightly
-upkeep and settling correction candidates do not run, so a change the first two miss can leave the older page first.
-Checked with no key in a throwaway home (2026-11-10): PostgreSQL on Monday, SQLite on Wednesday, imported, never
-distilled: SQLite's page first with the conflict line; after `krouter_correct`, the old page superseded and the
-correction first. The installer and `krouter doctor` both say which state you are in.
-
-Rather look first? Nothing below changes your machine until the last line:
-
-```bash
-git clone https://github.com/398894496-arch/KRouter.git && cd KRouter
-./scripts/first_run.sh                      # a receipt on a throwaway copy of the sample memory
-python3 scripts/bootstrap.py --dry-run      # every file and app setting the install would change, changed nowhere
-python3 scripts/bootstrap.py --minimal --apps claude --vault ~/notes   # lookup only, Claude Code only, your folder
-```
-
-**Uninstall:**
-
-```bash
-sh ~/.dsh-krouter/current/scripts/uninstall.sh     # from a clone: sh scripts/uninstall.sh; --dry-run lists first
-```
-
-It stops and removes the nightly job, the router, the rules, KRouter's MCP entries and hooks, the Claude Code plugin
-(and its marketplace when it points at a folder on this machine) and the recorded path. It never touches your
-memory folder or your keys file. `--purge` also removes the cache, the state and `~/.dsh-krouter`.
-
 ## Works with
 
 One install wires every app it finds, writing each app's own MCP settings in the format that app documents. It keeps
@@ -254,8 +181,6 @@ and `uninstall.sh` takes out only its own entries.
 | LangGraph long-term memory (no MCP) | `krouter.integrations.langgraph.KRouterStore`, a `BaseStore`: per-user and per-thread namespaces as folders of Markdown pages, cited and refusing: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md#langgraph-store-long-term-memory) | tested in real graphs (langgraph 1.0 and 1.2), in CI; not on PyPI yet |
 | Agent frameworks: LlamaIndex, LangChain / LangGraph, OpenAI Agents SDK, Pydantic AI, Google ADK, CrewAI, Vercel AI SDK | a LlamaIndex retriever; the others through their own MCP client: [`docs/FRAMEWORKS.md`](docs/FRAMEWORKS.md) | all tested against the server, in CI; three of them through their whole agent loop |
 | Any other app that runs a local MCP server (Windsurf, opencode, Continue, Roo Code, …) | add the server below to the app's MCP settings | should work, not yet tested by us: [tell us](https://github.com/398894496-arch/KRouter/issues) |
-| A team | a self-hosted HTTP server: [Running it for a team](#running-it-for-a-team) | tested with Claude Code, the MCP Python SDK and the JS client over HTTP |
-| Apps that only take a remote MCP server | the same HTTP server, behind HTTPS | should work, not yet tested by us |
 | Your own code | a Python package and `krouter` command; a dependency-free JavaScript / TypeScript client (below) | tested |
 
 ```json
@@ -267,67 +192,6 @@ Use the full path to your home folder (on Windows, `C:\\Users\\you\\.agents\\…
 standard-library Python over stdio with three tools: `krouter_ask` and `krouter_status` read; `krouter_note` lets
 your AI write one line down (a decision, a correction, a fact). A note lands on that day's notes page as a clue,
 never on a rule page, as one git commit you can revert.
-
-### From your own code
-
-Python 3.9+, the same lookups, receipts and notes:
-
-```bash
-pipx install "git+https://github.com/398894496-arch/KRouter"      # or: uvx --from git+https://github.com/398894496-arch/KRouter krouter ask "…"
-krouter ask "how do we ship a release?"
-```
-
-```python
-import krouter
-a = krouter.ask("how do we ship a release?")
-print(a.page, a.how, a.refused)          # the page it came from, the one-line answer, True when the memory does not know
-krouter.note("Releases are tagged from main only.", kind="decision")
-```
-
-JavaScript / TypeScript (Node 18+), local or a team server ([`sdk/js`](sdk/js); not on npm yet):
-
-```js
-import { KRouter } from "./sdk/js/index.js";
-const a = await KRouter.local().ask("how do we ship a release?");   // or KRouter.remote(url, { token })
-console.log(a.page, a.how, a.refused);
-```
-
-## Running it for a team
-
-One server holds the memories of a team, each one a folder of Markdown in its own git repository; everyone's agent
-asks it over MCP. It is self-hosted: there is no KRouter cloud.
-
-| | |
-|---|---|
-| **Deploy** | `mcp_server.py --http` (standard-library Python, no packages), the Docker image `ghcr.io/398894496-arch/krouter`, [Compose](deploy/docker-compose.yml) (two memories and a git-pull sidecar), a [Kubernetes manifest](deploy/kubernetes/krouter.yaml), a hardened [systemd unit](deploy/systemd/krouter.service) |
-| **Isolation** | several memories ("banks") on one server, each at `/mcp/NAME` with its own index, its own label on every answer and its own token; one bank's lookups never read another's folder |
-| **Auth** | a token per person or agent (`--users`: only hashes kept, read or write, limited to some memories if you like), or one shared token per memory, or both; the server refuses to listen beyond this machine while any memory has none; browser Origins allow-listed; the access log keeps a hash of each question and the person's name, never the text or a token |
-| **Attribution** | every write names who made it: on the page, in the change ledger, in a journal (`krouter_changes`: who changed this, and when) and as the git author; two people correcting one thing in opposite ways: the later holds, the earlier is kept as superseded and named in the reply |
-| **Speed** | below, measured; 4 resident lookup processes per memory (`--workers`), so a lookup does not start Python |
-| **Freshness** | files re-checked at most every 2 s (`--refresh-every`); a note written through the server is found by the very next lookup; Compose and Kubernetes pull each repository every 5 minutes |
-| **Monitoring** | `GET /healthz`; Prometheus `GET /metrics`: calls by memory, tool and outcome, refusals, a latency histogram, index build time, lookup processes |
-| **Writes** | read-only by default; `--allow-write` offers `krouter_note` and `krouter_correct`: one write at a time, one git commit each, listed in the change ledger; a `read` token is not offered them |
-| **Backup, rollback** | the memory is the git repository: back it up like code, take a change back with `git revert`; the index is a cache rebuilt from the folder |
-
-Measured with [`bench/scale/serve_load.py`](bench/scale/serve_load.py) on synthetic memories, one Apple M2 laptop
-(8 GB), the server and its callers on the same machine, 300 calls per row, none failed:
-
-| Pages | One caller: median, answers/s | 8 callers: answers/s | 32 callers: median, p95, answers/s | Resident memory | Index build at start |
-|---|---|---|---|---|---|
-| 1,000 | 5 ms, 195/s | 646/s | 42 ms, 77 ms, 742/s | 203 MB | 0.5 s |
-| 10,000 | 13 ms, 77/s | 267/s | 104 ms, 112 ms, 301/s | 216 MB | 3.5 s |
-| 50,000 | 54 ms, 17/s | 72/s | 377 ms, 651 ms, 75/s | 267 MB | 24 s |
-
-Ten people with their own tokens and agents reading and writing at once ([`bench/team/load.py`](bench/team/load.py);
-asks, notes, concurrent corrections of one page and contradicting corrections of one decision; the same laptop, then
-busy with other test runs): reads p50 / p95 39 / 129 ms on the template, 102 / 284 ms at 10,000 pages,
-446 / 2,010 ms at 50,000; one memory takes about 8, 5 and 2.5 writes a second (one at a time; the git commits are most
-of it); no errors. Every write was attributed to the right person, nothing acknowledged went missing, and each contested
-decision ended with the last correction in force. Thirty minutes of it at 10,000 pages: 0 errors in 21,218 calls, no memory growth (on the third run; the first two
-found three bugs, now fixed). A smaller run of it is a CI test. Not tested: several machines, or a
-real team over weeks.
-
-Rerun it, and setup, tokens and TLS: [`docs/TEAM.md`](docs/TEAM.md).
 
 ## Five minutes later
 
