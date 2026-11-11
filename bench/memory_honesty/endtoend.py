@@ -45,8 +45,8 @@ PAGES = 3          # pages whose text is handed to the reader: the first three o
 PAGE_CHARS = 14000  # one page's text is cut here (a LongMemEval session is 10 700 characters at the median)
 BATCH_PROMPTS = 10
 BATCH_CHARS = 150000
-CONDS = {"krouter-haiku": "haiku", "krouter-sonnet": "sonnet", "nothing-haiku": "haiku"}
-JUDGE_OF = {"haiku": "sonnet", "sonnet": "haiku"}  # the judge is never the model that wrote the reply
+CONDS = {"krouter-haiku": "haiku", "krouter-sonnet": "sonnet", "nothing-haiku": "haiku", "krouter-opus": "opus"}
+JUDGE_OF = {"haiku": "sonnet", "sonnet": "haiku", "opus": "sonnet"}  # the judge is never the model that wrote the reply
 
 
 def _refusal_study():
@@ -526,11 +526,22 @@ def posthoc_prepare() -> None:
     print(json.dumps(out))
 
 
+def opus_prepare() -> None:
+    """Set 41, Opus row: the very same prompt files as the Sonnet condition (same ids, same batches), read by Opus; nothing is
+    generated again. Only the index gets `krouter-opus/<id>` entries and the replies get their own folder."""
+    idx = json.loads((STATE / "index.json").read_text(encoding="utf-8"))
+    for k, v in list(idx.items()):
+        if v["cond"] == "krouter-sonnet":
+            idx["krouter-opus/" + k.split("/", 1)[1]] = {"cond": "krouter-opus", "qid": v["qid"]}
+    (STATE / "index.json").write_text(json.dumps(idx, indent=0), encoding="utf-8")
+    print(json.dumps({"krouter-opus": sum(1 for v in idx.values() if v["cond"] == "krouter-opus")}))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=("sample", "prepare", "mech", "score", "posthoc-prepare"))
+    ap.add_argument("cmd", choices=("sample", "prepare", "mech", "score", "posthoc-prepare", "opus-prepare"))
     a = ap.parse_args()
-    {"sample": sample, "prepare": prepare, "mech": mech, "score": score, "posthoc-prepare": posthoc_prepare}[a.cmd]()
+    {"sample": sample, "prepare": prepare, "mech": mech, "score": score, "posthoc-prepare": posthoc_prepare, "opus-prepare": opus_prepare}[a.cmd]()
     return 0
 
 

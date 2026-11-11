@@ -1721,3 +1721,28 @@ Reading the labelled replies turned up two kinds of label that the registered ru
 Deviations, said together: the four empty agent starts and the `INDEX.txt` fix; the `_abs` display edit; the four re-filed replies; subagents start in this worktree rather than an empty folder (told to read and write only their own files, and no reader or judge reported touching another file); one Haiku judge said it matched answers to files by the order of its reads, and the batch was read in full against its replies afterwards. Prompt counts: **reader 300** (130 + 130 + 40); judge 117 + 1 re-label + 34 post-hoc = 152, outside the 300. Files: `bench/memory_honesty/results/set41/` (`sample.json`, `rows.jsonl` with every reply, label and who gave it, `score.json`, `swaps.json`, `posthoc.json`); `bench/memory_honesty/endtoend.py`.
 
 **Not claimed.** A, B and C are small (30, 60, 40), so the intervals are wide; one reader model of each size and no repeat run. LoCoMo's adversarial label is the benchmark's, and a reply that corrects the person is neither right nor wrong under it. LongMemEval has been public since 2024. **Other projects' numbers are for other questions, readers and judges: these cannot be ranked against them.** The retrieval-layer figure (9 of 30 `none`, set 7 / 38) is unchanged and stays alongside.
+
+
+### Set 41, addendum: a third reader, Claude Opus 5.5 (registered 2026-11-11, before any Opus reply)
+
+**Why.** The maintainer asked for the same chain read by Opus as well, run once, to put next to Haiku 5.5 and Sonnet 5.5.
+
+**What is the same, exactly.** The 130 sealed questions (A 30, B 60, C 40); **the prompt files that were already generated for the Sonnet condition, not one character
+changed** (the receipts and pages were produced by the engine at `506f64c`; the engine on this branch is now newer, and is *not* run again for this row); the batches (20,
+at most 10 prompts or 150 000 characters each); the reply length note (about 150 words); the scoring rules, the judge prompts, the pass bar (A and B at least 76.67% "don't know",
+C at most 15% refused) and the main labels, all as registered above. No separate bar for Opus. A fingerprint of the 130 prompt files (SHA-256 over the sorted file hashes, first 16 hex):
+`f4639348c11d929f`; it is checked again before the Opus replies are scored.
+
+**What changes.** Only the reader: Claude Opus 5.5 as Claude Code subagents (`opus`); every agent reports its model id, which should be `claude-opus-5-5`, and a different one is
+reported and stops the run. Each prompt is asked once; no prompt is asked again, none is added; a batch that fails stops the run and is reported before anything else is done. Replies
+go to their own folder (`replies/krouter-opus`). The *nothing* row is **not run for Opus** (to save quota). Prompts for Opus: 130, in addition to the 300 above. Replies are checked
+for filing under the wrong prompt the way they were for the others (against each reply's own question and its batch-mates'), and any re-filing is listed.
+
+**Judging.** Rules first, as registered. What the rules do not settle goes to **Sonnet 5.5** (the judge is not the reader), in batches of 20, with the same two prompts.
+
+**Side columns, registered now (the other two readers' versions of these were done after the fact and said so).** Beside the main labels, never in place of them:
+(1) of the B replies the main rule labels `made_up`, how many assert an answer for the person asked (P) and how many point out that the notes say it of someone else (Q), by the
+same judge prompt as the post-hoc check of the first two readers; (2) of the C replies the *rules* label `refused`, how many in fact contain the right answer, by the registered
+answerable judge prompt. The main columns stay the registered rule's; the side columns are listed next to them, and a pass or fail is decided on the main ones.
+
+**Reported, whatever it shows:** the three counts for A, B and C, by receipt state, the two side columns, who labelled how many, and the three readers side by side.
