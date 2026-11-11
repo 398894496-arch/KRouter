@@ -30,8 +30,7 @@ def run(request, tmp_path_factory):
         phases = load.run(url, people, 8, 0, request.param, results)
         final = load.final_answer(url, people[0]["token"], vault, results)
     finally:
-        proc.terminate()
-        proc.wait(timeout=30)
+        load.stop(proc)  # the server's log is drained on a thread: read it only once that thread is done
     log = (tmp_path / "server.log").read_text(encoding="utf-8")
     return {"vault": vault, "people": people, "results": results, "phases": phases, "final": final, "log": log,
             "env": load.clean_env(tmp_path)}

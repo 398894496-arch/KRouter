@@ -115,7 +115,7 @@ def prepare(work: Path, source: Path | None, clients: int) -> tuple[Path, list[d
 
 def start(work: Path, vault: Path, users: Path, extra: list[str] | None = None) -> tuple[subprocess.Popen, str, float]:
     t0 = time.perf_counter()
-    log = open(work / "server.log", "w", encoding="utf-8")  # noqa: SIM115
+    log = open(work / "server.log", "w", encoding="utf-8", buffering=1)  # noqa: SIM115  一行一写，读的人不用等缓冲
     proc = subprocess.Popen([sys.executable, str(SERVER), "--http", "127.0.0.1:0", "--vault", str(vault),
                              "--label", "team", "--users", str(users), "--allow-write", *(extra or [])],
                             env=clean_env(work), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
@@ -138,8 +138,18 @@ def start(work: Path, vault: Path, users: Path, extra: list[str] | None = None) 
             log.write(ln)
         log.close()
 
-    threading.Thread(target=drain, daemon=True).start()
+    proc.drain = threading.Thread(target=drain, daemon=True)  # 读 server.log 之前先 stop()：日志写完、文件关上
+    proc.drain.start()
     return proc, url, ready
+
+
+def _stop_server(proc: subprocess.Popen) -> None:
+    """End the server and wait until everything it logged is in server.log."""
+    proc.terminate()
+    proc.wait(timeout=30)
+    drain = getattr(proc, "drain", None)
+    if drain is not None:
+        drain.join(timeout=30)
 
 
 # ---------- the clients ----------
@@ -541,8 +551,7 @@ def main() -> int:
         rss_end = rss_mb(proc.pid)
     finally:
         stop.set()
-        proc.terminate()
-        proc.wait(timeout=30)
+        _stop_server(proc)  # the log is complete before it is read below
     env = clean_env(work)
     checks = verify(vault, results, env)
     errors_in_log = sum(1 for ln in (work / "server.log").read_text(encoding="utf-8").splitlines()
@@ -569,3 +578,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+stop = _stop_server  # tests call load.stop(proc); inside long_run a local named stop (an Event) shadows it
