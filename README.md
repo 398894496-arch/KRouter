@@ -198,6 +198,9 @@ and `uninstall.sh` takes out only its own entries.
     "args": ["/Users/you/.agents/skills/krouter/scripts/mcp_server.py"] } } }
 ```
 
+In the official MCP Registry as `io.github.398894496-arch/krouter` ([entry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.398894496-arch/krouter)), pointing at the release's
+`KRouter.mcpb`, so apps that browse the registry can find it.
+
 Use the full path to your home folder (on Windows, `C:\\Users\\you\\.agents\\…` and often `python`). The server is
 standard-library Python over stdio with three tools: `krouter_ask` and `krouter_status` read; `krouter_note` lets
 your AI write one line down (a decision, a correction, a fact). A note lands on that day's notes page as a clue,
