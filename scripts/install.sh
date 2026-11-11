@@ -212,8 +212,12 @@ else
       elif command -v crontab >/dev/null 2>&1 && [ "${KROUTER_SKIP_TIMER:-}" != "1" ]; then
         LINE="10 9 * * * OBSIDIAN_VAULT='$VAULT' KROUTER_KEYS_ENV='$KEYS_ENV' '$RUN_SH' >>'$HOME/.local/state/krouter/daily.log' 2>&1 # dsh-krouter-daily"
         mkdir -p "$HOME/.local/state/krouter"
-        { crontab -l 2>/dev/null | grep -v '# dsh-krouter-daily$' || true; printf '%s\n' "$LINE"; } | crontab -
-        printf '%s\n' "self-evolution timer installed: crontab 09:10 vault=$VAULT"
+        # crontab 在、却执行不了（受限沙箱）时不能让安装中途退出：写不进去就照实说没装上
+        if { crontab -l 2>/dev/null | grep -v '# dsh-krouter-daily$' || true; printf '%s\n' "$LINE"; } | crontab - 2>/dev/null; then
+          printf '%s\n' "self-evolution timer installed: crontab 09:10 vault=$VAULT"
+        else
+          printf '%s\n' "HOST ACTION: crontab is here but could not be written (a sandbox?); the nightly job was NOT installed."
+        fi
       else
         printf '%s\n' "HOST ACTION: no systemd user session and no crontab; install extras/host-daily-evolution/cron.example by hand."
       fi

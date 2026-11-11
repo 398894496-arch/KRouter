@@ -401,3 +401,58 @@ def test_a_second_install_keeps_the_recorded_folder_whatever_the_terminal_langua
     assert res.returncode == 0, res.stdout[-1500:] + res.stderr[-1500:]
     assert Path(again["vault"]) == zh and again["state"] != "new"
     assert not (tmp_path / "home/Documents/Second Brain").exists()
+
+
+@POSIX
+def test_a_crontab_that_cannot_run_does_not_break_the_install(tmp_path):
+    """Agents often run the installer in a sandbox where `crontab` is on PATH but cannot be executed: the install
+    finishes, and says the nightly job is not there (acceptance report, §1.4)."""
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    cron = fake / "crontab"
+    cron.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")  # on PATH, found by `which` …
+    cron.chmod(0o755)
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "sitecustomize.py").write_text(  # … and refused when started, as a sandbox does (PermissionError)
+        "import os, subprocess\n_real = subprocess.Popen.__init__\n"
+        "def _deny(self, args, *a, **kw):\n"
+        "    first = args[0] if isinstance(args, (list, tuple)) else str(args).split()[0]\n"
+        "    if os.path.basename(str(first)) == 'crontab':\n"
+        "        raise PermissionError(1, 'Operation not permitted', str(first))\n"
+        "    return _real(self, args, *a, **kw)\n"
+        "subprocess.Popen.__init__ = _deny\n", encoding="utf-8")
+    env = _env(tmp_path)
+    env["PATH"] = f"{fake}:{env['PATH']}"
+    env["PYTHONPATH"] = str(site)
+    res, out = _boot(env, "--lang", "en")
+    assert res.returncode == 0, res.stdout[-1500:] + res.stderr[-1500:]
+    assert "Traceback" not in res.stderr and out.get("timer") is False
+    res, out = _boot(env, "--lang", "en", "--timer")  # asked for: never claimed when it is not there
+    assert res.returncode == 0 and "Traceback" not in res.stderr, res.stdout[-1500:] + res.stderr[-1500:]
+    assert out.get("timer") is not True or (Path(env["HOME"]) / "Library/LaunchAgents").is_dir()
+
+
+@POSIX
+def test_uninstall_dry_run_says_would_and_never_removed(tmp_path):
+    env = _env(tmp_path)
+    res, out = _boot(env, "--lang", "en")
+    assert res.returncode == 0, res.stdout[-1500:] + res.stderr[-1500:]
+    skill = Path(env["HOME"]) / ".agents/skills/krouter"
+    dry = subprocess.run(["/bin/sh", str(REPO / "scripts/uninstall.sh"), "--dry-run"], env=env, capture_output=True,
+                         text=True, timeout=300)
+    assert dry.returncode == 0, dry.stderr
+    said = [ln for ln in dry.stdout.splitlines() if ln.startswith(("removed", "timer removed", "alias table saved"))]
+    assert not said and "would:" in dry.stdout, dry.stdout
+    assert skill.is_dir()  # nothing was touched
+
+
+@POSIX
+def test_an_english_dry_run_prints_no_chinese_path(tmp_path):
+    env = _env(tmp_path)
+    res = subprocess.run([sys.executable, str(BOOT), "--no-open", "--dry-run", "--lang", "en"], env=env,
+                         capture_output=True, text=True, timeout=600)
+    assert res.returncode == 0, res.stderr
+    lines = [ln for ln in res.stdout.splitlines() if not ln.startswith("{")]
+    assert not [ln for ln in lines if CJK.search(ln)], [ln for ln in lines if CJK.search(ln)]
+    assert any("90 System/Automation/Daily health.md" in ln for ln in lines)

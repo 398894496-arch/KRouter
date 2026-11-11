@@ -41,7 +41,20 @@ def _vault(tmp_path: Path, cards: int = 14, skills: int = 3, en_cards: bool = Fa
             f"use_when: \"改完配置却不生效、需要逐项核对第 {i} 类设置时\"\ncards: C01\ndrafted: 2026-10-01\n---\n\n"
             f"# 技能｜检查第 {i} 步\n\n**什么时候用**：改完配置却不生效时\n\n## 做法\n\n1. 先看读的是哪一份\n\n## 出处\n\n- 测试\n",
             encoding="utf-8")
+    own_row(vault)
     return vault
+
+
+def own_row(vault: Path) -> None:
+    """One alias row of the user's own: a vault in use, not one that still holds only the template's examples."""
+    for rel in ("90 系统文件/canonical_sources.psv", "90 System/canonical_sources.psv"):
+        table = vault / rel
+        if table.is_file():
+            line = next(ln for ln in table.read_text(encoding="utf-8").splitlines() if ln.startswith("Q01|"))
+            with table.open("a", encoding="utf-8") as fh:
+                fh.write("Q98|my own entrance|" + line.split("|", 2)[2] + "\n")
+            return
+    raise AssertionError("no alias table")
 
 
 def _decisions(monkeypatch, hook, text: str) -> None:
@@ -115,3 +128,4 @@ def test_a_vault_with_nothing_to_say_starts_with_nothing(hook, tmp_path, monkeyp
     vault = tmp_path / "empty"
     shutil.copytree(REPO / "template", vault)
     assert hook.start_text({}, vault) == ""
+

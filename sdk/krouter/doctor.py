@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -115,10 +116,17 @@ def _nightly_installed() -> bool:
     if (home / ".config/systemd/user/dsh-krouter-daily.timer").is_file():
         return True
     if os.name == "nt":
-        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution"], capture_output=True, text=True)
+        try:
+            res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution"], capture_output=True, text=True,
+                                 timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            return False
         return res.returncode == 0
     if sys.platform.startswith("linux") and shutil.which("crontab"):  # install.sh 只在 Linux 上用 crontab
-        res = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+        try:  # 能找到却不能执行（沙箱）也当没有
+            res = subprocess.run(["crontab", "-l"], capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            return False
         return "# dsh-krouter-daily" in (res.stdout or "")
     return False
 
@@ -233,14 +241,75 @@ def run(vault_arg: str | None = None) -> int:
     if not shutil.which("rg"):
         rows.append(("note", "ripgrep: not found; literal search uses the built-in fallback (same answers, slower on "
                              "large vaults)"))
+    zh = vault is not None and vault.is_dir() and zones.lang(vault) == "zh"  # 中文名字的库：结论用中文说
     width = max(len(s) for s, _ in rows)
     print("krouter doctor")
     for state, text in rows:
-        print(f"  {state.ljust(width)}  {text}")
+        print(f"  {state.ljust(width)}  {to_zh(text) if zh else text}")
     fails = [t for s, t in rows if s == "FAIL"]
     notes = sum(1 for s, _ in rows if s == "note")
     if fails:
-        print(f"verdict: NOT OK, {len(fails)} problem{'s' if len(fails) > 1 else ''} (the FAIL lines say how to fix each)")
+        print(f"结论：有问题，{len(fails)} 处（FAIL 那几行写了怎么修）" if zh else
+              f"verdict: NOT OK, {len(fails)} problem{'s' if len(fails) > 1 else ''} (the FAIL lines say how to fix each)")
         return 1
-    print("verdict: OK" + (f" ({notes} note{'s' if notes > 1 else ''} above: off by choice, or needs a model)" if notes else ""))
+    if zh:
+        print("结论：OK" + (f"（上面 {notes} 条提示：有意关着的，或者要模型才行的）" if notes else ""))
+    else:
+        print("verdict: OK" + (f" ({notes} note{'s' if notes > 1 else ''} above: off by choice, or needs a model)" if notes else ""))
     return 0
+
+
+# 中文名字的库里，每一行按同一个意思换成中文；路径、命令原样保留。新加一行英文，记得在这里加一条
+ZH = [
+    (r"^python: (.+); KRouter needs 3\.9 or newer$", r"Python：\1；KRouter 需要 3.9 或更新版本"),
+    (r"^memory folder: none recorded\. Fix: (.+) \(or pass --vault, or set KROUTER_VAULT\)$",
+     r"记忆文件夹：没有记录。修复：\1（或者传 --vault，或者设 KROUTER_VAULT）"),
+    (r"^memory folder: (.+) does not exist\. Fix: (.+)$", r"记忆文件夹：\1 不存在。修复：\2"),
+    (r"^memory folder: (.+) \(default names\)$", r"记忆文件夹：\1（默认的中文名字）"),
+    (r"^memory folder: (.+) \(English names\)$", r"记忆文件夹：\1（英文名字）"),
+    (r"^home page missing: (.+)\. Fix: (.+) \(adds only missing files\)$", r"首页不见了：\1。修复：\2（只补缺的文件）"),
+    (r"^lookup: answered in ([\d.]+) s from (.+)$", r"查询：\1 秒答出，出处 \2"),
+    (r"^lookup: answered in ([\d.]+) s \(said: not in the memory\)$", r"查询：\1 秒答出（答的是：库里没有）"),
+    (r"^lookup: no receipt came back\. Fix: reinstall with (.+)$", r"查询：没有拿到回执。修复：用 \1 重装"),
+    (r"^lookup failed: (.+)\. Fix: reinstall with (.+)$", r"查询出错：\1。修复：用 \2 重装"),
+    (r"^alias table: none in the memory folder; the sample one is used\. Fix: (.+)$",
+     r"别名表：库里没有，用的是样例那份。修复：\1"),
+    (r"^alias table: (.+)$", r"别名表：\1"),
+    (r"^model: connected \(distilling and the nightly upkeep can run\)$", r"模型：已接上（提炼和夜间整理能跑）"),
+    (r"^model: none\. .*Fix: log in to claude / codex / grok once, or put an API key in (.+)$",
+     r"模型：没有。查询、出处、拒答、本地导入都照常；新页写明改了主意时会排在前面并标出来，agent 用 krouter_correct "
+     r"当轮落实纠正也照常；提炼、夜间整理和纠正候选的判定不跑，所以换了别的说法的改主意，旧答案仍可能排第一。"
+     r"修复：登录一次 claude / codex / grok，或者把 API key 写进 \1"),
+    (r"^nightly job: installed$", r"夜间任务：已装"),
+    (r"^nightly job: the health page says running, but no job is installed\. Fix: (.+), or set lamp: unused on the health page$",
+     r"夜间任务：健康页说在跑，但本机没装任何任务。修复：\1，或者把健康页的 lamp 改成 unused"),
+    (r"^nightly job: not installed \(off by default\)\. Turn on: (.+)$", r"夜间任务：没装（默认不装）。要开：\1"),
+    (r"^Claude Desktop: connected through (.+)$", r"Claude Desktop：已通过 \1 接上"),
+    (r"^Claude Desktop: connected as an extension \((.+)\)$", r"Claude Desktop：已作为扩展接上（\1）"),
+    (r"^Claude Desktop: installed, but KRouter is in neither .*Fix: quit Claude Desktop, then (.+) --connect "
+     r"claude-desktop; or double-click (.+) and press Install$",
+     r"Claude Desktop：装了，但它的设置文件和扩展里都没有 KRouter（应用开着时写进去的条目，退出时会被它冲掉）。"
+     r"修复：退出 Claude Desktop，再运行 \1 --connect claude-desktop；或者双击 \2，点一次安装"),
+    (r"^old path: (.+): KRouter still starts from (\S+) \(renamed to ~/\.agents/skills/krouter in 2\.0; the old path "
+     r"is a link to it, so it works for now\)\. Fix: (.+) \(registers MCP, hooks and the nightly job at the new path\)$",
+     r"旧路径：\1 还在从 \2 启动 KRouter（2.0 改名为 ~/.agents/skills/krouter；旧路径是指向它的链接，暂时还能用）。"
+     r"修复：\3（把 MCP、钩子、夜间任务登记到新路径）"),
+    (r"^old path: (.+): KRouter still starts from (\S+) \(renamed to ~/\.agents/skills/krouter in 2\.0, and nothing "
+     r"is there any more\)\. Fix: (.+) \(registers MCP, hooks and the nightly job at the new path\)$",
+     r"旧路径：\1 还在从 \2 启动 KRouter（2.0 改名为 ~/.agents/skills/krouter，旧路径那里已经什么都没有了）。"
+     r"修复：\3（把 MCP、钩子、夜间任务登记到新路径）"),
+    (r"^connected: no app found\. Fix: (.+) \(or the MCP block in the README\)$",
+     r"已接上：没找到任何应用。修复：\1（或者照 README 里的 MCP 配置手动加）"),
+    (r"^connected: (.+)$", r"已接上：\1"),
+    (r"^ripgrep: not found; literal search uses the built-in fallback \(same answers, slower on large vaults\)$",
+     r"ripgrep：没找到；字面搜索用内置的替代（答案一样，大库上慢一些）"),
+]
+
+
+def to_zh(text: str) -> str:
+    """One doctor line in Chinese; a line with no rule stays as it is (so nothing is lost)."""
+    for pat, rep in ZH:
+        out, n = re.subn(pat, rep, text, flags=re.S)
+        if n:
+            return out
+    return text

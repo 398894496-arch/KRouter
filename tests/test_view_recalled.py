@@ -23,6 +23,9 @@ def vault(tmp_path, monkeypatch):
         monkeypatch.delenv(k, raising=False)
     v = tmp_path / "vault"
     shutil.copytree(REPO / "template-zh", v)
+    from test_session_start import own_row
+
+    own_row(v)  # a vault in use: the session-start index lists its topics
     return v
 
 

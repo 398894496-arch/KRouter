@@ -102,12 +102,12 @@ def test_doctor_names_a_settings_file_that_still_uses_the_old_path(tmp_path):
     run_env = {**env, "PYTHONPATH": str(REPO / "sdk"), "KROUTER_STATE_DIR": str(tmp_path / "state"),
                "KROUTER_CACHE_DIR": str(tmp_path / "cache")}
     broken = subprocess.run(doctor, env=run_env, capture_output=True, text=True, timeout=120)
-    line = next(ln for ln in broken.stdout.splitlines() if "old path:" in ln)
-    assert "FAIL" in line and "~/.claude.json" in line and "nothing is there" in line, broken.stdout
+    line = next(ln for ln in broken.stdout.splitlines() if "旧路径：" in ln)  # the template's default names: Chinese
+    assert "FAIL" in line and "~/.claude.json" in line and "已经什么都没有了" in line, broken.stdout
     assert broken.returncode == 1
     new = home / ".agents/skills/krouter"
     shutil.copytree(REPO / "skill/krouter", new)
     (home / ".agents/skills/krouter-obsidian").symlink_to(new)  # what an upgrade leaves
     linked = subprocess.run(doctor, env=run_env, capture_output=True, text=True, timeout=120)
-    line = next(ln for ln in linked.stdout.splitlines() if "old path:" in ln)
-    assert line.lstrip().startswith("note") and "works for now" in line, linked.stdout
+    line = next(ln for ln in linked.stdout.splitlines() if "旧路径：" in ln)
+    assert line.lstrip().startswith("note") and "暂时还能用" in line, linked.stdout

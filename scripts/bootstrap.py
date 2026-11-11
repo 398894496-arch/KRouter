@@ -261,6 +261,15 @@ def template_for(lang: str) -> Path:
     return zh if lang == "zh" and zh.is_dir() else ROOT / "template"
 
 
+def probe(argv: list[str], **kw) -> subprocess.CompletedProcess | None:
+    """Run an outside command only to look something up. None when it cannot run: missing, not executable, refused
+    by a sandbox (agents often run the installer in one), or too slow; the caller then treats it as not there."""
+    try:
+        return subprocess.run(argv, capture_output=True, text=True, **{"timeout": 30, **kw})
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
 def recorded_vault() -> str:
     """The memory folder an earlier install recorded, when it is still there: a second install (an upgrade) keeps
     using it, whatever language this terminal now says (1.x picked the folder name from the system's language)."""
@@ -346,8 +355,8 @@ def legacy_timer() -> bool:
         except OSError:
             pass
     if WINDOWS:
-        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution", "/XML"], capture_output=True, text=True)
-        texts.append(res.stdout or "")
+        res = probe(["schtasks", "/Query", "/TN", "KRouter daily evolution", "/XML"])
+        texts.append((res.stdout or "") if res else "")
     return any("krouter-obsidian" in t for t in texts)
 
 
@@ -398,7 +407,7 @@ def install_windows(vault: Path, dry: bool, timer: bool) -> int:
         try:
             os.symlink(skill, legacy, target_is_directory=True)
         except OSError:
-            subprocess.run(["cmd", "/c", "mklink", "/J", str(legacy), str(skill)], capture_output=True)
+            probe(["cmd", "/c", "mklink", "/J", str(legacy), str(skill)])
         print(f"moved: {legacy} → {skill}")
     old_rule = None if os.environ.get("KROUTER_CURSOR_RULE") else home / ".cursor/rules/krouter-obsidian.mdc"
     if os.environ.get("KROUTER_NO_CURSOR_RULES") != "1":
@@ -1084,10 +1093,10 @@ def register_mcp(t: dict, dry: bool, apps: set[str] | None = None, plugin: bool 
             continue
         if cli == "claude":
             backup(Path.home() / ".claude.json")  # claude mcp add --scope user 写这里
-            subprocess.run([exe, "mcp", "remove", "--scope", "user", "krouter"], capture_output=True, timeout=60)
+            probe([exe, "mcp", "remove", "--scope", "user", "krouter"], timeout=60)
         else:
             backup(codex_home() / "config.toml")  # codex mcp add 写这里
-            subprocess.run([exe, "mcp", "remove", "krouter"], capture_output=True, timeout=60)
+            probe([exe, "mcp", "remove", "krouter"], timeout=60)
         try:
             ok = subprocess.run([exe, *argv, *server], capture_output=True, text=True, timeout=60).returncode == 0
         except (OSError, subprocess.TimeoutExpired):
@@ -1162,15 +1171,15 @@ def cli_path() -> str:
 def remembering_timer() -> bool:
     """A nightly job installed on this machine (launchd / systemd / crontab / Windows task)."""
     if WINDOWS:
-        res = subprocess.run(["schtasks", "/Query", "/TN", "KRouter daily evolution"], capture_output=True, text=True)
-        return res.returncode == 0
+        res = probe(["schtasks", "/Query", "/TN", "KRouter daily evolution"])
+        return bool(res and res.returncode == 0)
     home = Path.home()
     if (home / "Library/LaunchAgents/local.dsh-krouter.daily-evolution.plist").is_file():
         return True
     if (home / ".config/systemd/user/dsh-krouter-daily.timer").is_file():
         return True
-    res = subprocess.run(["crontab", "-l"], capture_output=True, text=True) if shutil.which("crontab") else None
-    return bool(res and "# dsh-krouter-daily" in res.stdout)
+    res = probe(["crontab", "-l"]) if shutil.which("crontab") else None  # 能找到却不能执行（沙箱）也当没有
+    return bool(res and res.returncode == 0 and "# dsh-krouter-daily" in (res.stdout or ""))
 
 
 def timer_took(t: dict) -> bool:
@@ -1256,6 +1265,10 @@ def main() -> int:
     template = template_for(lang)
     print(f"{t['plan']}: {t['vault_' + state]} → {vault}")
     added = lay_down(template, vault, args.dry_run, lang)
+    planned = layout_for(vault, lang)
+    if args.dry_run and planned is not None and not (vault / zones.ZONES_FILE).is_file():
+        # 预演时库还没建：打出来的路径按它将要用的名字（英文库是 90 System/…），不按默认的中文名
+        os.environ["KROUTER_ZONES"] = str(planned)
     if added and (state != "new" or args.dry_run):
         shown = added if args.dry_run else added[:12]  # 预演把每个文件都列出来
         print(f"  {t['added']}: {len(added)}" + "".join(f"\n    {a}" for a in shown) + ("\n    …" if len(added) > len(shown) else ""))

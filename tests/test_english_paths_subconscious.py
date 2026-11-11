@@ -20,6 +20,9 @@ def english(tmp_path, monkeypatch):
     monkeypatch.setenv("KROUTER_CACHE_DIR", str(tmp_path / "cache"))
     vault = tmp_path / "en"
     zones.lay_out(REPO / "template", vault, alias_sample=REPO / "skill/krouter/scripts/canonical_sources.psv")
+    from test_session_start import own_row
+
+    own_row(vault)  # a vault in use: the index lists its topics
     return vault
 
 
