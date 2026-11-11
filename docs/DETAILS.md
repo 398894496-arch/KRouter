@@ -120,7 +120,7 @@ auto-update.
 
 ## What leaves your machine, and what it costs
 
-- **Queries never leave.** Lookup is local: a SQLite full-text cache and Python's standard library, ~110 ms per call.
+- **Queries never leave.** Lookup is local: a SQLite full-text cache and Python's standard library; 83–87 ms warm median on the 110-page test vault, 116–126 ms at 10,000 pages (whole hook process, p95 up to 144 ms; set 34, before 2.1.0; the 2.1.0 prompt hook's warm p95 at 10,000 pages is 129–131 ms, set 39).
 - **The nightly run sends vault text to one model** — the AI coding CLI you are logged into (your subscription) or the API key you gave it. It sends yesterday's logs (to distill them), the rule and topic pages (to precompute answers), excerpts about listed topics, and questions the router could not answer. `extras/host-daily-evolution/run.sh --dry-run` lists exactly what, and how many tokens, before anything is sent. `KROUTER_NIGHTLY=0` turns the nightly steps off.
 - **The nightly writer runs confined, and the API-key lane runs nothing locally.** grok runs in a kernel sandbox (the vault and the router only), claude with tools allow-listed to the vault and the router; Codex can read your account, other CLIs everything — the install prompt says which. Details: [`SECURITY.md`](../SECURITY.md).
 - **Keys never live in the vault, and are never sent or printed.** A key pasted on the key page moves into `~/.dsh-krouter-keys.env` (chmod 600) on the next run. Pages named or marked as secret (凭据 / 密钥 / credential / secret / password, or `secret: true`) are never sent and never quoted; key-shaped text anywhere else prints as `<redacted>`.
@@ -346,7 +346,7 @@ flowchart LR
 | L2 Distill | Distill. Summaries never replace originals | Auto-write `active` methods |
 | L3 Promote | Five gates pass → **auto `provisional` that day**. Next similar task asks. Adopt + accepted task → `active` | Auto-write `active`. Skip provisional when the gates already passed |
 | L4 Consolidate | Overnight: recurring topics → one cited dossier; 3–5 answer cards per rule / topic page; triggers learned from the router’s own misses; a checkup page lists what went stale | Copy authority pages, keep a card after its page changed, invent a paraphrase, edit source pages |
-| L5 Lock + recall | Short noun → that page + dual SHA. Miss → ranked recall over a rebuildable FTS5 cache, with `answer (generated):`; weak overlap → `recall: none`. ~30 ms in-process, ~110 ms per CLI call (`python3`, stdlib) | Vector fallback, neighbor cite, guess |
+| L5 Lock + recall | Short noun → that page + dual SHA. Miss → ranked recall over a rebuildable FTS5 cache, with `answer (generated):`; weak overlap → `recall: none`. ~30 ms in-process; a CLI call adds Python's start-up (the registered whole-hook timings are in NUMBERS) | Vector fallback, neighbor cite, guess |
 
 Full rules: [`PROTOCOL.md`](../PROTOCOL.md) · [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) · [`docs/VERIFY.md`](VERIFY.md)
 

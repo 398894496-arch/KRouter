@@ -13,6 +13,8 @@ notice, then the details.
 
 Docs: the ten-project comparison table (what each project's own page says, no ranking) is now on the README's front page, in both languages, with links from DETAILS and the README's document list; the full version stays in `docs/COMPARE-ALL.md`.
 
+Docs: four places on the pages that disagreed now agree: one latency statement with its conditions (the registered set 34 and set 39 numbers), the opening's "no key, no server" limited to personal use, the team section's "tested on one machine only" moved to its first sentence, and "every message looked up" qualified by the hosts that have a per-message hook (not Cursor). No registered number changed.
+
 ## 2.1.0 — 2026-11-11
 
 **Windows: the commands the install prints now run as printed ([#74](https://github.com/398894496-arch/KRouter/issues/74)).** The closing lines used to print `set "PYTHONPATH=…" && python -m krouter.cli doctor`, which failed in PowerShell 5.1 (`&&`) and PowerShell 7 (`set` does not set an environment variable, so the module could not be imported), and `… search "question"`, which the Python command line rejects (its command is `ask`). They now print `python "<…>\scripts\krouter_run.py" doctor` and `… ask "question"`: one command, no `&&`, no variable to set. The same `ask` replaces `search` in the lines printed on macOS and Linux. Tests check the printed line and that the command line's own argument parser accepts the printed arguments; **a real PowerShell 5.1, PowerShell 7 and cmd have not run it yet** (that waits for CI's Windows machine after the push).
