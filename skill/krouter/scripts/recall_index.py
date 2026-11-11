@@ -598,12 +598,15 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     if lib:
         hits = [h for h in hits if h["rel"] not in lib_map]
     study = None
+    ev_on = evidence.enabled(vault)
     if hits:
         n_all = con.execute("SELECT count(*) FROM files").fetchone()[0] or 1
         plan = evidence.question_plan(con, sys.modules[__name__], query, n_all, qtok)
+        # 重排和拒答关着时，段落证据只给交出去的那几页（回执里标段落行号用），不必看满 20 页
+        n_ev = EVIDENCE_PAGES if ev_on or os.environ.get("KROUTER_EVIDENCE_STUDY") else max(limit, AGG_PAGES)
         if plan:
-            evs = evidence.page_evidence(con, plan, [h["rid"] for h in hits[:EVIDENCE_PAGES]])
-            for h in hits[:EVIDENCE_PAGES]:
+            evs = evidence.page_evidence(con, plan, [h["rid"] for h in hits[:n_ev]])
+            for h in hits[:n_ev]:
                 h["ev"] = evs.get(h["rid"])
         if os.environ.get("KROUTER_EVIDENCE_STUDY"):
             study = {"plan": {k: plan[k] for k in ("type", "names", "first", "nums")} if plan else None,
@@ -616,13 +619,14 @@ def _recall(con: sqlite3.Connection, vault: Path, query: str, scope: str, limit:
     rival = lib[0]["score"] if lib else None
     crowded = bool(lib) and len(lib) >= min(DIRECT_FIRST, len(lib) + len(hits)) and all(
         h["rel"] in lib_map for h in sorted(lib + hits, key=lambda h: -h["score"])[:DIRECT_FIRST])
-    order = evidence.rerank(hits, EVIDENCE_PAGES, evidence.time_window(query, evidence.today())) \
-        if hits and any(h.get("ev") for h in hits[:EVIDENCE_PAGES]) else None
+    order = evidence.rerank(hits, EVIDENCE_PAGES, evidence.time_window(query, evidence.today()) if ev_on else None,
+                            ev_on) if hits and any(h.get("ev") for h in hits[:EVIDENCE_PAGES]) else None
     cap = None
     if limit == PAGES and order is not None and evidence.aggregate(query):
         args = args[:3] + (AGG_PAGES,) + args[4:]  # 加总题、列举题：答案散在好几页里，多交几页直接命中
         cap = PAGES - DIRECT_FIRST  # 联想的位置照旧两个，多出来的都给直接命中
-    out = _decide(*args, hits, assoc, conflict, rival=rival, crowded=crowded, order=order, assoc_cap=cap)
+    out = _decide(*args, hits, assoc, conflict, rival=rival, crowded=crowded, order=order, assoc_cap=cap,
+                  ev_gate=ev_on)
     if lib:
         ref = _decide(*args[:3], KB_PAGES, *args[4:], lib, False, False, library=True)
         if ref["hits"] and ref["confidence"] != "none":
@@ -662,7 +666,7 @@ def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats:
             df: dict[str, int], present: list[str], named: set[str], titled: set[str], single: bool, gate: bool,
             scope: str, own_cards: bool, cards_dir: str, skills_dir: str, hits: list[dict], assoc: bool,
             conflict: bool, library: bool = False, rival: float | None = None, crowded: bool = False,
-            order: list[dict] | None = None, assoc_cap: int | None = None) -> dict:
+            order: list[dict] | None = None, assoc_cap: int | None = None, ev_gate: bool = False) -> dict:
     """The gate, the confidence and the pages for one ranked list: your memory's (`library=False`), or the knowledge
     base's (`library=True`: no answer cards, no associated pages, no conflict tie-break, no asked-before check)."""
     qset = set(raw)
@@ -730,11 +734,11 @@ def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats:
         ranked = [h for h in order if h["rel"] not in asked]
         hits = ranked[:limit]
         top3 = ranked[:DIRECT_FIRST]
-        if conf != "none" and gate:
+        if conf != "none" and gate and ev_gate:
             ev_none = evidence.veto(top3)
             if ev_none:
                 conf = "none"
-        elif gate and refuse and not clipped and not crowded and not asked and evidence.rescue(top3):
+        elif gate and ev_gate and refuse and not clipped and not crowded and not asked and evidence.rescue(top3):
             conf, rescued = "low", "1"
         if conf == "high" and hits and hits[0] is not first:
             conf = "medium"  # 整页排第一的不是证据最好的那页：不说「直接」
@@ -768,6 +772,10 @@ def _decide(con: sqlite3.Connection, vault: Path, query: str, limit: int, stats:
            "strong": strong, "confidence": conf, "partial": partial and conf != "none"}
     if clipped and conf != "none":
         out["clipped"] = True
+    if assoc_cap is not None and len(hits) + len(picks) > PAGES:
+        # 加总题多交的直接命中排在联想页后面：前 PAGES 页和平常一模一样，多出来的单列在 `more`
+        cut = max(DIRECT_FIRST, PAGES - len(picks))
+        out["hits"], out["more"] = hits[:cut], hits[cut:]
     if ev_none:
         out["evidence_none"] = ev_none
     if rescued:
@@ -867,7 +875,8 @@ def all_clippings(con: sqlite3.Connection, hits: list[dict]) -> bool:
 def page_list(res: dict, k: int = PAGES) -> list[str]:
     """The pages a reader is given, in the receipt's order: the direct hits (the first `DIRECT_FIRST` of them always
     there, then any the associative path left room for), then the associated pages; at most `k`."""
-    return ([h["rel"] for h in res.get("hits", [])] + [a["rel"] for a in res.get("assoc", [])])[:k]
+    return ([h["rel"] for h in res.get("hits", [])] + [a["rel"] for a in res.get("assoc", [])]
+            + [h["rel"] for h in res.get("more", [])])[:k]
 
 
 VIA_LABEL = {"words": "shares words with", "link": "linked with", "supersedes": "replaces or is replaced by",

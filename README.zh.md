@@ -74,8 +74,8 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 - Cursor 上每句话那一层用不了（它的钩子加不了上下文），只有会话开始的索引。
 - 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
 - 2.0 没有在 Windows 上实测。
-- 问的是记忆里某件事的近邻时，它还是会作答，多半是 `low` 或 `medium`，不是 `recall: none`。我们找过能多拒这类题的规则（第 37 套），没有一条够好。
-- 没声明的参考资料文件夹按你的记忆算（只有剪藏文件夹和剪藏插件写的页能自动认出来）；`krouter kb suggest` 会指出可能是的那些。
+- 问的是记忆里某件事的近邻时，它还是会作答，多半是 `low` 或 `medium`。段落级证据（第 39 套）在 LoCoMo 上多拒了（223 道里 18 → 61），在 LongMemEval 上没有（30 道里 9 → 10），所以默认关。
+- 参考资料不用声明，逐页自动认（第 40 套：留出的 32 篇外来资料认出 30 篇，你自己的 43 页误判 0 页），只在合成库上测过；认错了用 `krouter kb mine 页面` 改。
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 
@@ -115,7 +115,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 ```bash
 krouter kb add "研究资料"           # 把一个文件夹声明成知识库（就是记忆文件夹里 krouter-kb.txt 的一行）
-krouter kb suggest                 # 看起来像参考资料、还没声明的文件夹（只建议，不改任何东西）
+krouter kb mine "笔记/随笔.md"      # 被认成资料、其实是你自己写的页（或文件夹）
 krouter kb import 报告.pdf          # 把 PDF、Word、HTML 转成知识库里的一页 Markdown
 ```
 
@@ -131,7 +131,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
   L5: 迁移过程中账单服务的数据库连接被占满……
 ```
 
-**它不做的：** 只检索 Markdown；`import` 用你本机已有的工具转换别的格式（`markitdown`、`pandoc`，PDF 也可以用 `pdftotext`；纯 HTML 不需要任何工具），一个都没有时会告诉你装哪个。没有向量检索（[测过，没有上线](docs/DENSE-OPTIN.md)）。没声明的文件夹按你的记忆算：`krouter doctor` 和 `krouter kb suggest` 会指出看起来像参考资料的那些（[细节](docs/DETAILS.zh.md#剪藏和别人写的材料)）。
+**它不做的：** 只检索 Markdown；`import` 用你本机已有的工具转换别的格式（`markitdown`、`pandoc`，PDF 也可以用 `pdftotext`；纯 HTML 不需要任何工具），一个都没有时会告诉你装哪个。没有向量检索（[测过，没有上线](docs/DENSE-OPTIN.md)）。没声明的页按来历和样子逐页分（来源行、署名、像文章的标题和篇幅），`krouter why` 会说为什么（[细节](docs/DETAILS.zh.md#剪藏和别人写的材料)）。
 
 ## 从你自己的代码里用
 
@@ -172,7 +172,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | 怎么跑、要装什么 | 一个 Markdown 文件夹加本地索引；只用 Python 标准库，一条命令装好，不用服务、不要 key | 云（API key）、自部署（Neo4j + Qdrant）或本地插件（Node.js） | PostgreSQL + pgvector 上的一个服务加一个 LLM key，或 Hindsight Cloud |
 | 不问也想起 | 每句话都在本机查一遍，不调模型，约 90 毫秒；会话开始还有一份索引 | 插件在「任务开始前」「每次 agent 运行前」召回 | 给 coding agent 的包在 agent「开始工作时」注入记忆 |
 | 结论带出处 | 每个回答都带，附回执 | 页面上没有说明 | observation 保留原话引文和证据数 |
-| 知识库 | Markdown 资料可声明为知识库，单独列出，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
+| 知识库 | 参考资料逐页自动认出（也可声明），单独列出，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
 | 敢说不知道 | 回执层 30 道：9 道 `none`、21 道 `related`（只有相关的页）、0 道 `direct`；加读题模型 29 / 30，但不给材料时也是 30 / 30 | 页面上没有数字 | 页面上没有数字 |
 | 标准评测 | 只测检索，按作者标注评分；还没参加同台评测 | 自报（OmniMemEval）：LongMemEval 89.20、LoCoMo 88.83 | LongMemEval 最好成绩（厂商图表，2026-01），部分由别人复现 |
 | 规模（GitHub，2026-11-11） | 49 星，一个维护者 | 12 352 星 | 60 340 星；有托管，承诺 99.9% 可用 |

@@ -88,8 +88,20 @@ def test_paragraph_index_and_evidence(chat):
     assert e["pc"] > 0.5 and e["l0"] >= 7 and e["bind"] >= e["bind_other"]
 
 
-def test_question_about_the_other_speaker_is_refused(chat):
+def test_paragraph_refusals_are_off_by_default(chat, monkeypatch):
+    monkeypatch.delenv("KROUTER_EVIDENCE", raising=False)
+    assert not ev.enabled(chat)
+    res = ri.recall(chat, "What sunset over the lake was painted by Caroline?")
+    assert "evidence_none" not in res
+    (chat / "krouter-settings.psv").write_text("evidence|on\n", encoding="utf-8")
+    assert ev.enabled(chat)
+    monkeypatch.setenv("KROUTER_EVIDENCE", "0")
+    assert not ev.enabled(chat)
+
+
+def test_question_about_the_other_speaker_is_refused(chat, monkeypatch):
     """LoCoMo's adversarial questions: the thing was said by the other person. Caroline never painted."""
+    monkeypatch.setenv("KROUTER_EVIDENCE", "1")
     res = ri.recall(chat, "What sunset over the lake was painted by Caroline?")
     assert res["confidence"] == "none" and res.get("evidence_none") == "other-speaker"
     ok = ri.recall(chat, "What did Caroline say about hiking with her sister on the trail?")

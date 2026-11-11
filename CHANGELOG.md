@@ -11,6 +11,37 @@ notice, then the details.
 
 ## 2.1.0 — unreleased
 
+**Paragraph-level evidence (set 39): built, measured both ways, off by default because it missed the bar.** Pages
+are now cut into paragraphs (a session into its turns) at index time, and every lookup records the best paragraph of
+each of the first 20 pages; the receipt marks it on the first quoted line: `L8 (passage L6-L8): …`. Questions that add
+up or list (`how many times`, `in total`, `都有哪些`) get 8 pages instead of 5 (the 3 extra come after the usual 5, under `more:`): that part is **on** (LongMemEval held-out
+half, every labelled session handed over 203 → 205 of 235, 16% more pages; nothing else moves). The rest is **off**,
+behind `KROUTER_EVIDENCE=1` or `evidence|on` in `krouter-settings.psv`: the first 20 pages re-ranked by their best
+paragraph, pages inside a time cue's window (`last Saturday`, `in March`, `三个月前`) counted double, and two refusals —
+the first page's best paragraph holds under a quarter of the question, or the question names a speaker (or asks about
+"I") and what that speaker said holds under 0.4 of what the other speaker said. Chosen on development data, held-out
+halves run once: **LoCoMo improved on both sides** (adversarial questions answered `none` 18 → 61 of 223; answerable
+questions whose page is handed over 613 → 619 of 768), but **LongMemEval's 30 unanswerable questions moved 9 → 10**
+(the bar was 14), its held-out half handed over 211 of 235 (212 before), and `heldout3` gained one wrong citation
+(36 → 37), so by the bar registered before the run it does not ship on. The answer-type check (does the best
+paragraph hold a number, a duration, a date, an amount, a frequency, an age when the question asks for one) does not
+separate (AUC 0.50 / 0.46) and is unused.
+
+**Reference material recognised without declaring (set 40).** Pages not in a declared folder are sorted by where they
+came from (KRouter's own folders and frontmatter, alias-table targets and `krouter kb mine` marks are your memory) and
+then page by page by how they read (a source or byline line, an article's title and shape, another language, the
+folder's majority; decision structure and your own annotations count against). Labelled synthetic vaults, held out and
+run once: 30 of 32 outside pages recognised, 0 of 43 of your own pages taken for reference material; on by default
+(`KROUTER_KB_AUTO=0` or `kb_auto|off` turns it off). `krouter kb mine` / `unmine` mark a page or folder as yours;
+`krouter why` and `krouter view` say why a page is reference material; the nightly report counts the pages recognised
+and lists the new ones. On set 37's synthetic set with nothing declared, of the 6 questions only an article answers, the
+memory now refuses 5 (was 2) and the article is listed for 5 (was 3); the 15 memory questions stay 15 of 15.
+
+- `skill/krouter/scripts/evidence.py` (new): paragraphs, speakers, answer types, time windows, aggregation questions,
+  the re-ranking and the two refusals; its constants are the chosen values. Index schema `recall-v18` (rebuilt once).
+- Set 18's coverage count (LongMemEval held-out half, every answer session among k pages) is 187 / 210 / 215 at k = 3 / 5 / 8, as at 44c041f.
+- `bench/evidence/study.py`, `bench/kb_auto/make.py`, `bench/kb_auto/run.py`, `tests/test_evidence.py`.
+
 What you will notice: the memory folder now has a **knowledge base**, a layer of its own for reference material
 (articles, clippings, research, documents someone else wrote). Declare a folder with `krouter kb add FOLDER` (or one
 line in `krouter-kb.txt` at the memory folder's root); clipping folders and web-clipper pages count without it, as in

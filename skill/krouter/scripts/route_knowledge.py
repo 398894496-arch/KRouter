@@ -421,7 +421,18 @@ def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
         print(note)
     print_extras(res, "conflict")
     print("recall:")
-    for h in res["hits"]:
+    _print_hits(res["hits"], res, vault, lines)
+    print_extras(res, "assoc")
+    if res.get("more"):
+        print("more: further direct hits for a question that adds up or lists (after the pages above)")
+        _print_hits(res["more"], res, vault, lines)
+    print_kb(vault, res, query)
+
+
+def _print_hits(hits: list[dict], res: dict, vault: Path, lines: int) -> None:
+    from recall_index import best_lines
+
+    for h in hits:
         flag = f" status={h['status']}" if h["status"] else ""
         flag += f" conflict={h['conflict']}" if h.get("conflict") else ""
         print(f"- {h['rel']} tier={h['tier']}{flag} score={h['score']}")
@@ -435,8 +446,6 @@ def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
             # 段落证据：最好的那一段是哪几行（只标在第一行上，回执不加行）
             where = f" (passage L{span[0]}-L{span[1]})" if i == 0 and span and span[1] > span[0] else ""
             print(f"  L{ln}{where}: {text}")
-    print_extras(res, "assoc")
-    print_kb(vault, res, query)
 
 
 def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: str) -> None:
