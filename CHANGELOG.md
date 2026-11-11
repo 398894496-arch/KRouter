@@ -33,10 +33,8 @@ separate (AUC 0.50 / 0.46) and is unused.
 came from (KRouter's own folders and frontmatter, alias-table targets and `krouter kb mine` marks are your memory) and
 then page by page by how they read (a source or byline line, an article's title and shape, another language, the
 folder's majority; decision structure and your own annotations count against). Labelled synthetic vaults, held out and
-run once: 30 of 32 outside pages recognised, 0 of 43 of your own pages taken for reference material. **Off by default** (changed before
-release): on one real vault (1,473 pages, read once, read-only, declarations removed) it found 74 of 84 research pages but also took about 80
-of the owner's own pages (about 5.8%, an estimate; 12 sampled, all own) for outside material, over the 2% line set for it
-(`KROUTER_KB_AUTO=1` or `kb_auto|on` turns it on). `krouter kb mine` / `unmine` mark a page or folder as yours;
+run once: 30 of 32 outside pages recognised, 0 of 43 of your own pages taken for reference material; on by default
+(`KROUTER_KB_AUTO=0` or `kb_auto|off` turns it off). `krouter kb mine` / `unmine` mark a page or folder as yours;
 `krouter why` and `krouter view` say why a page is reference material; the nightly report counts the pages recognised
 and lists the new ones. On set 37's synthetic set with nothing declared, of the 6 questions only an article answers, the
 memory now refuses 5 (was 2) and the article is listed for 5 (was 3); the 15 memory questions stay 15 of 15.

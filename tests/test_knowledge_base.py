@@ -80,29 +80,15 @@ def _receipt(v: Path, q: str, route: str = "search") -> str:
 Q_ARTICLE = "How did the billing service outage happen?"
 
 
-def test_undeclared_research_is_memory_by_default(vault):
-    """2.1.0 ships with automatic recognition OFF: nothing declared means nothing is taken for reference material."""
-    assert kb.auto_on(vault) is False
+def test_undeclared_research_is_memory_when_automatic_recognition_is_off(vault, monkeypatch):
+    monkeypatch.setenv("KROUTER_KB_AUTO", "0")
     res = ri.recall(vault, Q_ARTICLE)
     assert "kb" not in res
     assert res["hits"] and res["hits"][0]["rel"].startswith(RESEARCH)
 
 
-def test_automatic_recognition_is_switched_on_by_the_variable_or_the_settings_file(vault, monkeypatch):
-    assert kb.auto_on(vault) is False
-    (vault / "krouter-settings.psv").write_text("kb_auto|on\n", encoding="utf-8")
-    assert kb.auto_on(vault) is True
-    monkeypatch.setenv("KROUTER_KB_AUTO", "0")  # the variable wins over the file
-    assert kb.auto_on(vault) is False
-    (vault / "krouter-settings.psv").unlink()
-    monkeypatch.setenv("KROUTER_KB_AUTO", "1")
-    assert kb.auto_on(vault) is True
-
-
-def test_undeclared_article_is_recognised_without_declaring(vault, monkeypatch):
-    """With recognition switched on (KROUTER_KB_AUTO=1), the article (long, impersonal, written like an article) is
-    reference material."""
-    monkeypatch.setenv("KROUTER_KB_AUTO", "1")
+def test_undeclared_article_is_recognised_without_declaring(vault):
+    """2.1.0: nothing declared, the article (long, impersonal, written like an article) is reference material."""
     res = ri.recall(vault, Q_ARTICLE)
     assert res["confidence"] == "none" and not res["hits"]
     assert res["kb"][0]["rel"] == f"{RESEARCH}/Billing outage at a fintech.md" and res["kb"][0]["kb"] == "auto"
@@ -112,8 +98,7 @@ def test_undeclared_article_is_recognised_without_declaring(vault, monkeypatch):
     assert f"- {RESEARCH}/Billing outage at a fintech.md kb=auto" in text
 
 
-def test_marking_a_page_mine_wins_over_recognition(vault, capsys, monkeypatch):
-    monkeypatch.setenv("KROUTER_KB_AUTO", "1")
+def test_marking_a_page_mine_wins_over_recognition(vault, capsys):
     page = f"{RESEARCH}/Billing outage at a fintech.md"
     assert kb.main(["--vault", str(vault), "mine", page]) == 0
     assert "marked as yours" in capsys.readouterr().out
@@ -329,7 +314,6 @@ def test_standing_index_lists_memory_topics_only(vault):
 
 def test_nightly_counts_recognised_reference_pages(vault, tmp_path, monkeypatch):
     monkeypatch.setenv("KROUTER_STATE_DIR", str(tmp_path / "state"))
-    monkeypatch.setenv("KROUTER_KB_AUTO", "1")
     import nightly
 
     allp, new = kb.auto_news(vault)

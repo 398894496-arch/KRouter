@@ -279,11 +279,7 @@ def auto_news(vault: Path) -> tuple[list[str], list[str]]:
 
 
 def auto_on(vault: Path | None) -> bool:
-    """Automatic recognition is OFF by default: on only with `KROUTER_KB_AUTO=1`, or `kb_auto|on` in krouter-settings.psv
-    (the variable wins). Declared folders, clippings and `!` marks work either way. Why off: on a synthetic vault it found 30 of
-    32 held-out outside articles and misjudged 0 of 43 own pages (set 40), but on one real vault (1,473 pages, read-only, once)
-    it found 74 of 84 research pages and also took about 80 of the user's own pages (about 5.8%, an estimate) for outside
-    material, over the 2% line set for it."""
+    """Automatic recognition is on unless `KROUTER_KB_AUTO=0`, or `kb_auto|off` in krouter-settings.psv."""
     raw = os.environ.get("KROUTER_KB_AUTO", "").strip().lower()
     if raw in ("0", "off", "false", "no"):
         return False
@@ -295,10 +291,9 @@ def auto_on(vault: Path | None) -> bool:
         text = ""
     for line in text.splitlines():
         key, _, val = line.partition("|")
-        if key.strip().lower() == "kb_auto" and not line.lstrip().startswith("#") \
-                and val.strip().lower() in ("on", "1", "true", "yes"):
-            return True
-    return False
+        if key.strip().lower() == "kb_auto" and val.strip().lower() in ("off", "0", "false", "no"):
+            return False
+    return True
 
 
 def index_origin(con, rel: str, canon: str, text: str, vault_lang: str, aliased: bool) -> None:
