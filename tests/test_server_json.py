@@ -15,7 +15,10 @@ def test_server_json_matches_the_package_and_the_readme_marker():
     # 登记条目描述的是已发布的那一版：包的版本领先于它时（CHANGELOG 顶部是「未发布」），条目保持指向已发布的资产，
     # 发版时随 tag 一起改（版本、地址、SHA-256）
     if srv["version"] != version:
-        assert re.search(r"^## (\S+) — unreleased", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), re.M).group(1) == version
+        # 条目落后时：它指向的那一版必须是 CHANGELOG 里已发布（有日期）的一版，且当前版本（或「未发布」的那一版）在它之后
+        log = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        assert re.search(rf"^## {re.escape(srv['version'])} — \d{{4}}-\d{{2}}-\d{{2}}", log, re.M), "server.json points at a version that was never released"
+        assert re.search(rf"^## {re.escape(version)} — ", log, re.M), "the package version has no CHANGELOG section"
         version = srv["version"]
     assert srv["packages"]
     for pkg in srv["packages"]:
