@@ -5,7 +5,7 @@
 # Options pass through to bootstrap.py, e.g. `sh /tmp/krouter-install.sh --minimal --apps claude --lang en`.
 # Fetches the latest release (a tag, never main) into ~/.dsh-krouter/<tag>, checks its SHA-256 against the release's
 # SHA256SUMS, points ~/.dsh-krouter/current at it, and runs scripts/bootstrap.py from there. Run again to upgrade;
-# `| KROUTER_TAG=v1.3.0 sh` stays on one release. From a clone, it uses the clone.
+# `| KROUTER_TAG=v2.0.0 sh` stays on one release. From a clone, it uses the clone.
 set -eu
 
 REPO="398894496-arch/KRouter"

@@ -234,7 +234,7 @@ def _cursor_ts(text: str) -> str:
 
 
 def cursor_cwd(slug: str) -> str:
-    """`Users-fe1-Cursor-dsh-saas` → `/Users/fe1/Cursor/dsh-saas`: Cursor names a project folder after its path with
+    """`Users-you-code-my-app` → `/Users/you/code/my-app`: Cursor names a project folder after its path with
     `/` turned into `-`, so a name that itself has a `-` is ambiguous. Walk the disk and take the path that exists."""
     parts = [p for p in slug.split("-") if p]
 

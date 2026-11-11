@@ -13,6 +13,6 @@ for f in sorted(Path(sys.argv[2]).glob("*/record.json")):
     r = json.loads(re.sub(r"/private/tmp/[^\s\"\\)]*?/(proj|mem)/", r"<run>/\1/", text))
     for c in r.get("calls", []):
         c["result"] = re.sub(r"/private/tmp/[^\s\"\\|]*", "<run>", c.get("result", ""))[:300]
-    recs.append(json.loads(re.sub(r"/Users/fe1/[^\s\"\\']*?/skill/", "<repo>/skill/", json.dumps(r, ensure_ascii=False))))
+    recs.append(json.loads(re.sub(r"/(?:Users|home)/[^/\s\"\\']+/[^\s\"\\']*?/skill/", "<repo>/skill/", json.dumps(r, ensure_ascii=False))))
 Path(sys.argv[3]).write_text(json.dumps(recs, ensure_ascii=False, indent=1), encoding="utf-8")
 print(len(recs), "records ->", sys.argv[3])
