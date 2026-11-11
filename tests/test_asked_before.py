@@ -97,3 +97,19 @@ def test_what_you_stated_yourself_still_counts(tmp_path):
     out = _ask(env, "Which branch does the billing service deploy from?")
     assert "\nrecall:\n" in out and "cccc3333" in out.split("\nrecall:\n", 1)[1], out
     assert "you asked this before" not in out
+
+
+def test_a_manual_distill_with_no_model_lane_says_so_and_exits_normally(tmp_path):
+    """The backfill's third step on a machine with no key and no logged-in CLI: one clear line, the excerpts written,
+    exit 0 (it used to fail once per session)."""
+    vault, env = _vault(tmp_path, "en", {"eeee5555-port": [("Which port does the api use?", "Port 8443.")]})
+    env = {k: v for k, v in env.items() if not k.endswith("_API_KEY")}
+    env.update({"PATH": "/usr/bin:/bin", "KROUTER_KEYS_ENV": str(tmp_path / "no-keys.env"), "HOME": str(tmp_path / "h"),
+                "USERPROFILE": str(tmp_path / "h")})
+    env.pop("KROUTER_LEARN_CLI", None)
+    res = subprocess.run([sys.executable, str(IMPORT), "--days", "3650", "--distill", "--distill-max", "40"], env=env,
+                         capture_output=True, text=True, timeout=120)
+    assert res.returncode == 0, res.stderr
+    assert res.stderr.count("distill skipped: no model lane") == 1, res.stderr
+    row = json.loads([ln for ln in res.stdout.splitlines() if ln.startswith("{")][-1])
+    assert row["pages"] == 1 and row["distilled"] == 0 and row["distill_failed"] == 0 and row["distill_skipped"]

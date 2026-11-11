@@ -118,6 +118,16 @@ vault for instance: `sh /tmp/krouter-install.sh --vault ~/MyVault`. An existing 
 ones are added, and uninstalling never touches your memory. Windows, the Claude Code plugin, `--minimal`, every file it
 changes, what works without a key, and uninstalling: [`docs/INSTALL.md`](docs/INSTALL.md).
 
+Then, once, let your agent bring in your past sessions, so on day one it knows what you settled before. The first two
+steps never call a model and nothing leaves the machine; the third uses your agent's subscription (at least one call
+per session, the newest 40 by default, not your whole history in one go): [`docs/INSTALL.md`](docs/INSTALL.md#bring-in-your-past-sessions).
+
+```bash
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --dry-run --distill        # how many; writes nothing
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --local                    # import all, no model
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distill --distill-max 40  # distill the newest 40
+```
+
 ### From your own code
 
 `pipx install "git+https://github.com/398894496-arch/KRouter"`, then in Python `krouter.ask("how do we ship a

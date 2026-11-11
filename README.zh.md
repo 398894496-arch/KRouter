@@ -87,6 +87,14 @@ curl -fsSL https://github.com/398894496-arch/KRouter/releases/latest/download/bo
 
 什么都不问，本机装了哪个 AI 应用就接哪个。想把记忆放进你已有的文件夹，比如你的 Obsidian 库：`sh /tmp/krouter-install.sh --vault ~/我的库`。已有的文件夹一个文件都不改，只补缺的；卸载不碰你的记忆。Windows、Claude Code 插件、`--minimal`、它会动哪些文件、不配 key 时哪些能用、怎么卸载：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md)。
 
+然后做一次：让 agent 把你以前的会话导进来，它第一天就认识你以前定过的事。前两步不调模型、内容不离开本机；第三步用你 agent 的订阅额度（每个会话至少一次调用，默认只做最新的 40 个，不会一次把全部历史做完）：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#把以前的会话导进来)。
+
+```bash
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --dry-run --distill        # 看数量，不写入
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --local                    # 全部导入，不调模型
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distill --distill-max 40  # 提炼最新的 40 个
+```
+
 ### 从你自己的代码里用
 
 `pipx install "git+https://github.com/398894496-arch/KRouter"`，然后在 Python 里 `krouter.ask("我们怎么发版？")` 给出出处页、一句话结论、库里有没有；`krouter.note(…)` 记一笔。LangGraph 的长期记忆也能放在这个文件夹里（`krouter.integrations.langgraph.KRouterStore`）；JavaScript、LlamaIndex 和别的框架的 MCP 客户端：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#从你自己的代码里用) 和 [`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md)。

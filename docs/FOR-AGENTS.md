@@ -139,6 +139,13 @@ OK, or what is missing and the command that fixes it. Uninstall: `sh ~/.dsh-krou
 4. Session excerpts under `05 时间日志/会话摘录/` (`05 Journal/Sessions/` in an English vault) are the turn-by-turn record (time-log tier in recall). Distilled
    lines take effect without a yes; every run's additions, replaced decisions and settled correction candidates are
    listed in `90 系统文件/自动化/记忆变更记录.md` with one undo command per run (a git revert of that run's commit).
+5. **After installing, offer once to bring in the user's past sessions; do not do it unasked.** Run the preview first
+   (`import_sessions.py --days 3650 --dry-run --distill`: writes nothing, sends nothing) and tell the user what it
+   found: how many sessions (`sessions`), and about how many model calls the distill would take (`distilled`, at
+   least one per session) on which lane (their subscription through a logged-in CLI, at most 30 calls a day, or
+   their key). Only on their yes: import all of them with no model (`--local`), then distill the newest ones
+   (`--distill --distill-max 40`, default 40; run again later with a larger number to go further back; 2.0 does not
+   do the whole history by itself). Steps and what each one says: [`INSTALL.md`](INSTALL.md#bring-in-your-past-sessions).
 
 ## Check it yourself, offline
 

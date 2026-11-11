@@ -79,6 +79,24 @@ sh ~/.dsh-krouter/current/scripts/uninstall.sh     # 在 clone 里：sh scripts/
 它会停掉并删除夜间任务、路由器、规则、KRouter 的 MCP 条目和钩子、Claude Code 插件（插件市场指向本机文件夹时一并删）和记下的库路径；你的记忆文件夹和钥匙文件一律不动。`--purge` 另外删缓存、状态和 `~/.dsh-krouter`。
 
 
+## 把以前的会话导进来
+
+建议装完做一次：让 agent 把这台机器上已有的会话（Claude Code、Codex、Cursor）导进来，这样它第一天就认识你以前定过的事。分三步，前两步都不调模型。
+
+```bash
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --dry-run --distill       # 1. 看数量，不写入
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --local                   # 2. 全部导入，不调模型
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distill --distill-max 40 # 3. 提炼最新的 40 个
+```
+
+1. **预演。** 什么都不写、什么都不发。最后一行写着有多少个会话（`sessions`）、会写几页（`pages`）、第 3 步会把几个会话交给模型（`distilled`）、多少字（`chars`）。做第 3 步之前先把这几个数告诉用户。
+2. **导入。** 每个会话一页，放在 `05 时间日志/会话摘录/`（英文库是 `05 Journal/Sessions/`）：你的提问和每一轮最后的回答，已脱敏。不调模型，内容不离开本机。导进来马上就能查；以前问过、当时没记下答案的问题，不会被当成答案。
+3. **提炼。** 每个会话交给模型通道，在那一页写上「定了什么、改了什么」：你配了 key 就用 key，否则借一个已登录的 AI 编程命令行的订阅额度（`claude --print` 等；Codex 要设 `KROUTER_ALLOW_CODEX=1`）。每个会话至少一次调用，长的会更多。`--distill-max`（默认 40）取最新的这么多个会话；已经提炼过的不会再发。走已登录的命令行时另有每天 30 次的上限（`KROUTER_HOST_CLI_MAX`），每次都记在库里的订阅调用记录页。**2.0 不会自己把全部历史分批做完**：想往前多做，换一天把第 3 步再跑一次，把数字调大（80、120……）。没有 key、也没登录任何命令行时，它只说一次 `distill skipped`，摘录照写，正常退出。
+
+怎么撤回：每一轮提炼在变更记录（`90 系统文件/自动化/记忆变更记录.md`）里有编号；记忆文件夹是 git 仓库时（在里面 `git init` 一次），`import_sessions.py --undo <编号>` 撤回那一轮。第 2 步写的是新文件，每个会话一页，在 `05 时间日志/会话摘录/`：删掉就撤回了。Windows 上用 `python` 和 `%USERPROFILE%\.agents\skills\krouter\scripts\import_sessions.py`。
+
+2026-11-10 在临时 HOME 里用 5 个合成会话、不配模型实测：预演报 5 个会话、5 个待提炼、7,800 字，什么都没写；导入写了 5 页，什么都没发；第 3 步说 `distill skipped: no model lane …`，退出码 0。
+
 ## 从你自己的代码里用
 
 Python 3.9+，同样的查询、收据和笔记：

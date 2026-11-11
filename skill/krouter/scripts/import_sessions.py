@@ -839,6 +839,15 @@ def main() -> int:
                           "chars": 0, "writes": []}))
         return 0
     distill_on = (args.distill or bool(scheduled and st.get("distill"))) and not args.local
+    skipped_distill = ""
+    if distill_on and args.distill and not scheduled and not args.dry_run and not args.cli:
+        import llm
+
+        if not llm.plan(vault):  # 手动要提炼、却没有任何模型通道：说一次没做，摘录照写，不当成失败
+            distill_on = False
+            skipped_distill = ("no model lane (no API key, no logged-in agent CLI): the excerpts were written, nothing "
+                               "was sent; log in to claude / codex / grok or set a key, then run this again")
+            print("distill skipped: " + skipped_distill, file=sys.stderr)
     if scheduled and st.get("cli") and not args.cli:
         # 会话结束时在会话自己的环境里跑：shell 里碰巧有哪个 API key 就发给谁，不该由它决定。用同意时点名的那条
         os.environ["KROUTER_LEARN_CLI"] = st["cli"]
@@ -989,6 +998,7 @@ def main() -> int:
            "sessions": len({e["id"] for e in entries}), "pages": len(entries),
            "turns": sum(len(e["turns"]) for e in entries), "agents": sorted({e["agent"] for e in entries}),
            "distilled": calls, "distill_incremental": incremental, "distill_failed": failed, "chars": sent, "overlap": overlap,
+           **({"distill_skipped": skipped_distill} if skipped_distill else {}),
            "covered_by_daily_log": covered, "skipped_covered": skipped_covered, "fork_duplicates": forks_dropped,
            "kept_out": sum(1 for v in dropped.values() if v == "kept out"), "removed_kept_out": len(removed),
            "writes": [zones.real(vault, w) for w in written[:20]] + ([f"… {len(written) - 20} more"] if len(written) > 20 else []),

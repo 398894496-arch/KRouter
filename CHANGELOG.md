@@ -184,6 +184,15 @@ install path change (below).
 
 ### A lighter install that says what it changes
 
+- **Recommended once after installing: bring in your past sessions.** The README gives three commands of
+  `import_sessions.py`: a preview (`--days 3650 --dry-run --distill`: how many sessions, how many to distill, how many
+  characters; writes and sends nothing), the import of all of them with no model (`--local`), and distilling the
+  newest 40 (`--distill --distill-max 40`, on a key or a logged-in agent's subscription; at least one call per session;
+  30 calls a day through a CLI). 2.0 does not work through the whole history by itself: run the third again with a
+  larger number. `docs/INSTALL.md` has the details and how to take a run back; `docs/FOR-AGENTS.md` tells an installing
+  agent to offer it, show the preview's numbers, and go on only on a yes. A manual `--distill` with no model lane now
+  says `distill skipped` once and exits 0 (it failed once per session). Checked in a throwaway home with five
+  synthetic sessions.
 - **The default install no longer imports past sessions.** It makes the memory folder, connects the apps it finds
   (each settings file it changes is copied to `*.krouter-bak` first, and every file it created or changed is listed
   at the end) and records sessions from then on. Its last line gives the one command that imports the last 7 days;

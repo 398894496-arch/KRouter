@@ -100,6 +100,42 @@ It stops and removes the nightly job, the router, the rules, KRouter's MCP entri
 memory folder or your keys file. `--purge` also removes the cache, the state and `~/.dsh-krouter`.
 
 
+## Bring in your past sessions
+
+Recommended once, right after installing: let your agent bring in the sessions already on this machine (Claude Code,
+Codex, Cursor), so on day one it knows what you settled before. Three steps; the first two never call a model.
+
+```bash
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --dry-run --distill       # 1. how many, writes nothing
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --local                   # 2. all of them, no model
+python3 ~/.agents/skills/krouter/scripts/import_sessions.py --days 3650 --distill --distill-max 40 # 3. distill the newest 40
+```
+
+1. **Preview.** Writes nothing and sends nothing. Its last line says how many sessions (`sessions`), how many pages it
+   would write (`pages`), how many sessions step 3 would send to a model (`distilled`) and how many characters
+   (`chars`). Tell the user these numbers before step 3.
+2. **Import.** One page per session in `05 Journal/Sessions/` (`05 时间日志/会话摘录/` in a vault with the default
+   names): your questions and each turn's last answer, redacted. No model is called and nothing leaves the machine.
+   Lookups use these pages at once; a question you asked before with no answer recorded is not taken as its own
+   answer.
+3. **Distill.** Each session is sent to the model lane to write "what was decided, what changed" on its page: a key you
+   set, else an AI coding CLI you are logged in to, on its subscription (`claude --print`, …; Codex only with
+   `KROUTER_ALLOW_CODEX=1`). At least one call per session, more for a long one. `--distill-max` (default 40) takes
+   the newest that many sessions; a session already distilled is not sent again. Through a logged-in CLI there is also
+   a cap of 30 calls a day (`KROUTER_HOST_CLI_MAX`), each listed on the vault's subscription-calls page. **2.0 does not
+   work through the whole history by itself**: to go further back, run step 3 again on another day with a larger
+   number (80, 120, …). With no key and no logged-in CLI it says `distill skipped` once, writes the excerpts, and exits
+   normally.
+
+Taking it back: each distill run gets an id in the change ledger (`90 System/Automation/Memory changes.md`); when the
+memory folder is a git repository (`git init` in it once), `import_sessions.py --undo <id>` reverts that run. The
+pages step 2 wrote are new files, one per session in `05 Journal/Sessions/`: delete them to take them back. On
+Windows, use `python` and `%USERPROFILE%\.agents\skills\krouter\scripts\import_sessions.py`.
+
+Checked in a throwaway home with five synthetic sessions and no model (2026-11-10): the preview reported 5 sessions,
+5 to distill, 7,800 characters, and wrote nothing; the import wrote 5 pages and sent nothing; step 3 said
+`distill skipped: no model lane …` and exited 0.
+
 ## From your own code
 
 Python 3.9+, the same lookups, receipts and notes:
