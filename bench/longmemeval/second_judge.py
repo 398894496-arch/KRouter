@@ -35,6 +35,13 @@ import lme  # noqa: E402
 
 URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = "openai/gpt-oss-120b"
+# 第五次追加：DeepSeek。只用 deepseek-flash，写死；返回的 model 字段原样记下
+PROVIDERS = {
+    "groq": {"url": URL, "model": MODEL, "key": "GROQ_API_KEY", "max": "max_completion_tokens"},
+    "deepseek": {"url": "https://api.deepseek.com/chat/completions", "model": "deepseek-flash", "key": "DEEPSEEK_API_KEY",
+                 "max": "max_tokens"},
+}
+PROVIDER = PROVIDERS["groq"]
 
 
 def parse(reply: str) -> str:
@@ -50,20 +57,21 @@ def _seconds(raw: str) -> float:
     return total
 
 
-def call(prompt: str, key: str) -> tuple[str, dict]:
-    body = json.dumps({"model": MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0,
-                       "max_completion_tokens": 4096}).encode()
-    req = urllib.request.Request(URL, data=body, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+def call(prompt: str, key: str) -> tuple[str, dict, dict]:
+    body = json.dumps({"model": PROVIDER["model"], "messages": [{"role": "user", "content": prompt}], "temperature": 0,
+                       PROVIDER["max"]: 4096}).encode()
+    req = urllib.request.Request(PROVIDER["url"], data=body, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
                                                           "User-Agent": "bench-client"})
     with urllib.request.urlopen(req, timeout=120) as r:
         d = json.load(r)
-        return d["choices"][0]["message"].get("content") or "", {k.lower(): v for k, v in r.headers.items()}
+        meta = {"model": d.get("model", ""), "usage": {k: d.get("usage", {}).get(k) for k in ("prompt_tokens", "completion_tokens")}}
+        return d["choices"][0]["message"].get("content") or "", {k.lower(): v for k, v in r.headers.items()}, meta
 
 
 def run(args) -> int:
-    key = os.environ.get("GROQ_API_KEY", "")
+    key = os.environ.get(PROVIDER["key"], "")
     if not key:
-        raise SystemExit("GROQ_API_KEY is not set")
+        raise SystemExit(f"{PROVIDER['key']} is not set")
     data = qa.load_data(Path(args.data))
     replies = qa.read_jsonl([Path(args.replies)])
     out = Path(args.out)
@@ -74,7 +82,7 @@ def run(args) -> int:
             continue
         prompt = qa.judge_prompt(data[row["qid"]], row["response"])
         try:
-            reply, h = call(prompt, key)
+            reply, h, meta = call(prompt, key)
         except urllib.error.HTTPError as e:
             hdr = {k.lower(): v for k, v in (e.headers or {}).items() if k.lower().startswith(("retry-after", "x-ratelimit"))}
             try:
@@ -91,9 +99,14 @@ def run(args) -> int:
         except (KeyError, ValueError) as e:  # 回复格式不对：停
             print(json.dumps({"stopped": row["qid"], "error": type(e).__name__, "done": len(done) + n}), file=sys.stderr)
             return 1
+        if "pro" in str(meta.get("model", "")).lower():  # 只许 flash：返回的模型名里出现 pro 就停，不记这条
+            print(json.dumps({"stopped": row["qid"], "error": "unexpected model", "model": meta.get("model")}), file=sys.stderr)
+            return 1
+        rec = {"qid": row["qid"], "reply": reply, "verdict": parse(reply), "sonnet": "yes" if qa.correct(str(row["verdict"])) else "no"}
+        if PROVIDER is not PROVIDERS["groq"]:
+            rec.update(meta)
         with out.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"qid": row["qid"], "reply": reply, "verdict": parse(reply),
-                                 "sonnet": "yes" if qa.correct(str(row["verdict"])) else "no"}, ensure_ascii=False) + "\n")
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
         n += 1
         # 按限流头放慢：剩余请求数或 token 数见底就等到重置，不去撞 429
         if int(h.get("x-ratelimit-remaining-requests", "99") or 99) < 2:
@@ -153,7 +166,10 @@ def main() -> int:
     ap.add_argument("--data", required=True)
     ap.add_argument("--replies", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--provider", choices=sorted(PROVIDERS), default="groq")
     args = ap.parse_args()
+    global PROVIDER
+    PROVIDER = PROVIDERS[args.provider]
     return run_resuming(args) if args.cmd == "run" else report(args)
 
 
