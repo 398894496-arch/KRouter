@@ -1853,6 +1853,24 @@ replies holds any of those characters); if one changes, the run stops and that i
 settle has no verdict (no model is called for this addendum) and is reported as such. The labels under the registered rule are
 kept beside the new ones, each named by its rule and date.
 
+**Labelled again, said as it happened (2026-11-14, no model called).** All 600 rows were labelled again under the amended rule:
+**the 430 rows of Haiku, Sonnet and Opus are identical, row by row, to before** (and so are their scores). Only DeepSeek's rows
+changed: 23 with KRouter and 24 given nothing went from `made_up` to "don't know"; 4 have no verdict now — each says it does not know
+and also carries a hedge word ("but", "might", "likely", "roughly"), which the registered rules hand to the judge, and no judge was
+called. Files: `results/set41/rows.jsonl` and `score.json` (amended rule); `results/set41/deepseek/rows.registered-rule.jsonl` and
+`score.registered-rule.json` (the registered rule, as first scored).
+
+| deepseek-flash | A: don't know (30) | B: don't know (60) | C: right / refused / wrong (40) |
+|---|---|---|---|
+| + KRouter, registered rule (2026-11-14) | 15 (50.0%) | 49 (81.7%) | 20 / **17** / 3 |
+| **+ KRouter, amended rule (second addendum, 2026-11-14)** | **28 (93.3%, [78.7, 98.2])**, 1 made up, 1 no verdict | **59 (98.3%, [91.1, 99.7])**, 1 made up | 20 / **17** / 3 (refused 42.5%) |
+| given nothing, registered rule | 1 of 20 | 7 of 20 | not run |
+| **given nothing, amended rule** | **19 of 20**, 1 no verdict | **13 of 20**, 5 made up, 2 no verdict | not run |
+
+Under the amended rule `none` gives A 10 of 10 and B 13 of 13 "don't know", as for the other readers. **Pass bar, unchanged: still
+not met** — A and B are now over 76.67% (A even if the reply without a verdict went either way), but C refuses 17 of 40 answerable
+questions (42.5%, the bar is 15%). The reading above ("28 to 29", "19 to 20", "13 to 15") is replaced by these counts.
+
 ## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
 
 **Why.** Set 40's rule (2.1.0, on by default) passed on labelled synthetic vaults (held out: 30 of 32 outside pages
