@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11; 2.1.1 on 2026-11-12. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -10,6 +10,12 @@ semantic versioning; what counts as the stable surface is listed in [`docs/DETAI
 notice, then the details.
 
 ## Unreleased
+
+Nothing yet.
+
+## 2.1.1 — 2026-11-12
+
+What you will notice: fewer of your own pages are taken for reference material (a page now needs a source address, an author or a byline, or to read as prose), and experience cards and hook trigger phrases you have not used for 60 days step back behind the ones in use. The index is rebuilt once on the first lookup (`recall-v19`).
 
 Experience cards and the prompt hook's trigger phrases that go unused for 60 days step back (`hot.py`). A card not adopted or seen again for `hot_days` days (being offered does not count; a card never used counts from its date), and a generated or learned trigger phrase that has not brought a page for as long (counted from the first night that saw it), sort after the others of their kind: in the session-start digest, among suggestions, among the hook's two pages a message. Nothing is deleted or changed, no approval is needed, a lookup by name still finds it, and one use makes it hot again at once. Rule pages, corrections, the alias table and its pages, and recall itself are not affected. `hot_days|60` / `hot_days|off` in `krouter-settings.psv` (or `KROUTER_HOT_DAYS`); the nightly report counts what went cold and what came back; `krouter why` marks a cold card; the checkup page now says which pages are and are not weighed down. `KROUTER_TODAY` sets "today" for tests. Registered counts unchanged.
 

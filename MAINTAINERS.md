@@ -18,7 +18,7 @@ adopting it, so this page says what you keep if the project stops, and how it co
 
 ## How it continues without its author
 
-- **Anyone can pin and fork.** `KROUTER_TAG=v2.1.0` (any tag) installs that release; a fork only has to change the
+- **Anyone can pin and fork.** `KROUTER_TAG=v2.1.1` (any tag) installs that release; a fork only has to change the
   repository URL in `scripts/install.sh` and `scripts/bootstrap.py`.
 - **If the repository goes quiet** (no commit, release or reply to issues for 90 days), the maintainer intends to
   either hand the repository to a contributor who asks for it in an issue, or archive it with a pointer at the fork

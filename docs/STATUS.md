@@ -1,4 +1,4 @@
-> **Current status of `main` (latest release v2.1.0, 2026-11-11). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.1.1, 2026-11-12). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
@@ -27,7 +27,10 @@
 > - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
 >   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
 >   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
-> - **Releases:** 2.1.0 (2026-11-11, the bullet after this one); 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
+> - **Releases:** 2.1.1 (2026-11-12): reference material is recognised on positive evidence (a source address, an
+>   author or byline; on one real vault the owner's pages taken for reference fell from 30 to 3 of 692, set 42), and
+>   experience cards and the hook's trigger phrases unused for 60 days step back (`hot_days`; rules are never weighed
+>   down). 2.1.0 (2026-11-11, the bullet after this one); 2.0.0 (2026-11-10): mention something and the agent recalls what was settled about it; lessons carry
 >   over between tasks and grow into skills; five pages with the ones the vault connects; a change of mind holds
 >   with no key; a lighter install that is English end to end; the router moved to `skill/krouter` (an older
 >   install's path is left as a link on upgrade). Minor releases at most once a week, patches when ready;
