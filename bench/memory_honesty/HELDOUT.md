@@ -1902,3 +1902,115 @@ default (on) is not changed by this set.
 | 2026-11-12 | Registered (above). The 2.1.0 rule on the whole vault, nothing changed: outside pages recognised 78 of 88 (research folders 74 of 84, clipper pages 4 of 4), own pages taken for reference 80 of 1 406 (5.7%). Dev half: 35 of 42 and 50 of 714; held-out half 43 of 46 and 30 of 692 (counted with the old rule, before any change). |
 | 2026-11-12 | **Dev half, said as it happened.** Of the 50 own pages misjudged, 42 had no positive evidence of someone else's writing at all (no source address, author or byline), mostly "article-like title, long, impersonal" with lists, not prose; the other 8 got their "source" from a `来源：` field naming the owner's own record (an episode number, an internal file), not an address. Every outside page recognised on dev had a source address in its first lines. Two changes, both on dev only: a source counts only with an address (a field label alone no longer does); a page with no positive evidence (address, author, byline) that is not narrative prose is never reference material, whatever its score, and does not count toward its folder's majority. Dev after: outside 35 of 42 (unchanged), own misjudged **3 of 714** (a source index page, two voice-over drafts written as prose); set 40's synthetic dev half 35 of 35, 0 of 41 (unchanged). Not tuned further. |
 | 2026-11-12 | **Held out, run once.** Own pages misjudged **3 of 692 (0.4%)** (old rule 30) — bar 2%: **met**. Outside pages recognised **43 of 46** (old rule 43) — met. Set 40's synthetic held-out half **30 of 32, 0 of 43** — met (unchanged). Whole vault: outside 78 of 88 (research 74 of 84), own misjudged 6 of 1 406 (0.4%). The three own pages still misjudged on the held-out half: a daily report with a byline-like line, a pattern note, a voice-over draft. **One real vault; the rule was tuned on half of it, so it may fit this vault better than others.** Index schema `recall-v19` (the stored scores change). |
+
+## Set 45: mention it the way people actually say it — does the prompt hook bring the right page when the message does not use the page's words? (registered 2026-11-13, before any case existed)
+
+**Why.** Sets 32 and 35 left the hook's own share small (7 of 24 mentions, set 32 held-out) and let the standing index
+carry the rest. A read-only look at one maintainer's machine (counts only, nothing from the vault or the messages kept)
+found why: of 233 messages the hook could match over three days, 1 contained any of the 1,101 trigger phrases word for
+word, while the full-text lookup was fairly sure of a page for 102 and the hook's 2.5-times margin gate let 1 through
+(39 of the 102 were log pages, which the hook never brings; 62 failed the margin). The trigger phrases are guesses at
+whole questions and a message has to repeat one exactly. This set is the yardstick for a change that adds short
+per-page keywords and lets them corroborate a full-text lookup that is right but not far enough ahead. It is registered
+before the change exists, so the change is built against a fixed line. **This registration also fixes what the
+current hook scores, from the same 240 messages, before anything is changed.**
+
+**What is measured.** The prompt hook alone, as `session_hook.py prompt` calls `recollect.recollect()`: no model call, no
+network, no key, at most two pages per message. Mechanical scoring, as in set 32 (`bench/subconscious/set45.py` runs any
+of the case files below; no scoring rule is new except the two added quiet kinds).
+Conditions, all on the same messages:
+
+- **C0** the hook as it is on `main` (`d7f409a`: routes alias, trigger, recall; the 2.5-times margin gate);
+- **C1** C0 plus a `keyword` route and a margin gate corroborated by keywords, with keywords computed from the pages
+  with no model (what a user with no key gets);
+- **C2** C1 plus keywords written by a model overnight (`deepseek-flash`, called directly with its own key).
+
+C1 and C2 do not exist yet. Their exact definition (the matching rule, the stoplist, the margin ladder's rungs) is
+written into this log before the first development run of each; nothing about them may change after the held-out half has
+been opened. The margin rungs on offer are: L0 2.5 (today), L1 2.0, L2 1.5, L3 1.5 with at least one page-specific
+keyword in the message, L4 1.15 with two page-specific keywords and the full-text lookup's top three agreeing.
+
+**Vault.** `bench/memory_honesty/vault3` (110 pages, 18 old/new pairs among the superseded pages) copied to a temporary
+folder with `bench/subconscious/overlay/` laid into `90 系统文件/`, exactly as sets 32 and 35. Second condition,
+**crowded** (the set 35 scale-check recipe: 240 synthetic distractor topics added, the standing index at its shipped
+budget so that most real topics are not listed): C0 and the chosen configuration are each run on it; reported, not a
+pass condition (the point of the hook's own lookup is topics the index cannot list).
+
+**Messages.** 240, written by Sonnet 5.5 in fresh Claude Code subagents that read one input file (every Handbook and
+团队手册 page of vault3 with its status and text, and the alias names of the pages that have them) and a brief of message
+*types and proportions*, and nothing else: not the trigger sidecars, not any keyword or stoplist, not the engine, not any
+earlier set's messages. **No real message is used, quoted, paraphrased or described beyond the proportions below;** the
+brief's three example shapes are invented. Not edited after they are written. The writer's raw files stay out of the
+repository. Per language (zh, en), 120 messages: **48 recall** (one live page should come up; at least 32 of them, two
+thirds, use none of the page's listed names, which the writer marks `named: false` and the scorer re-checks mechanically
+by looking for the alias names in the text), **48 quiet** (6 kinds × 8) and **24 changed** (a topic with an old and a
+new page; the new page expected, the old one recorded; the 18 pairs are reused, about 2.7 messages a pair, which is a
+limit). Quiet kinds: *unrelated*; *other_sense* (a name used in another sense); *common_word* (a name or key word as an
+everyday word in a longer sentence); *pasted* (a name only inside pasted code, a log, a diff or command output, at
+least half unfenced); **new: *near_topic*** (the same field as some page but about something the vault does not hold);
+**new: *ack*** (one or two words, "ok", "继续", "那就这样"). Length, by characters of the message, aimed for across all
+240: about 60% up to 30, 25% 31 to 100, 10% 101 to 500, 5% 501 to 2,000 (the proportions of what the hook could match
+on the machine above). The achieved proportions are reported.
+Split: seed **20261145**; within each language × kind × subkind × `named` stratum the cases are sorted by id, shuffled
+with `random.Random(20261145)` and cut in half, the odd case of the strata taken in a fixed order alternating between
+the sides; **development 120** (where the new configurations' rules and the margin rung may be chosen),
+**held-out 120**, sealed (SHA-256 of the text recorded in the log) and run once per configuration.
+
+**Choice rule, development only (fixed now).** Among a configuration's rungs and settings choose the one maximising
+`right − 3 × (quiet cases bringing anything + wrong pages) − 9 × old-page deliveries`, where right is recall plus changed
+cases bringing the expected page; ties to the tighter rung and the fewer routes. Any setting with an old-page delivery on
+development is out. The corroborating keyword route may be on in the default only if C1's development numbers do not
+fall below C0's on quiet cases or wrong pages.
+
+**Pass line (fixed now), held-out, hook alone, both languages together unless said; for the configuration proposed as the
+default, all must hold:**
+
+- recall: right **≥ 22 / 48**, **≥ 10 / 24 in each language**, and **at least 10 more right than C0 on the same messages**;
+- changed: the new page brought **≥ 12 / 24**;
+- quiet cases bringing anything **≤ 2 / 48**, and of the 8 *near_topic* ones **≤ 1**;
+- wrong pages (any page other than the expected one, on recall and changed cases) **≤ 2 / 72**; old-page deliveries **0**.
+
+**Not allowed to get worse (fixed now; each must hold or the new route ships off):**
+
+- **N1** set 32 held-out through the same hook (`bench/subconscious/run.py heldout`, a regression only: that half was
+  opened in 2026-11): quiet ≤ 1 / 24, wrong 0, old 0, recall ≥ 7 / 24, changed ≥ 4 / 12, and every case C0 gets right
+  today stays right;
+- **N2** set 35 held-out, the hook's share (`set45.py` on `set35_heldout`): quiet ≤ 1 / 24, wrong 0, old 0, recall right
+  ≥ C0's, changed right ≥ C0's; if any quiet or wrong delivery differs from C0's, both hosts are run again before any
+  default changes;
+- **N3** time: the whole hook process (`bench/subconscious/speed.py`) on a 10,000-page vault with 2,000 alias rows and
+  10,000 trigger lines plus the new tables: warm **p50 ≤ 130 ms and p95 ≤ 150 ms**; on vault3 warm p95 ≤ 130 ms; cold
+  p95 ≤ 330 ms; the index build at 10,000 pages no more than 2 s longer than C0's;
+- **N4** no model call and no network on any path of the hook (a test that makes any socket use fail);
+- **N5** every registered retrieval count (heldout3, LongMemEval, LoCoMo and the other numbers `tests/test_docs_status.py`
+  recomputes) **identical**: the keywords are not in the full-text ranking;
+- **N6** with no keyword file and the keyword route off, the hook's output on every message of sets 32, 35 and 45 is
+  **byte-identical** to C0's (difference 0).
+
+**Host layer.** Only for a configuration that passes the hook-alone lines and is proposed as the default. Haiku 5.5 and
+Sonnet 5.5 as Claude Code subagents, as in set 35 (batches with the session-start index at the top and the hook's note
+above a message when it brought one; fetches written as `CALL …`, resolved for real by `both.py`), on set 45's
+held-out half, once per host. Line, each host: recall right ≥ 36 / 48 and ≥ 16 / 24 in each language, changed ≥ 18 / 24,
+quiet loud ≤ 4 / 48, wrong pages ≤ 4, old-page deliveries 0.
+
+**Side evidence, not a pass condition.** The same lookup replayed in isolation on the maintainer's own messages of a fixed
+window (state and index copied to a temporary folder, `KROUTER_NO_QUERY_LOG=1`, in memory only): counts and proportions
+of messages, deliveries by route and, for the full-text lookup, how many are fairly sure and how many the margin gate
+holds back, in the table kept with the baseline (`subconscious-baseline`, same definitions at every step). It has no
+labels and so no right or wrong; a rise in how often the keyword route speaks is read as a warning, not a result.
+
+**Reported, whatever it shows:** per condition and rung the counts on development; held-out once; recall right split
+into what C0 already brought, what the keyword route brought alone and what the corrected margin brought alone; quiet
+cases by kind; the achieved length mix; time; the crowded run.
+
+**Known limits, said with any number.** The messages are written by a model of the family that also reads them as host
+and that wrote sets 32 and 35, not by people, and are not the maintainer's messages; vault3 is small, is known to the
+author of the matcher, and its 18 pairs are reused for 48 changed cases; one writer; C2's keywords come from one
+cheaper model, not from the channel a user would configure; the isolated replay on one machine has no labels and its
+messages are mostly about this project's own development.
+
+### Log, set 45
+
+| Date | Event |
+|---|---|
+| 2026-11-13 | Registered, before any case was written. Next free number: the other registrations are 1–42 on `main` and 43–44 on the unmerged branch `bench/fact-cards`. |
