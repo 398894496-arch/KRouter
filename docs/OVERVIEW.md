@@ -42,9 +42,8 @@ given five sessions, for 198** (12 more, paired 95% interval +3 to +21). On ques
 several sessions: **40 of 47 against 31**. These are retrieval numbers: what the pages hold, not what a model answers
 from them ([set 18](../bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)).
 
-**Answer accuracy for the five-page version has not been measured.** The run with a reader and a judge is registered
-([set 22](../bench/memory_honesty/HELDOUT.md#set-22-the-same-reader-five-pages-each--keyword-search-against-krouter-with-its-associative-path-registered-2026-11-10-before-any-reader-or-judge-call)) and was not run. The answer accuracy that was measured is the previous version's, which gave three
-pages (KRouter 1.3.0: 400 of 500 right with Claude Sonnet 5.5 as reader and judge, level with BM25's three); that
+**Answer accuracy for the five-page version** (KRouter 2.1.1's default pages, about 5.6 a question; [set 22](../bench/memory_honesty/HELDOUT.md#set-22-the-same-reader-five-pages-each--keyword-search-against-krouter-with-its-associative-path-registered-2026-11-10-before-any-reader-or-judge-call), Claude Sonnet 5.5 as reader and judge, 2026-11-13): **449 of 500 right (89.8%)**, held-out half 201 of 235 (85.5%). BM25 was not rerun at the same page count, so nothing is said about keyword search. The previous version, which gave three
+pages (KRouter 1.3.0), got 400 of 500, level with BM25's three; that
 table, with its version and page count, is in [`docs/NUMBERS.md`](NUMBERS.md#the-same-reader-three-pages-krouter-130).
 
 **Finding the page** (earlier three-page versions), scored the same way. LongMemEval (KRouter 1.1.1): an answer
