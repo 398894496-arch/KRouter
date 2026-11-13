@@ -204,12 +204,12 @@ def classify(con, vault: Path, rels: list[str]) -> dict[str, str]:
         if not auto:
             continue
         try:
-            rows = con.execute(f"SELECT rel, dir, score, hard FROM origin WHERE rel IN ({marks})", chunk).fetchall()
+            rows = con.execute(f"SELECT rel, dir, score, hard, why FROM origin WHERE rel IN ({marks})", chunk).fetchall()
         except Exception:  # noqa: BLE001 - 旧缓存没有这张表
             rows = []
-        bonus = dir_bonus(con, {d for _r, d, _s, _h in rows})
-        for rel, d, score, hard in rows:
-            if rel not in out and not hard and score + bonus.get(d, 0.0) >= AUTO_MIN:
+        bonus = dir_bonus(con, {r[1] for r in rows})
+        for rel, d, score, hard, why in rows:
+            if rel not in out and not hard and NO_EVIDENCE not in (why or "") and score + bonus.get(d, 0.0) >= AUTO_MIN:
                 out[rel] = "auto"
     return out
 
@@ -219,7 +219,8 @@ def dir_bonus(con, dirs: set[str]) -> dict[str, float]:
     -DIR_BONUS where almost none do."""
     out = {}
     for d in dirs:
-        n, soft = con.execute("SELECT count(*), sum(score >= ?) FROM origin WHERE dir=? AND hard=''", (SOFT, d)).fetchone()
+        n, soft = con.execute("SELECT count(*), sum(score >= ? AND instr(why, ?) = 0) FROM origin WHERE dir=? AND hard=''",
+                              (SOFT, NO_EVIDENCE, d)).fetchone()
         if n and n >= DIR_MIN:
             share = (soft or 0) / n
             out[d] = DIR_BONUS if share >= DIR_SHARE else 0.0  # 只加不减：一个目录里混着两类时，资料页照样逐页认
@@ -342,6 +343,8 @@ LATIN_WORD = re.compile(r"[A-Za-z]{2,}")
 LONG_WORDS = 400    # 大致的词数到这个算长篇
 NARRATIVE_WORDS = 150
 AUTO_READ = 20000   # 判断来历只读每页前这么多字符
+POSITIVE = {"source", "author", "byline"}  # 别人写的正面证据
+NO_EVIDENCE = "-no-evidence"  # 没有正面证据、也不是成段叙述：不算资料，分数再高也不算
 AUTO_MIN = 3.0      # 分数到这个才算资料（第 40 套开发部分定：你自己的页开发部分最高 1.5）
 DIR_SHARE = 0.6     # 同目录里像资料的页占这么多（至少 DIR_MIN 页），每页再加 DIR_BONUS
 DIR_MIN = 3
@@ -374,7 +377,9 @@ def page_origin(rel: str, text: str, vault_lang: str, aliased: bool = False) -> 
     lines = [ln for ln in body.splitlines() if ln.strip()]
     edge = "\n".join(lines[:8] + lines[-5:])
     why, score = [], 0.0
-    if (SOURCE_FM.search(head) and URL_RE.search(head)) or SOURCE_LINE.search(edge) or \
+    # 来源要有网址：`来源：EP07`、`source: episodes/ep07.json` 这种指向自己文件的字段不算（第 42 套，真实库）
+    src_line = any(SOURCE_LINE.search(ln) and URL_RE.search(ln) for ln in lines[:8] + lines[-5:])
+    if (SOURCE_FM.search(head) and URL_RE.search(head)) or src_line or \
             any(URL_RE.search(ln) and len(ln.strip()) < 200 for ln in lines[:4]):
         score += 3.5
         why.append("source")
@@ -417,6 +422,10 @@ def page_origin(rel: str, text: str, vault_lang: str, aliased: bool = False) -> 
     if lang and vault_lang and lang != vault_lang:
         score += 1.5
         why.append("other-language")
+    if not set(why) & POSITIVE and "narrative" not in why:
+        # 没有任何别人写的正面证据（网址来源、作者、署名），也不是成段的叙述：长、少第一人称、没有决定结构都不够，
+        # 自己流水线生成的记录、日报、交接页正是这个样子（第 42 套）。目录多数也不能把它抬过门槛
+        why.append(NO_EVIDENCE)
     return round(score, 2), ",".join(why), ""
 
 

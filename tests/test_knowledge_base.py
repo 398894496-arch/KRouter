@@ -321,3 +321,20 @@ def test_nightly_counts_recognised_reference_pages(vault, tmp_path, monkeypatch)
     assert kb.auto_news(vault)[1] == []  # 第二次：没有新认出的
     lines = nightly.kb_lines(vault)
     assert lines and "比上次新增 0 页" in lines[0]
+
+
+def test_own_pipeline_record_without_evidence_is_not_reference(vault):
+    """Set 42: a long, impersonal record the owner's pipeline wrote, with a `来源：` field naming its own record and
+    lists rather than prose, is not reference material; the same text with a source address is."""
+    record = ("# Episode closure record EP07 with cohort separation\n\n- **来源：** EP07\n- status_of_run: closed\n\n"
+              + "".join(f"- metric_{i}: value {i} recorded by the nightly job for the cohort split and the retention curve\n"
+                        for i in range(80)))
+    _write(vault, "Projects/pipeline/generated/FB-EP07.md", record)
+    _write(vault, "Projects/pipeline/generated/FB-EP08.md", record.replace("EP07", "EP08"))
+    _write(vault, "Projects/pipeline/generated/FB-EP09.md", record.replace("EP07", "EP09"))
+    ri.recall(vault, "cohort separation")
+    assert kb.reason(vault, "Projects/pipeline/generated/FB-EP07.md") == ""
+    sourced = record.replace("- **来源：** EP07", "Source: https://example.org/report")
+    _write(vault, "Projects/pipeline/generated/report.md", sourced)
+    ri.recall(vault, "cohort separation")
+    assert kb.reason(vault, "Projects/pipeline/generated/report.md") == "auto"

@@ -75,7 +75,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 - 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
 - 2.0 没有在 Windows 上实测。
 - 问的是记忆里某件事的近邻时，它还是会作答，多半是 `low` 或 `medium`。段落级证据（第 39 套）在 LoCoMo 上多拒了（223 道里 18 → 61），在 LongMemEval 上没有（30 道里 9 → 10），所以默认关。
-- 参考资料不用声明，逐页自动认（第 40 套：留出的 32 篇外来资料认出 30 篇，你自己的 43 页误判 0 页），只在合成库上测过；认错了用 `krouter kb mine 页面` 改。
+- 参考资料不用声明，逐页自动认；在一个真实库上（用它的一半调过）主人自己的页误判 0.4%（第 40、42 套）；认错了用 `krouter kb mine 页面` 改。
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · English: [`README.md`](README.md)
 

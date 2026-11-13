@@ -1748,3 +1748,34 @@ answerable judge prompt. The main columns stay the registered rule's; the side c
 **Reported, whatever it shows:** the three counts for A, B and C, by receipt state, the two side columns, who labelled how many, and the three readers side by side.
 
 **Status: not run when 2.1.0 was released (2026-11-11).** No Opus reply exists, and no Opus number appears anywhere in the docs.
+
+## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
+
+**Why.** Set 40's rule (2.1.0, on by default) passed on labelled synthetic vaults (held out: 30 of 32 outside pages
+recognised, 0 of 43 own pages misjudged), but a read-only check on one real vault found about 80 of the owner's own
+pages taken for reference material (about 5.8%; the bar is 2%): pages the owner's own pipelines generate (records with
+English field names, daily reports, topic drafts, hand-over notes) score 3.0–5.5 on "long", "narrative",
+"impersonal", "no decision structure", with no source, byline or clipping marker at all. This set changes the rule so
+that a page is reference material only on **positive evidence** of someone else's writing, and measures it.
+
+**Data.** One real vault (about 1 500 indexed pages), read on a temporary copy without its declaration file, settings
+file and git folder; caches and state in a temporary folder, no query log; the copy is deleted afterwards. Labels are
+by folder, not by reading every page: *outside* = pages under the vault's research folders (`…/sources/`,
+`…/community_*`, 84 pages) plus pages with clipper frontmatter (4); *own* = every other page (12 sampled before this
+registration, 12 own; the rest not checked one by one). Pages are split into *dev* and *held-out* halves by a hash of
+the path (`set42:` + path); rule and threshold are set on dev only; the held-out half is scored once. Reports give
+counts and at most three page paths, never page text, and do not say whose vault it is. **Said plainly:** there is one
+real vault; whatever is tuned on its dev half may fit that vault and not others.
+
+**Pass bar, fixed now.** On the held-out half: (1) own pages misjudged at most 2%; (2) outside pages recognised not
+fewer than the 2.1.0 rule's count on the same half minus 2; (3) set 40's synthetic held-out half not worse than
+30 of 32 recognised and 0 of 43 misjudged. If (1) fails, the report says by how much and in which kind of page; the
+default (on) is not changed by this set.
+
+### Log, set 42
+
+| Date | Event |
+|---|---|
+| 2026-11-12 | Registered (above). The 2.1.0 rule on the whole vault, nothing changed: outside pages recognised 78 of 88 (research folders 74 of 84, clipper pages 4 of 4), own pages taken for reference 80 of 1 406 (5.7%). Dev half: 35 of 42 and 50 of 714; held-out half 43 of 46 and 30 of 692 (counted with the old rule, before any change). |
+| 2026-11-12 | **Dev half, said as it happened.** Of the 50 own pages misjudged, 42 had no positive evidence of someone else's writing at all (no source address, author or byline), mostly "article-like title, long, impersonal" with lists, not prose; the other 8 got their "source" from a `来源：` field naming the owner's own record (an episode number, an internal file), not an address. Every outside page recognised on dev had a source address in its first lines. Two changes, both on dev only: a source counts only with an address (a field label alone no longer does); a page with no positive evidence (address, author, byline) that is not narrative prose is never reference material, whatever its score, and does not count toward its folder's majority. Dev after: outside 35 of 42 (unchanged), own misjudged **3 of 714** (a source index page, two voice-over drafts written as prose); set 40's synthetic dev half 35 of 35, 0 of 41 (unchanged). Not tuned further. |
+| 2026-11-12 | **Held out, run once.** Own pages misjudged **3 of 692 (0.4%)** (old rule 30) — bar 2%: **met**. Outside pages recognised **43 of 46** (old rule 43) — met. Set 40's synthetic held-out half **30 of 32, 0 of 43** — met (unchanged). Whole vault: outside 78 of 88 (research 74 of 84), own misjudged 6 of 1 406 (0.4%). The three own pages still misjudged on the held-out half: a daily report with a byline-like line, a pattern note, a voice-over draft. **One real vault; the rule was tuned on half of it, so it may fit this vault better than others.** Index schema `recall-v19` (the stored scores change). |

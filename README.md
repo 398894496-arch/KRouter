@@ -113,8 +113,8 @@ default) treats `related` as `none`; on a memory of session pages that means it 
 - Windows was not tested for 2.0.
 - A question about something near what your memory holds still gets an answer, usually at `low` or `medium`. Paragraph
   evidence (set 39) refuses more on LoCoMo (18 → 61 of 223) but not on LongMemEval (9 → 10 of 30): off by default.
-- Reference material is recognised page by page without declaring (set 40: 30 of 32 held-out articles, 0 of 43 of
-  your own pages taken for one), on a synthetic vault only; `krouter kb mine PAGE` corrects a wrong call.
+- Reference material is recognised page by page without declaring; on one real vault, tuned on half of it, 0.4% of
+  the owner's pages were taken for reference (sets 40, 42); `krouter kb mine PAGE` corrects a wrong call.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 

@@ -11,6 +11,8 @@ notice, then the details.
 
 ## Unreleased
 
+Reference material is recognised on positive evidence (set 42). On a real vault 2.1.0 took about 6% of the owner's own pages for reference material: records, daily reports and hand-over notes their own pipelines write (long, impersonal, English field names, lists, no decisions). Now a source counts only with an address (a `来源：` field naming your own record does not), and a page with no source address, author or byline that is not narrative prose is never reference material and does not count toward its folder's majority. Held-out half of that vault: own pages misjudged 30 → 3 of 692, outside pages recognised 43 → 43 of 46; set 40's synthetic held-out half unchanged. One vault, tuned on half of it. Index schema `recall-v19` (rebuilt once on the first lookup).
+
 Docs: the ten-project comparison table (what each project's own page says, no ranking) is now on the README's front page, in both languages, with links from DETAILS and the README's document list; the full version stays in `docs/COMPARE-ALL.md`.
 
 Docs: four places on the pages that disagreed now agree: one latency statement with its conditions (the registered set 34 and set 39 numbers), the opening's "no key, no server" limited to personal use, the team section's "tested on one machine only" moved to its first sentence, and "every message looked up" qualified by the hosts that have a per-message hook (not Cursor). No registered number changed.
