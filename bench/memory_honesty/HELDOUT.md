@@ -1840,6 +1840,19 @@ know". Of the 2 C replies the rules labelled `refused`, neither contains the rig
 **Read with.** One run, small samples (30 / 60 / 40). With KRouter, DeepSeek's weak point here is the answerable side: it says the
 notes do not have the answer for 17 of 40 questions whose answer is on the pages (Haiku 11, Sonnet 7, Opus 5).
 
+### Set 41, second addendum: typographic apostrophes read as straight ones (registered 2026-11-14, after the DeepSeek result above was seen)
+
+**Why, and when.** Added on 2026-11-14 **after** the DeepSeek labels were seen, at the maintainer's call ("补"): the registered
+"don't know" and hedge patterns match the apostrophe U+0027 only ("don't", "n't"); DeepSeek's replies write U+2019 ("don’t") in 104
+of 170, so a reply that says the memory has nothing is not seen as saying so. **The change, exactly:** before the two patterns
+`IDK` and `HEDGE` are matched, the reply's typographic apostrophes — U+2019, U+2018, U+02BC, U+201B, U+FF07 — are replaced by
+U+0027. Nothing else changes: not the patterns, not the question-mark rule, not the answer match for C, not the judge prompts, not
+the main labels' names, not the pass bar (A and B at least 76.67% "don't know", C at most 15% refused). Every row is labelled
+again under the amended rule, and **the 430 rows of Haiku, Sonnet and Opus must come out exactly as before** (none of their
+replies holds any of those characters); if one changes, the run stops and that is reported. A reply the amended rules no longer
+settle has no verdict (no model is called for this addendum) and is reported as such. The labels under the registered rule are
+kept beside the new ones, each named by its rule and date.
+
 ## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
 
 **Why.** Set 40's rule (2.1.0, on by default) passed on labelled synthetic vaults (held out: 30 of 32 outside pages
