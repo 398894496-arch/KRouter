@@ -75,8 +75,8 @@ session the answer needs for **210 of 235 questions, keyword search 198; multi-s
 
 ### The lessons carry over
 
-A lesson from one task is offered on another in the same situation, and lessons that keep coming back grow into
-skills the agent fetches when they fit. Held out: the right lesson for **14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku
+A lesson from one task is offered on another in the same situation; lessons that keep coming back grow into skills,
+and lessons or hook triggers unused for 60 days step back (`hot_days`, never your rules). Held out: the right lesson for **14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku
 5.5)** tasks with a new subject, **14 / 14 and 13 / 14** in English (sets 15, 16); skills drafted right 16 / 16 and
 fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)).
 
@@ -113,8 +113,8 @@ default) treats `related` as `none`; on a memory of session pages that means it 
 - Windows was not tested for 2.0.
 - A question about something near what your memory holds still gets an answer, usually at `low` or `medium`. Paragraph
   evidence (set 39) refuses more on LoCoMo (18 → 61 of 223) but not on LongMemEval (9 → 10 of 30): off by default.
-- Reference material is recognised page by page without declaring (set 40: 30 of 32 held-out articles, 0 of 43 of
-  your own pages taken for one), on a synthetic vault only; `krouter kb mine PAGE` corrects a wrong call.
+- Reference material is recognised page by page without declaring; on one real vault, tuned on half of it, 0.4% of
+  the owner's pages were taken for reference (sets 40, 42); `krouter kb mine PAGE` corrects a wrong call.
 
 [![ci](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml/badge.svg)](https://github.com/398894496-arch/KRouter/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/398894496-arch/KRouter)](https://github.com/398894496-arch/KRouter/releases/latest) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) · 中文：[`README.zh.md`](README.zh.md)
 
@@ -350,7 +350,7 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 
 **Maintenance.** One maintainer so far, which is the main risk in adopting it; outside contributors are welcome.
 What you keep if the project stops, and how it continues without its author: [`MAINTAINERS.md`](MAINTAINERS.md).
-Minor releases come at most once a week and patches when ready; `KROUTER_TAG=v2.1.0` (any tag) pins one. What counts
+Minor releases come at most once a week and patches when ready; `KROUTER_TAG=v2.1.1` (any tag) pins one. What counts
 as the stable surface: [`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions). Bugs and
 questions: [issues](https://github.com/398894496-arch/KRouter/issues); security reports: [`SECURITY.md`](SECURITY.md).
 

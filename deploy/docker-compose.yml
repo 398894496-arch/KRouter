@@ -3,7 +3,7 @@
 # repositories into ./vaults/team and ./vaults/ops, then `docker compose up -d`. See docs/TEAM.md.
 services:
   krouter:
-    image: ghcr.io/398894496-arch/krouter:v2.1.0
+    image: ghcr.io/398894496-arch/krouter:v2.1.1
     restart: unless-stopped
     ports: ["8787:8787"]
     entrypoint: ["python", "/app/skill/krouter/scripts/mcp_server.py", "--http", "0.0.0.0:8787"]

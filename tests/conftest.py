@@ -24,3 +24,5 @@ os.environ["KROUTER_NO_MCP"] = "1"
 os.environ["KROUTER_NO_HOOKS"] = "1"  # 也不许往宿主的 ~/.codex/hooks.json、~/.cursor/hooks.json 里加钩子
 os.environ["KROUTER_CLAUDE_MEM_DB"] = str(_ISOLATED / "no-claude-mem.db")
 os.environ["KROUTER_CLAUDE_DESKTOP_RUNNING"] = "0"  # 本机开着的 Claude Desktop 不影响测试；要测"开着"的测试自己设 1
+# 冷热（hot.py）按"今天"算：测试固定今天，免得过两个月后固定的摘要、提示词因为卡变冷而换了顺序
+os.environ.setdefault("KROUTER_TODAY", "2026-11-12")

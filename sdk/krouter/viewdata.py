@@ -110,6 +110,19 @@ _EN = [
      "yesterday's redacted session excerpts. KROUTER_NIGHTLY=0 turns it off; run.sh --dry-run shows what would be sent first."),
     (re.compile(r"^没有可用的模型通道（.*?），这些功能没开：(.*?)。召回.*$"), r"No model lane (no API key and no logged-in agent command line): off: \1. "
      "Recall, correction capture, the experience digest and cards and notes the agent writes itself work as usual."),
+    (re.compile(r"^冷热（(\d+) 天没被用到.*?）：经验卡 (\d+)/(\d+) 张是冷的（本次新降 (\d+)、恢复 (\d+)），"
+                r"钩子触发词 (\d+)/(\d+) 条是冷的（本次新降 (\d+)、恢复 (\d+)）。$"),
+     r"Hot and cold (unused for \1 days sorts after the rest; nothing deleted or changed; one use restores it; rule pages, "
+     r"corrections and the alias table untouched): experience cards \2/\3 cold (\4 new, \5 back), prompt-hook trigger "
+     r"phrases \6/\7 cold (\8 new, \9 back)."),
+    (re.compile(r"^冷热：关着.*$"), "Hot and cold: off (`hot_days|off` in krouter-settings.psv)."),
+    (re.compile(r"^- 新降权的经验卡(.*)$"), r"- card gone cold \1"),
+    (re.compile(r"^- 恢复的经验卡(.*)$"), r"- card back in use \1"),
+    (re.compile(r"^- 新降权的触发词 (.*)$"), r"- trigger phrase gone cold \1"),
+    (re.compile(r"^- 恢复的触发词 (.*)$"), r"- trigger phrase back in use \1"),
+    (re.compile(r"^自动认出的参考资料（.*?）：共 (\d+) 页，比上次新增 (\d+) 页。.*$"),
+     r"Reference material recognised automatically: \1 pages, \2 new since last time. "
+     "`krouter kb mine PAGE` if one is yours; `krouter kb add` for a whole folder."),
     (re.compile(r"^借用已登录的 agent 命令行（订阅额度）：(.*?)，今天 (\d+) / (\d+) 次，每次见 (`.*?`)。$"),
      r"Borrowing the logged-in agent command line (subscription quota): \1, \2 / \3 calls today, each one logged in \4."),
 ]
@@ -396,7 +409,7 @@ class Store:
             used = exp.usage(self.vault)
         except Exception:  # noqa: BLE001
             cards, used = [], {}
-        for rank, c in enumerate(exp.ranked(cards, used)):
+        for rank, c in enumerate(exp.ranked(cards, used, self.vault)):
             u = used.get(c["id"], {})
             out["cards"].append({
                 "id": c["id"], "rel": c["rel"], "title": c["title"], "lesson": c["lesson"], "when": c["when"],

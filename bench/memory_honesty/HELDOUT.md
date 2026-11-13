@@ -1764,3 +1764,34 @@ By state (Opus): `none` — A 10 / 10 and B 13 / 13 said so; `related` — A 14 
 **Side columns, registered before the run, listed next to the main labels (the main labels stand):** of Opus's 13 B replies labelled `made_up`, the judge found **13 point out that the notes say it of someone else (Q) and none asserts an answer for the person asked (P)**; read that way B is 60 of 60. Of the 3 C replies the rules labelled `refused`, **1 in fact contains the right answer** (2 do not): refused 4 of 40 (10%), right 31, on that reading. For Haiku and Sonnet the same two checks were made after the fact and are listed in the post-hoc check above: Q 4 / P 1 and Q 20 / P 2; the rules' 4 and 3 refusals gave 3 and 2 with the right answer.
 
 **Read with.** Opus's A column is *lower* than the other two readers' (24 against 29 and 28). Reading its 6 `made_up` A replies after the scoring (not a registered label; the registered labels stand): two answer the half of a two-part question that the pages support (tomatoes; the headphones) and say the other half is not there, one corrects the question's role title and gives the numbers the notes have, one infers a university from two notes and says no single note states it, one lists what the notes do have for a taxi-against-bus question (an assistant's estimate included), and one says the notes do not mention table tennis and quotes the tennis they do mention. So several are partial or hedged answers that the registered rules (no refusal phrase and no question mark, or the judge's letter) count as made up. No claim here that one reader is better than another: one run each, 30 / 60 / 40 questions, a different judge for Opus (Sonnet) than for Sonnet (Haiku). Deviations from the registration: none. Prompts: 130 reader, 51 judge, 16 for the side columns. Files: the same `results/set41/` (`rows.jsonl` holds every reply of all three readers).
+
+## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
+
+**Why.** Set 40's rule (2.1.0, on by default) passed on labelled synthetic vaults (held out: 30 of 32 outside pages
+recognised, 0 of 43 own pages misjudged), but a read-only check on one real vault found about 80 of the owner's own
+pages taken for reference material (about 5.8%; the bar is 2%): pages the owner's own pipelines generate (records with
+English field names, daily reports, topic drafts, hand-over notes) score 3.0–5.5 on "long", "narrative",
+"impersonal", "no decision structure", with no source, byline or clipping marker at all. This set changes the rule so
+that a page is reference material only on **positive evidence** of someone else's writing, and measures it.
+
+**Data.** One real vault (about 1 500 indexed pages), read on a temporary copy without its declaration file, settings
+file and git folder; caches and state in a temporary folder, no query log; the copy is deleted afterwards. Labels are
+by folder, not by reading every page: *outside* = pages under the vault's research folders (`…/sources/`,
+`…/community_*`, 84 pages) plus pages with clipper frontmatter (4); *own* = every other page (12 sampled before this
+registration, 12 own; the rest not checked one by one). Pages are split into *dev* and *held-out* halves by a hash of
+the path (`set42:` + path); rule and threshold are set on dev only; the held-out half is scored once. Reports give
+counts and at most three page paths, never page text, and do not say whose vault it is. **Said plainly:** there is one
+real vault; whatever is tuned on its dev half may fit that vault and not others.
+
+**Pass bar, fixed now.** On the held-out half: (1) own pages misjudged at most 2%; (2) outside pages recognised not
+fewer than the 2.1.0 rule's count on the same half minus 2; (3) set 40's synthetic held-out half not worse than
+30 of 32 recognised and 0 of 43 misjudged. If (1) fails, the report says by how much and in which kind of page; the
+default (on) is not changed by this set.
+
+### Log, set 42
+
+| Date | Event |
+|---|---|
+| 2026-11-12 | Registered (above). The 2.1.0 rule on the whole vault, nothing changed: outside pages recognised 78 of 88 (research folders 74 of 84, clipper pages 4 of 4), own pages taken for reference 80 of 1 406 (5.7%). Dev half: 35 of 42 and 50 of 714; held-out half 43 of 46 and 30 of 692 (counted with the old rule, before any change). |
+| 2026-11-12 | **Dev half, said as it happened.** Of the 50 own pages misjudged, 42 had no positive evidence of someone else's writing at all (no source address, author or byline), mostly "article-like title, long, impersonal" with lists, not prose; the other 8 got their "source" from a `来源：` field naming the owner's own record (an episode number, an internal file), not an address. Every outside page recognised on dev had a source address in its first lines. Two changes, both on dev only: a source counts only with an address (a field label alone no longer does); a page with no positive evidence (address, author, byline) that is not narrative prose is never reference material, whatever its score, and does not count toward its folder's majority. Dev after: outside 35 of 42 (unchanged), own misjudged **3 of 714** (a source index page, two voice-over drafts written as prose); set 40's synthetic dev half 35 of 35, 0 of 41 (unchanged). Not tuned further. |
+| 2026-11-12 | **Held out, run once.** Own pages misjudged **3 of 692 (0.4%)** (old rule 30) — bar 2%: **met**. Outside pages recognised **43 of 46** (old rule 43) — met. Set 40's synthetic held-out half **30 of 32, 0 of 43** — met (unchanged). Whole vault: outside 78 of 88 (research 74 of 84), own misjudged 6 of 1 406 (0.4%). The three own pages still misjudged on the held-out half: a daily report with a byline-like line, a pattern note, a voice-over draft. **One real vault; the rule was tuned on half of it, so it may fit this vault better than others.** Index schema `recall-v19` (the stored scores change). |

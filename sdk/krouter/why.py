@@ -138,6 +138,7 @@ TEXT = {
         "cards_off": "Experience cards are switched off (KROUTER_EXPERIENCE=0).",
         "cards_overlap": "Cards whose situation shares words with this question (a hint, not a rule): ",
         "card_line": "〔{id}〕 {lesson} (shares: {words})",
+        "card_cold": " — cold: not adopted or seen again for {days}+ days, so it sorts after the cards in use",
         "cards_source": "Cards taken from a page shown above: ",
         "cards_nothing": "No card's situation reads like this question.",
         "none": "none",
@@ -253,6 +254,7 @@ TEXT = {
         "cards_off": "经验卡功能关着（KROUTER_EXPERIENCE=0）。",
         "cards_overlap": "处境和这个问题共有词的卡（提示，不是规则）：",
         "card_line": "〔{id}〕{lesson}（共有：{words}）",
+        "card_cold": "——冷：{days} 天以上没被采用、也没再遇到，排在用着的卡后面",
         "cards_source": "出处是上面某一页的卡：",
         "cards_nothing": "没有哪张卡的处境读起来像这个问题。",
         "none": "无",
@@ -516,7 +518,10 @@ def explain(vault, question: str, lang: str | None = None, refresh: bool = True,
 
 def _cards(m, vault: Path, q: str, shown: list[str]) -> dict:
     exp = m.experience
-    out: dict = {"on": exp.digest_on(), "total": 0, "digest_max": exp.DIGEST_MAX_LINES, "overlap": [], "from_pages": []}
+    import hot
+
+    out: dict = {"on": exp.digest_on(), "total": 0, "digest_max": exp.DIGEST_MAX_LINES, "overlap": [], "from_pages": [],
+                 "hot_days": hot.days(vault)}
     try:
         cards = exp.load_cards(vault)
     except Exception:  # noqa: BLE001
@@ -527,7 +532,8 @@ def _cards(m, vault: Path, q: str, shown: list[str]) -> dict:
     qw = exp.words(q)
     for c in exp.suggest(vault, q, limit=3, cards=cards):
         shared = [w for w in exp.words(c["matched"]) if w in qw]
-        out["overlap"].append({"id": c["id"], "rel": c["rel"], "lesson": c["lesson"] or c["title"], "words": shared})
+        out["overlap"].append({"id": c["id"], "rel": c["rel"], "lesson": c["lesson"] or c["title"], "words": shared,
+                               "cold": bool(c.get("cold"))})
     stems = {Path(r).stem: r for r in shown}
     for c in cards:
         src = c["source"] or ""
@@ -734,7 +740,9 @@ def blocks(e: dict) -> list[dict]:
         li(t(L, "cards_digest", n=cd["total"], k=cd["digest_max"]))
         sep = ", " if L == "en" else "、"
         for c in cd["overlap"]:
-            li(t(L, "cards_overlap") + t(L, "card_line", id=c["id"], lesson=c["lesson"], words=sep.join(c["words"])), 1, c["rel"])
+            cold = t(L, "card_cold", days=cd.get("hot_days") or "") if c.get("cold") else ""
+            li(t(L, "cards_overlap") + t(L, "card_line", id=c["id"], lesson=c["lesson"], words=sep.join(c["words"])) + cold,
+               1, c["rel"])
         for c in cd["from_pages"]:
             li(t(L, "cards_source") + f"〔{c['id']}〕 {c['lesson']} ← {c['page']}", 1, c["rel"])
         if not cd["overlap"] and not cd["from_pages"]:
