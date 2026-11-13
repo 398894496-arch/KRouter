@@ -47,7 +47,7 @@ spec:
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true}
       containers:
         - name: krouter
-          image: ghcr.io/398894496-arch/krouter:v2.1.1
+          image: ghcr.io/398894496-arch/krouter:v2.1.2
           command: ["python", "/app/skill/krouter/scripts/mcp_server.py", "--http", "0.0.0.0:8787"]
           args: ["--bank", "team=/vault/team", "--bank-token", "team=/tokens/team",
                  "--bank", "ops=/vault/ops", "--bank-token", "ops=/tokens/ops",

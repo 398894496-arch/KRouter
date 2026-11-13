@@ -147,7 +147,7 @@ export class KRouter {
   #init() {
     this.ready ??= (async () => {
       const r = await this.#call("initialize", { protocolVersion: PROTOCOL, capabilities: {},
-        clientInfo: { name: "krouter-js", version: "2.1.1" } });
+        clientInfo: { name: "krouter-js", version: "2.1.2" } });
       await this.t.send({ jsonrpc: "2.0", method: "notifications/initialized" });
       return r;
     })();

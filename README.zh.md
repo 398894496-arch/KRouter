@@ -72,7 +72,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 - 这些评测里，宿主是把要取哪一页写出来，没有真的去调工具。
 - 真实会话里，宿主几乎不会主动写经验卡（第 30、31 套：两个宿主都是 4 次里 0 次）；学习靠钩子和夜间整理。
 - Cursor 上每句话那一层用不了（它的钩子加不了上下文），只有会话开始的索引。
-- 5 页版本的答题正确率没有重跑（第 22 套已登记，没有跑）。
+- 2.1.1 交页下的答题正确率（第 22 套：500 道答对 449 道，留出的一半 235 道答对 201 道）没有在同样页数下重跑纯关键词检索作对照。
 - 2.0 没有在 Windows 上实测。
 - 问的是记忆里某件事的近邻时，它还是会作答，多半是 `low` 或 `medium`。段落级证据（第 39 套）在 LoCoMo 上多拒了（223 道里 18 → 61），在 LongMemEval 上没有（30 道里 9 → 10），所以默认关。
 - 参考资料不用声明，逐页自动认；在一个真实库上（用它的一半调过）主人自己的页误判 0.4%（第 40、42 套）；认错了用 `krouter kb mine 页面` 改。
@@ -231,7 +231,7 @@ krouter view --demo             # 在一个用完即删的样例记忆库上看�
 
 ## 用数字说话
 
-按基准作者自己的标注机械评分、不调模型：LongMemEval 留出的一半里，KRouter 给的 5 页把答案需要的会话交齐的是 **235 道里 210 道，纯关键词检索 198 道**（跨多个会话的题 47 道里 40 道对 31 道；[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。5 页版本的答题正确率还没测（第 22 套）；3 页时（1.3.0）是 500 道答对 400 道，和 BM25 打平。我们自己的 200 道留出题：KRouter 引错 26%，claude-mem 64%，basic-memory 78%；给纯检索加上 KRouter 那两条规则就和它打平。整节原文和弱点：[`docs/OVERVIEW.zh.md`](docs/OVERVIEW.zh.md#用数字说话)；每个数字和方法：[`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
+按基准作者自己的标注机械评分、不调模型：LongMemEval 留出的一半里，KRouter 给的 5 页把答案需要的会话交齐的是 **235 道里 210 道，纯关键词检索 198 道**（跨多个会话的题 47 道里 40 道对 31 道；[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。按 2.1.1 默认交页（平均每题约 5.6 页；第 22 套，Sonnet 5.5 读题和评分）的答题正确率是 **500 道答对 449 道**（89.8%），留出的一半 235 道答对 201 道（85.5%）；交 3 页的 1.3.0 是 400 道。纯 BM25 没有在同样页数下重跑。我们自己的 200 道留出题：KRouter 引错 26%，claude-mem 64%，basic-memory 78%；给纯检索加上 KRouter 那两条规则就和它打平。整节原文和弱点：[`docs/OVERVIEW.zh.md`](docs/OVERVIEW.zh.md#用数字说话)；每个数字和方法：[`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
 
 ## 自己复现
 
@@ -266,6 +266,6 @@ python3 bench/locomo/locomo.py run --system krouter && python3 bench/locomo/loco
 - [`ROADMAP.zh.md`](ROADMAP.zh.md)：下一步打算做什么，不写日期
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md)：适合新人的 issue 都打了标签
 
-**维护。** 目前只有一个维护者，这是采用它最大的风险，欢迎外部贡献。项目停了你还剩什么、没有作者时怎么继续：[`MAINTAINERS.md`](MAINTAINERS.md)。小版本每周最多一个，补丁随时发；`KROUTER_TAG=v2.1.1`（换成任何 tag）可以固定版本。哪些算稳定接口：[`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions)。问题和 bug 提 [issue](https://github.com/398894496-arch/KRouter/issues)；安全问题见 [`SECURITY.md`](SECURITY.md)。
+**维护。** 目前只有一个维护者，这是采用它最大的风险，欢迎外部贡献。项目停了你还剩什么、没有作者时怎么继续：[`MAINTAINERS.md`](MAINTAINERS.md)。小版本每周最多一个，补丁随时发；`KROUTER_TAG=v2.1.2`（换成任何 tag）可以固定版本。哪些算稳定接口：[`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions)。问题和 bug 提 [issue](https://github.com/398894496-arch/KRouter/issues)；安全问题见 [`SECURITY.md`](SECURITY.md)。
 
 *原名 DSH-KRouter，旧链接、旧 clone 地址和旧安装命令都会自动跳转。* MIT 协议。

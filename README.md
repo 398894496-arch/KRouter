@@ -109,7 +109,7 @@ default) treats `related` as `none`; on a memory of session pages that means it 
 - In real sessions hosts almost never write a lesson card on their own (0 of 4 on both hosts, sets 30 and 31):
   learning comes from the hooks and the nightly run.
 - On Cursor the per-message layer is not available (its hook cannot add context); it gets the session-start index.
-- Answer accuracy has not been rerun for the five-page version (set 22 is registered, not run).
+- Answer accuracy at 2.1.1's pages (set 22: 449 of 500, held-out half 201 of 235) has no keyword-search row at the same page count.
 - Windows was not tested for 2.0.
 - A question about something near what your memory holds still gets an answer, usually at `low` or `medium`. Paragraph
   evidence (set 39) refuses more on LoCoMo (18 → 61 of 223) but not on LongMemEval (9 → 10 of 30): off by default.
@@ -306,7 +306,7 @@ vault, history included; KRouter itself talks to no cloud ([details](docs/DETAIL
 Scored from the benchmark authors' own labels, no model: on LongMemEval's held-out half, KRouter's five pages hold
 every session the answer needs for **210 of 235 questions, plain keyword search 198** (multi-session 40 of 47
 against 31; [set 18](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)).
-Answer accuracy at five pages is not measured yet (set 22); at three pages (1.3.0) it was 400 of 500, level with BM25.
+Answer accuracy at 2.1.1's default pages (about 5.6 a question; set 22, Sonnet 5.5 reader and judge): **449 of 500** (89.8%), held-out half 201 of 235 (85.5%); at three pages (1.3.0) 400 of 500. BM25 was not rerun at the same page count.
 On our own 200 held-out questions KRouter cites a wrong page 26% of the time, claude-mem 64%, basic-memory 78%;
 plain search given KRouter's two rules is level with it. The whole section, with where it is weak:
 [`docs/OVERVIEW.md`](docs/OVERVIEW.md#measured-not-claimed); every number and its method:
@@ -350,7 +350,7 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 
 **Maintenance.** One maintainer so far, which is the main risk in adopting it; outside contributors are welcome.
 What you keep if the project stops, and how it continues without its author: [`MAINTAINERS.md`](MAINTAINERS.md).
-Minor releases come at most once a week and patches when ready; `KROUTER_TAG=v2.1.1` (any tag) pins one. What counts
+Minor releases come at most once a week and patches when ready; `KROUTER_TAG=v2.1.2` (any tag) pins one. What counts
 as the stable surface: [`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions). Bugs and
 questions: [issues](https://github.com/398894496-arch/KRouter/issues); security reports: [`SECURITY.md`](SECURITY.md).
 

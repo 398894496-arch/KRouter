@@ -50,7 +50,7 @@ sys.path.insert(0, str(HERE))
 from krouter_home import vault_path  # noqa: E402
 import team  # noqa: E402
 
-VERSION = "2.1.1"
+VERSION = "2.1.2"
 PROTOCOLS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
 ROUTES = ("search", "preference", "correction", "memory", "project", "suggest")
 INSTRUCTIONS = (
