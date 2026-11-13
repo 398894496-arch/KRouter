@@ -168,5 +168,85 @@
   "key": "krouter-haiku/conv-47-185",
   "group": "B",
   "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-26-179",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-44-130",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-30-086",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/gpt4_d84a3211",
+  "group": "C",
+  "verdict": "no/A"
+ },
+ {
+  "key": "krouter-opus/0a34ad58",
+  "group": "C",
+  "verdict": "yes/B"
+ },
+ {
+  "key": "krouter-opus/conv-48-219",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-30-094",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-43-213",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/bc149d6b",
+  "group": "C",
+  "verdict": "no/A"
+ },
+ {
+  "key": "krouter-opus/conv-44-136",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-48-208",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-41-161",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-41-163",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-44-137",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-47-185",
+  "group": "B",
+  "verdict": "Q"
+ },
+ {
+  "key": "krouter-opus/conv-42-229",
+  "group": "B",
+  "verdict": "Q"
  }
 ]

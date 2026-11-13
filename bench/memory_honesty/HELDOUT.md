@@ -1747,4 +1747,20 @@ answerable judge prompt. The main columns stay the registered rule's; the side c
 
 **Reported, whatever it shows:** the three counts for A, B and C, by receipt state, the two side columns, who labelled how many, and the three readers side by side.
 
-**Status: not run when 2.1.0 was released (2026-11-11).** No Opus reply exists, and no Opus number appears anywhere in the docs.
+**Status: run on 2026-11-12, after 2.1.0 was released.** Results below.
+
+### Result, set 41 addendum: Claude Opus 5.5 (run 2026-11-12, once)
+
+The prompt files were fingerprinted before and match the registration (`f4639348c11d929f`); 20 Opus agents (`opus`), one per batch of the Sonnet condition, each reported `claude-opus-5-5`; 130 replies, none missing, none asked twice; the check of every reply against its own question and its batch-mates' found no reply filed under the wrong prompt. Judge: Sonnet 5.5 (`claude-sonnet-5-5`, every agent said so). Rules settled 79 of the 130, the judge 51. The *nothing* row was **not run** for Opus.
+
+| Reader | A: LongMemEval unanswerable (30): don't know / made up | B: LoCoMo adversarial (60): don't know / made up | C: answerable (40): right / refused / wrong |
+|---|---|---|---|
+| Haiku 5.5 + KRouter | **29** / 1 (96.7%) | **55** / 5 (91.7%) | 26 / **11** / 3 (refused 27.5%) |
+| Sonnet 5.5 + KRouter | **28** / 2 (93.3%) | **38** / 22 (63.3%) | 29 / **7** / 4 (refused 17.5%) |
+| **Opus 5.5 + KRouter** | **24** / 6 (80.0%, [62.7, 90.5]) | **47** / 13 (78.3%, [66.4, 86.9]) | 30 / **5** / 5 (refused 12.5%, [5.5, 26.1]) |
+
+By state (Opus): `none` — A 10 / 10 and B 13 / 13 said so; `related` — A 14 of 20, B 34 of 47; all 40 answerable were `related`. **Pass bar (the registered one, unchanged): met by Opus** (A 80.0% and B 78.3%, both at least 76.67%; C refused 12.5%, at most 15%). Not met by Haiku or Sonnet, as above. B is close to the line (the interval is [66.4, 86.9]).
+
+**Side columns, registered before the run, listed next to the main labels (the main labels stand):** of Opus's 13 B replies labelled `made_up`, the judge found **13 point out that the notes say it of someone else (Q) and none asserts an answer for the person asked (P)**; read that way B is 60 of 60. Of the 3 C replies the rules labelled `refused`, **1 in fact contains the right answer** (2 do not): refused 4 of 40 (10%), right 31, on that reading. For Haiku and Sonnet the same two checks were made after the fact and are listed in the post-hoc check above: Q 4 / P 1 and Q 20 / P 2; the rules' 4 and 3 refusals gave 3 and 2 with the right answer.
+
+**Read with.** Opus's A column is *lower* than the other two readers' (24 against 29 and 28). Reading its 6 `made_up` A replies after the scoring (not a registered label; the registered labels stand): two answer the half of a two-part question that the pages support (tomatoes; the headphones) and say the other half is not there, one corrects the question's role title and gives the numbers the notes have, one infers a university from two notes and says no single note states it, one lists what the notes do have for a taxi-against-bus question (an assistant's estimate included), and one says the notes do not mention table tennis and quotes the tennis they do mention. So several are partial or hedged answers that the registered rules (no refusal phrase and no question mark, or the judge's letter) count as made up. No claim here that one reader is better than another: one run each, 30 / 60 / 40 questions, a different judge for Opus (Sonnet) than for Sonnet (Haiku). Deviations from the registration: none. Prompts: 130 reader, 51 judge, 16 for the side columns. Files: the same `results/set41/` (`rows.jsonl` holds every reply of all three readers).
