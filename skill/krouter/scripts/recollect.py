@@ -17,7 +17,10 @@ What counts as a mention, from most to least sure (`ROUTES`; the default is `DEF
   nightly step learned from real lookups). Same matching, and a learned question counts only when the message repeats
   it.
 - `recall`: full-text recall over the message, at `medium` or `high` confidence with the top page at least
-  `RECALL_MARGIN` times the second, never a log page.
+  `RECALL_MARGIN` times the second, never a log page. Off by default and not settled (set 45, C1a):
+  `KROUTER_RECALL_MARGIN_LOW=<m>` (1.0 ≤ m < `RECALL_MARGIN`) also brings a top page at least `m` times the second when
+  the message says `KROUTER_RECALL_KEYWORDS_MIN` (default 1) of its keywords that no other page has (`page_keys.py`,
+  the index's `kw` table: names, headings, bold phrases, identifiers, computed with no model).
 
 A name or trigger match also needs a second key: full-text recall over the whole message must not refuse it, or its
 top page must match at least `GATE_STRONG` of the message's content words. A name inside a message about something
@@ -87,6 +90,10 @@ GATE = os.environ.get("KROUTER_RECALL_GATE", "1") != "0"
 GATE_STRONG = 4
 RECALL_CONF = ("medium", "high")
 RECALL_MARGIN = 2.5
+# 第 45 套 C1a：领先不到 RECALL_MARGIN 时，领先不低于这个较低倍数、且这页的特有关键词（page_keys.py，库里只此一页有）
+# 在消息里出现至少 KEYWORDS_MIN 个，也递。默认关（不设就和原来逐字节相同）；较低倍数没定默认值，开发集上选
+MARGIN_LOW_ENV = "KROUTER_RECALL_MARGIN_LOW"
+KEYWORDS_MIN_ENV = "KROUTER_RECALL_KEYWORDS_MIN"
 LOG_TYPES = {"log", "daily-log", "session", "session-excerpt", "correction-candidates"}
 
 
@@ -488,7 +495,7 @@ def recollect(vault: Path, text: str, use: tuple[str, ...] | None = None, today:
             hits = []  # 名字对上了，这句话的其他词却和库对不上：多半说的是别的事
     if "recall" in use and len(hits) < PER_PROMPT:
         res = res or _ranked(vault, said)
-        hits += _recall_hits(vault, res, today, {h["real"] for h in hits})
+        hits += _recall_hits(vault, res, today, {h["real"] for h in hits}, said)
     out = []
     brought_cold = [h for h in hits[:PER_PROMPT] if h.get("cold")]
     if brought_cold:
@@ -557,15 +564,54 @@ def _ranked(vault: Path, said: str) -> dict | None:
         return None
 
 
-def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> list[dict]:
+def margin_low() -> tuple[float, int] | None:
+    """(lower margin, keywords needed) when the corroborated margin is on (`KROUTER_RECALL_MARGIN_LOW`), else None."""
+    try:
+        low = float(os.environ.get(MARGIN_LOW_ENV) or 0)
+        need = int(os.environ.get(KEYWORDS_MIN_ENV) or 1)
+    except ValueError:
+        return None
+    return (low, max(1, need)) if 1.0 <= low < RECALL_MARGIN else None
+
+
+def corroborating(vault: Path, rel: str, said: str) -> list[str]:
+    """The keywords of `rel` that no other page has and that the message says (whole words for Latin), from the
+    index's `kw` table, read-only. Empty when the table is missing or anything fails."""
+    import sqlite3
+
+    import recall_index as ri
+
+    s, _where, cuts = squash(said)
+    try:
+        con = sqlite3.connect(f"file:{ri.cache_path(vault)}?mode=ro", uri=True, timeout=2)
+        try:
+            terms = [t for (t,) in con.execute("SELECT DISTINCT term FROM kw WHERE rel=?", (rel,)) if t and t in s]
+            return [t for t in terms if spans(t, s, cuts) and con.execute(
+                "SELECT count(DISTINCT rel) FROM kw WHERE term=?", (t,)).fetchone()[0] == 1]
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return []
+
+
+def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str], said: str = "") -> list[dict]:
     import recall_index as ri
 
     allowed = ("high",) if ri.strict_on(vault) else RECALL_CONF  # 严格模式：全文召回只递有直接依据的页
     if not res or not res.get("hits") or res.get("partial") or res.get("confidence") not in allowed:
         return []
     top = res["hits"][0]
-    if top.get("tier") in ("log", "dead") or (res.get("margin") or 0) < RECALL_MARGIN:
+    word = " ".join(res.get("query_tokens", [])[:4])
+    if top.get("tier") in ("log", "dead"):
         return []
+    if (res.get("margin") or 0) < RECALL_MARGIN:
+        low = margin_low()
+        if low is None or (res.get("margin") or 0) < low[0]:
+            return []
+        keys = corroborating(vault, top["rel"], said)
+        if len(keys) < low[1]:
+            return []
+        word = " ".join(keys[:4])
     real = zones.real(vault, top["rel"])
     cur = current(vault, real, today)
     if cur is None or cur[0] in have:
@@ -576,7 +622,7 @@ def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> 
     for c in res.get("conflict") or []:
         if isinstance(c, dict) and c.get("older"):
             older = zones.real(vault, c["older"])
-    return [{"route": "recall", "word": " ".join(res.get("query_tokens", [])[:4]), "rel": real, "real": cur[0],
+    return [{"route": "recall", "word": word, "rel": real, "real": cur[0],
              "anchor": "", "older": cur[1] or older}]
 
 

@@ -26,11 +26,12 @@ import krouter_redact  # noqa: E402
 import associate  # noqa: E402
 import kb  # noqa: E402
 import evidence  # noqa: E402
+import page_keys  # noqa: E402
 
 redact = krouter_redact.redact
 is_secret_page = krouter_redact.is_secret_page  # 其他夜间脚本经 ri.is_secret_page 用它
 
-SCHEMA_VERSION = "recall-v19"  # v19：来历分数要正面证据（来源要有网址；没有正面证据又不成段叙述的页不算资料）； v18：段落证据带每页的标题和触发词； v17：段落表、每页的日期和说话人（段落级证据，evidence.py），每页的来历（kb.py 自动识别）； v15：边表（链接、取代、同会话、同一天、共同的词、一起被引用），给联想通路用； v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
+SCHEMA_VERSION = "recall-v20"  # v20：每页的关键词表 kw（page_keys.py，不进全文列、不改排序，只给提示钩子做旁证）； v19：来历分数要正面证据（来源要有网址；没有正面证据又不成段叙述的页不算资料）； v18：段落证据带每页的标题和触发词； v17：段落表、每页的日期和说话人（段落级证据，evidence.py），每页的来历（kb.py 自动识别）； v15：边表（链接、取代、同会话、同一天、共同的词、一起被引用），给联想通路用； v14：多存每页 frontmatter 的文字（字面检索预筛用）；v13：机密页不存 how、脱敏规则扩大
 STRONG_W = 0.5  # 软权重 ≥ 此值才算"有效匹配词"
 MIN_STRONG_MATCH = 2
 SCORE_MIN = 8.5  # bm25×分层权重的绝对下限
@@ -245,7 +246,7 @@ def connect(db: Path) -> sqlite3.Connection:
     if not row or row[0] != SCHEMA_VERSION:
         con.executescript(
             """
-            DROP TABLE IF EXISTS vcol; DROP TABLE IF EXISTS vinst; DROP TABLE IF EXISTS vrow; DROP TABLE IF EXISTS docs; DROP TABLE IF EXISTS files; DROP TABLE IF EXISTS fm;
+            DROP TABLE IF EXISTS vcol; DROP TABLE IF EXISTS vinst; DROP TABLE IF EXISTS vrow; DROP TABLE IF EXISTS docs; DROP TABLE IF EXISTS files; DROP TABLE IF EXISTS fm; DROP TABLE IF EXISTS kw;
             CREATE VIRTUAL TABLE docs USING fts5(
                 rel UNINDEXED, title, triggers, body, uni, tier UNINDEXED, status UNINDEXED, how UNINDEXED, name UNINDEXED,
                 tokenize='unicode61');
@@ -255,6 +256,10 @@ def connect(db: Path) -> sqlite3.Connection:
             CREATE TABLE files(rel TEXT PRIMARY KEY, mtime_ns INTEGER, size INTEGER, rid INTEGER);
             -- 每页 frontmatter 的原文（已脱敏、小写），只给字面检索预筛用：frontmatter 不进全文索引
             CREATE TABLE fm(rel TEXT PRIMARY KEY, text TEXT);
+            -- 每页的关键词（page_keys.py，不用模型）：只有提示钩子读，不进全文排序
+            CREATE TABLE kw(term TEXT, rel TEXT, kind TEXT);
+            CREATE INDEX kw_term ON kw(term);
+            CREATE INDEX kw_rel ON kw(rel);
             """
             + associate.DROP + associate.SCHEMA + evidence.DROP + evidence.SCHEMA + kb.ORIGIN_DROP + kb.ORIGIN_SCHEMA
         )
@@ -331,6 +336,7 @@ def refresh(vault: Path, con: sqlite3.Connection, only=None) -> dict[str, int]:
             con.execute("DELETE FROM docs WHERE rowid=?", (rid,))
             con.execute("DELETE FROM files WHERE rel=?", (rel,))
             con.execute("DELETE FROM fm WHERE rel=?", (rel,))
+            con.execute("DELETE FROM kw WHERE rel=?", (rel,))
             associate.forget(con, rel, rid)
             evidence.forget(con, rid)
             con.execute("DELETE FROM origin WHERE rel=?", (rel,))
@@ -388,6 +394,11 @@ def refresh(vault: Path, con: sqlite3.Connection, only=None) -> dict[str, int]:
         head = text.replace("\r\n", "\n")
         end = head.find("\n---", 4) if head.startswith("---\n") else -1
         con.execute("INSERT OR REPLACE INTO fm VALUES(?,?)", (rel, head[:end + 4].lower() if end >= 0 else ""))
+        con.execute("DELETE FROM kw WHERE rel=?", (rel,))
+        if not secret and tier_of(zones.canon(vault, rel), status) not in ("log", "dead"):
+            con.executemany("INSERT INTO kw VALUES(?,?,?)", [
+                (term, rel, kind) for term, kind in page_keys.keywords(
+                    title, path.stem, meta, body, aliases.get(rel, []), QUERY_STOP, EN_FUNCTION, FUNCTION_CHARS)])
     if changed or added or removed:
         con.execute("INSERT OR REPLACE INTO meta VALUES('built_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%S"),))
     if rels is None:
