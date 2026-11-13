@@ -13,6 +13,8 @@ notice, then the details.
 
 `server.json` now points at v2.1.2 (`KRouter.mcpb`, SHA-256 `af3925eb…`, checked against the published `SHA256SUMS`); nothing else changed.
 
+Docs only: the "recalls without being asked" cell of the comparison tables now leads with how it differs (every message looked up on the machine, nothing sent out) and then what was measured (set 35: 24 / 24 and 23 / 24, 12 / 12 changed rules, 1 and 2 of 24 quiet messages moved it), the "Measured, not claimed" section leads with it and with the lessons carrying over, and the "Benchmarks" cell and a few other places that still said the five-page answer accuracy had not been run or that there was no answer-accuracy number now say what set 22 measured (449 of 500, held-out half 201 of 235). No registered number changed.
+
 ## 2.1.2 — 2026-11-13
 
 What you will notice: nothing in how KRouter looks things up; the engine is the same as 2.1.1. This release carries the
