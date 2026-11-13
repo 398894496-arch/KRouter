@@ -79,7 +79,8 @@ def run(args) -> int:
             print(json.dumps({"stopped": row["qid"], "http": e.code, "done": len(done) + n}), file=sys.stderr)
             return 1
         except (urllib.error.URLError, TimeoutError, KeyError, ValueError) as e:
-            print(json.dumps({"stopped": row["qid"], "error": type(e).__name__, "done": len(done) + n}), file=sys.stderr)
+            print(json.dumps({"stopped": row["qid"], "error": type(e).__name__, "reason": str(getattr(e, "reason", e))[:200],
+                              "done": len(done) + n}), file=sys.stderr)
             return 1
         with out.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps({"qid": row["qid"], "reply": reply, "verdict": parse(reply),
