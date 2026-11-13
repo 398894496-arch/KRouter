@@ -76,7 +76,13 @@ def run(args) -> int:
         try:
             reply, h = call(prompt, key)
         except urllib.error.HTTPError as e:
-            print(json.dumps({"stopped": row["qid"], "http": e.code, "done": len(done) + n}), file=sys.stderr)
+            hdr = {k.lower(): v for k, v in (e.headers or {}).items() if k.lower().startswith(("retry-after", "x-ratelimit"))}
+            try:
+                msg = json.loads(e.read().decode("utf-8", "replace")).get("error", {}).get("message", "")[:300]
+            except (ValueError, OSError, AttributeError):
+                msg = ""
+            print(json.dumps({"stopped": row["qid"], "http": e.code, "done": len(done) + n, "headers": hdr, "message": msg}),
+                  file=sys.stderr)
             return 1
         except (urllib.error.URLError, TimeoutError, ConnectionError) as e:  # 网络错误：可以续（第四次追加）
             print(json.dumps({"stopped": row["qid"], "error": type(e).__name__, "reason": str(getattr(e, "reason", e))[:200],
