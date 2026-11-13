@@ -11,7 +11,7 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+`server.json` now points at v2.1.2 (`KRouter.mcpb`, SHA-256 `af3925eb…`, checked against the published `SHA256SUMS`); nothing else changed.
 
 ## 2.1.2 — 2026-11-13
 
