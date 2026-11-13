@@ -81,7 +81,8 @@ def load_data(path: Path) -> dict:
 def read_jsonl(paths) -> list[dict]:
     out = []
     for p in paths:
-        out += [json.loads(x) for x in Path(p).read_text(encoding="utf-8").splitlines() if x.strip()]
+        # 只按 "\n" 分行：回复和提示里有 U+2028，str.splitlines 会把一条记录从中间切开
+        out += [json.loads(x) for x in Path(p).read_text(encoding="utf-8").split("\n") if x.strip()]
     return out
 
 
