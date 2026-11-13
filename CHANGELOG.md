@@ -11,7 +11,7 @@ notice, then the details.
 
 ## Unreleased
 
-Nothing yet.
+Set 22 run (2026-11-13): LongMemEval S answer accuracy with 2.1.1's default pages (about 5.6 a question), Sonnet 5.5 reader and judge as in sets 11 and 12: 449 of 500 (89.8%, 87.2–92.4), held-out half 201 of 235; 1.3.0 at three pages was 400 of 500. BM25 was not rerun at the same page count. Results: `bench/longmemeval/results/2026-11-13-sonnet-qa.set22.jsonl`.
 
 ## 2.1.1 — 2026-11-12
 

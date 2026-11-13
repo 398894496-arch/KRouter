@@ -14,7 +14,9 @@
 >   the missing 18 points [15.0, 21.8] are lost in retrieval, not by the reader. 2.0 gives five pages, two of them
 >   ones the vault connects to the hits: every answer session among them for 210 of 235 held-out questions (BM25's
 >   top five 198), multi-session 40 of 47 (31) ([set 18](https://github.com/398894496-arch/KRouter/blob/main/bench/memory_honesty/HELDOUT.md)).
->   Answer accuracy at five pages is not measured yet (set 22, registered).
+>   **Answer accuracy at 2.1.1's default pages** (about 5.6 a question; set 22, 2026-11-13, same reader and judge): **449 of
+>   500, 89.8% [87.2, 92.4]**, held-out half 201 of 235; multi-session 100 of 121 (69), temporal 111 of 127 (97). BM25
+>   was not rerun at the same page count; at it, BM25 hands over every answer session for 396 of 470, KRouter 417.
 > - **Someone else's benchmarks** (scored from the authors' labels, no model judge): LongMemEval S, an answer session
 >   cited for 439 of 470 answerable questions (1.x, three pages); 9 of 30 unanswerable refused by the gate (set 14; the
 >   "3 of 30" quoted before was 1.1.1; with a reader model on top, 29 of 30 are answered "not mentioned", but the same

@@ -15,7 +15,7 @@
 | **cognee** | pip 安装；Docker；云 | 本地快速上手不要；要“生成回答”才设 LLM key | 页面上没有说明（有 Claude Code、Codex 插件） | “可检查召回到的证据” | 自报 BEAM：0.79（100K，20 题）、0.67（10M，探索性） | 33,232 |
 | **graphiti** | Python 框架；自备图数据库（Neo4j、FalkorDB、Neptune）和 LLM | 默认 OpenAI，需 `OPENAI_API_KEY` | 页面上没有说明 | 每个事实可追溯到原始 episode | 无数字（有论文链接） | 32,727 |
 | **Hindsight** | 服务器（Docker、pip、Helm）、Python 内嵌、云 | 快速上手要 LLM key；页面写可用本地模型 | 编码 agent 包启动时注入；LLM 包装每次调用自动存取 | 观察附原文引用和证据计数 | 只有图表（LongMemEval，2026-01）；写“已被他人复现”，无数字 | 60,340 |
-| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 在有每条消息钩子的宿主里，每条消息本机查一遍（Cursor 没有，见 README 的宿主列表），不调模型；热启动中位数：110 页的测试库 83–87 ms，1 万页库 116–126 ms（整个钩子进程，p95 最高 144 ms；第 34 套，2.1.0 之前测的；2.1.0 的提问钩子在 1 万页库上热启动 p95 是 129–131 ms，第 39 套） | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LoCoMo 991/1,540 | 49 |
+| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 在有每条消息钩子的宿主里，每条消息本机查一遍（Cursor 没有，见 README 的宿主列表），不调模型；热启动中位数：110 页的测试库 83–87 ms，1 万页库 116–126 ms（整个钩子进程，p95 最高 144 ms；第 34 套，2.1.0 之前测的；2.1.0 的提问钩子在 1 万页库上热启动 p95 是 129–131 ms，第 39 套） | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LongMemEval 答题正确率 449/500（2.1.1，Sonnet 5.5 读题和评分，第 22 套）；LoCoMo 991/1,540 | 49 |
 | **Letta** | npm 装终端工具；`letta server`；云 | 页面上没有说明 | 页面上没有说明 | 页面上没有说明 | 无数字 | 25,413 |
 | **mem0** | 库（pip/npm）、自托管（docker compose）、云 | 要 LLM（默认 OpenAI）；云要注册 key | 页面上没有说明（示例是代码里手动检索） | 页面上没有说明 | 自报（托管平台）：LoCoMo 92.5，LongMemEval 94.4，BEAM 64.1/48.6 | 68,777 |
 | **MemOS** | 四个入口：云 API、自托管（Neo4j+Qdrant）、云插件、本地插件（Node.js，SQLite） | 云：要 key；自托管：.env 里填 key；本地插件：页面上没有说明 | DeepSeek Harness 插件：自动召回；OpenClaw 云插件：每次运行前召回 | 页面上没有说明 | 自报（OmniMemEval）：LoCoMo 88.83，LongMemEval 89.20 等十项 | 12,352 |
