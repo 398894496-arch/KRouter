@@ -13,6 +13,8 @@ notice, then the details.
 
 Set 22 run (2026-11-13): LongMemEval S answer accuracy with 2.1.1's default pages (about 5.6 a question), Sonnet 5.5 reader and judge as in sets 11 and 12: 449 of 500 (89.8%, 87.2–92.4), held-out half 201 of 235; 1.3.0 at three pages was 400 of 500. BM25 was not rerun at the same page count. Results: `bench/longmemeval/results/2026-11-13-sonnet-qa.set22.jsonl`.
 
+`server.json` now points at v2.1.1 (`KRouter.mcpb`, SHA-256 `a2d4ffe3…`, checked against the published `SHA256SUMS`); nothing else changed.
+
 ## 2.1.1 — 2026-11-12
 
 What you will notice: fewer of your own pages are taken for reference material (a page now needs a source address, an author or a byline, or to read as prose), and experience cards and hook trigger phrases you have not used for 60 days step back behind the ones in use. The index is rebuilt once on the first lookup (`recall-v19`).
