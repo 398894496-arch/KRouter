@@ -78,9 +78,12 @@ def run(args) -> int:
         except urllib.error.HTTPError as e:
             print(json.dumps({"stopped": row["qid"], "http": e.code, "done": len(done) + n}), file=sys.stderr)
             return 1
-        except (urllib.error.URLError, TimeoutError, KeyError, ValueError) as e:
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:  # 网络错误：可以续（第四次追加）
             print(json.dumps({"stopped": row["qid"], "error": type(e).__name__, "reason": str(getattr(e, "reason", e))[:200],
                               "done": len(done) + n}), file=sys.stderr)
+            return 2
+        except (KeyError, ValueError) as e:  # 回复格式不对：停
+            print(json.dumps({"stopped": row["qid"], "error": type(e).__name__, "done": len(done) + n}), file=sys.stderr)
             return 1
         with out.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps({"qid": row["qid"], "reply": reply, "verdict": parse(reply),
@@ -125,6 +128,19 @@ def report(args) -> int:
     return 0
 
 
+def run_resuming(args, resumes: int = 5, wait: float = 30.0) -> int:
+    """Fourth amendment: a network error is resumed (at least `wait` seconds later, at most `resumes` times); an HTTP
+    error (rate limit, authentication) stops at once."""
+    for attempt in range(resumes + 1):
+        rc = run(args)
+        if rc != 2:
+            return rc
+        if attempt < resumes:
+            print(json.dumps({"resume": attempt + 1, "after_s": wait}), file=sys.stderr, flush=True)
+            time.sleep(wait)
+    return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["run", "report"])
@@ -132,7 +148,7 @@ def main() -> int:
     ap.add_argument("--replies", required=True)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
-    return run(args) if args.cmd == "run" else report(args)
+    return run_resuming(args) if args.cmd == "run" else report(args)
 
 
 if __name__ == "__main__":
