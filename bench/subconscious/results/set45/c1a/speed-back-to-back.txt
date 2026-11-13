@@ -1,0 +1,61 @@
+== round 1 v10k C0
+15:26  up 4 days, 14:30, 1 user, load averages: 5.04 6.89 6.29
+index build: 9.1 s
+hit: printed=[True]  cold p50 244 ms p95 286 ms (n=20)  warm p50 150 ms p95 192 ms (n=200)
+miss: printed=[False]  cold p50 212 ms p95 219 ms (n=20)  warm p50 124 ms p95 159 ms (n=200)
+== round 1 v10k NEW on 1.5
+15:27  up 4 days, 14:31, 1 user, load averages: 7.00 6.92 6.34
+index build: 10.8 s
+hit: printed=[True]  cold p50 301 ms p95 364 ms (n=20)  warm p50 164 ms p95 245 ms (n=200)
+miss: printed=[False]  cold p50 221 ms p95 243 ms (n=20)  warm p50 123 ms p95 154 ms (n=200)
+== round 1 v10k-corr C0
+15:28  up 4 days, 14:33, 1 user, load averages: 6.01 6.68 6.30
+index build: 9.2 s
+hit: printed=[False]  cold p50 262 ms p95 309 ms (n=20)  warm p50 162 ms p95 208 ms (n=200)
+miss: printed=[False]  cold p50 235 ms p95 279 ms (n=20)  warm p50 119 ms p95 130 ms (n=200)
+== round 1 v10k-corr NEW on 1.5
+15:30  up 4 days, 14:34, 1 user, load averages: 5.74 6.41 6.23
+index build: 10.0 s
+hit: printed=[True]  cold p50 305 ms p95 347 ms (n=20)  warm p50 207 ms p95 249 ms (n=200)
+miss: printed=[False]  cold p50 218 ms p95 225 ms (n=20)  warm p50 131 ms p95 318 ms (n=200)
+== round 1 vault3 C0
+15:31  up 4 days, 14:36, 1 user, load averages: 8.72 6.81 6.37
+index build: 0.2 s
+hit: printed=[True]  cold p50 134 ms p95 153 ms (n=20)  warm p50 121 ms p95 197 ms (n=200)
+miss: printed=[False]  cold p50 126 ms p95 137 ms (n=20)  warm p50 111 ms p95 127 ms (n=200)
+== round 1 vault3 NEW on 1.5
+15:32  up 4 days, 14:37, 1 user, load averages: 6.35 6.49 6.28
+index build: 0.2 s
+hit: printed=[True]  cold p50 131 ms p95 186 ms (n=20)  warm p50 127 ms p95 275 ms (n=200)
+miss: printed=[False]  cold p50 125 ms p95 149 ms (n=20)  warm p50 120 ms p95 163 ms (n=200)
+== round 2 v10k C0
+15:33  up 4 days, 14:38, 1 user, load averages: 5.03 6.09 6.14
+index build: 12.5 s
+hit: printed=[True]  cold p50 302 ms p95 491 ms (n=20)  warm p50 173 ms p95 355 ms (n=200)
+miss: printed=[False]  cold p50 236 ms p95 305 ms (n=20)  warm p50 139 ms p95 280 ms (n=200)
+== round 2 v10k NEW on 1.5
+15:35  up 4 days, 14:39, 1 user, load averages: 7.39 6.34 6.22
+index build: 16.6 s
+hit: printed=[True]  cold p50 312 ms p95 1062 ms (n=20)  warm p50 165 ms p95 379 ms (n=200)
+miss: printed=[False]  cold p50 219 ms p95 260 ms (n=20)  warm p50 131 ms p95 265 ms (n=200)
+== round 2 v10k-corr C0
+15:37  up 4 days, 14:41, 1 user, load averages: 6.51 6.41 6.26
+index build: 9.9 s
+hit: printed=[False]  cold p50 253 ms p95 271 ms (n=20)  warm p50 154 ms p95 209 ms (n=200)
+miss: printed=[False]  cold p50 204 ms p95 211 ms (n=20)  warm p50 112 ms p95 121 ms (n=200)
+== round 2 v10k-corr NEW on 1.5
+15:38  up 4 days, 14:42, 1 user, load averages: 4.76 5.87 6.06
+index build: 10.2 s
+hit: printed=[True]  cold p50 301 ms p95 360 ms (n=20)  warm p50 203 ms p95 235 ms (n=200)
+miss: printed=[False]  cold p50 205 ms p95 210 ms (n=20)  warm p50 115 ms p95 125 ms (n=200)
+== round 2 vault3 C0
+15:39  up 4 days, 14:44, 1 user, load averages: 3.88 5.38 5.86
+index build: 0.2 s
+hit: printed=[True]  cold p50 119 ms p95 125 ms (n=20)  warm p50 106 ms p95 113 ms (n=200)
+miss: printed=[False]  cold p50 112 ms p95 118 ms (n=20)  warm p50 104 ms p95 116 ms (n=200)
+== round 2 vault3 NEW on 1.5
+15:40  up 4 days, 14:45, 1 user, load averages: 3.73 5.14 5.74
+index build: 0.2 s
+hit: printed=[True]  cold p50 116 ms p95 119 ms (n=20)  warm p50 109 ms p95 121 ms (n=200)
+miss: printed=[False]  cold p50 114 ms p95 118 ms (n=20)  warm p50 107 ms p95 128 ms (n=200)
+rc=0
