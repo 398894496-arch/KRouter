@@ -207,7 +207,8 @@ def main() -> int:
         f"- 问题过宽（实词不到 2 个，可能把无关提问召回到这一页）：{len(broad_cards)} 张",
         *[f"  - `{r}`：{q}" for r, q in broad_cards[:30]], "",
         f"## 近 {args.days} 天没人读、也没被召回的规则页（{len(unused)}/{len(rules)}）", "",
-        "只是提醒，不降权、不删除。确认没用了再标 superseded / retired。", "",
+        "规则页只是提醒，不降权、不删除（知识不因为旧就降权）；确认没用了再标 superseded / retired。"
+        "降权只对经验卡和每句话钩子的触发词：hot_days 天没被用到就排到同类后面（`krouter-settings.psv` 的 `hot_days`，见夜间维护页）。", "",
         *[f"- `{r}`" for r in unused], "",
     ]
     out = ri.zones.path(vault, args.out)

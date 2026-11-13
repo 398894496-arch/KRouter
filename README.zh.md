@@ -58,7 +58,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 ### 举一反三
 
-一件事里得到的经验，换一件处境相同的事时会被提出来；反复被证实的经验会长成技能，事情对得上时 agent 自己去取。留出集：换了题材的任务，提出对的经验 **14 / 14（Sonnet 5.5）和 11 / 14（Haiku 5.5）**，英文 **14 / 14 和 13 / 14**（第 15、16 套）；技能起草对了 16 / 16，取用并照做 12 / 12（第 24、25 套，[`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)）。
+一件事里得到的经验，换一件处境相同的事时会被提出来；反复被证实的经验会长成技能，事情对得上时 agent 自己去取；60 天没用到的经验卡和钩子触发词排到后面（`hot_days`，你的规则页不降）。留出集：换了题材的任务，提出对的经验 **14 / 14（Sonnet 5.5）和 11 / 14（Haiku 5.5）**，英文 **14 / 14 和 13 / 14**（第 15、16 套）；技能起草对了 16 / 16，取用并照做 12 / 12（第 24、25 套，[`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)）。
 
 ### 托底：你能核对的那一层
 

@@ -190,20 +190,28 @@ def digest_line(card: dict, lang: str = "zh") -> str:
     return f"- {body}〔{card['id']}〕"
 
 
-def rank_key(card: dict, used: dict) -> tuple:
-    """Adopted or seen again cards first, the most recent first; then cards not yet passed over (offered IGNORED_AFTER
-    times and never adopted sink to the bottom); then times offered; then confirmed; then the newest date."""
+def rank_key(card: dict, used: dict, window: int | None = None, now=None) -> tuple:
+    """Cards in use before cold ones (`hot.py`: not adopted or seen again for `window` days); then adopted or seen
+    again cards first, the most recent first; then cards not yet passed over (offered IGNORED_AFTER times and never
+    adopted sink to the bottom); then times offered; then confirmed; then the newest date."""
+    import hot
+
     u = used.get(card["id"], {})
+    warm = not hot.card_cold(card, used, window, now)
     # 被采纳、或在别的会话里又遇到一次（宿主判定"摘要里已有这条"）：都是这条经验站得住的证据
     adopted = max(u.get("last_adopted", ""), u.get("last_again", ""), card.get("adopted_at", ""))
     passed_over = not adopted and u.get("offered", 0) >= IGNORED_AFTER
     fresh = max(card.get("date", ""), u.get("last_offered", "")[:10])
-    return (bool(adopted), adopted, not passed_over, u.get("offered", 0), card.get("status") == "active", fresh,
+    return (warm, bool(adopted), adopted, not passed_over, u.get("offered", 0), card.get("status") == "active", fresh,
             card["rel"])
 
 
-def ranked(cards: list[dict], used: dict | None = None) -> list[dict]:
-    return sorted(cards, key=lambda c: rank_key(c, used or {}), reverse=True)
+def ranked(cards: list[dict], used: dict | None = None, vault: Path | None = None) -> list[dict]:
+    """Best first. `vault`: where `hot_days` is read (cold cards after the others); without it, the default window."""
+    import hot
+
+    window, now = hot.days(vault), hot.today()
+    return sorted(cards, key=lambda c: rank_key(c, used or {}, window, now), reverse=True)
 
 
 def digest(vault: Path, max_lines: int = DIGEST_MAX_LINES, cards: list[dict] | None = None,
@@ -213,7 +221,7 @@ def digest(vault: Path, max_lines: int = DIGEST_MAX_LINES, cards: list[dict] | N
     if not cards:
         return ""
     lang = lang_of(cards)
-    shown = ranked(cards, usage(vault) if used is None else used)[:max_lines]
+    shown = ranked(cards, usage(vault) if used is None else used, vault)[:max_lines]
     out = [HEAD[lang].format(folder=zones.real(vault, FOLDER))] + [digest_line(c, lang) for c in shown]
     if len(cards) > len(shown):
         out.append(MORE[lang].format(n=len(cards) - len(shown), k=max_lines))
@@ -382,7 +390,12 @@ def suggest(vault: Path, query: str, limit: int = MAX_SUGGESTIONS, min_cover: fl
         cover, n, phrase = best
         if cover >= min_cover and n >= min_words:
             found.append({**c, "score": round(cover + 0.01 * n, 3), "matched": phrase})
-    found.sort(key=lambda c: -c["score"])
+    import hot
+
+    window, now, use = hot.days(vault), hot.today(), usage(vault)
+    for c in found:
+        c["cold"] = hot.card_cold(c, use, window, now)
+    found.sort(key=lambda c: (c["cold"], -c["score"]))  # 冷的经验排在同样对得上的后面（hot.py）
     return found[:limit]
 
 

@@ -197,7 +197,18 @@ Explains how a lookup came out, in seven short sections. It asks the same code `
    replaced which, and that the newer is listed first.
 7. **Experience cards.** Cards are not matched to a question (the agent gets the whole digest at session start and
    judges the situation), so this says how many there are and names the ones whose situation shares words with the
-   question, or that were taken from one of the pages shown.
+   question, or that were taken from one of the pages shown; a cold card (below) is marked so.
+
+**Hot and cold (2.1.1, `hot.py`).** An experience card not adopted or seen again for `hot_days` days (60 by default;
+being offered does not count; a card never used counts from its own date), and a trigger phrase of the prompt hook
+(the generated and the learned `下意识触发词*.psv` lines) that has not brought a page for as long (counted from the
+first night the nightly step saw it, since the lines carry no date), sort after the others of their kind: cards in the
+session-start digest and among suggestions, trigger phrases among the prompt hook's two pages a message. Nothing is
+deleted, no page is changed, nothing needs approval, and a lookup by name still finds it; one use makes it hot again at
+once. Rule pages, correction pages, the alias table and its pages, and recall itself are never affected: knowledge is
+not weighed down for being old. `hot_days|N` / `hot_days|off` in `krouter-settings.psv` (or `KROUTER_HOT_DAYS`); the
+nightly report lists how many went cold and came back. On the registered benches nothing changes (no use records 60
+days old; the cards of sets 15 and 16 are all equally cold, so their digest is identical).
 
 ### Three states, and strict mode
 

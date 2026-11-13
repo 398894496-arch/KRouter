@@ -490,6 +490,11 @@ def recollect(vault: Path, text: str, use: tuple[str, ...] | None = None, today:
         res = res or _ranked(vault, said)
         hits += _recall_hits(vault, res, today, {h["real"] for h in hits})
     out = []
+    brought_cold = [h for h in hits[:PER_PROMPT] if h.get("cold")]
+    if brought_cold:
+        import hot
+
+        hot.warm_again(vault, [hot.key(h["a"], zones.canon(vault, h["rel"])) for h in brought_cold])  # 用到了：当场恢复
     for h in hits[:PER_PROMPT]:
         pos = where[h["span"][0]] if h.get("span") else 0
         d = describe(vault, h["real"], h.get("anchor", ""), h.get("older", ""), today)
@@ -530,7 +535,14 @@ def _choose(vault: Path, found: list[dict], today: date) -> list[dict]:
         taken.append(sp)
         if f["real"] not in by_page:
             by_page[f["real"]] = f
-    return sorted(by_page.values(), key=lambda f: (f["route"] != "alias", -(f["span"][1] - f["span"][0]), f["span"][0]))
+    # 冷的触发词（hot.py：hot_days 天没递出过）排在同类后面，先让出每句话两页的位置；别名表是你的，不降
+    import hot
+
+    frozen = hot.cold_triggers(vault)
+    for f in by_page.values():
+        f["cold"] = f["route"] == "trigger" and hot.key(f["a"], zones.canon(vault, f["rel"])) in frozen
+    return sorted(by_page.values(), key=lambda f: (f["route"] != "alias", f["cold"], -(f["span"][1] - f["span"][0]),
+                                                   f["span"][0]))
 
 
 def _ranked(vault: Path, said: str) -> dict | None:

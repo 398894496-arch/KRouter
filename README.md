@@ -75,8 +75,8 @@ session the answer needs for **210 of 235 questions, keyword search 198; multi-s
 
 ### The lessons carry over
 
-A lesson from one task is offered on another in the same situation, and lessons that keep coming back grow into
-skills the agent fetches when they fit. Held out: the right lesson for **14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku
+A lesson from one task is offered on another in the same situation; lessons that keep coming back grow into skills,
+and lessons or hook triggers unused for 60 days step back (`hot_days`, never your rules). Held out: the right lesson for **14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku
 5.5)** tasks with a new subject, **14 / 14 and 13 / 14** in English (sets 15, 16); skills drafted right 16 / 16 and
 fetched and followed 12 / 12 (sets 24, 25; [`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)).
 

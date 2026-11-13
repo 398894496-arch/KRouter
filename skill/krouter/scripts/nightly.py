@@ -258,6 +258,16 @@ def kb_lines(vault: Path) -> list[str]:
     return out + ([""] if new else [])
 
 
+def hot_lines(vault: Path) -> list[str]:
+    """Cold experience cards and trigger phrases (hot.py): how many, what went cold and what came back since last night."""
+    try:
+        import hot
+
+        return hot.report_lines(hot.nightly(vault))
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def write_report(vault: Path, results: list[dict], state: str, lane_name: str, at: str) -> None:
     rows = []
     for r in results:
@@ -272,6 +282,7 @@ def write_report(vault: Path, results: list[dict], state: str, lane_name: str, a
         *duplicate_lines(vault),
         *skill_lines(results),
         *kb_lines(vault),
+        *hot_lines(vault),
         "| 步骤 | 结果 | 模型调用 / 发出 | 秒 | 原因 |", "|---|---|---|---|---|", *rows, "",
         "发出的内容：规则页 / 主题页全文（问答卡）、主题证据（主题档案）、路由器没答好的查询原文（夜间学习）；"
         "开了会话导入并选了提炼时，还有昨天会话的脱敏摘录。"
