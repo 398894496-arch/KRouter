@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11; 2.1.1 on 2026-11-12. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11; 2.1.1 on 2026-11-12; 2.1.2 on 2026-11-13. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 Minor releases (new features) at most once a week; patch releases (fixes, docs, benchmark updates) when ready. 1.0.0 to
@@ -11,7 +11,16 @@ notice, then the details.
 
 ## Unreleased
 
-Set 22 run (2026-11-13): LongMemEval S answer accuracy with 2.1.1's default pages (about 5.6 a question), Sonnet 5.5 reader and judge as in sets 11 and 12: 449 of 500 (89.8%, 87.2–92.4), held-out half 201 of 235; 1.3.0 at three pages was 400 of 500. BM25 was not rerun at the same page count. Results: `bench/longmemeval/results/2026-11-13-sonnet-qa.set22.jsonl`.
+Nothing yet.
+
+## 2.1.2 — 2026-11-13
+
+What you will notice: nothing in how KRouter looks things up; the engine is the same as 2.1.1. This release carries the
+set 22 run and the docs that report it. With 2.1.1's default pages (about 5.6 a question), Claude Sonnet 5.5 as reader
+and as judge, run once: **449 of 500 (89.8%)**, and on the held-out half **201 of 235 (85.5%)**. Plain BM25 was not rerun
+at the same page count, so there is no keyword-search row to set beside it.
+
+Set 22 run (2026-11-13): LongMemEval S answer accuracy with 2.1.1's default pages (about 5.6 a question), Sonnet 5.5 reader and judge as in sets 11 and 12: 449 of 500 (89.8%, 87.2–92.4), held-out half 201 of 235 (85.5%); 1.3.0 at three pages was 400 of 500. BM25 was not rerun at the same page count. Results: `bench/longmemeval/results/2026-11-13-sonnet-qa.set22.jsonl`.
 
 `server.json` now points at v2.1.1 (`KRouter.mcpb`, SHA-256 `a2d4ffe3…`, checked against the published `SHA256SUMS`); nothing else changed.
 

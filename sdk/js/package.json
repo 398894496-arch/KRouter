@@ -1,6 +1,6 @@
 {
   "name": "krouter",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Ask your KRouter memory from JavaScript or TypeScript: the page that answers, its one-line answer, or \"not in the vault\". No dependencies.",
   "type": "module",
   "main": "index.js",

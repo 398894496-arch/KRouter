@@ -43,7 +43,7 @@ container runs as user 10001, so give it the token file (`chown 10001 /etc/krout
 ```bash
 docker run -d --name krouter-team --restart unless-stopped -p 8787:8787 \
   -v /srv/team-vault:/vault:ro -v /etc/krouter/token:/run/secrets/krouter_token:ro \
-  ghcr.io/398894496-arch/krouter:v2.1.1
+  ghcr.io/398894496-arch/krouter:v2.1.2
 ```
 
 Keep the vault current with a pull every few minutes (cron, a systemd timer, or a CI job):

@@ -73,7 +73,7 @@ LongMemEval S, 500 questions; reader and judge Claude Sonnet 5.5 with the benchm
 | nothing | 30 (6.0%) | 0 |
 | plain keyword search (BM25), its top three sessions | 405 (81.0%, 77.4–84.4) | 376 |
 | the pages KRouter 1.3.0 cites, three at most | 400 (80.0%, 76.4–83.4) | 371 |
-| the pages KRouter 2.1.1 hands over at its default, about 5.6 (set 22) | 449 (89.8%, 87.2–92.4) | 419 |
+| the pages KRouter 2.1.1 hands over at its default, about 5.6 (set 22) | 449 (89.8%, 87.2–92.4); held-out half 201 of 235 (85.5%) | 419 |
 | the benchmark's own answer sessions: perfect retrieval | 492 (98.4%, 97.2–99.4) | 462 |
 
 At three pages KRouter's lookup was level with plain keyword search (−1.0 points, paired interval −2.8 to +0.8), and

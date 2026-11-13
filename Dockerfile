@@ -2,7 +2,7 @@
 #
 #   docker run -d --name krouter-team -p 8787:8787 \
 #     -v /srv/team-vault:/vault:ro -v /etc/krouter/token:/run/secrets/krouter_token:ro \
-#     ghcr.io/398894496-arch/krouter:v2.1.1
+#     ghcr.io/398894496-arch/krouter:v2.1.2
 #
 # The vault is never written; the full-text index lives in the container's own cache. See docs/TEAM.md.
 FROM python:3.12-slim
