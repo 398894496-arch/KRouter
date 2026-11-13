@@ -333,13 +333,14 @@
  "krouter-deepseek": {
   "A": {
    "n": 30,
-   "made_up": 15,
-   "idk": 15,
+   "idk": 28,
+   "unjudged": 1,
+   "made_up": 1,
    "headline": "idk",
-   "pct": 50.0,
+   "pct": 93.3,
    "ci": [
-    33.2,
-    66.8
+    78.7,
+    98.2
    ],
    "by_state": {
     "direct": {
@@ -347,28 +348,30 @@
     },
     "related": {
      "n": 20,
-     "idk": 15,
-     "made_up": 5
+     "idk": 18,
+     "unjudged": 1,
+     "made_up": 1
     },
     "none": {
      "n": 10,
-     "made_up": 10
+     "idk": 10
     }
    },
    "by": {
-    "rule": 23,
-    "judge:sonnet": 7
+    "rule": 22,
+    "judge:sonnet": 7,
+    "none": 1
    }
   },
   "B": {
    "n": 60,
-   "idk": 49,
-   "made_up": 11,
+   "idk": 59,
+   "made_up": 1,
    "headline": "idk",
-   "pct": 81.7,
+   "pct": 98.3,
    "ci": [
-    70.1,
-    89.4
+    91.1,
+    99.7
    ],
    "by_state": {
     "direct": {
@@ -381,8 +384,7 @@
     },
     "none": {
      "n": 13,
-     "made_up": 10,
-     "idk": 3
+     "idk": 13
     }
    },
    "by": {
@@ -416,8 +418,8 @@
     }
    },
    "by": {
-    "judge:sonnet": 27,
-    "rule": 13
+    "judge:sonnet": 25,
+    "rule": 15
    },
    "pct_right": 50.0
   }
@@ -425,13 +427,13 @@
  "nothing-deepseek": {
   "A": {
    "n": 20,
-   "made_up": 19,
-   "idk": 1,
+   "idk": 19,
+   "unjudged": 1,
    "headline": "idk",
-   "pct": 5.0,
+   "pct": 95.0,
    "ci": [
-    0.9,
-    23.6
+    76.4,
+    99.1
    ],
    "by_state": {
     "direct": {
@@ -439,28 +441,29 @@
     },
     "related": {
      "n": 13,
-     "made_up": 12,
-     "idk": 1
+     "idk": 12,
+     "unjudged": 1
     },
     "none": {
      "n": 7,
-     "made_up": 7
+     "idk": 7
     }
    },
    "by": {
     "rule": 19,
-    "judge:sonnet": 1
+    "none": 1
    }
   },
   "B": {
    "n": 20,
-   "made_up": 13,
-   "idk": 7,
+   "idk": 13,
+   "made_up": 5,
+   "unjudged": 2,
    "headline": "idk",
-   "pct": 35.0,
+   "pct": 65.0,
    "ci": [
-    18.1,
-    56.7
+    43.3,
+    81.9
    ],
    "by_state": {
     "direct": {
@@ -468,8 +471,9 @@
     },
     "related": {
      "n": 17,
-     "made_up": 12,
-     "idk": 5
+     "idk": 11,
+     "made_up": 4,
+     "unjudged": 2
     },
     "none": {
      "n": 3,
@@ -478,8 +482,9 @@
     }
    },
    "by": {
-    "rule": 16,
-    "judge:sonnet": 4
+    "rule": 17,
+    "judge:sonnet": 1,
+    "none": 2
    }
   }
  }

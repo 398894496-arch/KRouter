@@ -342,10 +342,15 @@ def replies_of(cond: str) -> dict[str, str]:
     return out
 
 
+# 第 41 套第二次追加（2026-11-14）：弯撇号在 IDK、HEDGE 两个规则之前换成 U+0027，别的不动
+APOSTROPHES = str.maketrans({c: "'" for c in "\u2019\u2018\u02bc\u201b\uff07"})
+
+
 def mech_one(group: str, reply: str, gold: str) -> str | None:
     """A decision from rules alone, or None (a judge decides)."""
-    idk = bool(IDK.search(reply))
-    hedge = bool(HEDGE.search(reply))
+    seen = reply.translate(APOSTROPHES)
+    idk = bool(IDK.search(seen))
+    hedge = bool(HEDGE.search(seen))
     if group == "C":
         g = norm(gold)
         if len(g) >= 4 and g in norm(reply):
