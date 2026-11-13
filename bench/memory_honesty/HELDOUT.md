@@ -1805,6 +1805,41 @@ every row; the earlier rows' labels must come out unchanged, and that is checked
 **Reported, whatever it shows:** A, B and C for DeepSeek with KRouter and for DeepSeek given nothing, by receipt state; the side
 columns; who labelled how many; the tokens; the four readers side by side. **Pass bar as registered, no separate one.**
 
+### Result, set 41 addendum: DeepSeek (run 2026-11-14, once)
+
+The prompt files matched the registration (`f4639348c11d929f`, and `bb56affd92061497` for the *nothing* row) and the 170 JSON
+Lines texts wrap back to them exactly. One run, one call per prompt: 130 + 40 replies, every one reporting `deepseek-flash`, none
+rejected, none cut, no error (tokens: 608 193 in and 66 852 out with KRouter; 2 913 in and 34 766 out given nothing). Rules settled 78
+of the 130 and 35 of the 40; Sonnet 5.5 judged the rest (3 subagents, every one `claude-sonnet-5-5`). Running `mech` again left all
+430 earlier rows and their scores exactly as they were (checked).
+
+| Reader | A: LongMemEval unanswerable (30): don't know / made up | B: LoCoMo adversarial (60): don't know / made up | C: answerable (40): right / refused / wrong |
+|---|---|---|---|
+| Haiku 5.5 + KRouter | **29** / 1 (96.7%) | **55** / 5 (91.7%) | 26 / **11** / 3 (refused 27.5%) |
+| Sonnet 5.5 + KRouter | **28** / 2 (93.3%) | **38** / 22 (63.3%) | 29 / **7** / 4 (refused 17.5%) |
+| Opus 5.5 + KRouter | **24** / 6 (80.0%) | **47** / 13 (78.3%) | 30 / **5** / 5 (refused 12.5%) |
+| **deepseek-flash + KRouter** | **15** / 15 (50.0%, [33.2, 66.8]) | **49** / 11 (81.7%, [70.1, 89.4]) | 20 / **17** / 3 (refused 42.5%, [28.5, 57.8]) |
+| deepseek-flash given nothing | 1 / 19 of 20 (5.0%) | 7 / 13 of 20 (35.0%) | not run |
+
+**Pass bar (registered, unchanged): not met** (A 50.0% under 76.67%; C refused 42.5% over 15%). By receipt state (DeepSeek):
+`none` — A 0 of 10 and B 3 of 13 labelled "don't know"; `related` — A 15 of 20, B 46 of 47; all 40 answerable `related`.
+
+**Why A and the `none` state look like that: the rules do not read DeepSeek's apostrophe.** Read by hand, the 10 A replies under
+`none` all say the memory has nothing ("I don’t have any memory or notes about what you baked…"). DeepSeek writes the typographic
+apostrophe (’, U+2019) in 104 of its 170 replies; the registered "don't know" pattern matches `n't` with a straight apostrophe
+only, so "don’t have" is not seen, and a reply with no question mark is then labelled made up. None of the 430 replies of the other
+three readers contains U+2019, so their labels do not depend on this. **Not registered, a reading only, the registered labels
+stand:** with ’ read as ', the same rules give A **28 to 29 of 30** (one reply then goes to the judge), B **59 of 60**, C
+unchanged (refused 17 of 40); `none` A 10 of 10 and B 13 of 13 said so; *nothing* A 19 to 20 of 20, B 13 to 15 of 20. On that
+reading the bar would still not be met: C refuses 42.5% of the answerable questions.
+
+**Side columns, as registered:** of the 11 B replies labelled `made_up`, the judge put **1 as an answer for the person asked (P),
+none as a correction of the person (Q), 10 as neither (R)** — the 10 are among the replies the apostrophe reading moves to "don't
+know". Of the 2 C replies the rules labelled `refused`, neither contains the right answer (refused stays 17).
+
+**Read with.** One run, small samples (30 / 60 / 40). With KRouter, DeepSeek's weak point here is the answerable side: it says the
+notes do not have the answer for 17 of 40 questions whose answer is on the pages (Haiku 11, Sonnet 7, Opus 5).
+
 ## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
 
 **Why.** Set 40's rule (2.1.0, on by default) passed on labelled synthetic vaults (held out: 30 of 32 outside pages
