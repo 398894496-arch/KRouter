@@ -170,11 +170,11 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | | KRouter | MemOS | Hindsight |
 |---|---|---|---|
 | 怎么跑、要装什么 | 一个 Markdown 文件夹加本地索引；只用 Python 标准库，一条命令装好，不用服务、不要 key | 云（API key）、自部署（Neo4j + Qdrant）或本地插件（Node.js） | PostgreSQL + pgvector 上的一个服务加一个 LLM key，或 Hindsight Cloud |
-| 不问也想起 | 在有每句话钩子的宿主里，每句话都在本机查一遍（Cursor 没有，见「接哪些」的宿主列表），不调模型；热启动中位数：110 页的测试库 83–87 ms，1 万页库 116–126 ms（整个钩子进程，p95 最高 144 ms；第 34 套，2.1.0 之前测的；2.1.0 的提问钩子在 1 万页库上热启动 p95 是 129–131 ms，第 39 套）；会话开始还有一份索引 | 插件在「任务开始前」「每次 agent 运行前」召回 | 给 coding agent 的包在 agent「开始工作时」注入记忆 |
+| 不问也想起 | 每句话都在本机查一遍，不调模型，什么都不发出去（右边两家页面写的是「任务开始前」「每次 agent 运行前」召回）；这一层要宿主有每句话钩子（Cursor 没有，见「接哪些」的宿主列表），会话开始时还给一份定过的事的索引。实测（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)，留出 60 句，三分之二的提及没说页面上的名字，两层合起来）：该想起的 24 句，Sonnet 5.5 想起 24 句、Haiku 5.5 想起 23 句；改过的 12 条规则都给了新的那页；该安静的 24 句里，Sonnet 5.5 有 1 句、Haiku 5.5 有 2 句出了声；没有递错页，也没有递旧页。耗时：1 万页库热启动中位数 116–126 ms（细节见 [`NUMBERS`](docs/NUMBERS.zh.md)） | 插件在「任务开始前」「每次 agent 运行前」召回；页面上没有自动召回这一项单独的数字（只给了接上 MemOS 后 OpenClaw 任务完成率 36.63% → 50.87%） | 给 coding agent 的包在 agent「开始工作时」注入记忆；页面上没有这一项的数字 |
 | 结论带出处 | 每个回答都带，附回执 | 页面上没有说明 | observation 保留原话引文和证据数 |
 | 知识库 | 参考资料逐页自动认出（也可声明），单独列出，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
 | 敢说不知道 | **整条链（第 41 套，2026-11-12），读题模型是 Claude Opus 5.5（跑过的三个读题模型之一）：LongMemEval 30 道不可答题里 24 道说了记忆里没有（80.0%）；LoCoMo 陷阱题 60 道里 47 道（78.3%）；40 道可答题对照误拒 5 道（12.5%）；达到了事先定的过关线。其他读题模型的结果、没过线的部分和不给任何记忆时的对照见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。别家的数是别的题、别的模型，不能和这里的排名。** 检索层：回执 30 道：9 道 `none`、21 道 `related`（只有相关的页）、0 道 `direct`；早先加读题模型 29 / 30，但不给材料时也是 30 / 30 | 页面上没有数字 | 页面上没有数字 |
-| 标准评测 | 只测检索，按作者标注评分；还没参加同台评测 | 自报（OmniMemEval）：LongMemEval 89.20、LoCoMo 88.83 | LongMemEval 最好成绩（厂商图表，2026-01），部分由别人复现 |
+| 标准评测 | LongMemEval S 答题正确率：500 道答对 449 道（89.8%），留出的一半 235 道答对 201 道（85.5%）；Sonnet 5.5 读题和评分，自己跑的一遍；纯 BM25 没有在同样页数下重跑；不是第三方同台评测 | 自报（OmniMemEval）：LongMemEval 89.20、LoCoMo 88.83 | LongMemEval 最好成绩（厂商图表，2026-01），部分由别人复现 |
 | 规模（GitHub，2026-11-11） | 49 星，一个维护者 | 12 352 星 | 60 340 星；有托管，承诺 99.9% 可用 |
 
 每一格的出处和日期，以及为什么这些数字不能比大小：[`docs/COMPARE.zh.md`](docs/COMPARE.zh.md)。
@@ -191,7 +191,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | **cognee** | pip 安装；Docker；云 | 本地快速上手不要；要“生成回答”才设 LLM key | 页面上没有说明（有 Claude Code、Codex 插件） | “可检查召回到的证据” | 自报 BEAM：0.79（100K，20 题）、0.67（10M，探索性） | 33,232 |
 | **graphiti** | Python 框架；自备图数据库（Neo4j、FalkorDB、Neptune）和 LLM | 默认 OpenAI，需 `OPENAI_API_KEY` | 页面上没有说明 | 每个事实可追溯到原始 episode | 无数字（有论文链接） | 32,727 |
 | **Hindsight** | 服务器（Docker、pip、Helm）、Python 内嵌、云 | 快速上手要 LLM key；页面写可用本地模型 | 编码 agent 包启动时注入；LLM 包装每次调用自动存取 | 观察附原文引用和证据计数 | 只有图表（LongMemEval，2026-01）；写“已被他人复现”，无数字 | 60,340 |
-| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 在有每条消息钩子的宿主里，每条消息本机查一遍（Cursor 没有，见「接哪些」的宿主列表），不调模型；热启动中位数：110 页的测试库 83–87 ms，1 万页库 116–126 ms（整个钩子进程，p95 最高 144 ms；第 34 套，2.1.0 之前测的；2.1.0 的提问钩子在 1 万页库上热启动 p95 是 129–131 ms，第 39 套） | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LoCoMo 991/1,540 | 49 |
+| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 在有每句话钩子的宿主里，每句话都在本机查一遍，不调模型，什么都不发出去（Cursor 没有，见「接哪些」的宿主列表）；实测（第 35 套，留出 60 句）：24 句提及想起 24 句（Sonnet 5.5）、23 句（Haiku 5.5），改过的 12 条规则 12 / 12，该安静的 24 句里分别有 1 句、2 句出了声；1 万页库热启动中位数 116–126 ms（细节见 [`NUMBERS`](docs/NUMBERS.zh.md)） | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LongMemEval 答题正确率 449/500、留出半 201/235（2.1.1，Sonnet 5.5 读题和评分，第 22 套）；LoCoMo 991/1,540 | 49 |
 | **Letta** | npm 装终端工具；`letta server`；云 | 页面上没有说明 | 页面上没有说明 | 页面上没有说明 | 无数字 | 25,413 |
 | **mem0** | 库（pip/npm）、自托管（docker compose）、云 | 要 LLM（默认 OpenAI）；云要注册 key | 页面上没有说明（示例是代码里手动检索） | 页面上没有说明 | 自报（托管平台）：LoCoMo 92.5，LongMemEval 94.4，BEAM 64.1/48.6 | 68,777 |
 | **MemOS** | 四个入口：云 API、自托管（Neo4j+Qdrant）、云插件、本地插件（Node.js，SQLite） | 云：要 key；自托管：.env 里填 key；本地插件：页面上没有说明 | DeepSeek Harness 插件：自动召回；OpenClaw 云插件：每次运行前召回 | 页面上没有说明 | 自报（OmniMemEval）：LoCoMo 88.83，LongMemEval 89.20 等十项 | 12,352 |
@@ -231,7 +231,9 @@ krouter view --demo             # 在一个用完即删的样例记忆库上看�
 
 ## 用数字说话
 
-按基准作者自己的标注机械评分、不调模型：LongMemEval 留出的一半里，KRouter 给的 5 页把答案需要的会话交齐的是 **235 道里 210 道，纯关键词检索 198 道**（跨多个会话的题 47 道里 40 道对 31 道；[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。按 2.1.1 默认交页（平均每题约 5.6 页；第 22 套，Sonnet 5.5 读题和评分）的答题正确率是 **500 道答对 449 道**（89.8%），留出的一半 235 道答对 201 道（85.5%）；交 3 页的 1.3.0 是 400 道。纯 BM25 没有在同样页数下重跑。我们自己的 200 道留出题：KRouter 引错 26%，claude-mem 64%，basic-memory 78%；给纯检索加上 KRouter 那两条规则就和它打平。整节原文和弱点：[`docs/OVERVIEW.zh.md`](docs/OVERVIEW.zh.md#用数字说话)；每个数字和方法：[`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
+留出集，宿主是 Claude Sonnet 5.5 和 Haiku 5.5。提到就想起（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）：24 次提及（三分之二没说页面上的名字），分别想起 **24 次和 23 次**；改过的 12 条规则都给了新的那页；本该什么都不变的话，分别有 1 / 24 和 2 / 24 让它出了声。举一反三（第 15、16 套）：换了题材的任务，提出对的经验 **14 / 14 和 11 / 14**，英文 **14 / 14 和 13 / 14**。弱的一面：真实会话里，宿主自己提起存过的经验是 4 次里 2 次，自己写经验卡是 4 次里 0 次（第 30、31 套，2.0 之前测的）。
+
+检索和答题，按基准作者自己的标注机械评分、不调模型：LongMemEval 留出的一半里，KRouter 给的 5 页把答案需要的会话交齐的是 **235 道里 210 道，纯关键词检索 198 道**（跨多个会话的题 47 道里 40 道对 31 道；[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。按 2.1.1 默认交页（平均每题约 5.6 页；第 22 套，Sonnet 5.5 读题和评分）的答题正确率是 **500 道答对 449 道**（89.8%），留出的一半 235 道答对 201 道（85.5%）；交 3 页的 1.3.0 是 400 道。纯 BM25 没有在同样页数下重跑。我们自己的 200 道留出题：KRouter 引错 26%，claude-mem 64%，basic-memory 78%；给纯检索加上 KRouter 那两条规则就和它打平。整节原文和弱点：[`docs/OVERVIEW.zh.md`](docs/OVERVIEW.zh.md#用数字说话)；每个数字和方法：[`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
 
 ## 自己复现
 
