@@ -15,6 +15,8 @@ notice, then the details.
 
 Docs only: the "recalls without being asked" cell of the comparison tables now leads with how it differs (every message looked up on the machine, nothing sent out) and then what was measured (set 35: 24 / 24 and 23 / 24, 12 / 12 changed rules, 1 and 2 of 24 quiet messages moved it), the "Measured, not claimed" section leads with it and with the lessons carrying over, and the "Benchmarks" cell and a few other places that still said the five-page answer accuracy had not been run or that there was no answer-accuracy number now say what set 22 measured (449 of 500, held-out half 201 of 235). No registered number changed.
 
+Docs only: the Hindsight and MemOS cells of the "recalls without being asked" row now follow their documentation sites (read 2026-11-13), not only their READMEs: Hindsight's coding-agent package injects once on the session's first prompt and re-injects its page roster every user turn by default; MemOS's plugins retrieve before each task or turn. KRouter's own cell no longer implies that recalling automatically is only KRouter's; it says what differs (what each message is checked against, where, with no model and nothing sent out). No registered number changed.
+
 ## 2.1.2 — 2026-11-13
 
 What you will notice: nothing in how KRouter looks things up; the engine is the same as 2.1.1. This release carries the
