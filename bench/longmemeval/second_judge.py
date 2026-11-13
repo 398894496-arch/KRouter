@@ -75,10 +75,12 @@ def run(args) -> int:
     data = qa.load_data(Path(args.data))
     replies = qa.read_jsonl([Path(args.replies)])
     out = Path(args.out)
-    done = {json.loads(x)["qid"] for x in out.read_text().splitlines() if x.strip()} if out.exists() else set()
+    done = {r["qid"] for r in qa.read_jsonl([out])} if out.exists() else set()
     n = 0
     for row in replies:
         if row["qid"] in done:
+            continue
+        if row.get("status") == "not_answered":  # 读题时被接口拒收的：不送判分，按答错计
             continue
         prompt = qa.judge_prompt(data[row["qid"]], row["response"])
         try:
@@ -102,7 +104,7 @@ def run(args) -> int:
         if "pro" in str(meta.get("model", "")).lower():  # 只许 flash：返回的模型名里出现 pro 就停，不记这条
             print(json.dumps({"stopped": row["qid"], "error": "unexpected model", "model": meta.get("model")}), file=sys.stderr)
             return 1
-        rec = {"qid": row["qid"], "reply": reply, "verdict": parse(reply), "sonnet": "yes" if qa.correct(str(row["verdict"])) else "no"}
+        rec = {"qid": row["qid"], "reply": reply, "verdict": parse(reply), "sonnet": ("yes" if qa.correct(str(row["verdict"])) else "no") if "verdict" in row else None}
         if PROVIDER is not PROVIDERS["groq"]:
             rec.update(meta)
         with out.open("a", encoding="utf-8") as fh:

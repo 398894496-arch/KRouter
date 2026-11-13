@@ -648,6 +648,8 @@ KRouter 23 shared with BM25 and 17 copied from sets 11 and 12, so 195 to run; **
 | 2026-11-13 | **One more attempt after the stop, said as it happened (the maintainer's call: try once after the reset, stop at a 429 and leave it).** It judged 44 more and stopped at **462 of 500** on HTTP 429 again; the provider's message says the limit is **tokens per day** (200 000 a day on this account's tier), with a retry after about three minutes. Not tried again. **462 judged, 460 agree with Sonnet**; the two disagreements are still `0edc2aef` and `07b6f563` (Sonnet `no`, gpt-oss `yes`; Sonnet right on both, read by hand); none unparsed. gpt-oss said `yes` to 413, Sonnet to 411, of the same 462. **38 left, all single-session-assistant**, to be judged on another day under the same rules. No accuracy is stated for the 500 until then. |
 | 2026-11-13 | **Fifth amendment, before any DeepSeek call: a third judge, DeepSeek, on all 500.** The maintainer supplied a DeepSeek key for this ("给你一个deepseek key 可以调用 v41 flash 1017 别用pro"). Judge: **`deepseek-flash`** at `api.deepseek.com` (the only other model on that key, the `pro` one, is never called; the script names the model in code and stops if a reply reports a `pro` model); the `model` field each reply returns is recorded as it comes, with the usage. Everything else as the third and fourth amendments: all 500, not only the questions Groq did not reach; the same 500 stored replies, not one character changed; `qa.py`'s `judge_prompt`, word for word; temperature 0; the prompt as the only user message; first word `yes` / `no`, anything else listed apart as unparsed; sent: the question, the benchmark's answer and the stored reply, nothing from any user's notes; a network error resumed at least 30 seconds later, at most 5 times; any HTTP error (rate limit, authentication) stops the run. Reported: accuracy under DeepSeek, all 500 and the held-out half; agreement with Sonnet question by question; the disagreements and which way each leans, up to ten read by hand; the input and output tokens the replies report. **No bar**; the registered column stays Sonnet's; DeepSeek and Groq's judged questions are shown beside it. |
 | 2026-11-13 | **DeepSeek run, said as it happened.** The first call went out after the fifth amendment was committed (b7729a3). All 500 judged in one run: no network error, no HTTP error, no resume. Every reply reports the model `deepseek-flash` (no version string is returned, so "v41 flash 1017" cannot be checked against the reply). Tokens the replies report: **156 663 in, 20 920 out**. None unparsed. **Result: 449 of 500 (89.8% [87.0, 92.4]), held-out half 201 / 235 (85.5% [80.9, 89.8]), dev half 218, `_abs` 30 / 30 — the same verdict as Sonnet on all 500 questions**, so there are no disagreements to read. Against Groq's 462: 460 agree; on Groq's two (`0edc2aef`, `07b6f563`) DeepSeek says `no`, as Sonnet does. Results: `bench/longmemeval/results/2026-11-13-deepseek-judge.set22.jsonl`. The registered column stays Sonnet's (449); the judge from another family gives the same number. |
+| 2026-11-14 | **Sixth amendment, before any reader call: the same 500 prompts read by DeepSeek.** The maintainer asked for it ("读题也跑": many of the people it is shown to use DeepSeek). **Only the reader changes**: the 500 reader prompts are `qa.py`'s `reader_prompt` with the pages KRouter 2.1.1 handed over in this set, rebuilt by `bench/longmemeval/api_reader.py check` and compared before any call: 468 identical to the prompts the Sonnet readers were given, the other 32 identical to sets 11 and 12's (the ones this set carried over); nothing cut. Reader: **`deepseek-flash`** at `api.deepseek.com`, called directly by a script (no agent), the prompt as the only user message, temperature 0, at most 8 192 output tokens, **each prompt asked once**, four calls at a time; the `model` field and the usage each reply returns are recorded; the `pro` model is never called (named in code; a reply reporting it stops the run). Sent: the prompts, which hold only public dataset sessions and the question. A prompt the provider rejects as too long or malformed (HTTP 400, 413, 422) is **not answered and counted wrong**, not cut, not sent to another model; a network or server error (5xx) is resumed at least 30 seconds later, at most 5 times; a rate-limit or authentication refusal (401, 402, 403, 429) stops the run and what was done is reported. **Judges:** the registered column is Sonnet 5.5, as for the Sonnet reader (subagents, batches of 25, set 22's judge instructions and LongMemEval's templates, word for word); beside it `deepseek-flash` judges the same replies (`second_judge.py --provider deepseek`); the questions where the two judges differ are counted. Reported: accuracy with its interval, the held-out half, by type, beside the Sonnet reader's row (449 / 500, 201 / 235); not answered; the tokens. **No bar**, said as it comes. |
+| 2026-11-14 | **DeepSeek reader, said as it happened.** First call after the sixth amendment was committed (dce2930). All 500 prompts asked once, four at a time, in one run: no network error, no HTTP error, **none rejected (0 not answered)**; every reply reports `deepseek-flash`. Two replies stopped at the 8 192-token cap with no text (`gpt4_59149c78`, `0bc8ad93`); they stand as given and are judged wrong. Tokens: **7 727 635 in, 372 561 out**. Sonnet judges: 20 subagents, batches of 25, set 22's judge instructions word for word, every one `claude-sonnet-5-5`; three read the harness's saved copy of their own prompts after an output was cut; checked: one verdict per question, each judge prompt holding its own question's reply. **Result, Sonnet judge (the registered column): 433 of 500, 86.6% [83.6, 89.4]**; answerable 407 / 470; `_abs` 26 / 30; **held-out half 195 / 235 (83.0% [78.3, 87.7])**, dev half 212 / 235. By type: multi-session 91 / 121 (Sonnet reader 100), temporal 109 / 127 (111), preference 22 / 30 (22), single-session user 61 / 64 (61), assistant 56 / 56 (56), knowledge update 68 / 72 (69). Against the Sonnet reader (449, held-out 201), question by question: 17 only Sonnet's reader got right, 1 only DeepSeek's. **DeepSeek as its own judge: 433 / 500, held-out 197 / 235**; it agrees with the Sonnet judge on 494, the other 6 split 3 and 3 (judge tokens 149 711 in, 27 561 out). Results: `bench/longmemeval/results/2026-11-14-deepseek-reader.set22.jsonl`. |
 
 ## Set 14: can the refusal gate refuse more, without losing answers? (registered 2026-11-09, after the development analysis below and before any held-out half was opened)
 
@@ -1774,6 +1776,69 @@ By state (Opus): `none` — A 10 / 10 and B 13 / 13 said so; `related` — A 14 
 **Side columns, registered before the run, listed next to the main labels (the main labels stand):** of Opus's 13 B replies labelled `made_up`, the judge found **13 point out that the notes say it of someone else (Q) and none asserts an answer for the person asked (P)**; read that way B is 60 of 60. Of the 3 C replies the rules labelled `refused`, **1 in fact contains the right answer** (2 do not): refused 4 of 40 (10%), right 31, on that reading. For Haiku and Sonnet the same two checks were made after the fact and are listed in the post-hoc check above: Q 4 / P 1 and Q 20 / P 2; the rules' 4 and 3 refusals gave 3 and 2 with the right answer.
 
 **Read with.** Opus's A column is *lower* than the other two readers' (24 against 29 and 28). Reading its 6 `made_up` A replies after the scoring (not a registered label; the registered labels stand): two answer the half of a two-part question that the pages support (tomatoes; the headphones) and say the other half is not there, one corrects the question's role title and gives the numbers the notes have, one infers a university from two notes and says no single note states it, one lists what the notes do have for a taxi-against-bus question (an assistant's estimate included), and one says the notes do not mention table tennis and quotes the tennis they do mention. So several are partial or hedged answers that the registered rules (no refusal phrase and no question mark, or the judge's letter) count as made up. No claim here that one reader is better than another: one run each, 30 / 60 / 40 questions, a different judge for Opus (Sonnet) than for Sonnet (Haiku). Deviations from the registration: none. Prompts: 130 reader, 51 judge, 16 for the side columns. Files: the same `results/set41/` (`rows.jsonl` holds every reply of all three readers).
+
+### Set 41, addendum: DeepSeek as the reader (registered 2026-11-14, before any DeepSeek reply)
+
+**Why.** The maintainer asked for the readers people actually use ("读题也跑"; many of those it is shown to use DeepSeek), to put
+next to Haiku, Sonnet and Opus.
+
+**What is the same, exactly.** The 130 sealed questions (A 30, B 60, C 40); **the prompts already generated for the Sonnet
+condition, not one character changed** (the prompt files' fingerprint, computed as for Opus, is again `f4639348c11d929f`; the
+`batches/krouter-sonnet` JSON Lines hold the same 130 texts before the 1 500-character soft wrap the agents' file reader needed —
+checked: all 130 wrap back to the files exactly); the reply length note; the scoring rules, the judge prompts, the main labels and
+**the pass bar (A and B at least 76.67% "don't know", C at most 15% refused)**; the two side columns as registered for Opus (of the
+B replies labelled `made_up`, P against Q; of the C replies the rules label `refused`, how many contain the right answer).
+
+**What changes.** Only the reader: **`deepseek-flash`** at `api.deepseek.com`, called directly by a script (`endtoend.py
+deepseek-read`; no agent), the prompt as the only user message, temperature 0, at most 8 192 output tokens, **each prompt asked
+once**; the `model` field and usage of each reply recorded; the `pro` model never called. Sent: the prompts, which hold only public
+dataset sessions and the questions. A prompt the provider rejects (HTTP 400, 413, 422) gets an empty reply, is listed, and is scored
+by the rules as it stands (an empty reply to A or B counts as made up, to C as not right); a network or server error is resumed
+at least 30 seconds later, at most 5 times; a rate-limit or authentication refusal stops the run. **The *nothing* row is run too**,
+with `deepseek-flash`: the same 40 prompt files as Haiku's *nothing* row (A 20, B 20, drawn by the seed; fingerprint
+`bb56affd92061497`).
+
+**Judging.** Rules first, as registered; what they do not settle goes to **Sonnet 5.5** subagents (the judge is not the reader), in
+batches of 20, with the same two prompts; the side columns by the same judge. Running `mech` again rebuilds the rule decisions for
+every row; the earlier rows' labels must come out unchanged, and that is checked before anything is reported.
+
+**Reported, whatever it shows:** A, B and C for DeepSeek with KRouter and for DeepSeek given nothing, by receipt state; the side
+columns; who labelled how many; the tokens; the four readers side by side. **Pass bar as registered, no separate one.**
+
+### Result, set 41 addendum: DeepSeek (run 2026-11-14, once)
+
+The prompt files matched the registration (`f4639348c11d929f`, and `bb56affd92061497` for the *nothing* row) and the 170 JSON
+Lines texts wrap back to them exactly. One run, one call per prompt: 130 + 40 replies, every one reporting `deepseek-flash`, none
+rejected, none cut, no error (tokens: 608 193 in and 66 852 out with KRouter; 2 913 in and 34 766 out given nothing). Rules settled 78
+of the 130 and 35 of the 40; Sonnet 5.5 judged the rest (3 subagents, every one `claude-sonnet-5-5`). Running `mech` again left all
+430 earlier rows and their scores exactly as they were (checked).
+
+| Reader | A: LongMemEval unanswerable (30): don't know / made up | B: LoCoMo adversarial (60): don't know / made up | C: answerable (40): right / refused / wrong |
+|---|---|---|---|
+| Haiku 5.5 + KRouter | **29** / 1 (96.7%) | **55** / 5 (91.7%) | 26 / **11** / 3 (refused 27.5%) |
+| Sonnet 5.5 + KRouter | **28** / 2 (93.3%) | **38** / 22 (63.3%) | 29 / **7** / 4 (refused 17.5%) |
+| Opus 5.5 + KRouter | **24** / 6 (80.0%) | **47** / 13 (78.3%) | 30 / **5** / 5 (refused 12.5%) |
+| **deepseek-flash + KRouter** | **15** / 15 (50.0%, [33.2, 66.8]) | **49** / 11 (81.7%, [70.1, 89.4]) | 20 / **17** / 3 (refused 42.5%, [28.5, 57.8]) |
+| deepseek-flash given nothing | 1 / 19 of 20 (5.0%) | 7 / 13 of 20 (35.0%) | not run |
+
+**Pass bar (registered, unchanged): not met** (A 50.0% under 76.67%; C refused 42.5% over 15%). By receipt state (DeepSeek):
+`none` — A 0 of 10 and B 3 of 13 labelled "don't know"; `related` — A 15 of 20, B 46 of 47; all 40 answerable `related`.
+
+**Why A and the `none` state look like that: the rules do not read DeepSeek's apostrophe.** Read by hand, the 10 A replies under
+`none` all say the memory has nothing ("I don’t have any memory or notes about what you baked…"). DeepSeek writes the typographic
+apostrophe (’, U+2019) in 104 of its 170 replies; the registered "don't know" pattern matches `n't` with a straight apostrophe
+only, so "don’t have" is not seen, and a reply with no question mark is then labelled made up. None of the 430 replies of the other
+three readers contains U+2019, so their labels do not depend on this. **Not registered, a reading only, the registered labels
+stand:** with ’ read as ', the same rules give A **28 to 29 of 30** (one reply then goes to the judge), B **59 of 60**, C
+unchanged (refused 17 of 40); `none` A 10 of 10 and B 13 of 13 said so; *nothing* A 19 to 20 of 20, B 13 to 15 of 20. On that
+reading the bar would still not be met: C refuses 42.5% of the answerable questions.
+
+**Side columns, as registered:** of the 11 B replies labelled `made_up`, the judge put **1 as an answer for the person asked (P),
+none as a correction of the person (Q), 10 as neither (R)** — the 10 are among the replies the apostrophe reading moves to "don't
+know". Of the 2 C replies the rules labelled `refused`, neither contains the right answer (refused stays 17).
+
+**Read with.** One run, small samples (30 / 60 / 40). With KRouter, DeepSeek's weak point here is the answerable side: it says the
+notes do not have the answer for 17 of 40 questions whose answer is on the pages (Haiku 11, Sonnet 7, Opus 5).
 
 ## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
 

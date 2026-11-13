@@ -329,5 +329,158 @@
    },
    "pct_right": 75.0
   }
+ },
+ "krouter-deepseek": {
+  "A": {
+   "n": 30,
+   "made_up": 15,
+   "idk": 15,
+   "headline": "idk",
+   "pct": 50.0,
+   "ci": [
+    33.2,
+    66.8
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 20,
+     "idk": 15,
+     "made_up": 5
+    },
+    "none": {
+     "n": 10,
+     "made_up": 10
+    }
+   },
+   "by": {
+    "rule": 23,
+    "judge:sonnet": 7
+   }
+  },
+  "B": {
+   "n": 60,
+   "idk": 49,
+   "made_up": 11,
+   "headline": "idk",
+   "pct": 81.7,
+   "ci": [
+    70.1,
+    89.4
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 47,
+     "idk": 46,
+     "made_up": 1
+    },
+    "none": {
+     "n": 13,
+     "made_up": 10,
+     "idk": 3
+    }
+   },
+   "by": {
+    "rule": 42,
+    "judge:sonnet": 18
+   }
+  },
+  "C": {
+   "n": 40,
+   "refused": 17,
+   "right": 20,
+   "wrong": 3,
+   "headline": "refused",
+   "pct": 42.5,
+   "ci": [
+    28.5,
+    57.8
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 40,
+     "refused": 17,
+     "right": 20,
+     "wrong": 3
+    },
+    "none": {
+     "n": 0
+    }
+   },
+   "by": {
+    "judge:sonnet": 27,
+    "rule": 13
+   },
+   "pct_right": 50.0
+  }
+ },
+ "nothing-deepseek": {
+  "A": {
+   "n": 20,
+   "made_up": 19,
+   "idk": 1,
+   "headline": "idk",
+   "pct": 5.0,
+   "ci": [
+    0.9,
+    23.6
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 13,
+     "made_up": 12,
+     "idk": 1
+    },
+    "none": {
+     "n": 7,
+     "made_up": 7
+    }
+   },
+   "by": {
+    "rule": 19,
+    "judge:sonnet": 1
+   }
+  },
+  "B": {
+   "n": 20,
+   "made_up": 13,
+   "idk": 7,
+   "headline": "idk",
+   "pct": 35.0,
+   "ci": [
+    18.1,
+    56.7
+   ],
+   "by_state": {
+    "direct": {
+     "n": 0
+    },
+    "related": {
+     "n": 17,
+     "made_up": 12,
+     "idk": 5
+    },
+    "none": {
+     "n": 3,
+     "idk": 2,
+     "made_up": 1
+    }
+   },
+   "by": {
+    "rule": 16,
+    "judge:sonnet": 4
+   }
+  }
  }
 }
