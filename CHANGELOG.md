@@ -19,6 +19,8 @@ Docs: the ten-project comparison table (what each project's own page says, no ra
 
 Docs: four places on the pages that disagreed now agree: one latency statement with its conditions (the registered set 34 and set 39 numbers), the opening's "no key, no server" limited to personal use, the team section's "tested on one machine only" moved to its first sentence, and "every message looked up" qualified by the hosts that have a per-message hook (not Cursor). No registered number changed.
 
+Set 41 gets a third reader: Claude Opus 5.5, run once on the same 130 questions and prompt files (registered before its run). LongMemEval's 30 unanswerable questions: 24 said the memory does not have it; LoCoMo's 60 adversarial: 47; the 40 answerable controls: 5 wrongly refused. The bar fixed beforehand is met by Opus and not by Haiku or Sonnet. The "nothing" row was not run for Opus.
+
 ## 2.1.0 — 2026-11-11
 
 **Windows: the commands the install prints now run as printed ([#74](https://github.com/398894496-arch/KRouter/issues/74)).** The closing lines used to print `set "PYTHONPATH=…" && python -m krouter.cli doctor`, which failed in PowerShell 5.1 (`&&`) and PowerShell 7 (`set` does not set an environment variable, so the module could not be imported), and `… search "question"`, which the Python command line rejects (its command is `ask`). They now print `python "<…>\scripts\krouter_run.py" doctor` and `… ask "question"`: one command, no `&&`, no variable to set. The same `ask` replaces `search` in the lines printed on macOS and Linux. Tests check the printed line and that the command line's own argument parser accepts the printed arguments; **a real PowerShell 5.1, PowerShell 7 and cmd have not run it yet** (that waits for CI's Windows machine after the push).
