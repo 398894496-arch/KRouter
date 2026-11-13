@@ -1,0 +1,21 @@
+-- Sonnet judges for the DeepSeek reader: subagents told to read instr/batch_NNN.txt (set 22's JUDGE_INSTRUCTIONS.txt with the paths filled in)
+judge batch_001 claude-sonnet-5-5 25 yes 24
+judge batch_002 claude-sonnet-5-5 25 yes 23
+judge batch_003 claude-sonnet-5-5 25 yes 23
+judge batch_005 claude-sonnet-5-5 25 yes 18
+judge batch_008 claude-sonnet-5-5 25 yes 21
+judge batch_009 claude-sonnet-5-5 25 yes 21
+judge batch_004 claude-sonnet-5-5 25 yes 15 (re-read truncated output from saved tool-output copy of its own prompts)
+judge batch_006 claude-sonnet-5-5 25 yes 18 (read the harness's saved copy of its own output)
+judge batch_015 claude-sonnet-5-5 25 yes 23
+judge batch_011 claude-sonnet-5-5 25 yes 22
+judge batch_016 claude-sonnet-5-5 25 yes 24
+judge batch_014 claude-sonnet-5-5 25 yes 23
+judge batch_013 claude-sonnet-5-5 25 yes 22
+judge batch_017 claude-sonnet-5-5 25 yes 24
+judge batch_012 claude-sonnet-5-5 25 yes 16
+judge batch_019 claude-sonnet-5-5 25 yes 25
+judge batch_007 claude-sonnet-5-5 25 yes 22 (read the harness's saved copy of its own read)
+judge batch_010 claude-sonnet-5-5 25 yes 21 (read the harness's saved copy of its own read)
+judge batch_018 claude-sonnet-5-5 25 yes 23
+judge batch_020 claude-sonnet-5-5 25 yes 25

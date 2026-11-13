@@ -45,8 +45,11 @@ PAGES = 3          # pages whose text is handed to the reader: the first three o
 PAGE_CHARS = 14000  # one page's text is cut here (a LongMemEval session is 10 700 characters at the median)
 BATCH_PROMPTS = 10
 BATCH_CHARS = 150000
-CONDS = {"krouter-haiku": "haiku", "krouter-sonnet": "sonnet", "nothing-haiku": "haiku", "krouter-opus": "opus"}
-JUDGE_OF = {"haiku": "sonnet", "sonnet": "haiku", "opus": "sonnet"}  # the judge is never the model that wrote the reply
+CONDS = {"krouter-haiku": "haiku", "krouter-sonnet": "sonnet", "nothing-haiku": "haiku", "krouter-opus": "opus",
+         "krouter-deepseek": "deepseek", "nothing-deepseek": "deepseek"}
+JUDGE_OF = {"haiku": "sonnet", "sonnet": "haiku", "opus": "sonnet", "deepseek": "sonnet"}  # never the model that wrote the reply
+# DeepSeek 行（HELDOUT 第 41 套追加）：读的是和别的行同一批提示词文件；读题由脚本直调 deepseek-flash，不经子代理
+DEEPSEEK_SRC = {"krouter-deepseek": "krouter-sonnet", "nothing-deepseek": "nothing-haiku"}
 
 
 def _refusal_study():
@@ -537,11 +540,63 @@ def opus_prepare() -> None:
     print(json.dumps({"krouter-opus": sum(1 for v in idx.values() if v["cond"] == "krouter-opus")}))
 
 
+def deepseek_prepare() -> None:
+    """The DeepSeek rows: the very same prompt files as the Sonnet condition (KRouter) and as the Haiku nothing-given
+    condition (the same 40 questions); only index entries are added, nothing is generated again."""
+    idx = json.loads((STATE / "index.json").read_text(encoding="utf-8"))
+    for cond, src in DEEPSEEK_SRC.items():
+        for k, v in list(idx.items()):
+            if v["cond"] == src:
+                idx[f"{cond}/" + k.split("/", 1)[1]] = {"cond": cond, "qid": v["qid"]}
+    (STATE / "index.json").write_text(json.dumps(idx, indent=0), encoding="utf-8")
+    print(json.dumps({c: sum(1 for v in idx.values() if v["cond"] == c) for c in DEEPSEEK_SRC}))
+
+
+def deepseek_read() -> None:
+    """Read every prompt of the two DeepSeek rows once with `deepseek-flash` (bench/longmemeval/api_reader.py's call: temperature
+    0, the prompt as the only user message). A rejected prompt is written as an empty reply and listed. Model and usage go
+    to replies_meta/<cond>.jsonl."""
+    sys.path.insert(0, str(REPO / "bench/longmemeval"))
+    import api_reader as ar
+
+    key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not key:
+        raise SystemExit("DEEPSEEK_API_KEY is not set")
+    for cond, src in DEEPSEEK_SRC.items():
+        rows = [json.loads(x) for f in sorted((STATE / "batches" / src).glob("batch_*.jsonl"))
+                for x in f.read_text(encoding="utf-8").split("\n") if x.strip()]
+        out = STATE / "replies" / cond
+        out.mkdir(parents=True, exist_ok=True)
+        meta_f = STATE / "replies_meta" / f"{cond}.jsonl"
+        meta_f.parent.mkdir(parents=True, exist_ok=True)
+        done = {json.loads(x)["id"] for x in meta_f.read_text().split("\n") if x.strip()} if meta_f.exists() else set()
+        for r in rows:
+            if r["id"] in done:
+                continue
+            for attempt in range(6):
+                try:
+                    rec = ar.call(r["prompt"], key)
+                    break
+                except ar.Net as e:
+                    if attempt == 5:
+                        raise SystemExit(f"network, gave up at {r['id']}: {e}")
+                    print(json.dumps({"resume": attempt + 1, "at": r["id"]}), file=sys.stderr, flush=True)
+                    import time
+                    time.sleep(30)
+            with (out / "batch_01.jsonl").open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps({"id": r["id"], "response": rec.get("response", "")}, ensure_ascii=False) + "\n")
+            with meta_f.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps({"id": r["id"], **{k: v for k, v in rec.items() if k != "response"}}, ensure_ascii=False) + "\n")
+        print(json.dumps({cond: len(rows)}), file=sys.stderr, flush=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=("sample", "prepare", "mech", "score", "posthoc-prepare", "opus-prepare"))
+    ap.add_argument("cmd", choices=("sample", "prepare", "mech", "score", "posthoc-prepare", "opus-prepare", "deepseek-prepare",
+                                    "deepseek-read"))
     a = ap.parse_args()
-    {"sample": sample, "prepare": prepare, "mech": mech, "score": score, "posthoc-prepare": posthoc_prepare, "opus-prepare": opus_prepare}[a.cmd]()
+    {"sample": sample, "prepare": prepare, "mech": mech, "score": score, "posthoc-prepare": posthoc_prepare, "opus-prepare": opus_prepare,
+     "deepseek-prepare": deepseek_prepare, "deepseek-read": deepseek_read}[a.cmd]()
     return 0
 
 
