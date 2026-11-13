@@ -1777,6 +1777,34 @@ By state (Opus): `none` — A 10 / 10 and B 13 / 13 said so; `related` — A 14 
 
 **Read with.** Opus's A column is *lower* than the other two readers' (24 against 29 and 28). Reading its 6 `made_up` A replies after the scoring (not a registered label; the registered labels stand): two answer the half of a two-part question that the pages support (tomatoes; the headphones) and say the other half is not there, one corrects the question's role title and gives the numbers the notes have, one infers a university from two notes and says no single note states it, one lists what the notes do have for a taxi-against-bus question (an assistant's estimate included), and one says the notes do not mention table tennis and quotes the tennis they do mention. So several are partial or hedged answers that the registered rules (no refusal phrase and no question mark, or the judge's letter) count as made up. No claim here that one reader is better than another: one run each, 30 / 60 / 40 questions, a different judge for Opus (Sonnet) than for Sonnet (Haiku). Deviations from the registration: none. Prompts: 130 reader, 51 judge, 16 for the side columns. Files: the same `results/set41/` (`rows.jsonl` holds every reply of all three readers).
 
+### Set 41, addendum: DeepSeek as the reader (registered 2026-11-14, before any DeepSeek reply)
+
+**Why.** The maintainer asked for the readers people actually use ("读题也跑"; many of those it is shown to use DeepSeek), to put
+next to Haiku, Sonnet and Opus.
+
+**What is the same, exactly.** The 130 sealed questions (A 30, B 60, C 40); **the prompts already generated for the Sonnet
+condition, not one character changed** (the prompt files' fingerprint, computed as for Opus, is again `f4639348c11d929f`; the
+`batches/krouter-sonnet` JSON Lines hold the same 130 texts before the 1 500-character soft wrap the agents' file reader needed —
+checked: all 130 wrap back to the files exactly); the reply length note; the scoring rules, the judge prompts, the main labels and
+**the pass bar (A and B at least 76.67% "don't know", C at most 15% refused)**; the two side columns as registered for Opus (of the
+B replies labelled `made_up`, P against Q; of the C replies the rules label `refused`, how many contain the right answer).
+
+**What changes.** Only the reader: **`deepseek-flash`** at `api.deepseek.com`, called directly by a script (`endtoend.py
+deepseek-read`; no agent), the prompt as the only user message, temperature 0, at most 8 192 output tokens, **each prompt asked
+once**; the `model` field and usage of each reply recorded; the `pro` model never called. Sent: the prompts, which hold only public
+dataset sessions and the questions. A prompt the provider rejects (HTTP 400, 413, 422) gets an empty reply, is listed, and is scored
+by the rules as it stands (an empty reply to A or B counts as made up, to C as not right); a network or server error is resumed
+at least 30 seconds later, at most 5 times; a rate-limit or authentication refusal stops the run. **The *nothing* row is run too**,
+with `deepseek-flash`: the same 40 prompt files as Haiku's *nothing* row (A 20, B 20, drawn by the seed; fingerprint
+`bb56affd92061497`).
+
+**Judging.** Rules first, as registered; what they do not settle goes to **Sonnet 5.5** subagents (the judge is not the reader), in
+batches of 20, with the same two prompts; the side columns by the same judge. Running `mech` again rebuilds the rule decisions for
+every row; the earlier rows' labels must come out unchanged, and that is checked before anything is reported.
+
+**Reported, whatever it shows:** A, B and C for DeepSeek with KRouter and for DeepSeek given nothing, by receipt state; the side
+columns; who labelled how many; the tokens; the four readers side by side. **Pass bar as registered, no separate one.**
+
 ## Set 42: automatic reference recognition on a real vault (registered 2026-11-12, before any rule change was looked at on it)
 
 **Why.** Set 40's rule (2.1.0, on by default) passed on labelled synthetic vaults (held out: 30 of 32 outside pages
