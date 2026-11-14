@@ -1,0 +1,50 @@
+===== rung off
+routes: alias,trigger,recall  cases: set45dev  crowd: 0  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8
+===== rung 2.0:1
+routes: alias,trigger,recall  cases: set45dev  crowd: 0  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8
+===== rung 1.5:1
+routes: alias,trigger,recall  cases: set45dev  crowd: 0  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8
+===== rung 1.25:1
+routes: alias,trigger,recall  cases: set45dev  crowd: 0  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8
+===== rung 1.15:2
+routes: alias,trigger,recall  cases: set45dev  crowd: 0  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8

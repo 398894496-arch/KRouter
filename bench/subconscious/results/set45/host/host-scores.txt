@@ -1,0 +1,36 @@
+### normal haiku
+haiku: items 120 missing 0
+  zh: recall 23/24 (hook 5, host 18; unnamed 19/20)  changed 12/12 (hook 7, host 5)  quiet-loud 3/24 (hook 1)  wrong 3  old 0
+  en: recall 19/24 (hook 2, host 17; unnamed 17/22)  changed 11/12 (hook 0, host 11)  quiet-loud 3/24 (hook 1)  wrong 5  old 0
+  all: recall 42/48  changed 23/24  quiet-loud 6/48  wrong 8  old 0  loud by kind: unrelated=0, other_sense=2, common_word=1, pasted=1
+  set 45 layers (recall, both languages): hook alone 7, host where the hook was not 35, both layers 42 of 48; unnamed 36/42, named 6/6
+  changed: hook alone 7, host where the hook was not 16, both 23 of 24
+  quiet loud by the six kinds: unrelated=0/8, other_sense=2/8, common_word=1/8, pasted=1/8, near_topic=2/8, ack=0/8
+  wrong pages: by the hook 0, by the host only 8; old-page deliveries 0
+### normal sonnet
+sonnet: items 120 missing 0
+  zh: recall 24/24 (hook 5, host 19; unnamed 20/20)  changed 12/12 (hook 7, host 5)  quiet-loud 3/24 (hook 1)  wrong 0  old 0
+  en: recall 20/24 (hook 2, host 18; unnamed 18/22)  changed 11/12 (hook 0, host 11)  quiet-loud 2/24 (hook 1)  wrong 3  old 0
+  all: recall 44/48  changed 23/24  quiet-loud 5/48  wrong 3  old 0  loud by kind: unrelated=0, other_sense=1, common_word=1, pasted=0
+  set 45 layers (recall, both languages): hook alone 7, host where the hook was not 37, both layers 44 of 48; unnamed 38/42, named 6/6
+  changed: hook alone 7, host where the hook was not 16, both 23 of 24
+  quiet loud by the six kinds: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=3/8, ack=0/8
+  wrong pages: by the hook 0, by the host only 3; old-page deliveries 0
+### crowded haiku
+haiku: items 120 missing 0
+  zh: recall 22/24 (hook 5, host 17; unnamed 18/20)  changed 12/12 (hook 7, host 5)  quiet-loud 2/24 (hook 1)  wrong 1  old 0
+  en: recall 16/24 (hook 2, host 14; unnamed 14/22)  changed 11/12 (hook 0, host 11)  quiet-loud 2/24 (hook 1)  wrong 2  old 0
+  all: recall 38/48  changed 23/24  quiet-loud 4/48  wrong 3  old 0  loud by kind: unrelated=0, other_sense=1, common_word=1, pasted=0
+  set 45 layers (recall, both languages): hook alone 7, host where the hook was not 31, both layers 38 of 48; unnamed 32/42, named 6/6
+  changed: hook alone 7, host where the hook was not 16, both 23 of 24
+  quiet loud by the six kinds: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=2/8, ack=0/8
+  wrong pages: by the hook 0, by the host only 3; old-page deliveries 0
+### crowded sonnet
+sonnet: items 120 missing 0
+  zh: recall 24/24 (hook 5, host 19; unnamed 20/20)  changed 12/12 (hook 7, host 5)  quiet-loud 3/24 (hook 1)  wrong 0  old 0
+  en: recall 20/24 (hook 2, host 18; unnamed 18/22)  changed 11/12 (hook 0, host 11)  quiet-loud 2/24 (hook 1)  wrong 3  old 0
+  all: recall 44/48  changed 23/24  quiet-loud 5/48  wrong 3  old 0  loud by kind: unrelated=0, other_sense=1, common_word=1, pasted=0
+  set 45 layers (recall, both languages): hook alone 7, host where the hook was not 37, both layers 44 of 48; unnamed 38/42, named 6/6
+  changed: hook alone 7, host where the hook was not 16, both 23 of 24
+  quiet loud by the six kinds: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=3/8, ack=0/8
+  wrong pages: by the hook 0, by the host only 3; old-page deliveries 0

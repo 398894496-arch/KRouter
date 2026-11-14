@@ -1,0 +1,120 @@
+{"id": "48d3b2fee4", "response": "CALL krouter_ask: 软件采购\n先查一下团队对软件采购和续费的约定，看续订由谁来发起、到期前多久要问。"}
+{"id": "8f28d32b8e", "response": "用 dict 保持插入顺序的特性：`list(dict.fromkeys(items))`，前提是元素可哈希。如果元素不可哈希（比如 list 或 dict），就手动去重：遍历时用一个 seen 集合记录 key，`if key not in seen: seen.add(key); out.append(x)`。"}
+{"id": "e12fba9f0c", "response": "CALL krouter_ask: 短信通道\n先去查验证码短信这块现在的通道和切换机制，确认有没有自动换供应商、阈值是多少，再告诉你重试逻辑要不要自己写，免得和基础设施那边打架。"}
+{"id": "6e4da5a71e", "response": "好的，到时候留意接陌生号码，尤其是医院的来电，回访一般会用科室电话或医院总机号。你可以先把医院的科室电话存进通讯录，或者在日历里设个提醒，这样来电会显示名字，不容易被拦截或误挂。"}
+{"id": "3f591cc888", "response": "CALL krouter_ask: 证书续签\n先去查证书续签这页里值班遇到续签卡住该怎么处理。已知证书由证书管理服务自动续签、到期前 30 天未续会告警到值班群（团队手册/证书续签.md），所以这条告警本身是预期内的提示；官网目前正常、三个子域共用这张证书，这些信息回群里时要说明。查到具体联系人和流程后，我再告诉你该找谁、要不要先在群里回。"}
+{"id": "9dab08524c", "response": "CALL krouter_ask: 节假日安排\n先查下节假日前上线的截止时间和封网规定，再给你具体几点。"}
+{"id": "d1bb06e4e2", "response": "CALL krouter_ask: mobile release criteria\nLet me check the agreed release criteria for mobile rollouts before saying yes, since crash numbers alone may not be the whole bar."}
+{"id": "24271c0b87", "response": "CALL krouter_ask: load test on staging: when allowed, who must be told beforehand, traffic limits\nI'll check what has been agreed for load tests on the shared staging environment before you start, so we avoid a repeat of last time."}
+{"id": "8eec770a3d", "response": "你是指同意哪一件事？这一轮我这边还没有上文，麻烦说一下具体是哪个方案或操作，我再接着做。"}
+{"id": "eb5030a7ae", "response": "CALL krouter_ask: browser support\nLet me check what browser support level was agreed before answering on IE11."}
+{"id": "ef926d6b47", "response": "对，按团队手册，团队周会是每周二上午 10 点，半小时，只同步风险和需要协调的事，不念进度（团队手册/团队周会.md）。所以你准备好风险项和需要别人配合的点就行。"}
+{"id": "880c8d32b5", "response": "CALL krouter_ask: transactional email\nI'll check what was decided about the sending domain for transactional email before telling you whether a newsletter can share it."}
+{"id": "866d293ed8", "response": "CALL krouter_ask: 消息队列\n先查下团队对消息队列消费端的约定（比如重复消费该怎么处理），再判断这个重复通知该不该由消费端自己兜底。"}
+{"id": "6733299d7b", "response": "CALL krouter_ask: 发布说明\nI'll check the team's release-notes requirements first (what must be in them and where they go). I haven't seen the notes themselves, so paste them too and I'll compare."}
+{"id": "9b1b052ba7", "response": "For photos, digiKam is a solid free desktop pick that reads and writes standard XMP/IPTC tags, and Adobe Lightroom Classic is the paid option with strong keyword tools. If you want something lighter, XnView MP works, or just use Apple Photos or Google Photos albums and labels. What OS are you on, and roughly how many photos?"}
+{"id": "55d346280c", "response": "按团队手册，自建 GitLab 只读到明年三月，之后以 GitHub 企业版为准；新仓库应直接放 GitHub 企业版，并且默认私有（团队手册/代码托管.md）。所以现在新开仓库别再放 GitLab 了。"}
+{"id": "e42458afe6", "response": "CALL krouter_ask: 团队周会\n先确认团队周会对汇报内容的约定再回答你。"}
+{"id": "510a1d5806", "response": "CALL krouter_ask: 需求评审\n先查团队对新需求在开始写之前要不要先拉大家评审的约定。"}
+{"id": "61ba1c2e6c", "response": "CALL krouter_ask: database for new services\nLet me check what the team has settled on for new services' databases before recommending one."}
+{"id": "35e020db0f", "response": "CALL krouter_ask: cost alert\nI'll check how cloud cost spikes are routed (who owns the alert and who responds) before answering."}
+{"id": "39932508cb", "response": "You're welcome."}
+{"id": "3de32c60e3", "response": "这一轮我还没有上文，不确定「这个」指哪个方案；你再说一下具体是哪一个，我就照着做。"}
+{"id": "1a1833b241", "response": "可以，写得具体一点更容易被物业重视：说明是哪几栋、故障频率（比如每周几次）、有没有困人，最好附上报修记录或照片。需要的话我帮你起草一条发到群里的文字。"}
+{"id": "06f86eb331", "response": "探店可以按地理位置聚类，把离得近的几家排在同一个半天里，别来回跑；热门的店尽量错开高峰。把名单发我，我可以帮你按区域排个顺序。"}
+{"id": "3efd8ed2a2", "response": "CALL krouter_ask: 消息队列\n先查团队对异步任务用哪个中间件、topic 怎么命名的约定。"}
+{"id": "afa389a178", "response": "I don't have a recorded PR review SLA for your team, so I can't state one. A common default is a first response within one business day, with a shorter target for small PRs. If the repo has a CONTRIBUTING.md or a team doc it should say; tell me if you want to check there."}
+{"id": "2b18cf3790", "response": "Ha, cats are great at shipping to production. If anything got typed into your editor or terminal, check git diff before you commit."}
+{"id": "bff1bfc6fa", "response": "很可能是版本差异：CI 里的 golangci-lint 版本或启用的 linter 集合和你本地不同，SA4006、ineffassign 这类检查在新版本里往往更严。先对比 `golangci-lint --version` 和 CI 里装的版本，再看仓库有没有 .golangci.yml 以及 CI 是否固定了版本。用和 CI 一致的版本在本地跑一遍应该就能复现，然后按提示修 retry.go 第 14、31 行未使用的赋值。"}
+{"id": "5373fe560f", "response": "是自动切换：验证码短信同时接入两家供应商，主通道失败率超过 2% 时自动切到备用通道，不需要人工去切（团队手册/短信通道.md）。该页也说明这么做是为了避免单一供应商故障导致用户无法登录。"}
+{"id": "5591e1a6d6", "response": "Sorry to hear that, that's an annoying one. Do you want me to draft a quick message to your team with a new ETA, or help work out which tasks can wait until you arrive?"}
+{"id": "2f6a600691", "response": "CALL krouter_ask: model deployment\nLet me check the agreed process for deploying a model before answering."}
+{"id": "b886f35d06", "response": "CALL krouter_ask: third-party scripts\nLet me check the team's rules for adding third-party scripts like a chat widget before you add it."}
+{"id": "8b4dc34bb6", "response": "I don't have your company's PTO policy on hand, so I can't give you a number. It's usually in the HR handbook or the benefits page of your HR system; if you paste the relevant section I can help interpret it."}
+{"id": "774a349dd6", "response": "yml 语法本身看着没问题；pending 加 runner offline 说明是 runner 的问题而不是配置：没有在线的 runner 能接这些 job。到 Settings > CI/CD > Runners 看哪个 runner 离线，在 runner 机器上检查 `gitlab-runner status`、重启服务并看日志。另外注意所有 job 都没写 tags，如果 runner 没勾选 Run untagged jobs，也会一直 pending，可以在 job 里加 `tags: [docker]`。"}
+{"id": "3cfdf10ba8", "response": "Which segments do you mean, customer segments or user cohorts, or sections of the document? I haven't seen the writeup, so paste it or tell me what the tags are for (for example filtering by segment later), and I'll suggest a tagging scheme."}
+{"id": "31619ae818", "response": "CALL krouter_ask: 客户投诉\n先查团队对客户投诉的首次答复时限、结果答复时限，以及涉及退款是否要知会风控的规定。"}
+{"id": "5585e6497c", "response": "CALL krouter_ask: 临时权限\n先查线上库临时权限的申请流程：要谁审批、最长能开多久、到期要不要自己关。主管不在的话，我会看规定里有没有替代审批人，争取帮你赶在三点前走通。"}
+{"id": "039f39c995", "response": "CALL krouter_ask: support escalation\nI'll check how a stuck customer-facing crash bug should be escalated, who owns triage, and who sets priority, before you change anything yourself."}
+{"id": "aea8055205", "response": "CALL krouter_ask: database for new services\nLet me check what's been decided for new services before suggesting MySQL or something else."}
+{"id": "3fa7e78ef7", "response": "I can't generate images directly, but I can write you an SVG header with a sunset gradient (sky, sun, horizon silhouette), or point you to free sources like Unsplash or Pexels. What size and mood do you want, warm and calm or dramatic?"}
+{"id": "5a3c75f038", "response": "CALL krouter_ask: interview process\nLet me check how long the coding round is in our interview process."}
+{"id": "62a55ed226", "response": "CALL krouter_ask: price change\nI'll check what was decided about existing customers when prices change before answering."}
+{"id": "7aa736f686", "response": "CALL krouter_ask: 服务拆分\n先查团队对把模块拆成独立部署服务的要求：要走哪些审批、先写什么文档、谁点头，以及上线前的硬性前置条件（监控、值班等）。查到之后我按优惠券这个场景帮你理出一份清单，你再排计划。"}
+{"id": "0f85131845", "response": "CALL krouter_ask: access review\nLet me check whether prod DB logins get revoked by an access review or an expiring temporary grant, since that would explain the vanished login."}
+{"id": "87f881b46d", "response": "CALL krouter_ask: 服务拆分\n先查团队对订单模块拆成独立服务要走的流程。"}
+{"id": "a532542b1b", "response": "春节档电影扎堆，预告像去年那部不代表剧情真的雷同，可以先看导演、主演和类型是不是你喜欢的。我建议等上映后一两天的评分和口碑出来再决定。告诉我片名的话，我可以帮你分析一下预告里能看出什么。"}
+{"id": "35fd22b7d2", "response": "CALL krouter_ask: 绩效评估\n先查绩效评估的周期安排、入职满几个月才参评、谁来打分，以及自评和互评的截止时间；下个月还是下下个月以那一页为准。"}
+{"id": "ed21bcaac0", "response": "一般需要带本人身份证、旧驾驶证和近期免冠照片，年纪较大的话通常还要体检证明。可以在「交管 12123」App 上预约或在线办理换证，也可以带齐材料去车管所窗口。各地细节略有不同，建议先看所在地车管所的官方通知确认材料清单。"}
+{"id": "d2e3f3ae44", "response": "CALL krouter_ask: analytics queries\nLet me check where big analytics queries are supposed to run now before you kick it off."}
+{"id": "057fe8544a", "response": "Sounds like a good reason to step away; enjoy the break."}
+{"id": "c54ea89cc1", "response": "Do you mean your laptop shut down, or a Jupyter-style notebook whose kernel died? If it's a hosted notebook, idle timeouts while you're away are a common cause, and unsaved cells may be recoverable from the checkpoint. Tell me which one and what error you see."}
+{"id": "de4e663741", "response": "Go on with what? This session has no earlier context for me, so tell me what you want continued."}
+{"id": "d10fc131b9", "response": "CALL krouter_ask: code comments language\nLet me check whether the team has agreed a language for comments and commit messages before saying Spanish is fine."}
+{"id": "3e0526f7cf", "response": "CALL krouter_ask: mobile release criteria\n先查团队对灰度放量的比例和节奏的约定，再回答你。"}
+{"id": "d646f77b29", "response": "手机上的权限弹窗没法全局关掉，但可以在系统设置里按 App 提前授权，这样就不再弹：iOS 在「设置」里找到对应 App 选权限，Android 在「设置 > 应用 > 权限」。位置、麦克风这类敏感权限建议保持「使用时允许」，不要一刀切全放开。"}
+{"id": "013cde30cf", "response": "统一用 Kafka，主题命名为 业务域.事件名，消息保留 7 天，消费者必须幂等（团队手册/消息队列.md）。"}
+{"id": "c5ca30ff09", "response": "现在统一用 Kafka：主题命名 业务域.事件名，消息至少保留 7 天，消费者必须做幂等，所以重复消费靠消费端幂等来处理（团队手册/消息队列.md）。这页是因为 RabbitMQ 高峰期堆积严重才改的，取代了旧的消息队列页，新同事别按旧说法去接 RabbitMQ。"}
+{"id": "b9f2a738e6", "response": "CALL krouter_ask: model deployment\nLet me check the agreed path to production for models, including any gates beyond a 2% holdout gain, before you plan the weekend push."}
+{"id": "13011a3211", "response": "CALL krouter_ask: API deprecation\nI'll check the deprecation rules (notice period, which version may remove a field) before saying whether it can go in 3.2."}
+{"id": "260aaff827", "response": "Do you mean Polish-style postfix/prefix expression notation, or i++ versus ++i? For expressions, prefix puts the operator first (+ 1 2), postfix puts it last (1 2 +), and postfix is the easiest to evaluate with a stack. For increments, prefix returns the new value and postfix returns the old one."}
+{"id": "b1bd75c0cd", "response": "CALL krouter_ask: transactional email\nI'll check which system and owner handle sending receipts now."}
+{"id": "cb61951d20", "response": "The single response you pasted shows etag a1b2c3d4, so to see it change you need to curl twice and compare. Typical causes: several backend instances generating different etags, a CDN or gzip layer rewriting it, or the etag being derived from something volatile like a timestamp or request id. cache-control: private, max-age=0 just means clients revalidate every time, which is not itself the cause. Send two responses side by side, including Server, Via and Content-Encoding, and I can narrow it down."}
+{"id": "6315dd4c9a", "response": "CALL krouter_ask: support hours\nLet me check the agreed support hours and what applies to enterprise clients at night."}
+{"id": "11a01e43d0", "response": "CALL krouter_ask: 数据标注\n先查团队对训练样本标注的分工和验收标准。"}
+{"id": "ea0125f403", "response": "我这边没有你们团队关于 Python 格式化工具的既定约定，所以先给通用建议：新项目可以直接用 ruff（`ruff format` 与 black 基本兼容，还能替代 flake8 和 isort），已经在用 black 的项目不必为此迁移。配置统一放在仓库根目录的 pyproject.toml（`[tool.ruff]` 或 `[tool.black]`）。要对齐全团队，可以把同一份配置放进模板仓库或 pre-commit 里。"}
+{"id": "1c9881dbc1", "response": "CALL krouter_ask: feature requests\nLet me check where customer feature requests like CSV export are supposed to be recorded and who reviews them."}
+{"id": "d50bd1574d", "response": "家用血压计优先选上臂式，比腕式更稳、更准；品牌可以看欧姆龙（Omron）和鱼跃，两三百元的型号就够用。买之前确认有医疗器械注册证，袖带尺寸要适合她的上臂。功能不用太多，语音播报和大屏对老人更实用。"}
+{"id": "ea8d656abc", "response": "See you tomorrow afternoon."}
+{"id": "065ed08c58", "response": "那赶紧打吧，先告诉他晚点四十分钟，让他别在站台干等，可以去候车厅或附近坐着。另外让他留意车站广播和 12306 上的实时正晚点信息，时间可能还会变。"}
+{"id": "beee807060", "response": "Which game is it? Beetle spawns in most games depend on time of day, weather, biome and sometimes equipment, so first check whether the rare ones only appear at night or in rain, and use any bait or net upgrade. If the quest has a rarity or luck stat, boosting it helps more than extra hours of searching. Tell me the game and I can be more specific."}
+{"id": "d74c610a35", "response": "Rebase for your own unshared feature branch to keep history linear before opening the PR; merge for shared or already-pushed branches so you don't rewrite other people's history. If your team squash-merges PRs, the choice matters much less. I don't have a recorded team rule here, so check your repo's contributing doc."}
+{"id": "72c77b943e", "response": "CALL krouter_ask: 短信通道\n先查验证码收不到时有没有备用通道或兜底方案。"}
+{"id": "5707ec1b6b", "response": "Because deploy has `if: github.ref == 'refs/heads/main'`, and on pull_request events github.ref is refs/pull/<n>/merge, so the condition is false and the job is skipped. To run it on PRs, also allow `github.event_name == 'pull_request'`, though deploying from PRs is usually not what you want; a separate preview-deploy job is cleaner. Note your paste ends before the deploy job has any steps."}
+{"id": "f3844fae33", "response": "CALL krouter_ask: App 系统版本\n先查客户端当前支持的最低 iOS 系统版本，再回答 iOS 14 能不能用。"}
+{"id": "d2d5332d72", "response": "周三发版的发布说明要写三块：新功能、修复、已知问题；写完发到产品公告频道，并且要同步更新帮助中心（团队手册/发布说明.md）。"}
+{"id": "ed641a2c1c", "response": "Which thing should I do? This session has no earlier message to act on, so tell me the exact change or step."}
+{"id": "e451a40c6e", "response": "Sounds good, see you in 20."}
+{"id": "955b063fa8", "response": "I don't have your on-call pay terms, so I can't give you a number. It's normally covered in the compensation or on-call policy from HR; if you paste it, I can help read it."}
+{"id": "b143946edc", "response": "改了 compose 文件之后，光 `docker compose restart` 不会重新读取配置，需要 `docker compose up -d --force-recreate`（或先 down 再 up -d）才会应用新的 volumes。写法是 `volumes: - /宿主机绝对路径:/容器内路径`，相对路径要以 ./ 开头。用 `docker inspect <容器>` 看 Mounts 确认是否生效，macOS 或 Windows 上还要确认该目录已在 Docker Desktop 的共享路径里。"}
+{"id": "4a5ccc8436", "response": "慢的主要是缓存：两次到 cache-01:6379 的请求各超时 2000ms，加上重试等待，占了这个 job 7.3 秒里大约 4 秒。上游拉取 5000 行只用了 812ms，不是瓶颈。先查 cache-01 的负载、网络和连接数，必要时把超时设短、重试加退避；row 2231 缺 sku 被跳过只是数据问题，和慢无关。"}
+{"id": "68ab086e9c", "response": "从断言看是 `notes.startswith('## Features')` 不成立，说明生成结果的开头不是这个标题，不一定是 ## New。先在测试里 print(notes) 看第一段标题是什么，也要确认 generate 对 feat、fix、chore 分组的输出顺序，如果别的分组排在前面也会失败。贴一下 generate 的模板就能判断是改模板还是改测试。"}
+{"id": "e86e9e5fe4", "response": "按团队手册，技术分享是每两周周四下午一次，每组每季度至少讲一次（团队手册/技术分享.md），所以你们组还没人讲的话，先报题目是对的。具体下一个周四是几号，这条记录里没写，需要看排期表或问组织者。讲完别忘了录像要进知识库。"}
+{"id": "7670358136", "response": "按团队手册，生产权限走工单申请，需要上级和系统负责人双人审批，临时权限最长 7 天，到期自动收回（团队手册/权限申请.md）。线上出问题的话，工单里写清原因和需要的范围，并直接联系这两位审批人催办。"}
+{"id": "9b4331be62", "response": "CALL krouter_ask: 测试环境\n先查预发环境的数据来源、同步频率，以及手机号是否做脱敏。"}
+{"id": "711a9bcdea", "response": "CALL krouter_ask: 数据看板\nI'll check which database the dashboards are supposed to read from."}
+{"id": "a01060fa2c", "response": "CALL krouter_ask: third-party scripts\nLet me check the team's rule on third-party trackers on the site before answering."}
+{"id": "9f9b4ad6eb", "response": "好的。这一轮我还没有上文，需要我做什么请直接说。"}
+{"id": "de5b9f34dc", "response": "If none of these are pushed or shared, the docs and chore commits (2d7f6b0, c41e9aa) are the safe ones to squash together. I'd keep the hackathon voice search prototype as its own commit, since it is unrelated and you may want to drop or revert it independently, and the fix 3fa91c2 is better left separate too. git lists newest first, while `git rebase -i HEAD~4` shows them oldest first. Don't squash anything already pushed to a shared branch."}
+{"id": "d1ab6a515f", "response": "CALL krouter_ask: hackathon\nLet me check what the agreed follow-up is for a winning hackathon demo."}
+{"id": "ba30787954", "response": "Per Handbook/Hackathon.md, the hackathon runs for two days every quarter, and winners get one sprint of follow-up. That page doesn't list the next date, so check the team calendar or ask the organizers."}
+{"id": "1e3c9a3adf", "response": "CALL krouter_ask: 技术分享\n先查技术分享的频率、各组的硬性要求和录像存放位置，再看你们组这季度轮没轮到。"}
+{"id": "d212b00e8e", "response": "CALL krouter_ask: 数据分级\nLet me check the retention rules for user call recordings."}
+{"id": "8a8f7dd4c3", "response": "CALL krouter_ask: 数据看板\n先查数据看板上指标口径变更要怎么留说明、要通知谁。"}
+{"id": "895fddbe32", "response": "CALL krouter_ask: 测试环境\n先查测试环境的数据是不是有定时清理或重置。"}
+{"id": "f4d4b3add3", "response": "CALL krouter_ask: 办公网络\n先查访客该连哪个 Wi-Fi，以及怎么给访客授权。"}
+{"id": "d02467e657", "response": "CALL krouter_ask: 数据分级\n先查含手机号的数据属于哪个级别、能不能拷到个人电脑。"}
+{"id": "a429404b11", "response": "清单还没贴过来，你把内容发我我才能查漏。先给个年货常见遗漏项：坚果干果、糖果零食、饮料酒水、生鲜肉蛋、春联福字红包，以及给长辈的礼品。贴上之后我按人数和天数帮你核对数量。"}
+{"id": "b9991bf0af", "response": "A few ideas: LazyChef, NoCook, Microwave Muse, Edible-ish, Fork It, or Dinner Is Handled. If you want something short and brandable, Fork It and NoCook are my picks. Do you want me to lean funnier or cleaner?"}
+{"id": "5104db749c", "response": "CALL krouter_ask: access review\nLet me check whether unused access gets revoked in the access review before you rely on the billing DB login."}
+{"id": "826d06b866", "response": "CALL krouter_ask: refunds\nLet me check the refund policy, especially who may approve a $180 refund, before you do it yourself."}
+{"id": "6d01273c3a", "response": "CALL krouter_ask: 意见反馈\n先查 App 里用户提建议的入口最后流向哪里、谁来处理。"}
+{"id": "6227c67e80", "response": "CALL krouter_ask: 数据共享\n先查给外部公司提供用户明细该走什么方式，能不能直接邮件发。"}
+{"id": "dcad45288d", "response": "CALL krouter_ask: feature requests\nLet me check where feature requests like dark mode should be logged and who reviews them."}
+{"id": "b3e3fff3b5", "response": "If this is a public API field being deprecated, then yes: the handbook says to give at least six months' notice with a Sunset header, and to remove the field only in a major version (Handbook/API deprecation.md). Which field is it, and is the removal release a major one?"}
+{"id": "1b3e71600b", "response": "Okay, leaving it as it is. Let me know if you want to come back to it."}
+{"id": "52dc5b5f1a", "response": "你们峰值每秒两三百、个别大客户突发上千，令牌桶正好适合：它允许桶容量内的突发，同时限制长期速率。想简化的话，别一开始做复杂分级：先用网关自带的令牌桶（多数网关几行配置），按客户 key 设一个默认配额，再给少数大客户单独加覆盖值。固定窗口最简单，但有窗口边界处瞬时翻倍的问题，漏桶会把突发削平，对大客户的突发不友好。"}
+{"id": "111955abe4", "response": "给合作方的数据只走数据交换平台，文件要加密，下载链接 72 小时后失效，禁止用邮件发明细（团队手册/数据共享.md）。所以有时效，是 72 小时。"}
+{"id": "39636b9cec", "response": "Yeah, coffee prices keep climbing. A thermos or the office machine pays for itself fast."}
+{"id": "46827159c4", "response": "SyncJob 不一定是罪魁：日志里它是拿连接超时失败（等了 30 秒仍拿不到），更像是池被打满后的受害者。先看是谁占着连接：开 Hikari 的 `leakDetectionThreshold`（比如 20s），并在出问题时抓一次 thread dump 或看 Hikari 的 active、idle、waiting 指标。同时 GET /api/orders 已经变慢到 2 到 3 秒，可能是慢查询、事务里调了外部接口占着连接，也可能是 maximumPoolSize 偏小。"}
+{"id": "e6c7860467", "response": "CALL krouter_ask: mobile release criteria\nLet me check the agreed ship bar for iOS releases."}
+{"id": "9159d2b08e", "response": "CALL krouter_ask: analytics queries\nLet me check where reports are meant to be run now."}
+{"id": "2925475f84", "response": "CALL krouter_ask: on-site days\nLet me check the on-site day rules to tell you when you're in the office."}
+{"id": "7fd940f5ba", "response": "代码统一迁到 GitHub 企业版，新仓库默认私有；自建 GitLab 只读到明年三月（团队手册/代码托管.md）。所以现在放 GitHub 企业版，保持私有；要改成公开，这一页没写，需要另行确认。"}
+{"id": "a1be8321de", "response": "CALL krouter_ask: support escalation\nLet me check how bugs should be handed over to engineering."}
+{"id": "509ba82f87", "response": "CALL krouter_ask: 消息队列\nLet me check the team's standard for adding a new queue (broker, topic naming, retention)."}
+{"id": "7a7eba975e", "response": "CALL krouter_ask: 发布说明\n先查上线新功能后要通知客服的约定，以及发到哪个群或频道。"}
+{"id": "aaa4ca8a24", "response": "CALL krouter_ask: 开源许可证\n先查团队对 copyleft 类许可证的引入规定，再回答要不要先找法务。"}
+{"id": "55b323c6dd", "response": "官网的 https 证书由证书管理服务自动续签，不用人工管；到期前 30 天还没续上，会告警到值班群（团队手册/证书续签.md）。所以平时是证书管理服务负责，值班群收到告警后才需要人介入。"}
+{"id": "c1056af38b", "response": "CALL krouter_ask: status page\nLet me check how often the status page should be updated during an outage."}
+{"id": "7ee8548a81", "response": "继续什么？这一轮没有上文，请说一下要接着做哪件事。"}
