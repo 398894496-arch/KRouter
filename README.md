@@ -319,7 +319,12 @@ second:
 ```bash
 python3 bench/memory_honesty/run.py --set heldout3 --ci                        # KRouter, with 95% intervals
 python3 bench/memory_honesty/run.py --set heldout3 --vs-matched bm25-floor    # against BM25 + the same two rules
+python3 bench/reproduce.py                                                      # every registered number that needs no model, next to its registered value
 ```
+
+`bench/reproduce.py` takes about ten seconds and prints `match` or `MISMATCH` per row; what it leaves out and how to run
+that yourself: [`bench/REPRODUCE.md`](bench/REPRODUCE.md). Another memory system can be scored on the spoken-style messages
+of set 45 (a small adapter, no model): [`bench/subconscious/public/`](bench/subconscious/public/README.md).
 
 Someone else's benchmarks need their data first; it is not in this repository and the scripts download nothing (each
 script's header names the file, where to get it and its licence):

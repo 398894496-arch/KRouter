@@ -244,7 +244,11 @@ krouter view --demo             # 在一个用完即删的样例记忆库上看�
 ```bash
 python3 bench/memory_honesty/run.py --set heldout3 --ci                        # KRouter，带 95% 区间
 python3 bench/memory_honesty/run.py --set heldout3 --vs-matched bm25-floor    # 和加了同样两条规则的 BM25 比
+python3 bench/reproduce.py                                                      # 所有不需要模型的已登记数字，和登记值并排
 ```
+
+`bench/reproduce.py` 大约十秒，每一行打印 `match` 或 `MISMATCH`；它没收的数字和怎么自己跑，见 [`bench/REPRODUCE.zh.md`](bench/REPRODUCE.zh.md)。
+别的记忆系统也可以在第 45 套的口语消息上计分（一个很小的适配器，不用模型）：[`bench/subconscious/public/`](bench/subconscious/public/README.zh.md)。
 
 别人出的基准要先下载它们的数据：数据不在仓库里，脚本也不会自己下载（每个脚本开头写了文件名、下载地址和许可）：
 

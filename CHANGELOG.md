@@ -11,6 +11,8 @@ notice, then the details.
 
 ## Unreleased
 
+Bench and docs only (no engine change, no registered number or counting changed): `python3 bench/reproduce.py` recomputes the 18 registered numbers that need no model, key or download (honesty bench on three vaults with the BM25 baselines and the stored raw answers of claude-mem and basic-memory, set 40, the prompt hook by itself on set 45's development half and on sets 32 and 35's held-out halves) and prints each next to its registered value, `match` or `MISMATCH` (about ten seconds; `bench/REPRODUCE.md` lists what is left out and how to run it with your own model or data). `bench/subconscious/public/` turns set 45's development half into a benchmark other memory systems can run: a two-function adapter interface, a scorer with the registered counting, the KRouter hook and a plain BM25 baseline as adapters, `--export` / `--answers` for systems not written in Python; the held-out half stays sealed and is refused by the scorer.
+
 `server.json` now points at v2.1.2 (`KRouter.mcpb`, SHA-256 `af3925eb…`, checked against the published `SHA256SUMS`); nothing else changed.
 
 Docs only: the "recalls without being asked" cell of the comparison tables now leads with how it differs (every message looked up on the machine, nothing sent out) and then what was measured (set 35: 24 / 24 and 23 / 24, 12 / 12 changed rules, 1 and 2 of 24 quiet messages moved it), the "Measured, not claimed" section leads with it and with the lessons carrying over, and the "Benchmarks" cell and a few other places that still said the five-page answer accuracy had not been run or that there was no answer-accuracy number now say what set 22 measured (449 of 500, held-out half 201 of 235). No registered number changed.
