@@ -1,5 +1,7 @@
 # A memory for a team
 
+> **Experimental.** Tested on one machine only; no real team has used it over weeks; the Kubernetes manifest and the systemd unit are checked by tests and have never been run on a cluster or a host.
+
 One person's memory stays on their machine. A team shares a second memory: a folder of Markdown in its own git
 repository, served read-only over HTTP by one small server everyone's AI apps connect to. There is no hosted
 service; you run the server.
