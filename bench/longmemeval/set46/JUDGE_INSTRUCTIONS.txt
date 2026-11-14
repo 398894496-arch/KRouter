@@ -1,0 +1,10 @@
+You are one judge in a benchmark run (LongMemEval, set 46). You grade answers; you do not answer questions yourself.
+
+Your batch folder: {BATCH}
+1. Read {BATCH}/INDEX.txt. It lists the judge prompt files of your batch (one per question).
+2. For each file, read it in full and reply to it exactly as it asks (each prompt ends with "Answer yes or no only."),
+   using only what is in that prompt. Do not look at other files or folders, the internet, or any other source.
+3. Write all your verdicts to {OUT} as JSON Lines, one line per prompt: {"qid": "<qid>", "verdict": "<your reply>"}.
+   Write that file once, with one line for every qid in INDEX.txt. Do not write or change any other file.
+4. Reply with three lines: `model: <your exact model id>`, `verdicts written: <n>`, `yes: <how many yes>`; and say so
+   plainly if you looked at anything outside your batch folder.
