@@ -1,0 +1,51 @@
+{"pid": "q020b066467", "n": 1, "query": "sold furniture, bought or assembled furniture, fixed furniture", "ts": "2026-11-14T07:41:47", "returned": ["7784236e_2"], "found": 5}
+{"pid": "q151d857b92", "n": 1, "query": "Master's degree duration years program completed", "ts": "2026-11-14T07:42:03", "returned": ["21996cbe"], "found": 5}
+{"pid": "q21954e60de", "n": 1, "query": "autographed football collection", "ts": "2026-11-14T07:42:15", "returned": [], "found": 0}
+{"pid": "q1358473ec5", "n": 1, "query": "food delivery service ordered Grubhub DoorDash Uber Eats", "ts": "2026-11-14T07:42:21", "returned": [], "found": 0}
+{"pid": "q151d857b92", "n": 2, "query": "I earned my Master's degree, finished master's in computer science, years of graduate school", "ts": "2026-11-14T07:42:14", "returned": ["answer_35c5419d_abs_2", "f002a741_2"], "found": 5}
+{"pid": "q151d857b92", "n": 3, "query": "I earned my Master's degree, finished master's in computer science, years of graduate school", "ts": "2026-11-14T07:42:36", "returned": [], "found": 5}
+{"pid": "q23d5cbc7f2", "n": 1, "query": "apartment in Shinjuku, how long living there", "ts": "2026-11-14T07:42:35", "returned": ["ultrachat_343289"], "found": 5}
+{"pid": "q24765ddb0e", "n": 1, "query": "my grandma's age, grandfather age, grandparents years old", "ts": "2026-11-14T07:43:03", "returned": [], "found": 0}
+{"pid": "q24765ddb0e", "n": 2, "query": "grandma passed away at age", "ts": "2026-11-14T07:43:13", "returned": ["answer_2504635e_3", "ultrachat_322666"], "found": 5}
+{"pid": "q27832e531f", "n": 1, "query": "homegrown garden vegetables herbs I grow", "ts": "2026-11-14T07:44:45", "returned": ["answer_92d5f7cd", "ultrachat_161745"], "found": 5}
+{"pid": "q6a5fe98b76", "n": 1, "query": "Rachel Wednesday February", "ts": "2026-11-14T07:44:51", "returned": [], "found": 0}
+{"pid": "q752bcd7ac8", "n": 1, "query": "Miami trip hotel", "ts": "2026-11-14T07:45:00", "returned": [], "found": 0}
+{"pid": "q7be77d7e6e", "n": 1, "query": "iPad case order arrived", "ts": "2026-11-14T07:45:04", "returned": [], "found": 0}
+{"pid": "q7dfdbed9e9", "n": 1, "query": "I led a project / leading a project team", "ts": "2026-11-14T07:45:06", "returned": ["sharegpt_nVi6tIt_0", "answer_ec904b3c_2"], "found": 5}
+{"pid": "qa29616a125", "n": 1, "query": "accommodation cost per night Hawaii Tokyo", "ts": "2026-11-14T07:45:12", "returned": [], "found": 0}
+{"pid": "q868f1b03bb", "n": 1, "query": "baked egg tarts", "ts": "2026-11-14T07:45:15", "returned": ["answer_733e443a_abs_3"], "found": 5}
+{"pid": "qde1b6b059e", "n": 1, "query": "baked for uncle's birthday party", "ts": "2026-11-14T07:45:23", "returned": ["answer_e6143162_abs", "sharegpt_hn3IS1q_0", "sharegpt_SF6KWw1_9"], "found": 5}
+{"pid": "q868f1b03bb", "n": 2, "query": "egg tart custard pastry I made", "ts": "2026-11-14T07:45:38", "returned": ["09d8b29e_1"], "found": 5}
+{"pid": "qf0b0fdc3df", "n": 1, "query": "Tom Alex became a parent baby", "ts": "2026-11-14T07:45:39", "returned": ["answer_65600ff6_abs_2", "answer_65600ff6_abs_1", "sharegpt_7PLgNll_0"], "found": 5}
+{"pid": "q5d0031b6b6", "n": 1, "query": "Italian restaurants I have tried in my city", "ts": "2026-11-14T07:45:20", "returned": [], "found": 5}
+{"pid": "q7a92e3470c", "n": 1, "query": "how old I am, my age, years old, birthday", "ts": "2026-11-14T07:45:21", "returned": ["fb328ace_1", "answer_17dc2f5b_1", "5b5eb39b_1"], "found": 5}
+{"pid": "q5d0031b6b6", "n": 2, "query": "pasta pizza Italian place tried", "ts": "2026-11-14T07:45:59", "returned": [], "found": 0}
+{"pid": "q38d26d8fc7", "n": 1, "query": "my dad gave me a birthday gift", "ts": "2026-11-14T07:45:59", "returned": [], "found": 5}
+{"pid": "qde1b6b059e", "n": 2, "query": "my uncle's birthday party, I baked a cake", "ts": "2026-11-14T07:46:09", "returned": ["31f3f40d_4", "f2ce866d_2"], "found": 5}
+{"pid": "q38d26d8fc7", "n": 2, "query": "father present birthday", "ts": "2026-11-14T07:46:14", "returned": [], "found": 0}
+{"pid": "qf0b0fdc3df", "n": 2, "query": "Tom and his wife had a baby, expecting, my friend Tom", "ts": "2026-11-14T07:46:14", "returned": [], "found": 0}
+{"pid": "qde1b6b059e", "n": 3, "query": "uncle party dessert I made", "ts": "2026-11-14T07:46:30", "returned": [], "found": 0}
+{"pid": "qaaa19d1dae", "n": 1, "query": "fixing the fence; bought three cows from Peter", "ts": "2026-11-14T07:45:18", "returned": [], "found": 0}
+{"pid": "qbc3d224467", "n": 1, "query": "table tennis with friends at the local park", "ts": "2026-11-14T07:45:18", "returned": ["79bb1298_5"], "found": 5}
+{"pid": "qf0b0fdc3df", "n": 3, "query": "Tom became a dad, newborn, welcomed his first child", "ts": "2026-11-14T07:46:36", "returned": ["sharegpt_kTBVvbN_0", "d9bce149_2", "ultrachat_238311"], "found": 5}
+{"pid": "qf59fa773e5", "n": 1, "query": "sports event I participated in: race, tournament, game, charity run, match", "ts": "2026-11-14T07:45:50", "returned": ["answer_8c64ce25_3", "2aee3e70", "sharegpt_8ns7j9U_0"], "found": 5}
+{"pid": "q9581a874e4", "n": 1, "query": "hamster name", "ts": "2026-11-14T07:45:50", "returned": [], "found": 0}
+{"pid": "qf59fa773e5", "n": 2, "query": "I played, I just finished running a 5K, basketball, swimming, cycling, softball, volleyball, last week", "ts": "2026-11-14T07:47:03", "returned": ["answer_8c64ce25_1", "answer_8c64ce25_2", "773287dc_1"], "found": 5}
+{"pid": "qdc683c2e65", "n": 1, "query": "I am years old, my age, turned birthday", "ts": "2026-11-14T07:47:09", "returned": ["sharegpt_Dewf2fQ_0", "ef71a35e_1", "sharegpt_hccQjAV_0"], "found": 5}
+{"pid": "q8694c2a339", "n": 1, "query": "Jamaican snapper dish with fruit", "ts": "2026-11-14T07:47:11", "returned": ["35201d43"], "found": 5}
+{"pid": "qac0ec63387", "n": 1, "query": "Sapiens total pages, current page I am on", "ts": "2026-11-14T07:47:14", "returned": ["7613d5ec_2"], "found": 5}
+{"pid": "qdc683c2e65", "n": 2, "query": "as a 32-year-old, I'm in my thirties, age of the user", "ts": "2026-11-14T07:47:20", "returned": [], "found": 0}
+{"pid": "qac0ec63387", "n": 2, "query": "Sapiens by Yuval Harari pages read so far", "ts": "2026-11-14T07:47:23", "returned": [], "found": 0}
+{"pid": "qac0ec63387", "n": 3, "query": "Sapiens book page count bookmark", "ts": "2026-11-14T07:47:30", "returned": [], "found": 5}
+{"pid": "qdc683c2e65", "n": 3, "query": "how old I am, my 3Xth birthday, I'm 3", "ts": "2026-11-14T07:47:35", "returned": [], "found": 0}
+{"pid": "qf7a3358174", "n": 1, "query": "my brother, my sister, my siblings", "ts": "2026-11-14T07:47:36", "returned": ["c96fac82_3", "76a6b5fb_2", "b8b49175"], "found": 5}
+{"pid": "qe296567841", "n": 1, "query": "violin practice every day minutes hours", "ts": "2026-11-14T07:47:49", "returned": ["answer_7cc5362f_abs"], "found": 5}
+{"pid": "qd3a33fee9f", "n": 1, "query": "my phone model, phone case, charger, phone accessories", "ts": "2026-11-14T07:47:49", "returned": [], "found": 0}
+{"pid": "q964d42d215", "n": 1, "query": "my age, how old I am, my birthday", "ts": "2026-11-14T07:47:48", "returned": ["7614c21f_2", "answer_8de18468_1", "sharegpt_xQQ30VB_0"], "found": 5}
+{"pid": "qe296567841", "n": 2, "query": "I practice my violin", "ts": "2026-11-14T07:48:13", "returned": [], "found": 0}
+{"pid": "qf7a3358174", "n": 2, "query": "I have two brothers and a sister; siblings, family size, growing up with", "ts": "2026-11-14T07:47:46", "returned": ["answer_477ae455_1", "answer_477ae455_2", "7a389bd1_7"], "found": 5}
+{"pid": "qbb81c8097e", "n": 1, "query": "asylum application how long I waited months", "ts": "2026-11-14T07:47:46", "returned": [], "found": 0}
+{"pid": "q964d42d215", "n": 2, "query": "I'm 32 years old / I just turned", "ts": "2026-11-14T07:48:20", "returned": [], "found": 0}
+{"pid": "qbb81c8097e", "n": 2, "query": "asylum interview EAD waited 18 months", "ts": "2026-11-14T07:48:24", "returned": [], "found": 0}
+{"pid": "q964d42d215", "n": 3, "query": "as a 30-something, my own age", "ts": "2026-11-14T07:48:31", "returned": ["d161536e", "ultrachat_506827"], "found": 5}
+{"pid": "qfb8e789f85", "n": 1, "query": "volunteered at local animal shelter fundraising dinner", "ts": "2026-11-14T07:48:34", "returned": ["13f3da23_3"], "found": 5}

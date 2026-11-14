@@ -1,0 +1,50 @@
+{
+ "judged": 62,
+ "of": 62,
+ "wrong": {
+  "n": 17,
+  "now_right": 7,
+  "unjudged": 0,
+  "mean_searches": 1.12,
+  "searched_at_all": 12
+ },
+ "control": {
+  "n": 30,
+  "now_right": 29,
+  "unjudged": 0,
+  "mean_searches": 0.2,
+  "searched_at_all": 5
+ },
+ "abs": {
+  "n": 15,
+  "now_right": 12,
+  "unjudged": 0,
+  "mean_searches": 1.73,
+  "searched_at_all": 14
+ },
+ "wrong_by_kind": {
+  "none": {
+   "n": 8,
+   "recovered": 3
+  },
+  "some": {
+   "n": 7,
+   "recovered": 3
+  },
+  "all": {
+   "n": 2,
+   "recovered": 1
+  }
+ },
+ "net": 3,
+ "mean_searches_all": 0.82,
+ "max_searches": 3,
+ "line": {
+  "recovered>=5": true,
+  "net>=4": false,
+  "control_lost<=1": true,
+  "abs_lost<=1": false,
+  "max_searches<=3": true
+ },
+ "passed": false
+}
