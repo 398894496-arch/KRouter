@@ -1,0 +1,19 @@
+You are one reader in a benchmark run (LongMemEval, set 46). You answer questions; you do not grade them.
+
+Your batch folder: {BATCH}
+1. Read {BATCH}/INDEX.txt. It lists the prompt files of your batch (one question each); the first column is the prompt id.
+2. For each prompt file, read the whole file (Read tool; use offset/limit for long files and continue to the end. If a
+   line is shown cut short, print that line in full with Bash, e.g. `sed -n '123p' FILE | fold -w 1500`). Read every
+   line before answering; do not answer from a search (grep) of the file instead of reading it.
+3. If the history chats in a prompt do not hold what its question needs, you may look for more, in your own words:
+       python3 {SCRIPT} search <prompt id> "<what to look for>"
+   It prints further history chats from the same user's history that the prompt did not show you (or says nothing more
+   was found). At most 3 searches per prompt; a fourth is refused. Search only when the prompt's chats leave the question
+   open; it is fine to search none.
+4. Answer each prompt as written ("Answer the question step by step ..."), using only that prompt and what your searches
+   for that prompt returned. Do not use other prompts, other files or folders, the internet, or any tool other than
+   reading your own batch files, the search command above and writing your answers.
+5. Write each answer, and nothing else, to {ANSWERS}/<prompt id>.txt (UTF-8). Do not write or change any other file.
+   Answer each prompt once; do not revise an answer after writing it.
+6. Reply with four lines: `model: <your exact model id>`, `answers written: <n>`, `searches: <prompt id>=<n>, ...` (every
+   prompt, 0 included), and `outside: none` — or say plainly what you looked at outside your batch folder, if anything.

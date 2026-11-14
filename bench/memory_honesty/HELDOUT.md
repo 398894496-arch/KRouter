@@ -2081,3 +2081,63 @@ repeat to measure noise; vault3 is small and its 18 pairs serve 48 changed cases
 |---|---|
 | 2026-11-13 | Registered, before any host was run. |
 | 2026-11-13 | **Run, development half, C0 only, four runs of 120** (`bench/subconscious/both.py prepare set45dev` and `score`; results and every reply in `bench/subconscious/results/set45/host/`; Haiku 5.5 and Sonnet 5.5, each agent reported `claude-haiku-5-5` or `claude-sonnet-5-5`, every reply present; tokens used by the four agents 129,932 + 125,066 for Haiku (normal, crowded) and 104,077 + 119,306 for Sonnet, 478,381 in all, far under the 3 million stop). The index of the normal condition lists all 60 topics, of the crowded one 300 topics with 16 as full lines. The hook brought a page for 16 of the 120 messages in both. Both layers = right when the hook brought the expected page or the host fetched or named it; host = right where the hook was not. **Normal index. Sonnet:** recall **44 / 48** (hook alone 7, host added 37; zh 24 / 24, en 20 / 24; messages that use none of the page's names 38 / 42, that use a name 6 / 6), changed **23 / 24** (hook 7, host added 16), quiet loud **5 / 48** (the hook 2; other_sense 1, common_word 1, near_topic 3 of 8), wrong pages 3 (all by the host), old 0. **Haiku:** recall **42 / 48** (hook 7, host +35; zh 23 / 24, en 19 / 24; unnamed 36 / 42, named 6 / 6), changed 23 / 24, quiet loud **6 / 48** (other_sense 2, common_word 1, pasted 1, near_topic 2), wrong 8, old 0. **Crowded index. Sonnet:** recall 44 / 48 (host +37; zh 24 / 24, en 20 / 24; unnamed 38 / 42), changed 23 / 24, quiet loud 5 / 48 (near_topic 3), wrong 3, old 0 (the totals equal the normal run's; the host pages differ on 5 messages). **Haiku:** recall **38 / 48** (host +31; zh 22 / 24, en 16 / 24; unnamed 32 / 42), changed 23 / 24, quiet loud 4 / 48 (other_sense 1, common_word 1, near_topic 2), wrong 3, old 0. **Read with.** (1) The hook alone is 7 / 48 recall and 7 / 24 changed as in the baseline; almost all of what the whole chain gains is the host reading the standing index and fetching: 31 to 37 of the 38 to 44 recall cases right. (2) Misses concentrate in English messages that use no name: 9 of the 13 cases missed in at least one run are English recall cases, 4 (all English) were missed by all four runs, and zh recall is 22 to 24 / 24 against en 16 to 20 / 24. (3) **Wrong pages are mostly the other language's page of the same topic:** vault3 holds the handbook in English and Chinese, and 14 of the 17 wrong pages over the four runs, and 12 of 28 missed cases (run-level), are a page in the other language's folder where the host fetched or named the counterpart instead of the expected page; under the registered rule these count as wrong and as misses. (4) Quiet loud is the registered rule's loud: a hook delivery (2 of 48), a memory fetch or a named vault page; for near_topic (2 to 3 of 8) these are mostly the host starting its reply with a memory lookup (a `CALL` line); the replies hold only the start, so what it would then have said is not measured. (5) Crowding costs Haiku 4 recall cases (42 to 38) and Sonnet none. (6) Against set 35's host-layer line as reference only (recall at least 75%, changed at least 75%, quiet loud at most 8%, wrong at most 2 per 60, old 0): recall and changed are above 75% in all four runs; quiet loud 4 / 48 or fewer holds only for Haiku crowded, and wrong pages exceed 4 in Haiku normal. No pass line applies to this run. Held-out half: not run, not read. |
+
+## Set 46: the reader may search again — how much of set 22's wrong answers comes back, and what it costs (registered 2026-11-14, before any reader call; development half only)
+
+**Why.** Set 22 left 51 of 500 LongMemEval questions wrong with KRouter's default pages and a Claude Sonnet 5.5 reader: in 29
+no answer session was handed over, in 13 some, in 9 all. Every reader there had one look: the pages KRouter handed over for the
+question as asked. This set measures what happens when the reader, after reading those pages, may look again in its own words a
+few times, as an agent with KRouter as a tool would: how many wrong answers come back, and whether right answers and the
+unanswerable questions (`_abs`) are spoiled. The maintainer asked for it ("调 上").
+
+**What is run.** Development half only (`lme.split_of`); the held-out half is not run, read or looked at until the development
+half has met the line below and the maintainer has agreed. Questions (`bench/longmemeval/multi_search.py prepare`, seed
+**20261146**, drawn in this order): **all 17 development questions set 22 got wrong** (by kind: no answer session handed over 8,
+some 7, all 2); **30 development questions set 22 got right**, drawn at random (the control); **15 of the 30 `_abs` questions**,
+drawn at random (the other 15 are kept back with the held-out half). 62 in all. **The first pages are set 22's, exactly:** the
+prompt is `qa.reader_prompt` with the sessions set 22 handed over (from set 22's results file); all 62 are checked to be identical,
+character for character, to the prompts set 22's readers were given (62 of 62). So the only difference from set 22 is the extra
+searches.
+
+**The extra searches.** The reader may run `python3 bench/longmemeval/multi_search.py search <prompt id> "<its own words>"`: KRouter's
+own entry point (`route_knowledge.py search`, as set 22 ran it, at this commit's engine, the default configuration, on the same
+question's vault, `KROUTER_NO_QUERY_LOG=1`) at up to 8 pages; up to 3 sessions the reader has not yet been shown are printed in the
+benchmark's history format (dates and turns, no page names), or "nothing more was found". **At most 3 searches per prompt**: the
+script counts them and refuses a fourth. Every call, refused or not, is written to the state folder's `searches.jsonl` (prompt id,
+number, query, sessions returned).
+
+**Reader and judge, as set 22.** Claude Sonnet 5.5 as Claude Code subagents (model alias `sonnet`; each reports its model id and a
+batch counts only if it reports `claude-sonnet-5-5`). Readers get set 22's reader instructions with one step added (the search
+command and its limit; `bench/longmemeval/set46/READER_INSTRUCTIONS.txt`); batches of up to 6 prompts or 400 000 characters, 13
+batches; each prompt answered once, no second asking. Judges get set 22's judge instructions word for word (only the set number in
+the first line differs; `set46/JUDGE_INSTRUCTIONS.txt`) and LongMemEval's judge prompts (`qa.judge_prompt`), batches of 25.
+**How the reader is kept to its batch and the search command, and how it is checked afterwards:** prompt ids are opaque (a hash of
+the question id); a reader's batch folder holds only its prompts and an index; the gold answers, set 22's replies and verdicts and
+the data files are outside it and the instructions forbid reading anything else. The subagents do have file and shell tools, so this
+rests on the instructions and is **checked after the run**: (1) each reader reports how many searches it ran per prompt, and the count
+must equal `searches.jsonl`'s; (2) the subagents' own transcripts are searched for any file read or command outside their batch
+folder, their answers folder and the search command. A batch that fails either check is reported apart, its numbers shown with and
+without it, and no pass is claimed while it is in.
+
+**Pass line (fixed now), development half:**
+
+- **recovered**: at least **5 of the 17** wrong answers now right;
+- **net**: recovered minus control questions lost minus `_abs` lost **at least 4**;
+- **control**: at most **1 of 30** right answers lost;
+- **`_abs`**: at most **1 of 15** lost (a reply that answers instead of saying the information is not there);
+- **searches**: at most 3 per prompt (enforced); the mean is reported.
+
+Reported, whatever it shows: recovered by kind (none / some / all handed over); control and `_abs` lost, each named; the mean and
+spread of searches, and how many prompts searched at all; for recovered answers, whether a search returned an answer session; any
+control answer that changes although its reader did not search (drift between batches), reported as it is. **Budget:** the run stops
+and is reported if Claude Code's usage for it passes 2.5 million tokens before it ends (the maintainer agreed to 2–4% of the weekly
+quota; estimated at about 1.7 million). The held-out half is not run under this registration.
+
+### Log, set 46
+
+| Date | Event |
+|---|---|
+| 2026-11-14 | Registered, before any reader or judge call. |
+| 2026-11-14 | **Budget raised, before any answer was judged.** After 4 of 13 reader batches (16 prompts, about 707 000 tokens, 44 000 a prompt instead of the 25 000 estimated) the run was paused: finishing would pass the 2.5 million stop. The planning session raised it to 3.1 million (hard stop 3.3 million), the maintainer's agreement being a share of the weekly quota (2–4%) that the usage so far kept within. Nothing else changed. |
+| 2026-11-14 | **Run, development half, said as it happened.** 13 reader batches, every reader reporting `claude-sonnet-5-5`; 62 answers, one per prompt. **Searches:** 51 in all, 0 refused (no prompt asked for a fourth); 31 of 62 prompts searched; mean 0.82 a prompt (old wrong 1.12, control 0.20, `_abs` 1.73), at most 3. **Checks:** (1) each reader's count of its searches equals `searches.jsonl`, prompt by prompt (51 = 51); (2) the readers' transcripts were scanned for every file read and every shell command: no read of the gold answers, of set 22's replies or verdicts, of the data files, of the selection or search log, or of another batch; outside their batch and answers folders they touched only the harness's saved copies of their own search output (3 batches), `/tmp` files they wrote with their own search output (2 batches, against the instruction not to write other files) and `ls` of their own answers folder. No batch is set aside for reading outside. **One batch (09, 6 prompts) said its reader skimmed five long prompts with `grep` instead of reading every line**; as in set 22 its answers stand (each prompt asked once) and the numbers are given with and without it. Judges: 3 batches, every one `claude-sonnet-5-5`, one verdict per prompt. Tokens (Claude Code's count per subagent): readers **2 174 118**, judges **221 656**, **2 395 774** in all. |
+| 2026-11-14 | **Result, development half: the line is not met.** **Recovered 7 of 17** set 22 got wrong (no answer session handed over 3 of 8, some 3 of 7, all 1 of 2); in 6 of the 7 a search returned an answer session the first pages lacked; the 7th (`knowledge-update`, all handed over) searched nothing and is drift between readers. **Control lost 1 of 30** (single-session assistant; in the skimming batch 09). **`_abs` lost 3 of 15**: two after searches returned related chats (1 and 3 searches), one with no search (drift). **Net 7 − 1 − 3 = 3.** Against the line: recovered ≥ 5 **met** (7); net ≥ 4 **not met** (3); control ≤ 1 **met** (1); `_abs` ≤ 1 **not met** (3); searches ≤ 3 met. Without batch 09: recovered 7 of 16, control 27 of 27, `_abs` 10 of 13 (lost 3), net 4 — `_abs` still fails. Of the 10 old wrong answers not recovered, 5 had a search that returned no answer session, 4 did not search, 1 (in batch 09) was given its missing answer session by a search and still answered wrong. The held-out half is not run. Files: `bench/longmemeval/results/set46/` (`dev-score.json`, `dev-rows.jsonl`, `searches.jsonl`, `answers.jsonl`, `verdicts.jsonl`, `selection.json`). |
