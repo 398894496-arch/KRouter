@@ -35,8 +35,8 @@ def score():
 def _run_in_a_fresh_process(adapter: str, cases: str) -> dict:
     """The way a user runs it. The KRouter hook is measured in its own process, as the hook runs: in a shared pytest process
     another test's earlier calls into the engine's modules (compile_subconscious.standing_index) change one message's result."""
-    out = subprocess.run([sys.executable, "-I", str(PUBLIC / "score.py"), "--adapter", adapter, "--cases", cases, "--json"],
-                         capture_output=True, text=True, cwd=REPO)
+    out = subprocess.run([sys.executable, "-X", "utf8", "-I", str(PUBLIC / "score.py"), "--adapter", adapter, "--cases", cases, "--json"],
+                         capture_output=True, text=True, encoding="utf-8", cwd=REPO)
     assert out.returncode == 0, out.stderr
     return json.loads(out.stdout)[0]
 
@@ -88,15 +88,15 @@ def test_adapter_contract_is_checked(score, tmp_path):
 
 
 def test_export_and_answers_round_trip(score, tmp_path):
-    out = subprocess.run([sys.executable, "-I", str(PUBLIC / "score.py"), "--export", str(tmp_path)],
-                         capture_output=True, text=True, cwd=REPO)
+    out = subprocess.run([sys.executable, "-X", "utf8", "-I", str(PUBLIC / "score.py"), "--export", str(tmp_path)],
+                         capture_output=True, text=True, encoding="utf-8", cwd=REPO)
     assert out.returncode == 0, out.stderr
     pages = [json.loads(l) for l in (tmp_path / "pages.jsonl").read_text(encoding="utf-8").splitlines()]
     msgs = [json.loads(l) for l in (tmp_path / "messages.jsonl").read_text(encoding="utf-8").splitlines()]
     assert len(pages) == 110 and len(msgs) == 120 and set(msgs[0]) == {"id", "text"}  # no expected answers in what is handed out
     (tmp_path / "answers.jsonl").write_text("".join(json.dumps({"id": m["id"], "pages": []}) + "\n" for m in msgs), encoding="utf-8")
-    res = subprocess.run([sys.executable, "-I", str(PUBLIC / "score.py"), "--answers", str(tmp_path / "answers.jsonl"), "--json"],
-                         capture_output=True, text=True, cwd=REPO)
+    res = subprocess.run([sys.executable, "-X", "utf8", "-I", str(PUBLIC / "score.py"), "--answers", str(tmp_path / "answers.jsonl"), "--json"],
+                         capture_output=True, text=True, encoding="utf-8", cwd=REPO)
     assert res.returncode == 0, res.stderr
     assert json.loads(res.stdout)[0]["recall"] == [0, 48]
 
@@ -105,4 +105,11 @@ def test_reproduce_table_matches_every_registered_value():
     repro = _load(REPO / "bench/reproduce.py", "repro_table")
     table = repro.rows()
     assert len(table) >= 15
-    assert [w for w, reg, got, _ in table if reg != got] == []
+    bad = [(w, reg, got) for w, reg, got, _ in table if reg != got]
+    import platform
+    import sqlite3
+
+    # print the recomputed values: a CI log that only names the row cannot be diagnosed
+    assert not bad, ("recomputed values differ from the registered ones (Python %s, SQLite %s, %s %s):\n" % (
+        platform.python_version(), sqlite3.sqlite_version, platform.system(), platform.machine())
+        + "\n".join(f"- {w.strip()}\n    registered: {reg}\n    recomputed: {got}" for w, reg, got in bad))

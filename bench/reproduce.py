@@ -44,7 +44,9 @@ _cache: dict[tuple, str] = {}
 def sh(*cmd: str) -> str:
     key = cmd
     if key not in _cache:
-        r = subprocess.run([PY, "-I", *cmd], cwd=REPO, env=ENV, capture_output=True, text=True)
+        # -X utf8: the scripts print Chinese; a Windows console or pipe would otherwise use cp1252 (and -I ignores PYTHONUTF8)
+        r = subprocess.run([PY, "-X", "utf8", "-I", *cmd], cwd=REPO, env=ENV, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
         if r.returncode != 0:
             raise SystemExit(f"command failed: {' '.join(cmd)}\n{r.stderr[-800:]}")
         _cache[key] = r.stdout
@@ -192,9 +194,9 @@ def timing() -> None:
         spec.loader.exec_module(set32)
 
         v = set32.make_vault(Path(tmp))
-        out = subprocess.run([PY, "-I", "bench/subconscious/speed.py", "--vault", str(v), "--warm", "50", "--cold", "5",
+        out = subprocess.run([PY, "-X", "utf8", "-I", "bench/subconscious/speed.py", "--vault", str(v), "--warm", "50", "--cold", "5",
                               "--hit", "do we add the Sunset header?", "--miss", "what should we have for lunch today"],
-                             cwd=REPO, env=ENV, capture_output=True, text=True)
+                             cwd=REPO, env=ENV, capture_output=True, text=True, encoding="utf-8", errors="replace")
         print(out.stdout.strip() or out.stderr[-500:])
         try:
             la = os.getloadavg()[0]
@@ -210,6 +212,9 @@ def main() -> int:
     ap.add_argument("--zh", action="store_true", help="一致 / 不一致 instead of match / MISMATCH")
     ap.add_argument("--timing", action="store_true")
     a = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):  # --zh prints 一致; a cp1252 console would raise UnicodeEncodeError
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     t0 = time.time()
     ok_w, bad_w = ("一致", "不一致") if a.zh else ("match", "MISMATCH")
     table = rows()
@@ -218,7 +223,11 @@ def main() -> int:
         rev = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, capture_output=True, text=True).stdout.strip()
     except OSError:
         rev = ""
-    print(f"KRouter {rev or '(not a git checkout)'}: registered numbers that need no model, recomputed now\n")
+    import platform
+    import sqlite3
+
+    print(f"KRouter {rev or '(not a git checkout)'}: registered numbers that need no model, recomputed now")
+    print(f"(Python {platform.python_version()}, SQLite {sqlite3.sqlite_version}, {platform.system()} {platform.machine()})\n")
     for what, reg, got, src in table:
         same = reg == got
         bad += not same

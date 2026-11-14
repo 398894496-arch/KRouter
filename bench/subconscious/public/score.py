@@ -190,6 +190,9 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="print the numbers as JSON")
     ap.add_argument("--show", action="store_true", help="list the cases that went wrong (development halves only)")
     a = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):  # messages and --json carry Chinese; a cp1252 console would raise UnicodeEncodeError
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     rows = load_cases(a.cases)
     pages = load_pages()
     if a.export:
