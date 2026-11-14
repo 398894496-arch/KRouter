@@ -61,6 +61,10 @@ def cases(split: str) -> list[dict]:
         text = (HERE / "set35_dev.jsonl").read_text(encoding="utf-8")
     elif split == "heldout":
         text = gzip.decompress((HERE / "set35_heldout.jsonl.gz").read_bytes()).decode("utf-8")
+    elif split in ("set45dev", "set45held"):
+        import set45
+
+        return set45.case_file(split)
     elif split == "learn":
         rows = [json.loads(x) for x in (HERE / "set36.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
         return [{"id": r["id"], "lang": r["lang"], "kind": "recall", "text": r["first"], "expect": r["expect"]}
@@ -222,7 +226,7 @@ def score(work: Path, host: str, show: bool) -> dict:
             continue
         kind = k["kind"]
         c[f"{kind}_n_{L}"] += 1
-        named = "named" if k.get("named") else "unnamed"
+        named = "named" if k.get("named_mech", k.get("named")) else "unnamed"
         c[f"{kind}_{named}_n_{L}"] += 1
         right_hook = k["expect"] in hook
         right_host = k["expect"] in hp
@@ -233,6 +237,8 @@ def score(work: Path, host: str, show: bool) -> dict:
             c[f"{kind}_by_host_{L}"] += (right_host and not right_hook)
         wrong = [p for p in set(hook) | set(hp) if p != k["expect"]]
         c[f"wrong_{L}"] += len(wrong)
+        c[f"wrong_hook_{L}"] += len([p for p in set(hook) if p != k["expect"]])
+        c[f"wrong_host_{L}"] += len([p for p in set(hp) if p != k["expect"] and p not in hook])
         if k.get("old") and k["old"] in set(hook) | set(hp):
             c[f"old_{L}"] += 1
         if show and (wrong or not (right_hook or right_host)):
@@ -255,6 +261,15 @@ def score(work: Path, host: str, show: bool) -> dict:
     print(f"  all: recall {g('recall_right')}/{g('recall_n')}  changed {g('changed_right')}/{g('changed_n')}  "
           f"quiet-loud {g('quiet_loud')}/{g('quiet_n')}  wrong {g('wrong')}  old {g('old')}  loud by kind: "
           + ", ".join(f"{s}={c.get('loud_' + s, 0)}" for s in ("unrelated", "other_sense", "common_word", "pasted")))
+    if any(k.get("subkind") in ("near_topic", "ack") for k in key.values()):
+        print("  set 45 layers (recall, both languages): hook alone " + str(g("recall_by_hook")) + ", host where the hook was not "
+              + str(g("recall_by_host")) + ", both layers " + str(g("recall_right")) + f" of {g('recall_n')}; unnamed "
+              f"{g('recall_unnamed_right')}/{g('recall_unnamed_n')}, named {g('recall_named_right')}/{g('recall_named_n')}")
+        print("  changed: hook alone " + str(g("changed_by_hook")) + ", host where the hook was not " + str(g("changed_by_host"))
+              + ", both " + str(g("changed_right")) + f" of {g('changed_n')}")
+        print("  quiet loud by the six kinds: " + ", ".join(
+            f"{s}={c.get('loud_' + s, 0)}/8" for s in ("unrelated", "other_sense", "common_word", "pasted", "near_topic", "ack")))
+        print(f"  wrong pages: by the hook {g('wrong_hook')}, by the host only {g('wrong_host')}; old-page deliveries {g('old')}")
     (work / f"detail_{host}.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")
     return dict(c)
 
