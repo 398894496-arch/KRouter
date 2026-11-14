@@ -1,0 +1,20 @@
+load:
+15:10  up 4 days, 14:14, 1 user, load averages: 3.62 4.53 4.94
+index build: 8.9 s
+hit: printed=[True]  cold p50 244 ms p95 255 ms (n=20)  warm p50 151 ms p95 173 ms (n=200)
+miss: printed=[False]  cold p50 219 ms p95 232 ms (n=20)  warm p50 121 ms p95 139 ms (n=200)
+== vault3+overlay
+15:11  up 4 days, 14:16, 1 user, load averages: 4.04 4.40 4.84
+index build: 0.2 s
+hit: printed=[True]  cold p50 121 ms p95 130 ms (n=20)  warm p50 112 ms p95 126 ms (n=200)
+miss: printed=[False]  cold p50 114 ms p95 118 ms (n=20)  warm p50 106 ms p95 121 ms (n=200)
+== v10k (3 phrases/page) second run
+15:12  up 4 days, 14:17, 1 user, load averages: 3.80 4.28 4.77
+index build: 9.2 s
+hit: printed=[True]  cold p50 253 ms p95 261 ms (n=20)  warm p50 157 ms p95 180 ms (n=200)
+miss: printed=[False]  cold p50 225 ms p95 397 ms (n=20)  warm p50 130 ms p95 150 ms (n=200)
+== v10k 1 phrase/page
+15:14  up 4 days, 14:18, 1 user, load averages: 4.41 4.32 4.74
+index build: 8.6 s
+hit: printed=[True]  cold p50 205 ms p95 256 ms (n=20)  warm p50 153 ms p95 187 ms (n=200)
+miss: printed=[False]  cold p50 179 ms p95 266 ms (n=20)  warm p50 123 ms p95 179 ms (n=200)

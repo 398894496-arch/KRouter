@@ -1,0 +1,63 @@
+### set45 dev, C0
+routes: alias,trigger,recall  cases: set45dev  crowd: 0  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8
+
+### set45 held-out, C0 (sealed)
+sealed: 120 rows saved, SHA-256 0bbe774f2e034a6de6aa4b7ed016961fd4c38a0ddf9c227d1f393baa4411733f; no score printed
+
+### set45 dev, C0, crowded 240
+routes: alias,trigger,recall  cases: set45dev  crowd: 240  cases: 120
+  zh: recall 5/24  changed 7/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 2/24  changed 0/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 7/48  changed 7/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 1/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 14 - 3*2 - 9*0 = 8
+
+### set45 held-out, C0, crowded 240 (sealed)
+sealed: 120 rows saved, SHA-256 634d88acf481592f23b564d306278d41c18aafe666fd086d1b13df6dc31d42e6; no score printed
+
+### N1 set32 dev, C0
+routes: alias,trigger,recall  cases: set32dev  crowd: 0  cases: 60
+  zh: recall 2/12  changed 3/6  quiet-loud 0/12  wrong 0  old 0
+  en: recall 3/12  changed 2/6  quiet-loud 0/12  wrong 0  old 0
+  all: recall 5/24  changed 5/12  quiet-loud 0/24  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/6, other_sense=0/6, common_word=0/6, pasted=0/6
+  pages brought by route: {'alias': 6, 'recall': 4}
+  choice score: 10 - 3*0 - 9*0 = 10
+
+### N1 set32 held-out, C0
+routes: alias,trigger,recall  cases: set32held  crowd: 0  cases: 60
+  zh: recall 6/12  changed 2/6  quiet-loud 1/12  wrong 0  old 0
+  en: recall 1/12  changed 2/6  quiet-loud 0/12  wrong 0  old 0
+  all: recall 7/24  changed 4/12  quiet-loud 1/24  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/6, other_sense=1/6, common_word=0/6, pasted=0/6
+  pages brought by route: {'trigger': 1, 'alias': 7, 'recall': 4}
+  choice score: 11 - 3*1 - 9*0 = 8
+
+### N2 set35 dev, C0 (hook share)
+routes: alias,trigger,recall  cases: set35dev  crowd: 0  cases: 60
+  zh: recall 3/12  changed 0/6  quiet-loud 2/12  wrong 0  old 0
+  en: recall 3/12  changed 2/6  quiet-loud 0/12  wrong 0  old 0
+  all: recall 6/24  changed 2/12  quiet-loud 2/24  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/6, other_sense=1/6, common_word=0/6, pasted=1/6
+  pages brought by route: {'alias': 6, 'trigger': 1, 'recall': 3}
+  choice score: 8 - 3*2 - 9*0 = 2
+
+### N2 set35 held-out, C0 (hook share)
+routes: alias,trigger,recall  cases: set35held  crowd: 0  cases: 60
+  zh: recall 4/12  changed 2/6  quiet-loud 1/12  wrong 0  old 0
+  en: recall 3/12  changed 3/6  quiet-loud 0/12  wrong 0  old 0
+  all: recall 7/24  changed 5/12  quiet-loud 1/24  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/6, other_sense=0/6, common_word=0/6, pasted=1/6
+  pages brought by route: {'recall': 3, 'alias': 10}
+  choice score: 12 - 3*1 - 9*0 = 9
