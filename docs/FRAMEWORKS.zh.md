@@ -16,7 +16,7 @@ Windows 上是 `C:\\Users\\you\\.agents\\skills\\krouter\\scripts\\mcp_server.py
 | [LlamaIndex](#llamaindex) | `krouter.integrations.llamaindex.KRouterRetriever` | 已实测：`tests/test_sdk_llamaindex.py`（llama-index-core 0.14） |
 | [JavaScript / TypeScript](#javascript--typescript) | `sdk/js`，不依赖任何包 | 已实测：`sdk/js/test/krouter.test.js`（Node 22） |
 | [LangChain / LangGraph](#langchain--langgraph) | `langchain-mcp-adapters` | 已实测，含完整 agent 流程（LangChain 自带的假聊天模型）：`tests/test_frameworks.py`（langchain 1.4、langgraph 1.2、适配器 0.3） |
-| [LangGraph 存储](#langgraph-存储长期记忆) | `krouter.integrations.langgraph.KRouterStore`，一个 `BaseStore`（不走 MCP） | 已在真实的图里实测，同步和异步：`tests/test_langgraph_store.py`（langgraph 1.0.0 配 langgraph-checkpoint 2.1.0，1.2.20 配 4.3.1） |
+| [LangGraph 存储](#langgraph-存储长期记忆) | `krouter.integrations.langgraph.KRouterStore`，一个 `BaseStore`（不走 MCP） | 实验性：已在真实的图里实测，同步和异步，只在 CI 里跑：`tests/test_langgraph_store.py`（langgraph 1.0.0 配 langgraph-checkpoint 2.1.0，1.2.20 配 4.3.1） |
 | [OpenAI Agents SDK](#openai-agents-sdk) | `agents.mcp.MCPServerStdio` | 已实测：`tests/test_frameworks.py`（openai-agents 0.24） |
 | [Pydantic AI](#pydantic-ai) | `pydantic_ai.mcp.MCPToolset` | 已实测，含完整 agent 流程（Pydantic AI 的 `FunctionModel`）：`tests/test_frameworks.py`（pydantic-ai-slim 2.66、fastmcp 4.1） |
 | [Google ADK](#google-adk) | `McpToolset` | 已实测：`tests/test_frameworks.py`（google-adk 2.14，带 `mcp` 扩展） |
@@ -89,6 +89,8 @@ agent = create_agent("openai:gpt-4.1", tools)
 这个适配器的 README 现在写着它不再积极维护，建议改用 `langchain[mcp]`；服务这一端不用改。
 
 ## LangGraph 存储（长期记忆）
+
+**实验性。**只有 CI 里在真实的图上（langgraph 1.0 和 1.2）的测试覆盖；我们没有在部署出去的 agent 里跑过。
 
 LangGraph 自己的长期记忆接口，不走 MCP：一个 `BaseStore`，交给 `compile(store=...)`，图里的节点就在 KRouter 上调
 `put`、`get`、`search`、`delete`、`list_namespaces`（以及 `a` 开头的异步版本）。一个命名空间是一个文件夹

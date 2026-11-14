@@ -20,7 +20,7 @@ instead of `python3`. For a team server, use the framework's Streamable HTTP cli
 | [LlamaIndex](#llamaindex) | `krouter.integrations.llamaindex.KRouterRetriever` | tested: `tests/test_sdk_llamaindex.py` (llama-index-core 0.14) |
 | [JavaScript / TypeScript](#javascript--typescript) | `sdk/js`, no dependencies | tested: `sdk/js/test/krouter.test.js` (Node 22) |
 | [LangChain / LangGraph](#langchain--langgraph) | `langchain-mcp-adapters` | tested, agent loop included (LangChain's fake chat model): `tests/test_frameworks.py` (langchain 1.4, langgraph 1.2, adapters 0.3) |
-| [LangGraph store](#langgraph-store-long-term-memory) | `krouter.integrations.langgraph.KRouterStore`, a `BaseStore` (no MCP) | tested in real graphs, sync and async: `tests/test_langgraph_store.py` (langgraph 1.0.0 with langgraph-checkpoint 2.1.0, and 1.2.20 with 4.3.1) |
+| [LangGraph store](#langgraph-store-long-term-memory) | `krouter.integrations.langgraph.KRouterStore`, a `BaseStore` (no MCP) | experimental: tested in real graphs, sync and async, in CI only: `tests/test_langgraph_store.py` (langgraph 1.0.0 with langgraph-checkpoint 2.1.0, and 1.2.20 with 4.3.1) |
 | [OpenAI Agents SDK](#openai-agents-sdk) | `agents.mcp.MCPServerStdio` | tested: `tests/test_frameworks.py` (openai-agents 0.24) |
 | [Pydantic AI](#pydantic-ai) | `pydantic_ai.mcp.MCPToolset` | tested, agent loop included (Pydantic AI's `FunctionModel`): `tests/test_frameworks.py` (pydantic-ai-slim 2.66, fastmcp 4.1) |
 | [Google ADK](#google-adk) | `McpToolset` | tested: `tests/test_frameworks.py` (google-adk 2.14 with the `mcp` extra) |
@@ -103,6 +103,8 @@ The adapter's README now says it is no longer actively maintained and points to 
 does not change.
 
 ## LangGraph store (long-term memory)
+
+**Experimental.** Covered by tests in CI on real graphs (langgraph 1.0 and 1.2) only; not run by us in a deployed agent.
 
 LangGraph's own interface for long-term memory, without MCP: a `BaseStore` you pass to `compile(store=...)`, so your
 nodes call `put`, `get`, `search`, `delete` and `list_namespaces` (and the `a...` versions) on KRouter. A namespace is

@@ -17,6 +17,8 @@ Docs only: the "recalls without being asked" cell of the comparison tables now l
 
 Docs only: the Hindsight and MemOS cells of the "recalls without being asked" row now follow their documentation sites (read 2026-11-13), not only their READMEs: Hindsight's coding-agent package injects once on the session's first prompt and re-injects its page roster every user turn by default; MemOS's plugins retrieve before each task or turn. KRouter's own cell no longer implies that recalling automatically is only KRouter's; it says what differs (what each message is checked against, where, with no model and nothing sent out). No registered number changed.
 
+Docs only: the subconscious is now written as two layers (the per-message hook looks a message up on the machine and hands over a page when it names it or repeats words from it; the session-start index plus the host fetching for itself is what catches spoken wording), with set 45's development numbers (hook alone 7 of 48 mentions; both layers Sonnet 5.5 44, Haiku 5.5 42; changed rules 23 of 24; 4 to 6 of 48 quiet messages moved) and their three limits (a lookup counts as moving it; the test vault's English and Chinese twin pages; invented messages, small vault, one run per condition, development half), next to set 35's numbers, which are both layers together on messages that mention something the vault holds. The team service (with its Kubernetes and systemd files) and the LangGraph store are marked experimental. No code, test or registered number changed.
+
 ## 2.1.2 — 2026-11-13
 
 What you will notice: nothing in how KRouter looks things up; the engine is the same as 2.1.1. This release carries the

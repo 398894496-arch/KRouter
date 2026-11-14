@@ -4,7 +4,7 @@
 
 *「下意识」是个比喻，说的是不用你开口问就自动想起：在你本机查一下，不调模型，什么都不发出去。*
 
-KRouter 是给 coding agent（Claude Code、Codex、Cursor、DeepSeek Harness、Hermes、OpenClaw），以及任何接了 MCP 的应用（比如 Claude Desktop）用的本地 Markdown 记忆：你提到以前定过的事，agent 就想起来，相关的也一起带出；一件事里的经验能换个任务用；改了主意会替换旧答案；每个回答都注明出自哪一页。个人使用不需要 API key，不需要服务器；团队服务和用模型提炼是可选的（见下文）。
+KRouter 是给 coding agent（Claude Code、Codex、Cursor、DeepSeek Harness、Hermes、OpenClaw），以及任何接了 MCP 的应用（比如 Claude Desktop）用的本地 Markdown 记忆：你提到以前定过的事，agent 就想起来，相关的也一起带出；一件事里的经验能换个任务用；改了主意会替换旧答案；每个回答都注明出自哪一页。个人使用不需要 API key，不需要服务器；实验性的团队服务和用模型提炼是可选的（见下文）。
 
 > **你：** 下午我要把剪藏原件挪到归档文件夹里。
 >
@@ -50,7 +50,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 ### 提到就想起
 
-每一句话都在本机查一遍，会话开始时还先给一份「定过的事」的索引，所以换了说法也接得住。留出集 24 次提及（三分之二没说页面上的名字）：**Sonnet 5.5 想起 24 / 24，Haiku 5.5 23 / 24**；本该什么都不变的话，分别有 1 / 24 和 2 / 24 让它出了声（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）。
+分两层。**每一句话：**提示钩子在本机查一遍（不调模型，什么都不发出去），消息点了页面的名字、或重复了页里的原话时递出那一页；无关的话不出声。**每次会话开始：**把一份「定过的事」的索引放到 agent 面前，由 agent 自己去取页面；人平时说话不点名字的那类，主要靠这一层接住。这要宿主有这两种钩子、并且模型肯去查：Claude Code 和 Codex 两层都有，Cursor 只有会话开始那一层，只接了 MCP 服务的应用只有查询工具、没有任何自动的东西（见[能接哪些应用](#能接哪些应用)）。在 120 句自编的口语消息上（[第 45 套](bench/memory_honesty/HELDOUT.md#set-45-mention-it-the-way-people-actually-say-it--does-the-prompt-hook-bring-the-right-page-when-the-message-does-not-use-the-pages-words-registered-2026-11-13-before-any-case-existed)，开发半，不是留出半）：钩子单独想起 **48 句提及里的 7 句**（不点名字的 42 句里 1 句）；两层合起来 **Sonnet 5.5 想起 44 句，Haiku 5.5 想起 42 句**（索引放不下所有主题时 Haiku 是 38）；改过的规则 **23 / 24**；没有递旧页；48 句本该什么都不变的话里，有 4 到 6 句被动了。读法：查一次记忆就算动了；评测库里手册每页有中英两份，取了另一种语言的同主题页按规则算错页或没想起，所以错页和英文想起率看上去比实际差；消息是自编的、库小、每个条件只跑了一次。第 35 套（留出，24 句提到库里有的东西，两层合起来）更高：**24 / 24 和 23 / 24**，本该什么都不变的话有 1 / 24 和 2 / 24 让它出了声（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）。
 
 ### 联想到相关的一片
 
@@ -107,7 +107,7 @@ uvx --from git+https://github.com/398894496-arch/KRouter krouter demo --lang zh 
 
 ## 给团队用
 
-**只在一台机器上测过，还没有真实团队用过几周。**一个服务装下你们团队的一份记忆：放在 git 仓库里的一个 Markdown 文件夹，自己部署（没有 KRouter 云服务）。每个人一个令牌，每次写入都记在写的人名下，「这条是谁在什么时候改的」查得到（`krouter_changes`）；两个人对同一个决定给出相反的纠正时，后到的生效，先到的保留为被取代，回执里点名。十个人的 agent 在一台笔记本上同时读写（第 27 套）：三种规模下各 440 次调用 0 次出错，每种规模的 204 次写入都记到了对的人名下、一条不丢；1 万页连跑 30 分钟：21,218 次调用 0 错误。**只在单机上测过，没有真实团队长期使用的记录。** 部署、令牌、TLS 和这些数字：见 [`docs/TEAM.zh.md`](docs/TEAM.zh.md)。
+**实验性：只在一台机器上测过，还没有真实团队用过几周；Kubernetes 清单和 systemd 单元只由测试检查，没有在真实集群或主机上跑过。**一个服务装下你们团队的一份记忆：放在 git 仓库里的一个 Markdown 文件夹，自己部署（没有 KRouter 云服务）。每个人一个令牌，每次写入都记在写的人名下，「这条是谁在什么时候改的」查得到（`krouter_changes`）；两个人对同一个决定给出相反的纠正时，后到的生效，先到的保留为被取代，回执里点名。十个人的 agent 在一台笔记本上同时读写（第 27 套）：三种规模下各 440 次调用 0 次出错，每种规模的 204 次写入都记到了对的人名下、一条不丢；1 万页连跑 30 分钟：21,218 次调用 0 错误。**只在单机上测过，没有真实团队长期使用的记录。** 部署、令牌、TLS 和这些数字：见 [`docs/TEAM.zh.md`](docs/TEAM.zh.md)。
 
 ## 它也是你的知识库
 
@@ -135,7 +135,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 
 ## 从你自己的代码里用
 
-`pipx install "git+https://github.com/398894496-arch/KRouter"`，然后在 Python 里 `krouter.ask("我们怎么发版？")` 给出出处页、一句话结论、库里有没有；`krouter.note(…)` 记一笔。LangGraph 的长期记忆也能放在这个文件夹里（`krouter.integrations.langgraph.KRouterStore`）；JavaScript、LlamaIndex 和别的框架的 MCP 客户端：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#从你自己的代码里用) 和 [`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md)。
+`pipx install "git+https://github.com/398894496-arch/KRouter"`，然后在 Python 里 `krouter.ask("我们怎么发版？")` 给出出处页、一句话结论、库里有没有；`krouter.note(…)` 记一笔。LangGraph 的长期记忆也能放在这个文件夹里（`krouter.integrations.langgraph.KRouterStore`，实验性）；JavaScript、LlamaIndex 和别的框架的 MCP 客户端：见 [`docs/INSTALL.zh.md`](docs/INSTALL.zh.md#从你自己的代码里用) 和 [`docs/FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md)。
 
 ## 能接哪些应用
 
@@ -152,7 +152,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | Claude Desktop | 双击 [`KRouter.mcpb`](https://github.com/398894496-arch/KRouter/releases/latest/download/KRouter.mcpb)，点一次安装；或者应用关着时由安装脚本写设置文件 | 扩展包在应用里实测（4.23118.1，macOS，2026-11-10）：工具连上、带出处答对、库里没有的拒答；测的是写了完整 Python 路径的包，和安装脚本做的一样 |
 | VS Code（Copilot）· Copilot CLI · Gemini CLI · Kiro · Zed · Cline CLI | MCP：安装脚本写好各自的设置文件；重启一次应用 | 设置按各家文档的格式由测试检查过 |
 | 其他能跑本地 MCP 服务的应用（Windsurf、opencode、Continue、Roo Code……） | 把下面这段加进应用的 MCP 设置 | 我们没跑过：[告诉我们](https://github.com/398894496-arch/KRouter/issues) |
-| LangGraph 长期记忆（不走 MCP） | `krouter.integrations.langgraph.KRouterStore`（[`FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md#langgraph-存储长期记忆)） | 真实的图里实测（langgraph 1.0 和 1.2），CI 也跑 |
+| LangGraph 长期记忆（不走 MCP） | `krouter.integrations.langgraph.KRouterStore`（[`FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md#langgraph-存储长期记忆)） | 实验性：真实的图里实测（langgraph 1.0 和 1.2），只在 CI 里跑；我们没有在部署出去的 agent 里跑过 |
 | LlamaIndex、LangChain、OpenAI Agents SDK、Pydantic AI、Google ADK、CrewAI、Vercel AI SDK | 自带 LlamaIndex 检索器；其他用各自的 MCP 客户端（[`FRAMEWORKS.zh.md`](docs/FRAMEWORKS.zh.md)） | 对着服务实测，CI 也跑；其中三个连整个 agent 循环一起跑过 |
 | 你自己的代码 | Python 包和 `krouter` 命令；不依赖任何包的 JavaScript / TypeScript 客户端 | 已实测 |
 
@@ -172,7 +172,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | | KRouter | MemOS | Hindsight |
 |---|---|---|---|
 | 怎么跑、要装什么 | 一个 Markdown 文件夹加本地索引；只用 Python 标准库，一条命令装好，不用服务、不要 key | 云（API key）、自部署（Neo4j + Qdrant）或本地插件（Node.js） | PostgreSQL + pgvector 上的一个服务加一个 LLM key，或 Hindsight Cloud |
-| 不问也想起 | 每句话都按这句话说的内容在本机查：不调模型，什么都不发出去，无关的话不注入（第 35 套数了例外），被取代的旧页不会回来。这一层要宿主有每句话钩子（Cursor 没有，见「接哪些」的宿主列表），会话开始时还给一份定过的事的索引。右边两家也会自动召回，时机是一次任务或一轮开始时（见它们那两格）。实测（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)，留出 60 句，三分之二的提及没说页面上的名字，两层合起来）：该想起的 24 句，Sonnet 5.5 想起 24 句、Haiku 5.5 想起 23 句；改过的 12 条规则都给了新的那页；该安静的 24 句里，Sonnet 5.5 有 1 句、Haiku 5.5 有 2 句出了声；没有递错页，也没有递旧页。耗时：1 万页库热启动中位数 116–126 ms（细节见 [`NUMBERS`](docs/NUMBERS.zh.md)） | 插件在「任务开始前」「每次 agent 运行前」召回，运行后保存（README：OpenClaw、DeepSeek Harness、Hermes）。它的文档站，2026-11-13 读取：DeepSeek Harness 云插件在每一轮第一次调用模型之前取回相关记忆，成功后写回（[OpenClaw guide](https://memos-docs.openmem.net/openclaw/guide)）；本地插件每次任务前检索并注入，数据在你本机（[Local Plugin](https://memos-docs.openmem.net/openclaw/local_plugin)）；OpenClaw 插件的说法是每次只取 3–5 条相关记忆，上下文保持在 2,000–3,000 token 内（OpenClaw guide） | 它的文档页「Coding Agents」（[2026-11-13 读取](https://hindsight.vectorize.io/sdks/integrations/coding-agents)）：记忆在 agent 开始工作时放到它面前；`autoInject` 管的是会话第一句话时注入一次什么（默认是低预算的 reflect；`pages` 和 `recall` 只检索、不用 LLM，没查到会在下一句重试，最多 5 句）；`pageRefreshEveryTurns`（默认 1）是每 N 个用户回合重新取一遍页面、重新注入页面清单和工具说明；Qwen Code 一段写交互会话是「recall once per prompt」，页面没有说明这和只在第一句注入一次怎么对上；记忆默认放在 Hindsight Cloud，也可以是你自己跑的服务或本机的 daemon。LLM 包装器（README）：每次调用都存、都取。文档页上的数字（每个任务的纠正次数和成本）测的是记忆整体，不是什么时候召回 |
+| 不问也想起 | 分两层。**每句话：**钩子在本机查，不调模型，什么都不发出去；消息点了页面名字、或重复了页里的原话时递出那一页，无关的话不出声，被取代的旧页不会回来。**会话开始：**给一份定过的事的索引，宿主模型自己看懂再去取页面；没点名字的口语说法主要靠这一层。这要宿主有这两种钩子、并且模型肯去查：Claude Code 和 Codex 两层都有，Cursor 只有会话开始那一层，只接了 MCP 服务的应用只有查询工具、没有任何自动的东西（见「能接哪些应用」的宿主列表）。右边两家也会自动召回，时机是一次任务或一轮开始时（见它们那两格）。实测（[第 45 套](bench/memory_honesty/HELDOUT.md#set-45-mention-it-the-way-people-actually-say-it--does-the-prompt-hook-bring-the-right-page-when-the-message-does-not-use-the-pages-words-registered-2026-11-13-before-any-case-existed)，自编的 120 句口语消息，开发半，不是留出半）：钩子单独想起 48 句提及里的 7 句（不点名字的 42 句里 1 句）；两层合起来 Sonnet 5.5 想起 44 句、Haiku 5.5 想起 42 句（索引放不下所有主题时是 38）；改过的规则 23 / 24；没有递旧页；48 句本该什么都不变的话里，有 4 到 6 句被动了。读法：查一次记忆就算动了；评测库里手册每页有中英两份，取了另一种语言的同主题页按规则算错页或没想起，所以错页和英文想起率看上去比实际差；消息是自编的、库小、每个条件只跑了一次。第 35 套（留出，24 句提到库里有的东西，两层合起来）：Sonnet 5.5 想起 24 句、Haiku 5.5 想起 23 句；改过的 12 条规则都给了新的那页；该安静的 24 句里，Sonnet 5.5 有 1 句、Haiku 5.5 有 2 句出了声（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）。耗时：1 万页库热启动中位数 116–126 ms（细节见 [`NUMBERS`](docs/NUMBERS.zh.md)） | 插件在「任务开始前」「每次 agent 运行前」召回，运行后保存（README：OpenClaw、DeepSeek Harness、Hermes）。它的文档站，2026-11-13 读取：DeepSeek Harness 云插件在每一轮第一次调用模型之前取回相关记忆，成功后写回（[OpenClaw guide](https://memos-docs.openmem.net/openclaw/guide)）；本地插件每次任务前检索并注入，数据在你本机（[Local Plugin](https://memos-docs.openmem.net/openclaw/local_plugin)）；OpenClaw 插件的说法是每次只取 3–5 条相关记忆，上下文保持在 2,000–3,000 token 内（OpenClaw guide） | 它的文档页「Coding Agents」（[2026-11-13 读取](https://hindsight.vectorize.io/sdks/integrations/coding-agents)）：记忆在 agent 开始工作时放到它面前；`autoInject` 管的是会话第一句话时注入一次什么（默认是低预算的 reflect；`pages` 和 `recall` 只检索、不用 LLM，没查到会在下一句重试，最多 5 句）；`pageRefreshEveryTurns`（默认 1）是每 N 个用户回合重新取一遍页面、重新注入页面清单和工具说明；Qwen Code 一段写交互会话是「recall once per prompt」，页面没有说明这和只在第一句注入一次怎么对上；记忆默认放在 Hindsight Cloud，也可以是你自己跑的服务或本机的 daemon。LLM 包装器（README）：每次调用都存、都取。文档页上的数字（每个任务的纠正次数和成本）测的是记忆整体，不是什么时候召回 |
 | 结论带出处 | 每个回答都带，附回执 | 页面上没有说明 | observation 保留原话引文和证据数 |
 | 知识库 | 参考资料逐页自动认出（也可声明），单独列出，可从 PDF / Word / HTML 导入；没有向量检索 | 「Multi-Cube Knowledge Base Management」 | 页面上没有作为单独一层说明 |
 | 敢说不知道 | **整条链（第 41 套，2026-11-12），读题模型是 Claude Opus 5.5（跑过的三个读题模型之一）：LongMemEval 30 道不可答题里 24 道说了记忆里没有（80.0%）；LoCoMo 陷阱题 60 道里 47 道（78.3%）；40 道可答题对照误拒 5 道（12.5%）；达到了事先定的过关线。其他读题模型的结果、没过线的部分和不给任何记忆时的对照见 [`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。别家的数是别的题、别的模型，不能和这里的排名。** 检索层：回执 30 道：9 道 `none`、21 道 `related`（只有相关的页）、0 道 `direct`；早先加读题模型 29 / 30，但不给材料时也是 30 / 30 | 页面上没有数字 | 页面上没有数字 |
@@ -193,7 +193,7 @@ knowledge_base: 你知识库里的参考资料（文章、剪藏、文档，是�
 | **cognee** | pip 安装；Docker；云 | 本地快速上手不要；要“生成回答”才设 LLM key | 页面上没有说明（有 Claude Code、Codex 插件） | “可检查召回到的证据” | 自报 BEAM：0.79（100K，20 题）、0.67（10M，探索性） | 33,232 |
 | **graphiti** | Python 框架；自备图数据库（Neo4j、FalkorDB、Neptune）和 LLM | 默认 OpenAI，需 `OPENAI_API_KEY` | 页面上没有说明 | 每个事实可追溯到原始 episode | 无数字（有论文链接） | 32,727 |
 | **Hindsight** | 服务器（Docker、pip、Helm）、Python 内嵌、云 | 快速上手要 LLM key；页面写可用本地模型 | 给 coding agent 的包：会话第一句话时注入一次（默认低预算 reflect；`pages` / `recall` 只检索），默认每个用户回合重新取页面清单；LLM 包装器：每次调用都存、都取（文档页 2026-11-13 读取） | 观察附原文引用和证据计数 | 只有图表（LongMemEval，2026-01）；写“已被他人复现”，无数字 | 60,340 |
-| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 在有每句话钩子的宿主里，每句话都在本机查一遍，不调模型，什么都不发出去（Cursor 没有，见「接哪些」的宿主列表）；实测（第 35 套，留出 60 句）：24 句提及想起 24 句（Sonnet 5.5）、23 句（Haiku 5.5），改过的 12 条规则 12 / 12，该安静的 24 句里分别有 1 句、2 句出了声；1 万页库热启动中位数 116–126 ms（细节见 [`NUMBERS`](docs/NUMBERS.zh.md)） | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LongMemEval 答题正确率 449/500、留出半 201/235（2.1.1，Sonnet 5.5 读题和评分，第 22 套）；LoCoMo 991/1,540 | 49 |
+| **KRouter** | 一个 Markdown 文件夹 + SQLite；一行安装；无服务 | 查询不需要；只有可选的提炼用模型 | 分两层。在有每句话钩子的宿主里（Cursor 没有，见「能接哪些应用」的宿主列表），每句话都在本机查一遍，不调模型，什么都不发出去，消息点了页面名字或重复了页里的原话时递出那一页；会话开始时还有一份定过的事的索引，宿主自己据此去取（主要靠它接住口语说法，前提是宿主肯去查）。实测：第 45 套，自编的 120 句口语消息，开发半：钩子单独想起 48 句提及里的 7 句，两层合起来 44 句（Sonnet 5.5）、42 句（Haiku 5.5），改过的规则 23 / 24，48 句该安静的里有 4 到 6 句被动了（查一次就算）；第 35 套，留出，提到库里有的东西，两层合起来：24 / 24 和 23 / 24；1 万页库热启动中位数 116–126 ms（细节见 [`NUMBERS`](docs/NUMBERS.zh.md)） | 每个回答说出页面并附回执 | 自报：LongMemEval 留出半 210/235（BM25 198，仅检索）；LongMemEval 答题正确率 449/500、留出半 201/235（2.1.1，Sonnet 5.5 读题和评分，第 22 套）；LoCoMo 991/1,540 | 49 |
 | **Letta** | npm 装终端工具；`letta server`；云 | 页面上没有说明 | 页面上没有说明 | 页面上没有说明 | 无数字 | 25,413 |
 | **mem0** | 库（pip/npm）、自托管（docker compose）、云 | 要 LLM（默认 OpenAI）；云要注册 key | 页面上没有说明（示例是代码里手动检索） | 页面上没有说明 | 自报（托管平台）：LoCoMo 92.5，LongMemEval 94.4，BEAM 64.1/48.6 | 68,777 |
 | **MemOS** | 四个入口：云 API、自托管（Neo4j+Qdrant）、云插件、本地插件（Node.js，SQLite） | 云：要 key；自托管：.env 里填 key；本地插件：页面上没有说明 | 插件在任务前 / 每次 agent 运行前召回；文档站：DeepSeek Harness 云插件在每一轮第一次调用模型前，本地插件每次任务前，OpenClaw 插件每次取 3–5 条（文档站 2026-11-13 读取） | 页面上没有说明 | 自报（OmniMemEval）：LoCoMo 88.83，LongMemEval 89.20 等十项 | 12,352 |
@@ -233,7 +233,7 @@ krouter view --demo             # 在一个用完即删的样例记忆库上看�
 
 ## 用数字说话
 
-留出集，宿主是 Claude Sonnet 5.5 和 Haiku 5.5。提到就想起（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）：24 次提及（三分之二没说页面上的名字），分别想起 **24 次和 23 次**；改过的 12 条规则都给了新的那页；本该什么都不变的话，分别有 1 / 24 和 2 / 24 让它出了声。举一反三（第 15、16 套）：换了题材的任务，提出对的经验 **14 / 14 和 11 / 14**，英文 **14 / 14 和 13 / 14**。弱的一面：真实会话里，宿主自己提起存过的经验是 4 次里 2 次，自己写经验卡是 4 次里 0 次（第 30、31 套，2.0 之前测的）。
+留出集，宿主是 Claude Sonnet 5.5 和 Haiku 5.5。提到就想起（[第 35 套](bench/memory_honesty/HELDOUT.md#set-35-the-subconscious-as-a-whole--the-prompt-hook-then-the-host-reading-a-standing-index-registered-2026-11-10-before-any-case-existed)）：24 次提及（三分之二没说页面上的名字），分别想起 **24 次和 23 次**；改过的 12 条规则都给了新的那页；本该什么都不变的话，分别有 1 / 24 和 2 / 24 让它出了声（这是两层合起来、消息里提到了库里有的东西；在自编的口语消息上，第 45 套开发半，钩子单独想起 48 句里的 7 句，两层合起来 44 句和 42 句）。举一反三（第 15、16 套）：换了题材的任务，提出对的经验 **14 / 14 和 11 / 14**，英文 **14 / 14 和 13 / 14**。弱的一面：真实会话里，宿主自己提起存过的经验是 4 次里 2 次，自己写经验卡是 4 次里 0 次（第 30、31 套，2.0 之前测的）。
 
 检索和答题，按基准作者自己的标注机械评分、不调模型：LongMemEval 留出的一半里，KRouter 给的 5 页把答案需要的会话交齐的是 **235 道里 210 道，纯关键词检索 198 道**（跨多个会话的题 47 道里 40 道对 31 道；[第 18 套](bench/memory_honesty/HELDOUT.md#set-18-does-following-the-vaults-own-connections-bring-the-whole-answer-registered-2026-11-10-before-the-associative-path-was-written-or-any-held-out-question-was-run)）。按 2.1.1 默认交页（平均每题约 5.6 页；第 22 套，Sonnet 5.5 读题和评分）的答题正确率是 **500 道答对 449 道**（89.8%），留出的一半 235 道答对 201 道（85.5%）；交 3 页的 1.3.0 是 400 道。纯 BM25 没有在同样页数下重跑。我们自己的 200 道留出题：KRouter 引错 26%，claude-mem 64%，basic-memory 78%；给纯检索加上 KRouter 那两条规则就和它打平。整节原文和弱点：[`docs/OVERVIEW.zh.md`](docs/OVERVIEW.zh.md#用数字说话)；每个数字和方法：[`docs/NUMBERS.zh.md`](docs/NUMBERS.zh.md)。
 
