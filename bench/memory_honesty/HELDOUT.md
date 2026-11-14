@@ -2021,3 +2021,58 @@ messages are mostly about this project's own development.
 | 2026-11-13 | **N3 reference, C0 today, and a problem with the line as registered** (`bench/subconscious/speed.py`, 200 warm and 20 cold runs a message, results `results/set45/c0-speed.txt`; shared Apple laptop, load average 3.6–4.4, which is lower than set 34's 5–6; no other change). The set 34 vault with 10,000 trigger lines and 2,000 alias rows was rebuilt by `bench/subconscious/mk_v10k.py` because its build script is not in the repository (three trigger phrases a page; a one-phrase variant is also given). 10,000 pages, 3 phrases a page: a message that names a page, warm **p50 151 / p95 173 ms** (first run) and **157 / 180** (second); a message that names nothing, warm **121 / 139** and **130 / 150**; cold 244 / 255 and 219 / 232 (first run). One phrase a page: hit 153 / 187, miss 123 / 179. vault3 + overlay: hit warm 112 / 126, miss 106 / 121 (set 34 had 87 / 124 and 83 / 102). **C0 itself does not meet the registered absolute line (warm p50 ≤ 130 ms and p95 ≤ 150 ms) for a message that names a page on this machine today**, and set 34's 116–126 ms does not reproduce either; the hook with its lookup off costs about 62 ms of that. The line is registered and is not changed here. **Proposed amendment, not applied, for the maintainer to decide before any C1 run:** compare C1 with C0 back to back in the same quarter hour on the same vaults, requiring new warm p50 ≤ C0 + 10 ms and p95 ≤ C0 + 15 ms, and report the absolute figures without a line. |
 | 2026-11-13 | **Amendment to N3 (time), made after the baseline had been measured and before any development run of C1 or C2.** The absolute line registered above (10,000 pages, warm p50 ≤ 130 ms and p95 ≤ 150 ms) does not hold for the current hook itself on this machine today (message that names a page: warm p50 / p95 151 / 173 ms, repeated 157 / 180; load average 3.6–4.4; see the baseline row), and the speed vault is not the one set 34 measured: it was rebuilt from a fixed seed (`bench/subconscious/mk_v10k.py`) because the original build script is not in the repository. A line the unchanged hook fails cannot be a line for a change. **New N3, replacing the absolute figures:** on the same vault, on the same machine, in the same quarter hour, the new hook (the new route switched on) and C0 are measured back to back with `speed.py` (200 warm and 20 cold runs a message); **warm p50 of the new hook ≤ C0's + 10 ms and warm p95 ≤ C0's + 15 ms, for the message that names a page and for the one that names nothing, each judged on its own**; vault3 + overlay and the 10,000-page vault both; cold runs and the index-build time (no more than 2 s longer than C0's) are as registered, relative to the same back-to-back C0. Absolute figures are reported as measured and have no line. Every other line is unchanged. |
 | 2026-11-13 | **Open item (not a pass line).** When the machine is idle, measure the current hook's absolute latency once more on this speed vault and compare it with the "116–126 ms at 10,000 pages" the front page gives; if they do not agree, report it to the planning session, and how the page reads is the maintainer's decision. Not done here. |
+
+### Set 45, addendum: the host layer on the development half, early (registered 2026-11-13, before any host was run)
+
+**Why, and what it is not.** Set 45 as registered says the host layer is run only for a configuration proposed as the
+default. This run is earlier and for another reason: the hook alone has reached the end of what its mechanical lookup can
+do on spoken messages (baseline above: 1 of 42 unnamed recall cases), and the maintainer wants to know how the product as
+a whole does on them (the session-start standing index and the hook's note, then the host model reading both and
+fetching for itself) before deciding whether to build rewriting at write time or vectors. **It is a development
+segment: C0 only (the hook as on `main`, no new switch), against none of the held-out lines, and it changes no default.
+The held-out half is not run and not read.** The set 45 lines for the hook alone, N1 to N6 and the host-layer line
+registered above are not touched.
+
+**Same as set 35's host layer, exactly.** `bench/subconscious/both.py prepare` and `score`; its instructions to the
+host and its Chinese and English message frames; the standing index exactly as the session-start hook prints it
+(`compile_subconscious.standing_index`: for vault3 + overlay, 60 topics all listed); the hook's memory note above a
+message when C0 brought a page; Haiku 5.5 and Sonnet 5.5 as Claude Code subagents (`model: haiku` / `sonnet`), no key and
+no stored login; each message asked once; fetches written as `CALL krouter_ask`, `CALL shell` or `CALL read` lines
+instead of being run, and resolved for real on the bench vault; the scoring rules: a recall or changed case is **right**
+when the hook brought the expected page or the host fetched or named it, **wrong** for any other page brought, fetched or
+named, **old-page delivery** when the superseded page is brought, fetched or named; a quiet case is **loud** when the hook
+brought anything or the host made a memory fetch or named a vault page (reading the project's own files is not a fetch).
+The usage line in the index is as frozen at set 35; **no wording is revised here.**
+
+**Differences from set 35, each said.** (1) The messages are set 45's development half, 120 (24 recall, 24 quiet, 12
+changed per language), not set 35's 60. (2) One agent per host and condition takes all 120 items (set 35: 60), to cut fixed
+cost; as in set 35 the host sees every message of the batch at once, which a real session does not. (3) Quiet messages
+have six kinds, two new (`near_topic`, `ack`). (4) "Named" is the mechanical check of set 45 (the page's listed names or
+title in the text), not the writer's mark. (5) The scorer prints more, none of it a new rule: the three layers apart
+(hook alone, host where the hook was not right, both), quiet loud by the six kinds, wrong pages by whether the hook or the
+host brought them, and the new named split. (6) Each agent is told to use only its file reader on the one batch file and
+its writer for the reply file, and to state the model it runs as; whether it kept to that rests on the instruction.
+
+**Conditions.** (a) **Normal:** vault3 + overlay, the index as above. (b) **Crowded**, because a host layer is the only
+place a crowd matters (the hook's own lookup gave identical numbers with and without it): 240 synthetic distractor topics
+added and dated newer than the real pages, the index at its shipped budget, so that most real topics are listed by name
+only or not at all (set 35's scale check (b), `--crowd 240 --crowd-capped`). Both conditions are reported, for both
+hosts: four runs of 120.
+
+**Stop rule.** A host whose runs pass about 3 million tokens without finishing is stopped and reported.
+
+**No pass line.** The numbers are reported against the hook alone (7 of 48 recall, 7 of 24 changed, 2 of 48 quiet, from
+the baseline) and, for reference only, against set 35's host-layer line (recall ≥ 75%, changed ≥ 75%, quiet loud ≤ 8%,
+wrong ≤ 2 of 60, old 0). **Reported, whatever it shows:** per host and condition, recall right split into hook alone,
+host where the hook was not, and both together; named and not named; zh and en; changed; quiet loud by the six kinds;
+wrong pages and old-page deliveries on their own lines; tokens used.
+
+**Known limits, said with any number.** A model of the same family wrote the messages and reads them; the batch shows every
+message at once; fetches are written, not run, so a real session's tool use may differ; one run per host and condition, no
+repeat to measure noise; vault3 is small and its 18 pairs serve 48 changed cases.
+
+### Log, set 45 host layer (development)
+
+| Date | Event |
+|---|---|
+| 2026-11-13 | Registered, before any host was run. |
