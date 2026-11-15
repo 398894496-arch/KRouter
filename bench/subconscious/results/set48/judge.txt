@@ -1,0 +1,6 @@
+### apart
+k3: reply carries the page's rule (judge): recall 36/48, changed 22/24; states the replaced rule as current: 0/24; verdicts not read 0
+### mixed
+k3: reply carries the page's rule (judge): recall 36/48, changed 21/24; states the replaced rule as current: 0/24; verdicts not read 1
+### small
+k3: reply carries the page's rule (judge): recall 45/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0

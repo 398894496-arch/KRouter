@@ -1,0 +1,899 @@
+{
+ "en-001": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-002": {
+  "hook": [
+   "Handbook/API deprecation.md"
+  ],
+  "host": [
+   "Handbook/API deprecation.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-003": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-004": {
+  "hook": [],
+  "host": [
+   "Handbook/API deprecation.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-005": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-006": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-007": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-009": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-010": {
+  "hook": [],
+  "host": [
+   "Handbook/Analytics queries.md",
+   "Handbook/Analyst data access.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-016": {
+  "hook": [],
+  "host": [
+   "Handbook/Browser support.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-020": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-027": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-028": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-029": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-031": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-032": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-034": {
+  "hook": [],
+  "host": [
+   "Handbook/Third-party scripts.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-038": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-039": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-042": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-043": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-044": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-045": {
+  "hook": [],
+  "host": [
+   "Handbook/Database for new services.md",
+   "Daily log/2026-07-01.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-046": {
+  "hook": [
+   "Handbook/Hackathon.md"
+  ],
+  "host": [
+   "Handbook/Hackathon.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-047": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask"
+  ]
+ },
+ "en-049": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-051": {
+  "hook": [],
+  "host": [
+   "团队手册/代码托管.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-053": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-056": {
+  "hook": [],
+  "host": [
+   "Handbook/Price changes.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask"
+  ]
+ },
+ "en-058": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-060": {
+  "hook": [],
+  "host": [
+   "Handbook/Feature requests.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-061": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-063": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-067": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-068": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-069": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-071": {
+  "hook": [],
+  "host": [
+   "Handbook/Database for new services.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-074": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-075": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-078": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-080": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-082": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-083": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-085": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-089": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-090": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "krouter_ask"
+  ]
+ },
+ "en-091": {
+  "hook": [],
+  "host": [
+   "Handbook/Database for new services.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "en-092": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-093": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-097": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-099": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-106": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask"
+  ]
+ },
+ "en-109": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-110": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-111": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-115": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-116": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "en-117": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-118": {
+  "hook": [
+   "Handbook/A/B tests.md"
+  ],
+  "host": [
+   "Handbook/Cloud infrastructure changes.md",
+   "Handbook/A/B tests.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask"
+  ]
+ },
+ "en-120": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-001": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-002": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-005": {
+  "hook": [
+   "团队手册/代码托管.md"
+  ],
+  "host": [
+   "团队手册/代码托管.md",
+   "团队手册/代码托管（旧）.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-006": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-012": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-019": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-022": {
+  "hook": [
+   "团队手册/消息队列.md"
+  ],
+  "host": [
+   "团队手册/消息队列.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-024": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-025": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-026": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-028": {
+  "hook": [
+   "团队手册/团队周会.md"
+  ],
+  "host": [
+   "团队手册/团队周会.md"
+  ],
+  "calls": []
+ },
+ "zh-029": {
+  "hook": [
+   "团队手册/开源许可证.md"
+  ],
+  "host": [],
+  "calls": []
+ },
+ "zh-034": {
+  "hook": [
+   "团队手册/数据共享.md"
+  ],
+  "host": [
+   "团队手册/数据共享.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-036": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-039": {
+  "hook": [
+   "团队手册/消息队列.md"
+  ],
+  "host": [
+   "团队手册/消息队列.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-043": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-045": {
+  "hook": [],
+  "host": [
+   "团队手册/意见反馈.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-048": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-050": {
+  "hook": [
+   "团队手册/短信通道.md"
+  ],
+  "host": [
+   "团队手册/短信通道.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-053": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-054": {
+  "hook": [
+   "团队手册/技术分享.md"
+  ],
+  "host": [
+   "团队手册/技术分享.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-055": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-058": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-060": {
+  "hook": [],
+  "host": [
+   "团队手册/数据共享.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-061": {
+  "hook": [],
+  "host": [
+   "团队手册/短信通道.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-062": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask"
+  ]
+ },
+ "zh-063": {
+  "hook": [],
+  "host": [
+   "团队手册/权限申请.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-064": {
+  "hook": [],
+  "host": [
+   "团队手册/数据分级.md",
+   "团队手册/数据共享.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-068": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-070": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-072": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-075": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-076": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-077": {
+  "hook": [
+   "团队手册/代码托管.md"
+  ],
+  "host": [
+   "团队手册/代码托管.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-079": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-081": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-082": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-083": {
+  "hook": [
+   "团队手册/证书续签.md"
+  ],
+  "host": [
+   "团队手册/证书续签.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-085": {
+  "hook": [],
+  "host": [
+   "团队手册/消息队列.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-086": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-089": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-094": {
+  "hook": [],
+  "host": [
+   "团队手册/测试环境.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-095": {
+  "hook": [
+   "团队手册/发布说明.md"
+  ],
+  "host": [
+   "团队手册/发布说明.md",
+   "团队手册/发布说明（旧）.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-096": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-098": {
+  "hook": [],
+  "host": [
+   "团队手册/绩效评估.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-099": {
+  "hook": [],
+  "host": [
+   "团队手册/技术分享.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-101": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-102": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-103": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-105": {
+  "hook": [
+   "团队手册/证书续签.md"
+  ],
+  "host": [
+   "团队手册/证书续签.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-107": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-108": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-109": {
+  "hook": [
+   "团队手册/权限申请.md"
+  ],
+  "host": [
+   "团队手册/权限申请.md",
+   "团队手册/权限申请（旧）.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-110": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-111": {
+  "hook": [],
+  "host": [
+   "团队手册/权限申请.md"
+  ],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-113": {
+  "hook": [],
+  "host": [
+   "团队手册/团队周会.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-114": {
+  "hook": [],
+  "host": [
+   "团队手册/代码托管.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-116": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "krouter_ask"
+  ]
+ },
+ "zh-119": {
+  "hook": [],
+  "host": [
+   "团队手册/服务拆分.md"
+  ],
+  "calls": [
+   "krouter_ask",
+   "krouter_ask",
+   "read_note"
+  ]
+ },
+ "zh-120": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ }
+}

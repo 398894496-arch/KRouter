@@ -1,0 +1,56 @@
+### apart
+k3: items 120 missing 0
+  recall 37/48 (unnamed 31/42, named 6/6; zh 20, en 17)  changed 22/24  quiet loud 15/48  wrong 19  old 5
+  quiet loud by kind: unrelated=1/8, other_sense=5/8, common_word=2/8, pasted=0/8, near_topic=7/8, ack=0/8
+  tool calls 236 (1.97 a message; recall 127, changed 63, quiet 46); messages with a call: recall 40/48, changed 22/24, quiet 14/48
+  quiet messages whose reply names a vault page: 9/48; calls by tool: krouter_ask 86, krouter_topics 96, read_note 54
+  tokens: 959313 in, 52025 out (7994 in a message)
+### mixed
+k3: items 120 missing 0
+  recall 36/48 (unnamed 30/42, named 6/6; zh 21, en 15)  changed 22/24  quiet loud 18/48  wrong 11  old 3
+  quiet loud by kind: unrelated=3/8, other_sense=5/8, common_word=3/8, pasted=0/8, near_topic=7/8, ack=0/8
+  tool calls 196 (1.63 a message; recall 102, changed 54, quiet 40); messages with a call: recall 43/48, changed 24/24, quiet 17/48
+  quiet messages whose reply names a vault page: 7/48; calls by tool: krouter_ask 91, krouter_topics 59, read_note 46
+  tokens: 913592 in, 49115 out (7613 in a message)
+### small
+k3: items 120 missing 0
+  recall 45/48 (unnamed 39/42, named 6/6; zh 24, en 21)  changed 23/24  quiet loud 16/48  wrong 13  old 0
+  quiet loud by kind: unrelated=1/8, other_sense=4/8, common_word=1/8, pasted=2/8, near_topic=8/8, ack=0/8
+  tool calls 136 (1.13 a message; recall 71, changed 35, quiet 30); messages with a call: recall 48/48, changed 23/24, quiet 15/48
+  quiet messages whose reply names a vault page: 10/48; calls by tool: krouter_ask 104, krouter_topics 4, read_note 28
+  tokens: 734907 in, 36546 out (6124 in a message)
+### mixed
+krouter: items 120 missing 0
+  recall 18/48 (unnamed 12/42, named 6/6; zh 13, en 5)  changed 13/24  quiet loud 16/48  wrong 8  old 1
+  quiet loud by kind: unrelated=1/8, other_sense=4/8, common_word=3/8, pasted=1/8, near_topic=7/8, ack=0/8
+  tool calls 105 (0.88 a message; recall 54, changed 32, quiet 19); messages with a call: recall 37/48, changed 23/24, quiet 15/48
+  quiet messages whose reply names a vault page: 5/48; calls by tool: krouter_ask 88, read_note 17
+  tokens: 636569 in, 36005 out (5305 in a message)
+### mixed
+folder: items 120 missing 0
+  recall 47/48 (unnamed 41/42, named 6/6; zh 24, en 23)  changed 23/24  quiet loud 38/48  wrong 60  old 7
+  quiet loud by kind: unrelated=3/8, other_sense=8/8, common_word=7/8, pasted=8/8, near_topic=8/8, ack=4/8
+  tool calls 680 (5.67 a message; recall 294, changed 144, quiet 242); messages with a call: recall 48/48, changed 24/24, quiet 38/48
+  quiet messages whose reply names a vault page: 12/48; calls by tool: list_notes 268, read_note 160, search_notes 252
+  tokens: 858780 in, 78851 out (7156 in a message)
+### apart
+k1: items 120 missing 0
+  recall 30/48 (unnamed 24/42, named 6/6; zh 17, en 13)  changed 19/24  quiet loud 17/48  wrong 10  old 1
+  quiet loud by kind: unrelated=2/8, other_sense=3/8, common_word=3/8, pasted=2/8, near_topic=7/8, ack=0/8
+  tool calls 127 (1.06 a message; recall 65, changed 42, quiet 20); messages with a call: recall 38/48, changed 22/24, quiet 16/48
+  quiet messages whose reply names a vault page: 8/48; calls by tool: krouter_ask 90, read_note 37
+  tokens: 695318 in, 40492 out (5794 in a message)
+### apart
+k2: items 120 missing 0
+  recall 36/48 (unnamed 30/42, named 6/6; zh 21, en 15)  changed 21/24  quiet loud 16/48  wrong 25  old 5
+  quiet loud by kind: unrelated=1/8, other_sense=4/8, common_word=4/8, pasted=0/8, near_topic=7/8, ack=0/8
+  tool calls 280 (2.33 a message; recall 141, changed 90, quiet 49); messages with a call: recall 41/48, changed 24/24, quiet 16/48
+  quiet messages whose reply names a vault page: 9/48; calls by tool: krouter_ask 110, krouter_topics 125, read_note 45
+  tokens: 1078631 in, 51816 out (8989 in a message)
+### apart
+k4: items 120 missing 0
+  recall 31/48 (unnamed 25/42, named 6/6; zh 16, en 15)  changed 20/24  quiet loud 17/48  wrong 20  old 4
+  quiet loud by kind: unrelated=2/8, other_sense=4/8, common_word=3/8, pasted=0/8, near_topic=8/8, ack=0/8
+  tool calls 163 (1.36 a message; recall 92, changed 45, quiet 26); messages with a call: recall 41/48, changed 22/24, quiet 16/48
+  quiet messages whose reply names a vault page: 4/48; calls by tool: krouter_ask 78, read_note 34, search_notes 51
+  tokens: 740402 in, 41801 out (6170 in a message)
