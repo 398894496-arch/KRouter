@@ -2335,3 +2335,4 @@ no third round is run on these messages; what is left goes to the held-out half 
 | Date | Event |
 |---|---|
 | 2026-11-15 | Registered, before the change was written. |
+| 2026-11-15 | **The change written** (`compile_subconscious.py`: `index_groups` and the new sentence, behind `KROUTER_TOPICS=1`; `tool_host.py`: condition `k5`, and the count of replaced pages read). Checked without a model: on big-mixed the index with the switch names three groups (团队手册/ 530, Handbook/ 529, Handbook/A/ 1) with four names each, the last of them a real handbook topic, and says 762 are not listed; on the 110-page vault, where everything fits, the index is character for character the shipped one. |

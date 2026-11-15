@@ -72,8 +72,8 @@ class Stop(Exception):
     pass
 
 
-KCONDS = ("krouter", "k1", "k2", "k3", "k4")
-NEAREST, TOPICS = ("k1", "k3"), ("k2", "k3")
+KCONDS = ("krouter", "k1", "k2", "k3", "k4", "k5")
+NEAREST, TOPICS = ("k1", "k3", "k5"), ("k2", "k3", "k5")  # k5: as k3, on the index of the set 48 addendum
 
 
 def t_topics() -> dict:
@@ -371,6 +371,8 @@ def score(work: Path, cond: str) -> int:
         c[f"{kind}_right_{k['lang']}"] += right
         c["wrong"] += len([p for p in set(hook) | set(hp) if p != k["expect"]])
         c["old"] += bool(k.get("old") and k["old"] in set(hook) | set(hp))
+        c["old_read"] += bool(k.get("old") and any(x["name"] == "read_note" and rel_of(work, str(x["args"].get("path", "")))
+                                                   == k["old"] for x in r["calls"]))
     n = len(rows) or 1
     print(f"{cond}: items {len(key)} missing {c['missing']}")
     print(f"  recall {c['recall_right']}/{c['recall_n']} (unnamed {c['recall_unnamed_right']}/{c['recall_unnamed_n']}, named "
@@ -381,6 +383,7 @@ def score(work: Path, cond: str) -> int:
     print(f"  tool calls {c['calls']} ({c['calls'] / n:.2f} a message; recall {c['calls_recall']}, changed {c['calls_changed']}, "
           f"quiet {c['calls_quiet']}); messages with a call: recall {c['looked_recall']}/48, changed {c['looked_changed']}/24, "
           f"quiet {c['looked_quiet']}/48")
+    print(f"  replaced page read with read_note: {c['old_read']} of {c['changed_n']} changed cases")
     print(f"  quiet messages whose reply names a vault page: {c['quiet_names_page']}/{c['quiet_n']}; calls by tool: "
           + ", ".join(f"{k} {v}" for k, v in sorted(Counter(x["name"] for r in rows.values() for x in r["calls"]).items())))
     print(f"  tokens: {c['prompt_tokens']} in, {c['completion_tokens']} out ({c['prompt_tokens'] / n:.0f} in a message)")

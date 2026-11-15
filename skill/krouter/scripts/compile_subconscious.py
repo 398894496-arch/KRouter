@@ -194,10 +194,32 @@ INDEX_TAIL = {
 INDEX_MORE = {"zh": "库里还有 {n} 件没列出，别的事也可以照样先查。", "en": " {n} more are not listed; the same applies to them."}
 # KROUTER_TOPICS=1（第 48 套）：没列出的主题可以分组列出来，这句话告诉宿主怎么列
 INDEX_MORE_TOPICS = {
-    "zh": "库里还有 {n} 件没列出：用户的话像是在说一件定过的事、上面却没有，就调用 krouter_topics 看分组目录（再按组展开），找到名字再取那一页。",
-    "en": " {n} more are not listed: when the user's message sounds like something that was settled and it is not above, "
-          "call krouter_topics for the groups (then one group), and fetch the page once you have its name.",
+    "zh": "上面只列了一部分，还有 {n} 件没列出。用户的话说的是某一组管的那类事、上面又没有对应的条目时，调用 krouter_topics 并传那一组的"
+          "名字，在里面找到那件事的名字，再取那一页。",
+    "en": " {n} more are not listed. When the user's message is about the kind of thing one of the groups holds and no "
+          "line above covers it, call krouter_topics with that group's name, find the topic's name there, then fetch "
+          "its page.",
 }
+INDEX_GROUPS = 12         # 索引里最多列几个分组（按主题数从多到少）
+INDEX_GROUPS_HEAD = {"zh": "库里定过的事按文件夹分组（含上面列出的）：", "en": "Everything settled, by folder (those above included): "}
+
+
+def index_groups(vault: Path, topics: list[dict], lang: str) -> str:
+    """One line for the standing index when topics do not fit (`KROUTER_TOPICS=1`, set 48 addendum): each folder with
+    how many topics it holds and four of their names spread evenly over the group's order."""
+    groups: dict[str, list[str]] = {}
+    for t in topics:
+        page = zones.real(vault, t["rel"])
+        groups.setdefault(page.rsplit("/", 1)[0] if "/" in page else ".", []).append(t["name"])
+    parts = []
+    ordered = sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    for g, names in ordered[:INDEX_GROUPS]:
+        n = len(names)
+        ex = [names[i] for i in sorted({0, n // 3, (2 * n) // 3, n - 1})]
+        parts.append(f"{g}/（{n} 件，如 {'、'.join(ex)}）" if lang == "zh" else f"{g}/ ({n}, e.g. {'; '.join(ex)})")
+    more = len(ordered) - INDEX_GROUPS
+    tail = (f"；另有 {more} 组" if lang == "zh" else f"; {more} more groups") if more > 0 else ""
+    return INDEX_GROUPS_HEAD[lang] + ("；" if lang == "zh" else "; ").join(parts) + tail
 INDEX_FULL_MIN = 0.2      # 主题多时，整行至少占预算的这么多（排在最前的那些），其余的主题只列名字
 INDEX_NAMES_HEAD = {"zh": "也记着（只列名字，提到了同样先取那一页）：", "en": "Also known (names only; the same applies): "}
 
@@ -338,6 +360,10 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
         page = zones.real(vault, t["rel"])  # 库里真实的路径：宿主照着读 {vault}/[page]（英文库是 02 Methods/…）
         rows.append((t, redact(f"- {names}：{how}〔{page}〕" if cjk else f"- {names}: {how} [{page}]")))
     fits = sum(len(r) + 1 for _t, r in rows[:lines]) <= chars and len(rows) <= lines
+    group_line = ""
+    if not fits and os.environ.get("KROUTER_TOPICS") == "1":
+        group_line = redact(index_groups(vault, topics, lang))  # 分组这一行也算在预算里，只列名字的部分让出位置
+        chars = max(chars // 2, chars - len(group_line) - 1)
     # 放不下时：先给每个主题的名字留位置（一个几个字），剩下的预算再按排序给前面的主题整行
     names_len = len(INDEX_NAMES_HEAD[lang]) + sum(len(t["name"]) + 1 for t in topics)
     full_room = chars if fits else max(int(chars * INDEX_FULL_MIN), chars - names_len)
@@ -362,6 +388,8 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
         body.append(head + ("、" if lang == "zh" else "; ").join(named))
     shown = len(body) - (1 if named else 0) + len(named)
     more = len(topics) - shown
+    if group_line:
+        body.append(group_line)
     script = Path(__file__).resolve().with_name("route_knowledge.sh")
     cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
     tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=(INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang].format(n=more) if more else "")
