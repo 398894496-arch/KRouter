@@ -9,18 +9,28 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "skill/krouter/scripts"))
-sys.path.insert(0, str(REPO / "bench/subconscious"))
+
+
+def make_vault(root: Path) -> Path:
+    """vault3 with the bench's alias table laid in, as bench/subconscious/run.py does (not imported: its module names
+    collide with other benches' on sys.path)."""
+    import shutil
+
+    v = root / "vault"
+    shutil.copytree(REPO / "bench/memory_honesty/vault3", v)
+    (v / "90 系统文件").mkdir(parents=True, exist_ok=True)
+    shutil.copy(REPO / "bench/subconscious/overlay/canonical_sources.psv", v / "90 系统文件/canonical_sources.psv")
+    return v
 
 
 def test_index_is_not_empty_when_the_install_table_links_to_the_vaults(tmp_path, monkeypatch):
     import compile_subconscious as cs
-    import run as set32
 
     monkeypatch.setenv("KROUTER_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setenv("KROUTER_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setenv("KROUTER_NO_QUERY_LOG", "1")
     monkeypatch.delenv("KROUTER_MAP", raising=False)
-    v = set32.make_vault(tmp_path)
+    v = make_vault(tmp_path)
     table = v / "90 系统文件/canonical_sources.psv"
     plain = len(cs.index_topics(v))
     assert plain > 0
