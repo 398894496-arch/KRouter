@@ -2081,3 +2081,259 @@ repeat to measure noise; vault3 is small and its 18 pairs serve 48 changed cases
 |---|---|
 | 2026-11-13 | Registered, before any host was run. |
 | 2026-11-13 | **Run, development half, C0 only, four runs of 120** (`bench/subconscious/both.py prepare set45dev` and `score`; results and every reply in `bench/subconscious/results/set45/host/`; Haiku 5.5 and Sonnet 5.5, each agent reported `claude-haiku-5-5` or `claude-sonnet-5-5`, every reply present; tokens used by the four agents 129,932 + 125,066 for Haiku (normal, crowded) and 104,077 + 119,306 for Sonnet, 478,381 in all, far under the 3 million stop). The index of the normal condition lists all 60 topics, of the crowded one 300 topics with 16 as full lines. The hook brought a page for 16 of the 120 messages in both. Both layers = right when the hook brought the expected page or the host fetched or named it; host = right where the hook was not. **Normal index. Sonnet:** recall **44 / 48** (hook alone 7, host added 37; zh 24 / 24, en 20 / 24; messages that use none of the page's names 38 / 42, that use a name 6 / 6), changed **23 / 24** (hook 7, host added 16), quiet loud **5 / 48** (the hook 2; other_sense 1, common_word 1, near_topic 3 of 8), wrong pages 3 (all by the host), old 0. **Haiku:** recall **42 / 48** (hook 7, host +35; zh 23 / 24, en 19 / 24; unnamed 36 / 42, named 6 / 6), changed 23 / 24, quiet loud **6 / 48** (other_sense 2, common_word 1, pasted 1, near_topic 2), wrong 8, old 0. **Crowded index. Sonnet:** recall 44 / 48 (host +37; zh 24 / 24, en 20 / 24; unnamed 38 / 42), changed 23 / 24, quiet loud 5 / 48 (near_topic 3), wrong 3, old 0 (the totals equal the normal run's; the host pages differ on 5 messages). **Haiku:** recall **38 / 48** (host +31; zh 22 / 24, en 16 / 24; unnamed 32 / 42), changed 23 / 24, quiet loud 4 / 48 (other_sense 1, common_word 1, near_topic 2), wrong 3, old 0. **Read with.** (1) The hook alone is 7 / 48 recall and 7 / 24 changed as in the baseline; almost all of what the whole chain gains is the host reading the standing index and fetching: 31 to 37 of the 38 to 44 recall cases right. (2) Misses concentrate in English messages that use no name: 9 of the 13 cases missed in at least one run are English recall cases, 4 (all English) were missed by all four runs, and zh recall is 22 to 24 / 24 against en 16 to 20 / 24. (3) **Wrong pages are mostly the other language's page of the same topic:** vault3 holds the handbook in English and Chinese, and 14 of the 17 wrong pages over the four runs, and 12 of 28 missed cases (run-level), are a page in the other language's folder where the host fetched or named the counterpart instead of the expected page; under the registered rule these count as wrong and as misses. (4) Quiet loud is the registered rule's loud: a hook delivery (2 of 48), a memory fetch or a named vault page; for near_topic (2 to 3 of 8) these are mostly the host starting its reply with a memory lookup (a `CALL` line); the replies hold only the start, so what it would then have said is not measured. (5) Crowding costs Haiku 4 recall cases (42 to 38) and Sonnet none. (6) Against set 35's host-layer line as reference only (recall at least 75%, changed at least 75%, quiet loud at most 8%, wrong at most 2 per 60, old 0): recall and changed are above 75% in all four runs; quiet loud 4 / 48 or fewer holds only for Haiku crowded, and wrong pages exceed 4 in Haiku normal. No pass line applies to this run. Held-out half: not run, not read. |
+
+### Set 45, second addendum: DeepSeek as the host, development half (registered 2026-11-15, before any DeepSeek call on a set 45 item)
+
+**Why.** The host layer above was run with two Claude models only. Many people run their agents on DeepSeek models, and
+the whole chain depends on a host that reads the standing index and goes to fetch. This asks one thing: does
+`deepseek-flash`, given the same context and the same messages, go and look? **It is a development segment like the
+addendum above: C0 only, no pass line, no default changed, the held-out half not run and not read.** No number above is
+touched.
+
+**Same as the addendum above.** `bench/subconscious/both.py prepare set45dev` (normal, and `--crowd 240 --crowd-capped`)
+and `both.py score`, unchanged: the same 120 messages, the same standing index, the same hook note above a message when
+C0 brought a page, the same instructions to the host word for word, fetches written as `CALL` lines and resolved for real
+on the bench vault, the same rules for right, wrong, old-page delivery and loud. Each message asked once.
+
+**Differences, each said.** (1) **The host is reached through its API, not as an agent in a coding app**
+(`bench/subconscious/api_host.py run`): `deepseek-flash` at `api.deepseek.com`, temperature 0, at most 600 output tokens,
+no tools offered; the script stops if the reply names any other model. (2) **One message per call.** The system message
+is both.py's instructions word for word, then one sentence ("This call holds one item: the user message below. Write only
+your reply to it (any CALL lines first), nothing else."), then the session-start context; the user message is the item's
+message. The Claude hosts saw all 120 messages of a batch at once in one file; here the host sees one, which is nearer
+to a real session and is not the same condition. (3) There is no coding app's own system prompt around the host, so
+nothing else tells it how an assistant in a session behaves. (4) Run from a clone at a neutral path, so the paths the
+index prints (the route script, the bench vault) differ from the earlier runs' paths in their directory part only.
+(5) A script smoke test before the run sends one made-up message that is not a set 45 item; its reply is not kept.
+
+**Stop rules.** Any HTTP error or network failure stops the run and is reported; a stopped run is resumed, and an item
+with a reply is never asked again. Spending is checked on the account's balance before and after; the run is stopped and
+reported if it passes 3 yuan.
+
+**Reported, whatever it shows.** For both conditions, the same lines as the addendum above (recall right split into hook
+alone, host where the hook was not, both; unnamed and named; zh and en; changed; quiet loud by the six kinds; wrong pages;
+old-page deliveries), next to Sonnet 5.5 and Haiku 5.5 from the log above; tokens and what it cost; and, for the recall
+and changed cases that are not right, how many of each: the host did not look (no memory fetch, no page named), looked
+and the fetch came back with no page, or came back with another page (`api_host.py why`, which reads both.py's detail
+file and adds no scoring rule; the same count for the Claude hosts' saved runs is printed beside it).
+
+**Known limits, said with any number.** Those of the addendum above, and: one model of one provider, one run per
+condition; the comparison with the Claude hosts is not like for like (differences 1 to 3); fetches are written, not run,
+so what a DeepSeek-based agent with real tools does may differ.
+
+### Log, set 45 DeepSeek host (development)
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before any DeepSeek call on a set 45 item. `api_host.py why` on the saved Claude runs (normal index), for reference: Sonnet recall 48 cases, a memory fetch on 41, not right 4 (did not look 1, looked and got no page 1, another page 2); Haiku a fetch on 44, not right 6 (did not look 4, another page 2). |
+| 2026-11-15 | **Run, development half, C0 only, two runs of 120** (from a clone of d7c7132 at a neutral path; `both.py prepare set45dev`, `api_host.py run`, `both.py score`, `api_host.py why`; replies, key and detail files in `bench/subconscious/results/set45/host-deepseek/`; both `key.json` files are byte for byte those of the Claude runs, and the index sizes are theirs: 60 topics all listed, and 300 topics with 16 as full lines). Smoke test first: one made-up message, not a set 45 item, reply not kept. Every reply present, every one from `deepseek-flash`, no HTTP or network error, nothing asked twice. Tokens: 272,036 in (248,832 read from the provider's cache) and 20,087 out for the normal index, 277,196 in (241,536 cached) and 23,319 out for the crowded one; the account's balance read 7.03 yuan before and 6.89 some minutes after: about 0.14 yuan for the two runs and the smoke test. **Normal index:** recall **45 / 48** (hook alone 7, host added 38; zh 24 / 24, en 21 / 24; unnamed 39 / 42, named 6 / 6), changed **23 / 24** (hook 7, host added 16), quiet loud **11 / 48** (the hook 2; unrelated 1, other_sense 4, common_word 1, pasted 2, near_topic 3, ack 0), wrong pages 9 (all by the host), old 0. **Crowded index:** recall **40 / 48** (host added 33; zh 22 / 24, en 18 / 24; unnamed 34 / 42), changed 22 / 24, quiet loud **12 / 48** (unrelated 1, other_sense 4, common_word 1, pasted 1, near_topic 5), wrong 8, old 0. **Beside the Claude hosts** (log above; not like for like, see the differences): recall, normal 45 against Sonnet 44 and Haiku 42, crowded 40 against 44 and 38; changed 23 and 22 against 23 in all four Claude runs; quiet loud 11 and 12 against 5 and 6 (Sonnet, Haiku, normal) and 5 and 4 (crowded); wrong pages 9 and 8 against 3 and 8 (normal) and 3 and 3 (crowded). **Did it look** (`why`): on the 48 recall cases the host made a memory fetch on 46 (normal) and 45 (crowded), Sonnet 41 and Haiku 44 on the normal index; on the 24 changed cases 24 and 20; on the 48 quiet cases 10 and 11 (Sonnet 3, Haiku 5). Recall cases not right, normal: 3 (did not look 1, another page 2); crowded: 8 (did not look 1, looked and got no page 1, another page 6). **Read with.** (1) DeepSeek goes and looks at least as readily as the Claude hosts did; what it pays is on the quiet side: it looks on about twice as many messages that should be left alone (10 or 11 of 48), mostly a word that has another sense here (4 of 8 in both runs) and questions next to a topic the vault holds (3 and 5 of 8). (2) In the normal run the three cases with another page (two recall, one changed) are the same three, with the same pages, as in Sonnet's run (en-020, en-042, en-071). Of the 9 wrong pages, 6 are extra pages on 4 cases where the expected page was also fetched or named; the Claude hosts rarely named more than one. (3) Several English messages were looked up under the Chinese name of the topic; whether a wrong page is the other language's page of the same topic was not counted here. (4) **Cut-off replies:** `deepseek-flash` counts its own reasoning inside the 600-token limit, and 3 replies in each run ended at the limit (one in each with no text at all). Normal: a recall case and a changed case that are right anyway (the hook brought the page; the fetch line was written) and a quiet case with no fetch. Crowded: three quiet cases, one loud; the one with no text (en-058, near_topic) could have been loud, so quiet loud in the crowded run is 12 or 13. No recall or changed case was lost to the limit. The replies stand, each asked once as registered. (5) After its `CALL` line the model in a number of replies went on as if the page had come back ("I checked the page, it only says…"); the instructions ask for the start of the reply, and what it would say with a real result is not measured. (6) One run per condition, invented messages, a 110-page vault, the host one message at a time with no app around it: a development number about willingness to look, not a product claim. No pass line applies. Held-out half: not run, not read. |
+
+### Set 45, third addendum: a local embedding model, a one-off mechanical check on the development half (registered 2026-11-15, before any embedding of a set 45 message)
+
+**Why.** The hook alone brings the right page for 7 of 48 mentions (1 of the 42 that use none of the page's names), plain
+BM25 made as quiet lands at 4 to 5, and the gate's own criteria cannot tell an unnamed mention from a message to leave
+alone (about 24 of 48 at best). A diagnosis on a real vault the same day (`bench/subconscious/sibling_tie.py`) found the
+held-back lookups are near ties between pages in different folders, not sibling pages. One thing is left to check before
+the per-message layer is called finished for word matching: **can a local embedding model, no service and no key, tell
+the two kinds of message apart?** This is a check that decides whether an optional tier is worth building; it is not
+that tier, and nothing here is imported by the engine. Development segment: the held-out half is not run and not read,
+no default changes.
+
+**What is run** (`bench/subconscious/semantic_check.py`, in an environment of its own with `fastembed`; no model API).
+Pages: every page of vault3 + overlay outside `90 系统文件/` whose `type` is not a log type, each as one text (title and
+body). A message is embedded as the hook sees it (`recollect.prose`). The first page by cosine is mapped to the page in
+force (`recollect.current`); it is brought when its cosine is at least T and leads the best page of another topic by at
+least D. Scored with set 32's `score` and printed with set 45's `report`, the same counting as the hook's lines.
+**Model:** `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dimensions, about 0.22 GB, multilingual
+because the messages are Chinese and English), through fastembed's ONNX build, on the CPU.
+
+**Choosing T and D.** On this half, from T = 0.20 to 0.90 in steps of 0.01 and D in {0, 0.02, 0.05, 0.10}: among the
+settings with **at most 3 of 48 quiet messages loud and at most 1 wrong page**, the one with the most recall cases right
+(then changed right, then fewer loud, then the higher T). The same choice is made again for the hook and the model
+together (the model's page added when the hook brought fewer than two pages and not that one).
+
+**Reported, whatever it shows.** (1) Separation: the AUC of the first page's cosine, 48 recall cases against 48 quiet
+ones, next to the AUC of the lexical lookup's first-page score and margin with the gate off; and how many recall cases
+have the expected page first by cosine with no threshold at all. (2) At the chosen setting, the model alone: recall
+right (and of the 42 unnamed), changed, quiet loud by kind, wrong, old; beside the hook alone (7 / 48, 1 / 42, 7 / 24,
+2 / 48, 0, 0). (3) The same for the hook and the model together. (4) Cost: the model's size, time to load it, to embed
+the pages and one message, and an estimate at 10,000 pages.
+
+**The line, fixed here.** With quiet loud at most 3 of 48 and wrong at most 1: **recall right at least 24 of 48 and at
+least 20 of the 42 unnamed, for the model alone or for the hook and the model together.** Met: an optional tier is worth
+building, and would then need its own registered set with a held-out run. Not met: the idea is put down and no variant
+is tried (no other pooling, chunking, prompt or rule). One exception, fixed here: if this model reaches at least 12 of 48
+under the same limits, one larger multilingual model may be run once under the same rule, named in the log before it
+runs; below 12, nothing more is run.
+
+**Known limits, said with any number.** T and D are chosen on the half they are scored on, so every number here is an
+upper estimate for that model; the messages were written by a model from a list of the vault's pages; the vault has 110
+pages, each one or two sentences, far easier to embed than real notes; one run.
+
+### Log, set 45 embedding check (development)
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before any set 45 message was embedded. The script was checked for syntax only. |
+| 2026-11-15 | **Run once, development half** (`semantic_check.py`, fastembed 0.9.1 on the CPU of one Apple-silicon laptop; summary and every case's cosines in `bench/subconscious/results/set45/semantic/dev-minilm.json`). Said as it happened: the model's files would not come down through the library's own downloader on this machine, so they were fetched from the same Hugging Face repository with a plain HTTP client and their SHA-256 checked against the repository's; a `--model-dir` option was added to the script after registration to load them from a folder; a first attempt stopped on an incomplete model file before any message was embedded. Nothing in the rule changed. 90 pages embedded (the log pages and `90 系统文件/` left out). **Separation** (48 recall cases against 48 quiet ones, AUC): the first page's cosine **0.77**, its lead over the next topic 0.65; the lexical lookup with the gate off, first-page score 0.56, margin 0.61. **With no threshold at all the expected page is first by cosine for 21 of 48 recall cases.** **The model alone** at the chosen setting (T = 0.47, D = 0.10): recall **12 / 48** (unnamed **8 / 42**, named 4 / 6; zh 5 / 24, en 7 / 24), changed 7 / 24, quiet loud 0 / 48, wrong 1, old 0. **The hook and the model together** (the same setting chosen): recall **14 / 48** (unnamed 8 / 42, named 6 / 6), changed 13 / 24, quiet loud 2 / 48 (the hook's two), wrong 1, old 0. The hook alone, from the same run: 7 / 48, 1 / 42, 7 / 24, 2 / 48, 0, 0. **Cost:** 0.22 GB of model files (three files, 267 MB on disk); 0.65 s to load; 16 ms a page to embed (1.5 s for the 90 pages, about 160 s estimated for 10,000 pages of this length); 5.5 ms a message to embed and rank, under 1 ms more to rank 10,000 pages. **Against the line** (recall at least 24 of 48 and 20 of the 42 unnamed, with at most 3 quiet loud and 1 wrong): **not met**, alone (12 and 8) or together (14 and 8); and since the expected page is first for only 21 of 48 with no threshold, no choice of T and D could have met it with this model. **Read with.** (1) The model does separate better than word matching (0.77 against 0.56), and it brings 7 unnamed mentions the hook does not, quietly; what it lacks is the right page in first place. (2) It adds most on changed rules together with the hook (7 and 7 alone, 13 together). (3) T and D were chosen on the half they are scored on: these are upper estimates. (4) By the exception fixed above the model reached exactly 12 of 48, so one larger multilingual model may be run once under the same rule; whether it is run is the maintainer's decision and is logged here before it runs. Until then: no optional tier is built, no variant tried. Held-out half: not run, not read. |
+| 2026-11-15 | **The one larger model, named before it runs:** `intfloat/multilingual-e5-large` (1,024 dimensions, about 2.2 GB; fastembed's ONNX build from `Qdrant/multilingual-e5-large-onnx`, fetched by hand and its files' SHA-256 checked against the repository's), with the prefixes the model was trained with (`query: ` on messages, `passage: ` on pages; the script's `--query-prefix` and `--page-prefix`, in it since registration). The maintainer asked for this run ("a 2 GB model may be tested if needed; what we want is a product that works, principles can be adjusted"). Same rule, same line, once. No set 45 message has been embedded with it. |
+| 2026-11-15 | **Run once, the larger model** (`dev-e5-large.json` beside the first; same script, same laptop, CPU). **Separation** (AUC): the first page's cosine **0.70**, its lead over the next topic 0.73 (the small model: 0.77 and 0.65). **With no threshold the expected page is first by cosine for 38 of 48 recall cases** (the small model 21; the lexical lookup with its gate off, counted the same day with `gate_reasons.py set45dev`: first for 24, in the first three for 31, the first five for 32, the first ten for 34, not among the candidates at all for 14). **The model alone** at the chosen setting (T = 0.86, D = 0): recall **16 / 48** (unnamed 11 / 42, named 5 / 6; zh 14 / 24, en 2 / 24), changed 12 / 24, quiet loud 2 / 48, wrong 1, old 0. **The hook and the model together** (T = 0.82, D = 0.02): recall **15 / 48** (unnamed 9 / 42, named 6 / 6), changed 12 / 24, quiet loud 3 / 48, wrong 0, old 0. **Cost:** 2.2 GB; 4.6 s to load; 163 ms a page (15 s for the 90 pages, about 27 minutes estimated for 10,000 pages of this length); 49 ms a message. **Against the line: not met** (16 and 11 alone, 15 and 9 together; the line is 24 and 20). **Read with.** (1) The larger model finds the page: 38 of 48 in first place against 21 and 24. What it cannot do is say when to stay quiet: its cosines for mentions and for messages to leave alone overlap (0.70), so a threshold that keeps quiet messages quiet throws away more than half of the pages it had right. (2) So the limit of a per-message layer with no model reading the message is the decision to speak, not the ranking; a better ranker moves the ranking only. Where a model does read the candidates (the host, set 47), ranking is what matters and deciding is the model's. (3) T and D chosen on the half they are scored on; one run. **By the rule fixed at registration this check is finished: the line was not met by either model, no optional per-message embedding tier is built, and no further variant is run under this addendum.** Held-out half: not run, not read. |
+
+## Set 47: an index, or just a folder? The same messages with three things in the host's hands, tools run for real (registered 2026-11-15, before any host call)
+
+**Why.** Set 45's host layer says the whole chain brings the right page for 42 to 45 of 48 spoken mentions, and that
+almost all of it is the host reading the session-start index and fetching for itself. Two things that number does not
+say: what a host does with the same notes and no KRouter at all (a folder it can search), and what it does when its
+fetches are run and it sees their results (there they were written as a line and never run). An outside review asked
+for exactly this baseline. This set measures it. **No default changes; set 45's held-out half is not run and not read.**
+
+**Messages and vaults.** Set 45's development half, 120 messages (48 recall, 24 changed, 48 quiet), unchanged. Two
+vaults: vault3 + overlay (110 pages), and the same with 1,000 distractor pages dated newer than the real ones
+(`both.add_crowd(v, 1000, newer=True)`: 1,110 pages), the standing index at its shipped budget.
+
+**Three conditions** (`bench/subconscious/tool_host.py`; the system message is one neutral paragraph, then the
+condition's own block, word for word in the script).
+- **folder:** the host is told the notes are Markdown files in `notes/` and has `search_notes` (a case-insensitive
+  regular expression over the files, at most 30 matching lines), `list_notes` and `read_note`. No KRouter.
+- **listed:** the same, plus an index in its context, one line per page (title and path): the plain way to keep a wiki
+  for a model. No KRouter.
+- **krouter:** the standing index exactly as the session-start hook prints it, the hook's note above a message when it
+  brought a page, `krouter_ask` (the MCP tool's own description; it returns what `route_knowledge.py search` prints) and
+  `read_note`. No search tool: what is compared is KRouter's index and lookup against a folder and a search.
+
+**Host.** `deepseek-flash` through its API with function calling, temperature 0, at most 1,500 output tokens a call, at
+most 4 rounds of tool calls and then its reply; each message once; one conversation per message. The script stops if a
+reply names another model. Run from a clone at a neutral path.
+
+**Counting.** As set 45's host layer, with fetches now real: a recall or changed case is **right** when the hook brought
+the expected page (krouter only), or the host read it with `read_note`, or `krouter_ask` put it first (set 35's rule,
+resolved by `both.resolve`), or the reply names it; **wrong** for any other page brought, read, put first or named;
+**old-page delivery** for the replaced page; a quiet case is **loud** when the hook brought anything or the host made
+any tool call or named a page. A page that only appears in `search_notes` output is not counted until the host reads or
+names it. Also reported: tool calls and tokens per message. **Second measure, by a judge** (the same model, the prompt
+word for word in the script, shown the page in force, the replaced page if any, and the reply): does the reply state
+the page's rule, and does it state the replaced rule as current. It is there because the three conditions hand the
+host facts in different ways (a search line, a receipt's `how` line, a page), and the page count alone could favour one.
+
+**The line, fixed here, on the 1,110-page vault.** KRouter's index "earns its place" when **either** krouter is right on
+at least 6 more of the 48 recall cases than folder, **or** the two are within 2 of each other and krouter makes at most
+half the tool calls with no more quiet messages loud. If neither holds, the public pages say that at this size a plain
+folder with a search does as well. `listed` is reported beside both and has no line of its own. Whatever the numbers,
+all six runs are reported with both measures.
+
+**Known limits, said with any number.** The messages were written by a model from a list of the vault's pages; the
+distractor pages are generated and unlike the real ones, so a search may find the real pages more easily than in a real
+vault; one host model, one run per condition; pages are one or two sentences; the host has no other work in the session,
+so the cost of a long index or of many tool calls in a real session is not seen beyond the token counts.
+
+### Log, set 47
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before any host call. The script was run without a model only: `prepare` on both vaults (120 items; 110 and 1,110 pages; the hook brought a page for 16 messages in both) and each tool once by hand. |
+| 2026-11-15 | **Smoke test, and one change before any set 45 message was sent.** One made-up message, not a set 45 item, in each condition on the 110-page vault; replies not kept. In the folder condition the host used all 4 rounds and, with no tools offered for its reply, wrote tool-call markup as its reply. Added for every condition: when the 4 rounds are used up, one line is appended before the last call ("[Bench note, not from the user] No more tool calls are available. Write your reply to the user now."). Nothing else changed. |
+| 2026-11-15 | **Run, six runs of 120** (from a clone of 10a5be9 at a neutral path; `tool_host.py run`, `score`, `judge`; `prep.json`, `key.json`, every reply with its tool calls, the detail and judge files in `bench/subconscious/results/set47/`). Every reply present, every one from `deepseek-flash`, every one ended normally, no HTTP or network error, nothing asked twice. The account's balance went from 6.79 to 4.36 yuan over the six runs and the six judge passes. **110-page vault** (recall right / changed right / quiet loud / wrong pages / old-page deliveries; tool calls a message; input tokens a message): **krouter 45 / 48** (unnamed 39 / 42; zh 24, en 21), 23 / 24, **16 / 48**, 18, 1; 1.06 calls; 5,686 tokens. **folder 47 / 48** (unnamed 41 / 42), 23 / 24, **40 / 48**, 62, 8; 5.56 calls; 4,082 tokens. **listed 47 / 48** (unnamed 41 / 42), 23 / 24, **31 / 48**, 84, 16; 3.15 calls; 7,547 tokens. **1,110-page vault: krouter 16 / 48** (unnamed 10 / 42, named 6 / 6; zh 11, en 5), 15 / 24, 13 / 48, 13, 2; 0.82 calls; 5,161 tokens. **folder 45 / 48** (unnamed 39 / 42), 23 / 24, 39 / 48, 53, 11; 5.68 calls; 4,755 tokens. **listed 47 / 48** (unnamed 41 / 42), 23 / 24, 31 / 48, 89, 17; 2.84 calls; **46,796 tokens**. Quiet loud by kind (unrelated, other_sense, common_word, pasted, near_topic, ack, each of 8), 110 pages: krouter 1, 5, 1, 1, 8, 0; folder 5, 8, 6, 8, 8, 5; listed 2, 6, 4, 8, 8, 3. 1,110 pages: krouter 1, 2, 3, 0, 7, 0; folder 5, 8, 7, 8, 8, 3; listed 2, 7, 4, 7, 8, 3. **Judge** (the reply states the page's rule), recall and changed: 110 pages, krouter 45 and 23, folder 47 and 23, listed 47 and 23; 1,110 pages, krouter **15** and 15, folder 46 and 23, listed 46 and 23 (one verdict unread in each of the last two); **no reply in any run states a replaced rule as current (0 of 24 everywhere)**. The two measures agree to within one case in every run. **Against the line (1,110 pages): not met.** krouter is right on 29 fewer recall cases than folder (16 against 45), not 6 more, and not within 2. **Why krouter falls, counted after the run** (the 32 recall cases not right on the 1,110-page vault): the standing index at its shipped budget holds 10 full lines and names of the newest topics, all of them distractors (it says 757 more are not listed); **none of the 41 expected pages is in it**; on 9 cases the host did not call `krouter_ask`, and on 23 every call came back `memory: none` (asked again by hand on the same vault). With the topic names out of the index the host asks in the user's words, the lookup's gate refuses them as it refuses spoken messages to the hook, and the host has no other tool. On the 110-page vault, where every topic is in the index, the 3 cases not right are 1 not asked, 1 `none`, 1 another page. **Read with.** (1) At 110 pages the three are level on recall (45, 47, 47) and krouter does it with a fifth of folder's tool calls, 16 quiet messages loud against 40 and 31, and 18 wrong pages against 62 and 84. (2) folder and listed reach the right page because the model does the matching itself: it searches with several alternations over several rounds, or picks the page from the full list of titles; the price is 5.6 or about 3 calls a message, most quiet messages disturbed (31 to 40 of 48), and for listed 47 thousand input tokens a message at 1,110 pages. (3) folder and listed read the replaced page 8 to 17 times, but no reply gave the replaced rule as current: on these one- and two-sentence pages the host read both and answered from the page in force. KRouter's fewer old-page deliveries did not change an answer here. (4) The 1,110-page vault is the hardest case for the index: every distractor is newer than every real page, so the budget goes to them. A vault whose recent pages are the ones being talked about would do better; how much is not measured. (5) The distractors are generated hobby pages, easy for a search to tell from the handbook. One host, one run a condition. **What follows for the engine (not done here):** when the index is over its budget the topics that do not fit vanish from the host's view, and `krouter_ask` answers `none` to wording the gate does not recognise without offering what is nearest; both are places where a model, given the candidates, could do the matching the lookup cannot. Any change is a new registered set. No default changes. Set 45's held-out half: not run, not read. |
+
+## Set 48: when the index does not fit and the lookup says none, give the host something to choose from (registered 2026-11-15, before either change was written)
+
+**Why.** Set 47: at 1,110 pages KRouter brought the right page for 16 of 48 mentions where a folder with a search
+brought 45. Two causes were counted there. The standing index has a fixed budget (the session-start hook's output is
+capped), and what does not fit is gone from the host's view: none of the 41 expected pages was in it. And `krouter_ask`
+answered `memory: none` to the user's own wording on 23 of the 32 cases missed, offering nothing to go on. Set 45's
+embedding check the same day says where the limit is: ranking is not the hard part (a large model puts the page first
+for 38 of 48, the lexical ranking with its gate off for 24, in the first five for 32), deciding is, and deciding is what
+the host model does well when it has candidates in front of it. **This set changes what the host is given, not the
+gate: two switches, both off by default.**
+
+**The two changes (to be written after this registration).**
+- **`KROUTER_NEAREST=1`: nearest pages on a refusal.** When a lookup ends in `recall: none`, the output adds up to five
+  pages, title and path only, from the same lexical ranking with the gate off: pages in force only (a replaced page
+  stands for the one that replaced it), no log pages, no knowledge-base pages. They come under one line saying the
+  memory did not match this wording, these are only the nearest titles, read one only if its title fits what was asked,
+  otherwise tell the user the memory does not have it. The first line (`memory: none`) and the refusal itself do not
+  change; no page content is added.
+- **`KROUTER_TOPICS=1`: the topics that do not fit can be listed.** A `topics` lookup lists what the alias table names,
+  grouped by folder: with no argument, the groups with their counts (and every topic when there are few); with a group,
+  that group's topics (name and page). The standing index's sentence "N more are not listed" then says how to list them.
+  Exposed as the MCP tool `krouter_topics` when the switch is on.
+
+**Bench** (`tool_host.py`, as set 47: set 45's development half, 120 messages; `deepseek-flash` with function calling,
+at most 4 rounds, each message once; the same counting; run from a clone at a neutral path). Vaults: **small** (110
+pages); **big-apart** (set 47's: 1,000 newer distractor pages in their own folder); **big-mixed**, new here because a
+folder of nothing but distractors makes a grouped list too easy: the same 1,000 distractors written into the two
+handbook folders, 500 each. Conditions: **K0** krouter as shipped (set 47's condition); **K1** with nearest pages;
+**K2** with the topics list; **K3** with both; **K4** as shipped plus the folder's `search_notes` (what a host that can
+also search the vault's folder has today; no engine change); **folder** as in set 47. Runs: big-apart K1, K2, K3, K4 (K0
+16 / 48 and folder 45 / 48 are set 47's); big-mixed K0, K3, folder; small K3 (K0 45 / 48 is set 47's). Eight runs. The
+judge measure of set 47 is run on the three K3 runs.
+
+**The line, fixed here, for K3.** big-apart: recall right at least **40 of 48**; big-mixed: at least **36 of 48**; small:
+at least **44 of 48**; and in all three: quiet loud at most **20 of 48** (K0 was 13 and 16), at most **2.5 tool calls a
+message** (folder made 5.6), old-page deliveries at most 2. **All three met:** the two switches are proposed as the
+default, and before any default changes a confirmation on set 45's held-out half (K0 against K3, once) is the
+maintainer's separate decision. **Any one not met:** both stay off, and which line failed is said; K1 and K2 are reported
+to show which change did what, and are not candidates on their own under this set.
+
+**Reported, whatever it shows.** Every run with set 47's lines (recall, unnamed, changed, quiet loud by kind, wrong,
+old, calls and tokens a message); for K3, how many of the cases K0 missed were recovered through a nearest page and how
+many through the topics list; and, because nearest pages on a refusal are an invitation to answer from a page that does
+not hold the answer: **the quiet messages whose reply names a vault page**, for K0 and K3 on each vault (set 41 measured
+that handing over a page with a refusal made a reader invent an answer about one time in three; here only titles are
+handed over, and this count is how that is watched).
+
+**Known limits, said with any number.** Those of set 47. Also: the changes are written after seeing set 47's
+development messages fail, and are scored on those same messages, so these are development numbers until the held-out
+half is run; the bench vaults' topics all have alias rows, a real vault's pages mostly do not, and the topics list only
+covers what the alias table names.
+
+### Log, set 48
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before either change was written. |
+| 2026-11-15 | **Both changes written, behind their switches** (`route_knowledge.py`: `print_nearest` after `recall: none`, and a `topics` route; `compile_subconscious.py`: the index's "N more" sentence names `krouter_topics` when the switch is on; `mcp_server.py`: the `krouter_topics` tool when the switch is on; `tool_host.py`: conditions `k1` to `k4` and `--mixed`). Checked without a model: `prepare` on big-apart and big-mixed (1,110 pages each; the hook brought a page for 16 messages in both; the index says 757 and 753 topics are not listed), the topics list and the nearest titles once by hand, and that the shipped lookup prints no nearest block. Two details settled then, before any host call: a group is listed whole, one line a topic, up to 1,000 topics (in big-mixed a handbook folder holds about 530, the real ones last because they are the oldest); nearest pages are at most five, and fewer when fewer pages in force rank at all. |
+| 2026-11-15 | **Run, eight runs of 120** (from a clone of 8531468 at a neutral path; smoke test first on one made-up message in k3, reply not kept; `tool_host.py run`, `score`, `judge` on the three K3 runs; everything in `bench/subconscious/results/set48/`). Every reply present, every one from `deepseek-flash`, every one ended normally, no error, nothing asked twice. The balance went from 3.98 to 1.17 yuan. The full test suite with neither switch set: 707 passed, 8 skipped. **K3, both switches** (recall right / changed / quiet loud / wrong / old; calls and input tokens a message). **big-apart: 37 / 48** (unnamed 31 / 42; zh 20, en 17), 22 / 24, 15 / 48, 19, **5**; 1.97 calls; 7,994 tokens. **big-mixed: 36 / 48** (unnamed 30 / 42; zh 21, en 15), 22 / 24, 18 / 48, 11, **3**; 1.63 calls; 7,613 tokens. **small: 45 / 48** (unnamed 39 / 42), 23 / 24, 16 / 48, 13, 0; 1.13 calls; 6,124 tokens. Judge (the reply states the page's rule), recall and changed: 36 and 22, 36 and 21 (one verdict unread), 45 and 23; **no reply states a replaced rule as current (0 of 24 in each)**. **Against the line: not met.** big-apart recall is 37 where the line is 40; old-page deliveries are 5 and 3 where the line is at most 2. Met: big-mixed recall (36, the line), small recall (45, line 44), quiet loud in all three (15, 18, 16; line 20), tool calls in all three (line 2.5). **Both switches stay off.** **The other runs.** big-apart: K0 16 / 48 (set 47); **K1, nearest titles only, 30 / 48**, changed 19, quiet loud 17, wrong 10, old 1, 1.06 calls; **K2, topics list only, 36 / 48**, changed 21, quiet loud 16, wrong 25, old 5, 2.33 calls; **K4, as shipped plus the folder's search, 31 / 48**, changed 20, quiet loud 17, wrong 20, old 4, 1.36 calls (51 searches); folder 45 / 48 (set 47). big-mixed: **K0 18 / 48**, changed 13, quiet loud 16, wrong 8, old 1, 0.88 calls; **folder 47 / 48**, changed 23, quiet loud 38, wrong 60, old 7, 5.67 calls. **Where K3's gain came from** (recall cases right in K3 and not in K0): big-apart 21, of which 19 used `krouter_topics`; big-mixed 18, of which 13 used it; no case right in K0 was lost in either. **What K3 still misses:** big-apart 11 (6 with no tool call at all, 3 after a topics list, 2 after asking only); big-mixed 12 (5, 4, 3). **The old-page deliveries** in K3 (5 and 3) are all changed cases where the host named or asked for the replaced page, none where it read it; by the judge no reply gives the replaced rule as current. Under the registered counting they are deliveries and the line is not met. **Quiet messages whose reply names a vault page** (the watch on nearest titles inviting an answer): K0 5 of 48 on big-mixed; K3 9, 7 and 10 on big-apart, big-mixed and small; K1 8; folder 12. It rises by a few with the changes; quiet loud itself moves by two (13 to 15, 16 to 18, 16 to 16). **Read with.** (1) The two changes together take KRouter from 16 and 18 of 48 to 37 and 36 at 1,110 pages, at about two tool calls a message and with the quiet side nearly where it was; a folder with a search is still ahead on recall (45 and 47) and disturbs 38 or 39 of the 48 quiet messages with 5.7 calls a message. (2) Most of the gain is the topics list (K2 alone 36; K1 alone 30). Adding a search tool to the shipped KRouter (K4) helps less than either. (3) The largest group still missed is messages on which the host makes no call: nothing in its context tells it the vault holds something on them. (4) These are development numbers on messages the changes were written against; one host, one run a condition. Set 45's held-out half: not run, not read. |
+
+### Set 48, addendum: the groups shown in the index itself, and old-page deliveries counted by what the host did with them (registered 2026-11-15, before the change was written)
+
+**Why.** Set 48's K3 missed its line on two counts. On big-apart recall was 37 where the line is 40, and the largest
+group still missed (6 of 11 there, 5 of 12 on big-mixed) is messages on which the host made no call at all: with the
+topic out of the index, nothing in its context says the vault holds anything near it, and the sentence that points to
+`krouter_topics` asks it to judge that a message "sounds like something that was settled". And old-page deliveries
+were 5 and 3 where the line is 2: every one a changed case in which the host named or asked for the replaced page and
+did not read it, and no reply gave the replaced rule as current. **One more development round, K5; nothing here uses
+set 45's held-out half.**
+
+**The change (K5 = K3 plus this, behind `KROUTER_TOPICS=1`).** When topics do not fit, the standing index itself lists
+the groups they fall in: each folder with how many topics it holds and four of their names, spread evenly over the
+group's order (not the first four, which are the newest), at most twelve groups, the largest first, inside the same
+budget (the names-only part gives up the room). The sentence that follows says: when the user's message is about the
+kind of thing one of these groups holds and no line above covers it, call `krouter_topics` with that group's name, find
+the topic's name, then fetch the page. `krouter_topics` and the nearest titles are as in K3.
+
+**Counting, one thing changed and said.** Set 47's rule counts an old-page delivery whenever the replaced page is
+brought, read, put first or named. It is still reported. **The line here uses a narrower count: the replaced page
+read with `read_note`, or a reply that the judge says states the replaced rule as current.** Naming the replaced page
+while giving the rule in force (as in "this replaced the older page") is what a correct answer about a changed rule
+often does, and is not counted against the line.
+
+**Runs.** K5 on big-apart, big-mixed and small, with the judge on all three. K0, K3 and folder are set 47's and set
+48's.
+
+**The line, fixed here, for K5.** As set 48's: big-apart recall at least **40 of 48**, big-mixed at least **36**, small
+at least **44**; in all three quiet loud at most **20 of 48** and at most **2.5 tool calls a message**. Old pages by
+the narrower count: at most 2 read in each run, and no reply stating a replaced rule as current. New, because the
+index now says more about what the vault holds: **quiet messages whose reply names a vault page at most 12 of 48** in
+each run (a folder with a search: 12; K3: 7 to 10). **All met:** K5 is proposed as the default, to be confirmed once on
+set 45's held-out half (K0 against K5) if the maintainer decides to open it. **Any not met:** the switches stay off and
+no third round is run on these messages; what is left goes to the held-out half or to new messages.
+
+**Known limits.** Those of set 48. This is the second change scored on the same 120 messages.
+
+### Log, set 48 addendum
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before the change was written. |
+| 2026-11-15 | **The change written** (`compile_subconscious.py`: `index_groups` and the new sentence, behind `KROUTER_TOPICS=1`; `tool_host.py`: condition `k5`, and the count of replaced pages read). Checked without a model: on big-mixed the index with the switch names three groups (团队手册/ 530, Handbook/ 529, Handbook/A/ 1) with four names each, the last of them a real handbook topic, and says 762 are not listed; on the 110-page vault, where everything fits, the index is character for character the shipped one. |
+| 2026-11-15 | **Run, K5 on the three vaults** (from a clone of e6bf88e at a neutral path; `run`, `score`, `judge`; `replies_k5.jsonl`, `detail_k5.json`, `judge_k5.jsonl` and the prepared index as `prep_k5.json` beside set 48's files, the printed lines in `k5.txt`). Every reply present, from `deepseek-flash`, ended normally, nothing asked twice; the balance went from 20.91 to 19.75 yuan. Tests touching the index, the prompt hook and the MCP server with no switch set: 130 passed. (recall right / changed / quiet loud / wrong / old by set 47's rule; calls and input tokens a message.) **big-apart: 41 / 48** (unnamed 35 / 42; zh 24, en 17), 22 / 24, **25 / 48**, 26, 6; 1.95 calls; 8,167 tokens. **big-mixed: 41 / 48** (unnamed 35 / 42; zh 23, en 18), 21 / 24, 19 / 48, 30, 5; 1.78 calls; 11,624 tokens. **small: 45 / 48**, 23 / 24, 15 / 48, 13, 2; 1.07 calls; 5,917 tokens. Judge, recall and changed: 41 and 22, 40 and 21, 45 and 23 (one verdict unread in each of the first two); no reply states a replaced rule as current. Replaced page read: 1, 0, 0. Quiet messages whose reply names a vault page: 12, 11, 11. Quiet loud by kind (unrelated, other_sense, common_word, pasted, near_topic, ack): big-apart 2, 7, 3, 5, 8, 0; big-mixed 2, 4, 4, 1, 8, 0; small 1, 3, 1, 2, 8, 0. **Against the line: not met, on one count.** Recall is met on all three (41, 41, 45; lines 40, 36, 44), tool calls on all three, old pages by the narrower count on all three, quiet replies naming a page on all three (12 is the limit). **Quiet loud on big-apart is 25 where the line is 20** (19 and 15 on the other two). **By the rule fixed above the switches stay off and no third round is run on these messages.** **Against K3, case by case.** Recall: big-apart 7 gained and 3 lost, big-mixed 7 gained and 2 lost; the cases with no tool call fall from 6 and 5 to 1 and 0, and what is still missed is mostly after a topics list (6 and 4). Quiet, big-apart: 12 messages loud in K5 that were not in K3 and 2 the other way; 19 of the 25 loud ones include a `krouter_topics` call. On big-apart the group line names two folders of about 30 real topics each, and the host opens one for other-sense, pasted and near-topic messages alike; on big-mixed, where each group is mostly distractors, it does so less (19 loud). **Read with.** (1) With the groups in the index KRouter is right on 41 of 48 at 1,110 pages on both vaults (K0 16 and 18, K3 37 and 36, a folder with a search 45 and 47), at under two tool calls a message. (2) The price is on the quiet side and depends on the vault: nothing on two vaults, twelve more quiet messages disturbed on the third (25 of 48; a folder with a search disturbs 39). Saying more about what the vault holds makes the host look more, for mentions and for non-mentions together; this bench cannot have one without the other at this setting. (3) The second change scored on the same 120 messages; one host, one run. Set 45's held-out half: not run, not read. |

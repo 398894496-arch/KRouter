@@ -1,0 +1,38 @@
+### normal deepseek
+deepseek: items 120 missing 0
+  zh: recall 24/24 (hook 5, host 19; unnamed 20/20)  changed 12/12 (hook 7, host 5)  quiet-loud 6/24 (hook 1)  wrong 5  old 0
+  en: recall 21/24 (hook 2, host 19; unnamed 19/22)  changed 11/12 (hook 0, host 11)  quiet-loud 5/24 (hook 1)  wrong 4  old 0
+  all: recall 45/48  changed 23/24  quiet-loud 11/48  wrong 9  old 0  loud by kind: unrelated=1, other_sense=4, common_word=1, pasted=2
+  set 45 layers (recall, both languages): hook alone 7, host where the hook was not 38, both layers 45 of 48; unnamed 39/42, named 6/6
+  changed: hook alone 7, host where the hook was not 16, both 23 of 24
+  quiet loud by the six kinds: unrelated=1/8, other_sense=4/8, common_word=1/8, pasted=2/8, near_topic=3/8, ack=0/8
+  wrong pages: by the hook 0, by the host only 9; old-page deliveries 0
+deepseek recall: 48 cases, the host made a memory fetch on 46; not right: did not look 1, looked and got no page 0, another page 2
+deepseek changed: 24 cases, the host made a memory fetch on 24; not right: did not look 0, looked and got no page 0, another page 1
+deepseek quiet: 48 cases, a memory fetch on 10
+  {"case": "en-020", "kind": "changed", "lang": "en", "how": "other_page", "expect": "Handbook/Cloud infrastructure changes.md", "host": ["团队手册/消息队列.md"]}
+  {"case": "en-032", "kind": "recall", "lang": "en", "how": "did_not_look", "expect": "Handbook/Customer interview notes.md", "host": []}
+  {"case": "en-042", "kind": "recall", "lang": "en", "how": "other_page", "expect": "Handbook/GPU usage.md", "host": ["团队手册/设备申领.md"]}
+  {"case": "en-071", "kind": "recall", "lang": "en", "how": "other_page", "expect": "Handbook/Analytics queries.md", "host": ["团队手册/数据看板.md"]}
+### crowded deepseek
+deepseek: items 120 missing 0
+  zh: recall 22/24 (hook 5, host 17; unnamed 18/20)  changed 12/12 (hook 7, host 5)  quiet-loud 7/24 (hook 1)  wrong 2  old 0
+  en: recall 18/24 (hook 2, host 16; unnamed 16/22)  changed 10/12 (hook 0, host 10)  quiet-loud 5/24 (hook 1)  wrong 6  old 0
+  all: recall 40/48  changed 22/24  quiet-loud 12/48  wrong 8  old 0  loud by kind: unrelated=1, other_sense=4, common_word=1, pasted=1
+  set 45 layers (recall, both languages): hook alone 7, host where the hook was not 33, both layers 40 of 48; unnamed 34/42, named 6/6
+  changed: hook alone 7, host where the hook was not 15, both 22 of 24
+  quiet loud by the six kinds: unrelated=1/8, other_sense=4/8, common_word=1/8, pasted=1/8, near_topic=5/8, ack=0/8
+  wrong pages: by the hook 0, by the host only 8; old-page deliveries 0
+deepseek recall: 48 cases, the host made a memory fetch on 45; not right: did not look 1, looked and got no page 1, another page 6
+deepseek changed: 24 cases, the host made a memory fetch on 20; not right: did not look 0, looked and got no page 0, another page 2
+deepseek quiet: 48 cases, a memory fetch on 11
+  {"case": "en-006", "kind": "recall", "lang": "en", "how": "other_page", "expect": "Handbook/Access reviews.md", "host": ["团队手册/权限申请.md"]}
+  {"case": "en-007", "kind": "recall", "lang": "en", "how": "other_page", "expect": "Handbook/Access reviews.md", "host": ["Handbook/Database for new services.md"]}
+  {"case": "en-020", "kind": "changed", "lang": "en", "how": "other_page", "expect": "Handbook/Cloud infrastructure changes.md", "host": ["团队手册/消息队列.md"]}
+  {"case": "en-031", "kind": "recall", "lang": "en", "how": "other_page", "expect": "Handbook/Customer interview notes.md", "host": ["团队手册/数据分级.md"]}
+  {"case": "en-032", "kind": "recall", "lang": "en", "how": "looked_no_page", "expect": "Handbook/Customer interview notes.md", "host": []}
+  {"case": "en-042", "kind": "recall", "lang": "en", "how": "did_not_look", "expect": "Handbook/GPU usage.md", "host": []}
+  {"case": "en-071", "kind": "recall", "lang": "en", "how": "other_page", "expect": "Handbook/Analytics queries.md", "host": ["团队手册/数据看板.md"]}
+  {"case": "en-120", "kind": "changed", "lang": "en", "how": "other_page", "expect": "Handbook/Transactional email.md", "host": ["团队手册/出差标准.md"]}
+  {"case": "zh-001", "kind": "recall", "lang": "zh", "how": "other_page", "expect": "团队手册/App 系统版本.md", "host": ["Handbook/Mobile release criteria.md"]}
+  {"case": "zh-045", "kind": "recall", "lang": "zh", "how": "other_page", "expect": "团队手册/意见反馈.md", "host": ["Handbook/Feature requests.md"]}

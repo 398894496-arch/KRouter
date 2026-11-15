@@ -1,0 +1,27 @@
+### apart
+k5: items 120 missing 0
+  recall 41/48 (unnamed 35/42, named 6/6; zh 24, en 17)  changed 22/24  quiet loud 25/48  wrong 26  old 6
+  quiet loud by kind: unrelated=2/8, other_sense=7/8, common_word=3/8, pasted=5/8, near_topic=8/8, ack=0/8
+  tool calls 234 (1.95 a message; recall 119, changed 60, quiet 55); messages with a call: recall 46/48, changed 23/24, quiet 24/48
+  replaced page read with read_note: 1 of 24 changed cases
+  quiet messages whose reply names a vault page: 12/48; calls by tool: krouter_ask 104, krouter_topics 74, read_note 56
+  tokens: 980019 in, 48764 out (8167 in a message)
+k5: reply carries the page's rule (judge): recall 41/48, changed 22/24; states the replaced rule as current: 0/24; verdicts not read 1
+### mixed
+k5: items 120 missing 0
+  recall 41/48 (unnamed 35/42, named 6/6; zh 23, en 18)  changed 21/24  quiet loud 19/48  wrong 30  old 5
+  quiet loud by kind: unrelated=2/8, other_sense=4/8, common_word=4/8, pasted=1/8, near_topic=8/8, ack=0/8
+  tool calls 214 (1.78 a message; recall 114, changed 60, quiet 40); messages with a call: recall 47/48, changed 24/24, quiet 18/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 11/48; calls by tool: krouter_ask 109, krouter_topics 46, read_note 59
+  tokens: 1394869 in, 50221 out (11624 in a message)
+k5: reply carries the page's rule (judge): recall 40/48, changed 21/24; states the replaced rule as current: 0/24; verdicts not read 1
+### small
+k5: items 120 missing 0
+  recall 45/48 (unnamed 39/42, named 6/6; zh 24, en 21)  changed 23/24  quiet loud 15/48  wrong 13  old 2
+  quiet loud by kind: unrelated=1/8, other_sense=3/8, common_word=1/8, pasted=2/8, near_topic=8/8, ack=0/8
+  tool calls 129 (1.07 a message; recall 73, changed 31, quiet 25); messages with a call: recall 48/48, changed 22/24, quiet 14/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 11/48; calls by tool: krouter_ask 99, krouter_topics 6, read_note 24
+  tokens: 710034 in, 33660 out (5917 in a message)
+k5: reply carries the page's rule (judge): recall 45/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0

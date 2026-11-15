@@ -79,6 +79,15 @@ CORRECT_INSTRUCTION = (" When the user corrects a decision or says to do somethi
 LEARN_INSTRUCTION = (" When this session ran into an error or a wrong result and you found the cause and fixed it, record "
                      "the lesson with krouter_learn before your final reply (not for plain edits, renames, explanations "
                      "or questions).")
+TOPICS_TOOL = {
+    "name": "krouter_topics",
+    "description": "List what the user's memory has settled, by group (folder), when the session-start index says some "
+                   "topics are not listed. With no group: the groups and how many topics each holds (every topic when "
+                   "there are few). With a group: that group's topics, name and page. Then fetch the one page that "
+                   "fits with krouter_ask (its name) or by reading it.",
+    "inputSchema": {"type": "object", "properties": {"group": {"type": "string", "description": "A group's name as "
+                                                                 "listed, or empty for the groups."}}},
+}
 TOOLS = [
     {
         "name": "krouter_ask",
@@ -488,6 +497,8 @@ def skills_description(found: list[dict]) -> str:
 
 def tools() -> list[dict]:
     out = TOOLS + ([NOTE_TOOL, CORRECT_TOOL] if may_write() else []) + ([CHANGES_TOOL] if HTTP and (WRITE or USERS) else [])
+    if os.environ.get("KROUTER_TOPICS") == "1":
+        out = out + [TOPICS_TOOL]  # 第 48 套：默认关
     if learn_on():
         import experience
 
@@ -714,6 +725,9 @@ def call(name: str, args: dict) -> dict:
         return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_skill" and skill_list():
         text, err = skill(args)
+        return {"content": [{"type": "text", "text": text}], "isError": err}
+    if name == "krouter_topics" and os.environ.get("KROUTER_TOPICS") == "1":
+        text, err = _route("topics", str(args.get("group") or "").strip(), None)
         return {"content": [{"type": "text", "text": text}], "isError": err}
     if name == "krouter_ask":
         query = str(args.get("query") or "").strip()

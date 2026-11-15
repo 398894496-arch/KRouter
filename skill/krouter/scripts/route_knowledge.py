@@ -501,6 +501,8 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         if res.get("asked"):
             print(_ri.ASKED_NOTE.format(pages=", ".join(res["asked"][:2])))
         print("recall: none (no page covers enough of the question; do not guess)")
+        if os.environ.get("KROUTER_NEAREST") == "1" and not folded:
+            print_nearest(vault, query)
         if folded:
             print(_ri.RELATED_PAGES[_ri._note_lang(vault, query)].format(pages="; ".join(_ri.page_list(res))))
         _ri.print_kb(vault, res, query, 2)
@@ -508,6 +510,87 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         return  # 相关页已经点名，不再把字面检索的原文行当结果打出来
     # 索引这次没用上（recall 抛了错）就别拿它挑候选页：它可能缺页或过期，整个范围照老办法扫
     md_search(query, scope, vault=vault if res is not None else None, skip=(res or {}).get("asked") or [])
+
+
+NEAREST_MAX = 5
+NEAREST_HEAD = {
+    "en": "nearest_pages: (the memory did not match this wording; these are only the nearest titles, not answers. Read "
+          "one only if its title fits what was asked; otherwise tell the user the memory does not have it)",
+    "zh": "nearest_pages:（记忆里没有对上这句话的说法；下面只是最接近的几页的标题，不是答案。标题和问的事对得上才去读那一页，"
+          "否则告诉用户记忆里没有）",
+}
+
+
+def print_nearest(vault: Path, query: str) -> None:
+    """`KROUTER_NEAREST=1` (set 48): after a refusal, up to NEAREST_MAX page titles from the same ranking with the gate
+    off, for a host model to choose from. Pages in force only (a replaced page stands for its successor), no log pages,
+    no knowledge-base pages; titles and paths, no content. The refusal itself is unchanged."""
+    try:
+        from datetime import date
+
+        import recall_index as ri
+        import recollect
+
+        res = ri.recall(vault, query, refresh_first=False, gate=False, assoc=False, conflict=False, limit=20)
+        today, rows = date.today(), []
+        for h in (res or {}).get("hits") or []:
+            if h.get("tier") == "log":
+                continue
+            cur = recollect.current(vault, zones.real(vault, h["rel"]), today)
+            if cur is None or cur[0] in [r[1] for r in rows]:
+                continue
+            fm = (recollect.page(vault, cur[0]) or ({}, ""))[0]
+            if (fm.get("type") or "").lower() in recollect.LOG_TYPES:
+                continue
+            rows.append((fm.get("title") or Path(cur[0]).stem, cur[0]))
+            if len(rows) == NEAREST_MAX:
+                break
+        if rows:
+            print(NEAREST_HEAD[ri._note_lang(vault, query)])
+            for title, rel in rows:
+                print(redact(f"- {title} [{rel}]"))
+    except Exception:  # noqa: BLE001 - 附加信息：出错就不附，拒答照旧
+        return
+
+
+TOPICS_FLAT = 80     # 主题不超过这么多就整份列出
+TOPICS_GROUP = 1000  # 一组最多列这么多个主题（一行一个：名字和页）
+
+
+def topics(vault: Path, group: str) -> int:
+    """`KROUTER_TOPICS=1` (set 48): what the alias table names, by folder, for a host whose session-start index could
+    not hold them all. No argument: the groups and their counts (every topic when there are few). A group: its topics,
+    name and page."""
+    import compile_subconscious
+
+    ts = compile_subconscious.index_topics(vault)
+    groups: dict[str, list[dict]] = {}
+    for t in ts:
+        page = zones.real(vault, t["rel"])
+        groups.setdefault(page.rsplit("/", 1)[0] if "/" in page else ".", []).append({**t, "page": page})
+    group = group.strip().strip("/").strip()
+    print(f"topics: {len(ts)} in {len(groups)} groups")
+    if not ts:
+        return 0
+    if group:
+        if group not in groups:
+            print(f"no such group: {group}; groups: " + "; ".join(sorted(groups)))
+            return 0
+        rows = groups[group]
+    elif len(ts) <= TOPICS_FLAT:
+        rows = [t for g in sorted(groups) for t in groups[g]]
+    else:
+        for g in sorted(groups):
+            names = "; ".join(t["name"] for t in groups[g][:3])
+            print(redact(f"- {g}/ ({len(groups[g])} topics, e.g. {names})"))
+        print("list a group's topics by passing its name")
+        return 0
+    for t in rows[:TOPICS_GROUP]:
+        print(redact(f"- {t['name']} [{t['page']}]"))
+    if len(rows) > TOPICS_GROUP:
+        print(f"{len(rows) - TOPICS_GROUP} more in this group are not listed")
+    print("ask for a topic by its name, or read its page")
+    return 0
 
 
 def main() -> int:
@@ -528,6 +611,8 @@ def main() -> int:
     if not vault.is_dir():
         print(f"Vault not found: {vault}", file=sys.stderr)
         return 1
+    if route == "topics" and os.environ.get("KROUTER_TOPICS") == "1":
+        return topics(vault, query)
     if route not in ALLOWED:
         print(
             "usage: route_knowledge.py {status|preference|correction|memory|project|search|suggest} [literal query]",

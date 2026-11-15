@@ -1,0 +1,12 @@
+### small
+krouter: reply carries the page's rule (judge): recall 45/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0
+### small
+folder: reply carries the page's rule (judge): recall 47/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0
+### small
+listed: reply carries the page's rule (judge): recall 47/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0
+### big
+krouter: reply carries the page's rule (judge): recall 15/48, changed 15/24; states the replaced rule as current: 0/24; verdicts not read 0
+### big
+folder: reply carries the page's rule (judge): recall 46/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 1
+### big
+listed: reply carries the page's rule (judge): recall 46/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 1

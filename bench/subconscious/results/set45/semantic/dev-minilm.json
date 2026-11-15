@@ -1,0 +1,1132 @@
+{
+ "summary": {
+  "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "pages": 90,
+  "dim": 384,
+  "auc": {
+   "semantic first-page cosine": 0.772,
+   "semantic lead over the next topic": 0.65,
+   "lexical first-page score (gate off)": 0.556,
+   "lexical margin (gate off)": 0.614
+  },
+  "recall cases whose first page by cosine is the expected page, no threshold": "21/48",
+  "hook alone": {
+   "recall": 7,
+   "unnamed": 1,
+   "changed": 7,
+   "quiet_loud": 2,
+   "wrong": 0,
+   "old": 0
+  },
+  "semantic alone": {
+   "T": 0.47,
+   "D": 0.1,
+   "recall": 12,
+   "unnamed": 8,
+   "changed": 7,
+   "quiet_loud": 0,
+   "wrong": 1,
+   "old": 0
+  },
+  "hook and semantic": {
+   "T": 0.47,
+   "D": 0.1,
+   "recall": 14,
+   "unnamed": 8,
+   "changed": 13,
+   "quiet_loud": 2,
+   "wrong": 1,
+   "old": 0
+  },
+  "cost": {
+   "model load s": 0.65,
+   "embed all pages s": 1.46,
+   "per page ms": 16.2,
+   "per message ms, median (embed and rank)": 5.5,
+   "ranking 10,000 pages ms": 0.93,
+   "embedding 10,000 pages of this length, estimate s": 162
+  }
+ },
+ "cases": [
+  {
+   "id": "en-001",
+   "kind": "recall",
+   "s1": 0.3535,
+   "s2": 0.3523,
+   "top": "Handbook/Support escalation (old).md",
+   "bring": "Handbook/Support escalation.md",
+   "older": "Handbook/Support escalation (old).md"
+  },
+  {
+   "id": "en-002",
+   "kind": "recall",
+   "s1": 0.3542,
+   "s2": 0.2631,
+   "top": "团队手册/节假日安排.md",
+   "bring": "团队手册/节假日安排.md",
+   "older": ""
+  },
+  {
+   "id": "en-003",
+   "kind": "quiet",
+   "s1": 0.2355,
+   "s2": 0.2006,
+   "top": "团队手册/短信通道.md",
+   "bring": "团队手册/短信通道.md",
+   "older": ""
+  },
+  {
+   "id": "en-004",
+   "kind": "quiet",
+   "s1": 0.1877,
+   "s2": 0.1761,
+   "top": "团队手册/节假日安排.md",
+   "bring": "团队手册/节假日安排.md",
+   "older": ""
+  },
+  {
+   "id": "en-005",
+   "kind": "changed",
+   "s1": 0.4062,
+   "s2": 0.3495,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "en-006",
+   "kind": "recall",
+   "s1": 0.3034,
+   "s2": 0.2885,
+   "top": "Handbook/Database for new services.md",
+   "bring": "Handbook/Database for new services.md",
+   "older": ""
+  },
+  {
+   "id": "en-007",
+   "kind": "recall",
+   "s1": 0.4331,
+   "s2": 0.4109,
+   "top": "Handbook/Customer data deletion.md",
+   "bring": "Handbook/Customer data deletion.md",
+   "older": ""
+  },
+  {
+   "id": "en-009",
+   "kind": "quiet",
+   "s1": 0.4663,
+   "s2": 0.403,
+   "top": "团队手册/数据标注.md",
+   "bring": "团队手册/数据标注.md",
+   "older": ""
+  },
+  {
+   "id": "en-010",
+   "kind": "changed",
+   "s1": 0.5155,
+   "s2": 0.4039,
+   "top": "Handbook/Analytics queries.md",
+   "bring": "Handbook/Analytics queries.md",
+   "older": ""
+  },
+  {
+   "id": "en-016",
+   "kind": "recall",
+   "s1": 0.4719,
+   "s2": 0.3636,
+   "top": "Handbook/Browser support.md",
+   "bring": "Handbook/Browser support.md",
+   "older": ""
+  },
+  {
+   "id": "en-020",
+   "kind": "changed",
+   "s1": 0.3844,
+   "s2": 0.3596,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "en-027",
+   "kind": "recall",
+   "s1": 0.2982,
+   "s2": 0.2796,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "en-028",
+   "kind": "quiet",
+   "s1": 0.3484,
+   "s2": 0.3383,
+   "top": "Handbook/Support hours.md",
+   "bring": "Handbook/Support hours.md",
+   "older": ""
+  },
+  {
+   "id": "en-029",
+   "kind": "quiet",
+   "s1": 0.2639,
+   "s2": 0.2627,
+   "top": "团队手册/Go 代码规范.md",
+   "bring": "团队手册/Go 代码规范.md",
+   "older": ""
+  },
+  {
+   "id": "en-031",
+   "kind": "recall",
+   "s1": 0.328,
+   "s2": 0.3037,
+   "top": "团队手册/发布说明（旧）.md",
+   "bring": "团队手册/发布说明.md",
+   "older": "团队手册/发布说明（旧）.md"
+  },
+  {
+   "id": "en-032",
+   "kind": "recall",
+   "s1": 0.4724,
+   "s2": 0.4699,
+   "top": "Handbook/Customer interview notes.md",
+   "bring": "Handbook/Customer interview notes.md",
+   "older": ""
+  },
+  {
+   "id": "en-034",
+   "kind": "quiet",
+   "s1": 0.4117,
+   "s2": 0.3568,
+   "top": "团队手册/图片资源.md",
+   "bring": "团队手册/图片资源.md",
+   "older": ""
+  },
+  {
+   "id": "en-038",
+   "kind": "quiet",
+   "s1": 0.2788,
+   "s2": 0.2324,
+   "top": "Handbook/Price changes.md",
+   "bring": "Handbook/Price changes.md",
+   "older": ""
+  },
+  {
+   "id": "en-039",
+   "kind": "quiet",
+   "s1": 0.4307,
+   "s2": 0.4158,
+   "top": "Handbook/Price changes.md",
+   "bring": "Handbook/Price changes.md",
+   "older": ""
+  },
+  {
+   "id": "en-042",
+   "kind": "recall",
+   "s1": 0.347,
+   "s2": 0.306,
+   "top": "团队手册/设备申领.md",
+   "bring": "团队手册/设备申领.md",
+   "older": ""
+  },
+  {
+   "id": "en-043",
+   "kind": "quiet",
+   "s1": 0.4942,
+   "s2": 0.4655,
+   "top": "Handbook/On-site days.md",
+   "bring": "Handbook/On-site days.md",
+   "older": ""
+  },
+  {
+   "id": "en-044",
+   "kind": "quiet",
+   "s1": 0.2746,
+   "s2": 0.2526,
+   "top": "团队手册/服务拆分（旧）.md",
+   "bring": "团队手册/服务拆分.md",
+   "older": "团队手册/服务拆分（旧）.md"
+  },
+  {
+   "id": "en-045",
+   "kind": "changed",
+   "s1": 0.6763,
+   "s2": 0.4781,
+   "top": "Handbook/Database for new services (old).md",
+   "bring": "Handbook/Database for new services.md",
+   "older": "Handbook/Database for new services (old).md"
+  },
+  {
+   "id": "en-046",
+   "kind": "recall",
+   "s1": 0.6505,
+   "s2": 0.3212,
+   "top": "Handbook/Hackathon.md",
+   "bring": "Handbook/Hackathon.md",
+   "older": ""
+  },
+  {
+   "id": "en-047",
+   "kind": "recall",
+   "s1": 0.4103,
+   "s2": 0.3768,
+   "top": "Handbook/Hackathon.md",
+   "bring": "Handbook/Hackathon.md",
+   "older": ""
+  },
+  {
+   "id": "en-049",
+   "kind": "quiet",
+   "s1": 0.4372,
+   "s2": 0.4136,
+   "top": "团队手册/发布说明（旧）.md",
+   "bring": "团队手册/发布说明.md",
+   "older": "团队手册/发布说明（旧）.md"
+  },
+  {
+   "id": "en-051",
+   "kind": "recall",
+   "s1": 0.4166,
+   "s2": 0.3903,
+   "top": "团队手册/代码托管（旧）.md",
+   "bring": "团队手册/代码托管.md",
+   "older": "团队手册/代码托管（旧）.md"
+  },
+  {
+   "id": "en-053",
+   "kind": "quiet",
+   "s1": 0.3363,
+   "s2": 0.3304,
+   "top": "Handbook/Mobile release criteria.md",
+   "bring": "Handbook/Mobile release criteria.md",
+   "older": ""
+  },
+  {
+   "id": "en-056",
+   "kind": "recall",
+   "s1": 0.6909,
+   "s2": 0.56,
+   "top": "Handbook/Price changes.md",
+   "bring": "Handbook/Price changes.md",
+   "older": ""
+  },
+  {
+   "id": "en-058",
+   "kind": "quiet",
+   "s1": 0.3317,
+   "s2": 0.2912,
+   "top": "团队手册/需求评审.md",
+   "bring": "团队手册/需求评审.md",
+   "older": ""
+  },
+  {
+   "id": "en-060",
+   "kind": "changed",
+   "s1": 0.3704,
+   "s2": 0.3502,
+   "top": "团队手册/图片资源.md",
+   "bring": "团队手册/图片资源.md",
+   "older": ""
+  },
+  {
+   "id": "en-061",
+   "kind": "recall",
+   "s1": 0.3759,
+   "s2": 0.355,
+   "top": "团队手册/发布说明.md",
+   "bring": "团队手册/发布说明.md",
+   "older": ""
+  },
+  {
+   "id": "en-063",
+   "kind": "quiet",
+   "s1": 0.452,
+   "s2": 0.333,
+   "top": "Handbook/Support hours.md",
+   "bring": "Handbook/Support hours.md",
+   "older": ""
+  },
+  {
+   "id": "en-067",
+   "kind": "recall",
+   "s1": 0.6546,
+   "s2": 0.3729,
+   "top": "Handbook/Support hours.md",
+   "bring": "Handbook/Support hours.md",
+   "older": ""
+  },
+  {
+   "id": "en-068",
+   "kind": "quiet",
+   "s1": 0.3711,
+   "s2": 0.3336,
+   "top": "Handbook/Support hours.md",
+   "bring": "Handbook/Support hours.md",
+   "older": ""
+  },
+  {
+   "id": "en-069",
+   "kind": "quiet",
+   "s1": 0.4467,
+   "s2": 0.3357,
+   "top": "团队手册/权限申请.md",
+   "bring": "团队手册/权限申请.md",
+   "older": ""
+  },
+  {
+   "id": "en-071",
+   "kind": "recall",
+   "s1": 0.395,
+   "s2": 0.3643,
+   "top": "Handbook/Database for new services.md",
+   "bring": "Handbook/Database for new services.md",
+   "older": ""
+  },
+  {
+   "id": "en-074",
+   "kind": "quiet",
+   "s1": 0.2509,
+   "s2": 0.2382,
+   "top": "团队手册/技术分享（旧）.md",
+   "bring": "团队手册/技术分享.md",
+   "older": "团队手册/技术分享（旧）.md"
+  },
+  {
+   "id": "en-075",
+   "kind": "changed",
+   "s1": 0.404,
+   "s2": 0.2445,
+   "top": "团队手册/App 系统版本（旧）.md",
+   "bring": "团队手册/App 系统版本.md",
+   "older": "团队手册/App 系统版本（旧）.md"
+  },
+  {
+   "id": "en-078",
+   "kind": "quiet",
+   "s1": 0.3894,
+   "s2": 0.3609,
+   "top": "团队手册/服务拆分.md",
+   "bring": "团队手册/服务拆分.md",
+   "older": ""
+  },
+  {
+   "id": "en-080",
+   "kind": "changed",
+   "s1": 0.5722,
+   "s2": 0.4205,
+   "top": "Handbook/Mobile release criteria.md",
+   "bring": "Handbook/Mobile release criteria.md",
+   "older": ""
+  },
+  {
+   "id": "en-082",
+   "kind": "recall",
+   "s1": 0.487,
+   "s2": 0.3399,
+   "top": "Handbook/Customer refunds.md",
+   "bring": "Handbook/Customer refunds.md",
+   "older": ""
+  },
+  {
+   "id": "en-083",
+   "kind": "quiet",
+   "s1": 0.3654,
+   "s2": 0.3523,
+   "top": "团队手册/办公网络.md",
+   "bring": "团队手册/办公网络.md",
+   "older": ""
+  },
+  {
+   "id": "en-085",
+   "kind": "changed",
+   "s1": 0.5923,
+   "s2": 0.2848,
+   "top": "Handbook/Model deployment.md",
+   "bring": "Handbook/Model deployment.md",
+   "older": ""
+  },
+  {
+   "id": "en-089",
+   "kind": "quiet",
+   "s1": 0.1926,
+   "s2": 0.1869,
+   "top": "团队手册/消息队列（旧）.md",
+   "bring": "团队手册/消息队列.md",
+   "older": "团队手册/消息队列（旧）.md"
+  },
+  {
+   "id": "en-090",
+   "kind": "changed",
+   "s1": 0.3795,
+   "s2": 0.3777,
+   "top": "团队手册/绩效评估.md",
+   "bring": "团队手册/绩效评估.md",
+   "older": ""
+  },
+  {
+   "id": "en-091",
+   "kind": "recall",
+   "s1": 0.5257,
+   "s2": 0.3071,
+   "top": "Handbook/Database for new services.md",
+   "bring": "Handbook/Database for new services.md",
+   "older": ""
+  },
+  {
+   "id": "en-092",
+   "kind": "recall",
+   "s1": 0.2367,
+   "s2": 0.2275,
+   "top": "团队手册/办公网络.md",
+   "bring": "团队手册/办公网络.md",
+   "older": ""
+  },
+  {
+   "id": "en-093",
+   "kind": "quiet",
+   "s1": 0.2563,
+   "s2": 0.2506,
+   "top": "团队手册/技术方案模板.md",
+   "bring": "团队手册/技术方案模板.md",
+   "older": ""
+  },
+  {
+   "id": "en-097",
+   "kind": "recall",
+   "s1": 0.4744,
+   "s2": 0.4295,
+   "top": "Handbook/Hackathon.md",
+   "bring": "Handbook/Hackathon.md",
+   "older": ""
+  },
+  {
+   "id": "en-099",
+   "kind": "quiet",
+   "s1": 0.1638,
+   "s2": 0.1429,
+   "top": "Handbook/Mobile release criteria (old).md",
+   "bring": "Handbook/Mobile release criteria.md",
+   "older": "Handbook/Mobile release criteria (old).md"
+  },
+  {
+   "id": "en-106",
+   "kind": "recall",
+   "s1": 0.4424,
+   "s2": 0.3701,
+   "top": "团队手册/设备申领.md",
+   "bring": "团队手册/设备申领.md",
+   "older": ""
+  },
+  {
+   "id": "en-109",
+   "kind": "quiet",
+   "s1": 0.4278,
+   "s2": 0.3671,
+   "top": "Handbook/Bug bounty.md",
+   "bring": "Handbook/Bug bounty.md",
+   "older": ""
+  },
+  {
+   "id": "en-110",
+   "kind": "changed",
+   "s1": 0.2816,
+   "s2": 0.2732,
+   "top": "Handbook/Design handoff.md",
+   "bring": "Handbook/Design handoff.md",
+   "older": ""
+  },
+  {
+   "id": "en-111",
+   "kind": "recall",
+   "s1": 0.5209,
+   "s2": 0.3805,
+   "top": "Handbook/On-site days (old).md",
+   "bring": "Handbook/On-site days.md",
+   "older": "Handbook/On-site days (old).md"
+  },
+  {
+   "id": "en-115",
+   "kind": "changed",
+   "s1": 0.5564,
+   "s2": 0.3926,
+   "top": "Handbook/Third-party scripts (old).md",
+   "bring": "Handbook/Third-party scripts.md",
+   "older": "Handbook/Third-party scripts (old).md"
+  },
+  {
+   "id": "en-116",
+   "kind": "recall",
+   "s1": 0.4545,
+   "s2": 0.4081,
+   "top": "Handbook/Transactional email (old).md",
+   "bring": "Handbook/Transactional email.md",
+   "older": "Handbook/Transactional email (old).md"
+  },
+  {
+   "id": "en-117",
+   "kind": "recall",
+   "s1": 0.4061,
+   "s2": 0.3521,
+   "top": "团队手册/代码托管（旧）.md",
+   "bring": "团队手册/代码托管.md",
+   "older": "团队手册/代码托管（旧）.md"
+  },
+  {
+   "id": "en-118",
+   "kind": "quiet",
+   "s1": 0.4901,
+   "s2": 0.4129,
+   "top": "团队手册/需求评审.md",
+   "bring": "团队手册/需求评审.md",
+   "older": ""
+  },
+  {
+   "id": "en-120",
+   "kind": "changed",
+   "s1": 0.464,
+   "s2": 0.423,
+   "top": "Handbook/Transactional email (old).md",
+   "bring": "Handbook/Transactional email.md",
+   "older": "Handbook/Transactional email (old).md"
+  },
+  {
+   "id": "zh-001",
+   "kind": "recall",
+   "s1": 0.6575,
+   "s2": 0.3847,
+   "top": "团队手册/App 系统版本（旧）.md",
+   "bring": "团队手册/App 系统版本.md",
+   "older": "团队手册/App 系统版本（旧）.md"
+  },
+  {
+   "id": "zh-002",
+   "kind": "quiet",
+   "s1": 0.261,
+   "s2": 0.2291,
+   "top": "团队手册/消息队列（旧）.md",
+   "bring": "团队手册/消息队列.md",
+   "older": "团队手册/消息队列（旧）.md"
+  },
+  {
+   "id": "zh-005",
+   "kind": "recall",
+   "s1": 0.8579,
+   "s2": 0.3585,
+   "top": "团队手册/代码托管.md",
+   "bring": "团队手册/代码托管.md",
+   "older": ""
+  },
+  {
+   "id": "zh-006",
+   "kind": "quiet",
+   "s1": 0.3464,
+   "s2": 0.3291,
+   "top": "Handbook/Support escalation (old).md",
+   "bring": "Handbook/Support escalation.md",
+   "older": "Handbook/Support escalation (old).md"
+  },
+  {
+   "id": "zh-012",
+   "kind": "quiet",
+   "s1": 0.2479,
+   "s2": 0.2302,
+   "top": "Handbook/On-site days (old).md",
+   "bring": "Handbook/On-site days.md",
+   "older": "Handbook/On-site days (old).md"
+  },
+  {
+   "id": "zh-019",
+   "kind": "recall",
+   "s1": 0.4511,
+   "s2": 0.3783,
+   "top": "团队手册/技术方案模板.md",
+   "bring": "团队手册/技术方案模板.md",
+   "older": ""
+  },
+  {
+   "id": "zh-022",
+   "kind": "changed",
+   "s1": 0.5503,
+   "s2": 0.483,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "zh-024",
+   "kind": "quiet",
+   "s1": 0.2894,
+   "s2": 0.2715,
+   "top": "Handbook/Cloud cost alerts.md",
+   "bring": "Handbook/Cloud cost alerts.md",
+   "older": ""
+  },
+  {
+   "id": "zh-025",
+   "kind": "recall",
+   "s1": 0.5443,
+   "s2": 0.5223,
+   "top": "团队手册/发布说明.md",
+   "bring": "团队手册/发布说明.md",
+   "older": ""
+  },
+  {
+   "id": "zh-026",
+   "kind": "quiet",
+   "s1": 0.3662,
+   "s2": 0.3127,
+   "top": "Handbook/On-site days (old).md",
+   "bring": "Handbook/On-site days.md",
+   "older": "Handbook/On-site days (old).md"
+  },
+  {
+   "id": "zh-028",
+   "kind": "recall",
+   "s1": 0.6201,
+   "s2": 0.5174,
+   "top": "团队手册/团队周会.md",
+   "bring": "团队手册/团队周会.md",
+   "older": ""
+  },
+  {
+   "id": "zh-029",
+   "kind": "quiet",
+   "s1": 0.2602,
+   "s2": 0.2443,
+   "top": "团队手册/证书续签（旧）.md",
+   "bring": "团队手册/证书续签.md",
+   "older": "团队手册/证书续签（旧）.md"
+  },
+  {
+   "id": "zh-034",
+   "kind": "changed",
+   "s1": 0.5876,
+   "s2": 0.5831,
+   "top": "团队手册/数据标注.md",
+   "bring": "团队手册/数据标注.md",
+   "older": ""
+  },
+  {
+   "id": "zh-036",
+   "kind": "quiet",
+   "s1": 0.2449,
+   "s2": 0.2421,
+   "top": "团队手册/数据标注（旧）.md",
+   "bring": "团队手册/数据标注.md",
+   "older": "团队手册/数据标注（旧）.md"
+  },
+  {
+   "id": "zh-039",
+   "kind": "changed",
+   "s1": 0.467,
+   "s2": 0.4568,
+   "top": "Handbook/Interview process (old).md",
+   "bring": "Handbook/Interview process.md",
+   "older": "Handbook/Interview process (old).md"
+  },
+  {
+   "id": "zh-043",
+   "kind": "quiet",
+   "s1": 0.4358,
+   "s2": 0.4088,
+   "top": "团队手册/权限申请（旧）.md",
+   "bring": "团队手册/权限申请.md",
+   "older": "团队手册/权限申请（旧）.md"
+  },
+  {
+   "id": "zh-045",
+   "kind": "recall",
+   "s1": 0.4314,
+   "s2": 0.3863,
+   "top": "团队手册/App 系统版本.md",
+   "bring": "团队手册/App 系统版本.md",
+   "older": ""
+  },
+  {
+   "id": "zh-048",
+   "kind": "quiet",
+   "s1": 0.4972,
+   "s2": 0.4097,
+   "top": "团队手册/Go 代码规范.md",
+   "bring": "团队手册/Go 代码规范.md",
+   "older": ""
+  },
+  {
+   "id": "zh-050",
+   "kind": "changed",
+   "s1": 0.616,
+   "s2": 0.4797,
+   "top": "团队手册/短信通道.md",
+   "bring": "团队手册/短信通道.md",
+   "older": ""
+  },
+  {
+   "id": "zh-053",
+   "kind": "quiet",
+   "s1": 0.3563,
+   "s2": 0.3238,
+   "top": "团队手册/技术方案模板.md",
+   "bring": "团队手册/技术方案模板.md",
+   "older": ""
+  },
+  {
+   "id": "zh-054",
+   "kind": "recall",
+   "s1": 0.6195,
+   "s2": 0.5871,
+   "top": "团队手册/技术分享.md",
+   "bring": "团队手册/技术分享.md",
+   "older": ""
+  },
+  {
+   "id": "zh-055",
+   "kind": "quiet",
+   "s1": 0.38,
+   "s2": 0.3452,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "zh-058",
+   "kind": "quiet",
+   "s1": 0.229,
+   "s2": 0.2101,
+   "top": "团队手册/消息队列（旧）.md",
+   "bring": "团队手册/消息队列.md",
+   "older": "团队手册/消息队列（旧）.md"
+  },
+  {
+   "id": "zh-060",
+   "kind": "recall",
+   "s1": 0.5591,
+   "s2": 0.4986,
+   "top": "Handbook/Transactional email (old).md",
+   "bring": "Handbook/Transactional email.md",
+   "older": "Handbook/Transactional email (old).md"
+  },
+  {
+   "id": "zh-061",
+   "kind": "recall",
+   "s1": 0.4842,
+   "s2": 0.4679,
+   "top": "团队手册/数据标注.md",
+   "bring": "团队手册/数据标注.md",
+   "older": ""
+  },
+  {
+   "id": "zh-062",
+   "kind": "changed",
+   "s1": 0.6899,
+   "s2": 0.5623,
+   "top": "团队手册/客户投诉.md",
+   "bring": "团队手册/客户投诉.md",
+   "older": ""
+  },
+  {
+   "id": "zh-063",
+   "kind": "quiet",
+   "s1": 0.4631,
+   "s2": 0.4337,
+   "top": "Handbook/Mobile release criteria.md",
+   "bring": "Handbook/Mobile release criteria.md",
+   "older": ""
+  },
+  {
+   "id": "zh-064",
+   "kind": "recall",
+   "s1": 0.4983,
+   "s2": 0.3255,
+   "top": "团队手册/设备申领.md",
+   "bring": "团队手册/设备申领.md",
+   "older": ""
+  },
+  {
+   "id": "zh-068",
+   "kind": "quiet",
+   "s1": 0.3973,
+   "s2": 0.3594,
+   "top": "团队手册/设备申领.md",
+   "bring": "团队手册/设备申领.md",
+   "older": ""
+  },
+  {
+   "id": "zh-070",
+   "kind": "quiet",
+   "s1": 0.2842,
+   "s2": 0.2491,
+   "top": "Handbook/On-site days (old).md",
+   "bring": "Handbook/On-site days.md",
+   "older": "Handbook/On-site days (old).md"
+  },
+  {
+   "id": "zh-072",
+   "kind": "quiet",
+   "s1": 0.2006,
+   "s2": 0.1982,
+   "top": "团队手册/测试环境.md",
+   "bring": "团队手册/测试环境.md",
+   "older": ""
+  },
+  {
+   "id": "zh-075",
+   "kind": "recall",
+   "s1": 0.457,
+   "s2": 0.4477,
+   "top": "团队手册/服务拆分（旧）.md",
+   "bring": "团队手册/服务拆分.md",
+   "older": "团队手册/服务拆分（旧）.md"
+  },
+  {
+   "id": "zh-076",
+   "kind": "quiet",
+   "s1": 0.1832,
+   "s2": 0.1699,
+   "top": "Handbook/Price changes.md",
+   "bring": "Handbook/Price changes.md",
+   "older": ""
+  },
+  {
+   "id": "zh-077",
+   "kind": "changed",
+   "s1": 0.5621,
+   "s2": 0.4625,
+   "top": "团队手册/代码托管（旧）.md",
+   "bring": "团队手册/代码托管.md",
+   "older": "团队手册/代码托管（旧）.md"
+  },
+  {
+   "id": "zh-079",
+   "kind": "recall",
+   "s1": 0.5462,
+   "s2": 0.4729,
+   "top": "团队手册/数据标注.md",
+   "bring": "团队手册/数据标注.md",
+   "older": ""
+  },
+  {
+   "id": "zh-081",
+   "kind": "recall",
+   "s1": 0.3914,
+   "s2": 0.3514,
+   "top": "团队手册/消息队列（旧）.md",
+   "bring": "团队手册/消息队列.md",
+   "older": "团队手册/消息队列（旧）.md"
+  },
+  {
+   "id": "zh-082",
+   "kind": "quiet",
+   "s1": 0.2987,
+   "s2": 0.2929,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "zh-083",
+   "kind": "changed",
+   "s1": 0.4359,
+   "s2": 0.4318,
+   "top": "团队手册/数据共享.md",
+   "bring": "团队手册/数据共享.md",
+   "older": ""
+  },
+  {
+   "id": "zh-085",
+   "kind": "recall",
+   "s1": 0.3782,
+   "s2": 0.3275,
+   "top": "团队手册/消息队列（旧）.md",
+   "bring": "团队手册/消息队列.md",
+   "older": "团队手册/消息队列（旧）.md"
+  },
+  {
+   "id": "zh-086",
+   "kind": "quiet",
+   "s1": 0.2476,
+   "s2": 0.2419,
+   "top": "Handbook/Design handoff.md",
+   "bring": "Handbook/Design handoff.md",
+   "older": ""
+  },
+  {
+   "id": "zh-089",
+   "kind": "recall",
+   "s1": 0.4157,
+   "s2": 0.4014,
+   "top": "Handbook/Customer refunds (old).md",
+   "bring": "Handbook/Customer refunds.md",
+   "older": "Handbook/Customer refunds (old).md"
+  },
+  {
+   "id": "zh-094",
+   "kind": "quiet",
+   "s1": 0.5193,
+   "s2": 0.4836,
+   "top": "团队手册/数据共享.md",
+   "bring": "团队手册/数据共享.md",
+   "older": ""
+  },
+  {
+   "id": "zh-095",
+   "kind": "changed",
+   "s1": 0.4877,
+   "s2": 0.438,
+   "top": "团队手册/发布说明.md",
+   "bring": "团队手册/发布说明.md",
+   "older": ""
+  },
+  {
+   "id": "zh-096",
+   "kind": "recall",
+   "s1": 0.4911,
+   "s2": 0.4733,
+   "top": "团队手册/节假日安排.md",
+   "bring": "团队手册/节假日安排.md",
+   "older": ""
+  },
+  {
+   "id": "zh-098",
+   "kind": "recall",
+   "s1": 0.5328,
+   "s2": 0.5067,
+   "top": "团队手册/绩效评估.md",
+   "bring": "团队手册/绩效评估.md",
+   "older": ""
+  },
+  {
+   "id": "zh-099",
+   "kind": "changed",
+   "s1": 0.5583,
+   "s2": 0.5039,
+   "top": "团队手册/团队周会.md",
+   "bring": "团队手册/团队周会.md",
+   "older": ""
+  },
+  {
+   "id": "zh-101",
+   "kind": "recall",
+   "s1": 0.4557,
+   "s2": 0.4449,
+   "top": "团队手册/测试环境.md",
+   "bring": "团队手册/测试环境.md",
+   "older": ""
+  },
+  {
+   "id": "zh-102",
+   "kind": "changed",
+   "s1": 0.5506,
+   "s2": 0.4738,
+   "top": "团队手册/需求评审.md",
+   "bring": "团队手册/需求评审.md",
+   "older": ""
+  },
+  {
+   "id": "zh-103",
+   "kind": "quiet",
+   "s1": 0.4033,
+   "s2": 0.3935,
+   "top": "团队手册/办公网络.md",
+   "bring": "团队手册/办公网络.md",
+   "older": ""
+  },
+  {
+   "id": "zh-105",
+   "kind": "recall",
+   "s1": 0.7331,
+   "s2": 0.4587,
+   "top": "团队手册/证书续签.md",
+   "bring": "团队手册/证书续签.md",
+   "older": ""
+  },
+  {
+   "id": "zh-107",
+   "kind": "recall",
+   "s1": 0.38,
+   "s2": 0.349,
+   "top": "Handbook/Price changes.md",
+   "bring": "Handbook/Price changes.md",
+   "older": ""
+  },
+  {
+   "id": "zh-108",
+   "kind": "quiet",
+   "s1": 0.5485,
+   "s2": 0.4818,
+   "top": "Handbook/Database for new services.md",
+   "bring": "Handbook/Database for new services.md",
+   "older": ""
+  },
+  {
+   "id": "zh-109",
+   "kind": "recall",
+   "s1": 0.6911,
+   "s2": 0.5256,
+   "top": "团队手册/权限申请.md",
+   "bring": "团队手册/权限申请.md",
+   "older": ""
+  },
+  {
+   "id": "zh-110",
+   "kind": "recall",
+   "s1": 0.3465,
+   "s2": 0.3205,
+   "top": "团队手册/发布说明.md",
+   "bring": "团队手册/发布说明.md",
+   "older": ""
+  },
+  {
+   "id": "zh-111",
+   "kind": "changed",
+   "s1": 0.523,
+   "s2": 0.5003,
+   "top": "团队手册/权限申请.md",
+   "bring": "团队手册/权限申请.md",
+   "older": ""
+  },
+  {
+   "id": "zh-113",
+   "kind": "recall",
+   "s1": 0.3261,
+   "s2": 0.3067,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "zh-114",
+   "kind": "quiet",
+   "s1": 0.3846,
+   "s2": 0.3407,
+   "top": "团队手册/短信通道.md",
+   "bring": "团队手册/短信通道.md",
+   "older": ""
+  },
+  {
+   "id": "zh-116",
+   "kind": "recall",
+   "s1": 0.3782,
+   "s2": 0.3709,
+   "top": "团队手册/技术分享（旧）.md",
+   "bring": "团队手册/技术分享.md",
+   "older": "团队手册/技术分享（旧）.md"
+  },
+  {
+   "id": "zh-119",
+   "kind": "changed",
+   "s1": 0.5436,
+   "s2": 0.525,
+   "top": "团队手册/消息队列.md",
+   "bring": "团队手册/消息队列.md",
+   "older": ""
+  },
+  {
+   "id": "zh-120",
+   "kind": "quiet",
+   "s1": 0.466,
+   "s2": 0.3817,
+   "top": "团队手册/数据标注.md",
+   "bring": "团队手册/数据标注.md",
+   "older": ""
+  }
+ ]
+}
