@@ -2081,3 +2081,48 @@ repeat to measure noise; vault3 is small and its 18 pairs serve 48 changed cases
 |---|---|
 | 2026-11-13 | Registered, before any host was run. |
 | 2026-11-13 | **Run, development half, C0 only, four runs of 120** (`bench/subconscious/both.py prepare set45dev` and `score`; results and every reply in `bench/subconscious/results/set45/host/`; Haiku 5.5 and Sonnet 5.5, each agent reported `claude-haiku-5-5` or `claude-sonnet-5-5`, every reply present; tokens used by the four agents 129,932 + 125,066 for Haiku (normal, crowded) and 104,077 + 119,306 for Sonnet, 478,381 in all, far under the 3 million stop). The index of the normal condition lists all 60 topics, of the crowded one 300 topics with 16 as full lines. The hook brought a page for 16 of the 120 messages in both. Both layers = right when the hook brought the expected page or the host fetched or named it; host = right where the hook was not. **Normal index. Sonnet:** recall **44 / 48** (hook alone 7, host added 37; zh 24 / 24, en 20 / 24; messages that use none of the page's names 38 / 42, that use a name 6 / 6), changed **23 / 24** (hook 7, host added 16), quiet loud **5 / 48** (the hook 2; other_sense 1, common_word 1, near_topic 3 of 8), wrong pages 3 (all by the host), old 0. **Haiku:** recall **42 / 48** (hook 7, host +35; zh 23 / 24, en 19 / 24; unnamed 36 / 42, named 6 / 6), changed 23 / 24, quiet loud **6 / 48** (other_sense 2, common_word 1, pasted 1, near_topic 2), wrong 8, old 0. **Crowded index. Sonnet:** recall 44 / 48 (host +37; zh 24 / 24, en 20 / 24; unnamed 38 / 42), changed 23 / 24, quiet loud 5 / 48 (near_topic 3), wrong 3, old 0 (the totals equal the normal run's; the host pages differ on 5 messages). **Haiku:** recall **38 / 48** (host +31; zh 22 / 24, en 16 / 24; unnamed 32 / 42), changed 23 / 24, quiet loud 4 / 48 (other_sense 1, common_word 1, near_topic 2), wrong 3, old 0. **Read with.** (1) The hook alone is 7 / 48 recall and 7 / 24 changed as in the baseline; almost all of what the whole chain gains is the host reading the standing index and fetching: 31 to 37 of the 38 to 44 recall cases right. (2) Misses concentrate in English messages that use no name: 9 of the 13 cases missed in at least one run are English recall cases, 4 (all English) were missed by all four runs, and zh recall is 22 to 24 / 24 against en 16 to 20 / 24. (3) **Wrong pages are mostly the other language's page of the same topic:** vault3 holds the handbook in English and Chinese, and 14 of the 17 wrong pages over the four runs, and 12 of 28 missed cases (run-level), are a page in the other language's folder where the host fetched or named the counterpart instead of the expected page; under the registered rule these count as wrong and as misses. (4) Quiet loud is the registered rule's loud: a hook delivery (2 of 48), a memory fetch or a named vault page; for near_topic (2 to 3 of 8) these are mostly the host starting its reply with a memory lookup (a `CALL` line); the replies hold only the start, so what it would then have said is not measured. (5) Crowding costs Haiku 4 recall cases (42 to 38) and Sonnet none. (6) Against set 35's host-layer line as reference only (recall at least 75%, changed at least 75%, quiet loud at most 8%, wrong at most 2 per 60, old 0): recall and changed are above 75% in all four runs; quiet loud 4 / 48 or fewer holds only for Haiku crowded, and wrong pages exceed 4 in Haiku normal. No pass line applies to this run. Held-out half: not run, not read. |
+
+### Set 45, second addendum: DeepSeek as the host, development half (registered 2026-11-15, before any DeepSeek call on a set 45 item)
+
+**Why.** The host layer above was run with two Claude models only. Many people run their agents on DeepSeek models, and
+the whole chain depends on a host that reads the standing index and goes to fetch. This asks one thing: does
+`deepseek-flash`, given the same context and the same messages, go and look? **It is a development segment like the
+addendum above: C0 only, no pass line, no default changed, the held-out half not run and not read.** No number above is
+touched.
+
+**Same as the addendum above.** `bench/subconscious/both.py prepare set45dev` (normal, and `--crowd 240 --crowd-capped`)
+and `both.py score`, unchanged: the same 120 messages, the same standing index, the same hook note above a message when
+C0 brought a page, the same instructions to the host word for word, fetches written as `CALL` lines and resolved for real
+on the bench vault, the same rules for right, wrong, old-page delivery and loud. Each message asked once.
+
+**Differences, each said.** (1) **The host is reached through its API, not as an agent in a coding app**
+(`bench/subconscious/api_host.py run`): `deepseek-flash` at `api.deepseek.com`, temperature 0, at most 600 output tokens,
+no tools offered; the script stops if the reply names any other model. (2) **One message per call.** The system message
+is both.py's instructions word for word, then one sentence ("This call holds one item: the user message below. Write only
+your reply to it (any CALL lines first), nothing else."), then the session-start context; the user message is the item's
+message. The Claude hosts saw all 120 messages of a batch at once in one file; here the host sees one, which is nearer
+to a real session and is not the same condition. (3) There is no coding app's own system prompt around the host, so
+nothing else tells it how an assistant in a session behaves. (4) Run from a clone at a neutral path, so the paths the
+index prints (the route script, the bench vault) differ from the earlier runs' paths in their directory part only.
+(5) A script smoke test before the run sends one made-up message that is not a set 45 item; its reply is not kept.
+
+**Stop rules.** Any HTTP error or network failure stops the run and is reported; a stopped run is resumed, and an item
+with a reply is never asked again. Spending is checked on the account's balance before and after; the run is stopped and
+reported if it passes 3 yuan.
+
+**Reported, whatever it shows.** For both conditions, the same lines as the addendum above (recall right split into hook
+alone, host where the hook was not, both; unnamed and named; zh and en; changed; quiet loud by the six kinds; wrong pages;
+old-page deliveries), next to Sonnet 5.5 and Haiku 5.5 from the log above; tokens and what it cost; and, for the recall
+and changed cases that are not right, how many of each: the host did not look (no memory fetch, no page named), looked
+and the fetch came back with no page, or came back with another page (`api_host.py why`, which reads both.py's detail
+file and adds no scoring rule; the same count for the Claude hosts' saved runs is printed beside it).
+
+**Known limits, said with any number.** Those of the addendum above, and: one model of one provider, one run per
+condition; the comparison with the Claude hosts is not like for like (differences 1 to 3); fetches are written, not run,
+so what a DeepSeek-based agent with real tools does may differ.
+
+### Log, set 45 DeepSeek host (development)
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before any DeepSeek call on a set 45 item. `api_host.py why` on the saved Claude runs (normal index), for reference: Sonnet recall 48 cases, a memory fetch on 41, not right 4 (did not look 1, looked and got no page 1, another page 2); Haiku a fetch on 44, not right 6 (did not look 4, another page 2). |
