@@ -2233,3 +2233,61 @@ so the cost of a long index or of many tool calls in a real session is not seen 
 | 2026-11-15 | Registered, before any host call. The script was run without a model only: `prepare` on both vaults (120 items; 110 and 1,110 pages; the hook brought a page for 16 messages in both) and each tool once by hand. |
 | 2026-11-15 | **Smoke test, and one change before any set 45 message was sent.** One made-up message, not a set 45 item, in each condition on the 110-page vault; replies not kept. In the folder condition the host used all 4 rounds and, with no tools offered for its reply, wrote tool-call markup as its reply. Added for every condition: when the 4 rounds are used up, one line is appended before the last call ("[Bench note, not from the user] No more tool calls are available. Write your reply to the user now."). Nothing else changed. |
 | 2026-11-15 | **Run, six runs of 120** (from a clone of 10a5be9 at a neutral path; `tool_host.py run`, `score`, `judge`; `prep.json`, `key.json`, every reply with its tool calls, the detail and judge files in `bench/subconscious/results/set47/`). Every reply present, every one from `deepseek-flash`, every one ended normally, no HTTP or network error, nothing asked twice. The account's balance went from 6.79 to 4.36 yuan over the six runs and the six judge passes. **110-page vault** (recall right / changed right / quiet loud / wrong pages / old-page deliveries; tool calls a message; input tokens a message): **krouter 45 / 48** (unnamed 39 / 42; zh 24, en 21), 23 / 24, **16 / 48**, 18, 1; 1.06 calls; 5,686 tokens. **folder 47 / 48** (unnamed 41 / 42), 23 / 24, **40 / 48**, 62, 8; 5.56 calls; 4,082 tokens. **listed 47 / 48** (unnamed 41 / 42), 23 / 24, **31 / 48**, 84, 16; 3.15 calls; 7,547 tokens. **1,110-page vault: krouter 16 / 48** (unnamed 10 / 42, named 6 / 6; zh 11, en 5), 15 / 24, 13 / 48, 13, 2; 0.82 calls; 5,161 tokens. **folder 45 / 48** (unnamed 39 / 42), 23 / 24, 39 / 48, 53, 11; 5.68 calls; 4,755 tokens. **listed 47 / 48** (unnamed 41 / 42), 23 / 24, 31 / 48, 89, 17; 2.84 calls; **46,796 tokens**. Quiet loud by kind (unrelated, other_sense, common_word, pasted, near_topic, ack, each of 8), 110 pages: krouter 1, 5, 1, 1, 8, 0; folder 5, 8, 6, 8, 8, 5; listed 2, 6, 4, 8, 8, 3. 1,110 pages: krouter 1, 2, 3, 0, 7, 0; folder 5, 8, 7, 8, 8, 3; listed 2, 7, 4, 7, 8, 3. **Judge** (the reply states the page's rule), recall and changed: 110 pages, krouter 45 and 23, folder 47 and 23, listed 47 and 23; 1,110 pages, krouter **15** and 15, folder 46 and 23, listed 46 and 23 (one verdict unread in each of the last two); **no reply in any run states a replaced rule as current (0 of 24 everywhere)**. The two measures agree to within one case in every run. **Against the line (1,110 pages): not met.** krouter is right on 29 fewer recall cases than folder (16 against 45), not 6 more, and not within 2. **Why krouter falls, counted after the run** (the 32 recall cases not right on the 1,110-page vault): the standing index at its shipped budget holds 10 full lines and names of the newest topics, all of them distractors (it says 757 more are not listed); **none of the 41 expected pages is in it**; on 9 cases the host did not call `krouter_ask`, and on 23 every call came back `memory: none` (asked again by hand on the same vault). With the topic names out of the index the host asks in the user's words, the lookup's gate refuses them as it refuses spoken messages to the hook, and the host has no other tool. On the 110-page vault, where every topic is in the index, the 3 cases not right are 1 not asked, 1 `none`, 1 another page. **Read with.** (1) At 110 pages the three are level on recall (45, 47, 47) and krouter does it with a fifth of folder's tool calls, 16 quiet messages loud against 40 and 31, and 18 wrong pages against 62 and 84. (2) folder and listed reach the right page because the model does the matching itself: it searches with several alternations over several rounds, or picks the page from the full list of titles; the price is 5.6 or about 3 calls a message, most quiet messages disturbed (31 to 40 of 48), and for listed 47 thousand input tokens a message at 1,110 pages. (3) folder and listed read the replaced page 8 to 17 times, but no reply gave the replaced rule as current: on these one- and two-sentence pages the host read both and answered from the page in force. KRouter's fewer old-page deliveries did not change an answer here. (4) The 1,110-page vault is the hardest case for the index: every distractor is newer than every real page, so the budget goes to them. A vault whose recent pages are the ones being talked about would do better; how much is not measured. (5) The distractors are generated hobby pages, easy for a search to tell from the handbook. One host, one run a condition. **What follows for the engine (not done here):** when the index is over its budget the topics that do not fit vanish from the host's view, and `krouter_ask` answers `none` to wording the gate does not recognise without offering what is nearest; both are places where a model, given the candidates, could do the matching the lookup cannot. Any change is a new registered set. No default changes. Set 45's held-out half: not run, not read. |
+
+## Set 48: when the index does not fit and the lookup says none, give the host something to choose from (registered 2026-11-15, before either change was written)
+
+**Why.** Set 47: at 1,110 pages KRouter brought the right page for 16 of 48 mentions where a folder with a search
+brought 45. Two causes were counted there. The standing index has a fixed budget (the session-start hook's output is
+capped), and what does not fit is gone from the host's view: none of the 41 expected pages was in it. And `krouter_ask`
+answered `memory: none` to the user's own wording on 23 of the 32 cases missed, offering nothing to go on. Set 45's
+embedding check the same day says where the limit is: ranking is not the hard part (a large model puts the page first
+for 38 of 48, the lexical ranking with its gate off for 24, in the first five for 32), deciding is, and deciding is what
+the host model does well when it has candidates in front of it. **This set changes what the host is given, not the
+gate: two switches, both off by default.**
+
+**The two changes (to be written after this registration).**
+- **`KROUTER_NEAREST=1`: nearest pages on a refusal.** When a lookup ends in `recall: none`, the output adds up to five
+  pages, title and path only, from the same lexical ranking with the gate off: pages in force only (a replaced page
+  stands for the one that replaced it), no log pages, no knowledge-base pages. They come under one line saying the
+  memory did not match this wording, these are only the nearest titles, read one only if its title fits what was asked,
+  otherwise tell the user the memory does not have it. The first line (`memory: none`) and the refusal itself do not
+  change; no page content is added.
+- **`KROUTER_TOPICS=1`: the topics that do not fit can be listed.** A `topics` lookup lists what the alias table names,
+  grouped by folder: with no argument, the groups with their counts (and every topic when there are few); with a group,
+  that group's topics (name and page). The standing index's sentence "N more are not listed" then says how to list them.
+  Exposed as the MCP tool `krouter_topics` when the switch is on.
+
+**Bench** (`tool_host.py`, as set 47: set 45's development half, 120 messages; `deepseek-flash` with function calling,
+at most 4 rounds, each message once; the same counting; run from a clone at a neutral path). Vaults: **small** (110
+pages); **big-apart** (set 47's: 1,000 newer distractor pages in their own folder); **big-mixed**, new here because a
+folder of nothing but distractors makes a grouped list too easy: the same 1,000 distractors written into the two
+handbook folders, 500 each. Conditions: **K0** krouter as shipped (set 47's condition); **K1** with nearest pages;
+**K2** with the topics list; **K3** with both; **K4** as shipped plus the folder's `search_notes` (what a host that can
+also search the vault's folder has today; no engine change); **folder** as in set 47. Runs: big-apart K1, K2, K3, K4 (K0
+16 / 48 and folder 45 / 48 are set 47's); big-mixed K0, K3, folder; small K3 (K0 45 / 48 is set 47's). Eight runs. The
+judge measure of set 47 is run on the three K3 runs.
+
+**The line, fixed here, for K3.** big-apart: recall right at least **40 of 48**; big-mixed: at least **36 of 48**; small:
+at least **44 of 48**; and in all three: quiet loud at most **20 of 48** (K0 was 13 and 16), at most **2.5 tool calls a
+message** (folder made 5.6), old-page deliveries at most 2. **All three met:** the two switches are proposed as the
+default, and before any default changes a confirmation on set 45's held-out half (K0 against K3, once) is the
+maintainer's separate decision. **Any one not met:** both stay off, and which line failed is said; K1 and K2 are reported
+to show which change did what, and are not candidates on their own under this set.
+
+**Reported, whatever it shows.** Every run with set 47's lines (recall, unnamed, changed, quiet loud by kind, wrong,
+old, calls and tokens a message); for K3, how many of the cases K0 missed were recovered through a nearest page and how
+many through the topics list; and, because nearest pages on a refusal are an invitation to answer from a page that does
+not hold the answer: **the quiet messages whose reply names a vault page**, for K0 and K3 on each vault (set 41 measured
+that handing over a page with a refusal made a reader invent an answer about one time in three; here only titles are
+handed over, and this count is how that is watched).
+
+**Known limits, said with any number.** Those of set 47. Also: the changes are written after seeing set 47's
+development messages fail, and are scored on those same messages, so these are development numbers until the held-out
+half is run; the bench vaults' topics all have alias rows, a real vault's pages mostly do not, and the topics list only
+covers what the alias table names.
+
+### Log, set 48
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before either change was written. |
