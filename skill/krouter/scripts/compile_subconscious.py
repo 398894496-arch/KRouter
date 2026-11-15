@@ -195,10 +195,10 @@ INDEX_MORE = {"zh": "库里还有 {n} 件没列出，别的事也可以照样先
 # KROUTER_TOPICS=1（第 48 套）：没列出的主题可以分组列出来，这句话告诉宿主怎么列
 INDEX_MORE_TOPICS = {
     "zh": "上面只列了一部分，还有 {n} 件没列出。用户的话说的是某一组管的那类事、上面又没有对应的条目时，调用 krouter_topics 并传那一组的"
-          "名字，在里面找到那件事的名字，再取那一页。",
+          "名字（没有这个工具就在终端运行 {tcmd}），在里面找到那件事的名字，再取那一页。",
     "en": " {n} more are not listed. When the user's message is about the kind of thing one of the groups holds and no "
-          "line above covers it, call krouter_topics with that group's name, find the topic's name there, then fetch "
-          "its page.",
+          "line above covers it, call krouter_topics with that group's name (with no such tool, run {tcmd} in a terminal), find "
+          "the topic's name there, then fetch its page.",
 }
 INDEX_GROUPS = 12         # 索引里最多列几个分组（按主题数从多到少）
 INDEX_GROUPS_HEAD = {"zh": "库里定过的事按文件夹分组（含上面列出的）：", "en": "Everything settled, by folder (those above included): "}
@@ -392,7 +392,9 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
         body.append(group_line)
     script = Path(__file__).resolve().with_name("route_knowledge.sh")
     cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
-    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=(INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang].format(n=more) if more else "")
+    tcmd = f"sh {shlex.quote(str(script))} topics '<{'组名' if lang == 'zh' else 'group'}>'"
+    more_tpl = (INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang]
+    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=more_tpl.format(n=more, tcmd=tcmd) if more else "")
     return "\n".join([INDEX_HEAD[lang], *body, tail])
 
 
