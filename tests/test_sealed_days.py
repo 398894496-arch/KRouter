@@ -54,7 +54,6 @@ def test_streak_and_gaps(tmp_path: Path):
 
 def test_real_note_beats_stub_on_same_day(tmp_path: Path):
     vault = tmp_path / "vault"
-    day = date(2026, 7, 1)
     month = vault / "05 时间日志" / "2026-07"
     month.mkdir(parents=True)
     (month / "01｜待总结.md").write_text("---\nstatus: to-summarize\n---\n\nstub\n", encoding="utf-8")

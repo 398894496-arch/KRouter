@@ -16,3 +16,4 @@ build/
 dist/
 *.egg-info/
 dist-release/
+.coverage

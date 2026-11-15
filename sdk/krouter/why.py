@@ -19,7 +19,6 @@ asked otherwise.
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 from .viewdata import Store, head_of, mods
@@ -462,7 +461,7 @@ def explain(vault, question: str, lang: str | None = None, refresh: bool = True,
     q = " ".join((question or "").split())
     vlang = m.zones.lang(vault)
     lang = lang if lang in ("en", "zh") else vlang
-    ri, assoc = m.ri, m.associate
+    ri = m.ri
     out: dict = {"question": q, "lang": lang, "vault_lang": vlang, "vault": str(vault)}
     out["lock"] = _lock(m, vault, q)
     res = ri.recall(vault, q, refresh_first=refresh) if q else {"hits": [], "confidence": "none", "margin": 0.0,

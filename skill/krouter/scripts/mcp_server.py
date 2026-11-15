@@ -525,7 +525,6 @@ def correct(args: dict) -> tuple[str, bool]:
 
     import capture_ledger
     import corrections
-    import zones
 
     raw = cur_vault()
     if not raw:

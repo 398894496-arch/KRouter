@@ -40,3 +40,17 @@ krouter = ["view_ui/*"]  # krouter view: the page, hand-written, no external fil
 krouter_router = ["*.sh", "*.txt", "*.psv"]
 krouter_template = ["**/*"]       # krouter demo 用的示例库
 krouter_template_zh = ["**/*"]
+
+[tool.ruff]
+target-version = "py39"
+extend-exclude = ["template", "template-zh"]
+
+[tool.ruff.lint]
+# 只查会出事的：语法错误（E9）和 pyflakes（F：没定义的名字、没用到的 import 和变量等）。不查风格。
+select = ["E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# 评测脚本是登记记录的一部分，登记后不改；这里只让新写的不引入没定义的名字
+"bench/**" = ["F401", "F841"]
+# pytest 的 fixture 从别的测试文件 import 进来再当参数用，pyflakes 把它看成重复定义
+"tests/**" = ["F811"]

@@ -6,6 +6,17 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    # 语法错误和 pyflakes（没定义的名字、没用到的 import 和变量）；规则在 pyproject.toml 的 [tool.ruff]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ruff
+        run: python -m pip install ruff==0.8.6 && ruff check .
+
   test:
     strategy:
       fail-fast: false
@@ -28,7 +39,13 @@ jobs:
       - name: Install Python deps
         run: python -m pip install -r requirements.txt -r requirements-dev.txt
       - name: Unit tests
+        if: runner.os != 'Linux'
         run: python -m pytest -q
+      - name: Unit tests, with line coverage (Linux)
+        # 覆盖率只在 Linux 上数一次。测试里用子进程跑的脚本不计入，所以这个数偏低；
+        # 60 是防止大幅下滑的底线（加这一步时本机数到 67%），不是目标。
+        if: runner.os == 'Linux'
+        run: python -m pytest -q --cov=skill/krouter/scripts --cov=sdk/krouter --cov-report=term --cov-fail-under=60
       - uses: actions/setup-node@v4
         if: runner.os != 'Windows'
         with:

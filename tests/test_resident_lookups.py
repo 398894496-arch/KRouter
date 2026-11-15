@@ -6,14 +6,12 @@ from __future__ import annotations
 
 import contextlib
 import io
-import json
 import os
 import random
 import shutil
 import subprocess
 import sys
 import threading
-import time
 from pathlib import Path
 
 import pytest

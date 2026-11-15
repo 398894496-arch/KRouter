@@ -178,4 +178,4 @@ def test_same_project_name_in_two_repos_stays_two_pages(env):
     for who in ("alpha", "beta"):
         page = next(v for v in pages.values() if f"{who} decision" in v)
         other = "beta" if who == "alpha" else "alpha"
-        assert f"project_root: " in page and f"/{who}/api" in page and f"{other} decision" not in page
+        assert "project_root: " in page and f"/{who}/api" in page and f"{other} decision" not in page
