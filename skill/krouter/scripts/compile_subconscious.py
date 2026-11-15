@@ -8,6 +8,7 @@ Agents load that page; they open a vault page only after a lock hit.
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import re
 from datetime import date, datetime
@@ -191,6 +192,12 @@ INDEX_TAIL = {
            "nothing listed bears on the message, do nothing and do not mention this index.{more}"),
 }
 INDEX_MORE = {"zh": "库里还有 {n} 件没列出，别的事也可以照样先查。", "en": " {n} more are not listed; the same applies to them."}
+# KROUTER_TOPICS=1（第 48 套）：没列出的主题可以分组列出来，这句话告诉宿主怎么列
+INDEX_MORE_TOPICS = {
+    "zh": "库里还有 {n} 件没列出：用户的话像是在说一件定过的事、上面却没有，就调用 krouter_topics 看分组目录（再按组展开），找到名字再取那一页。",
+    "en": " {n} more are not listed: when the user's message sounds like something that was settled and it is not above, "
+          "call krouter_topics for the groups (then one group), and fetch the page once you have its name.",
+}
 INDEX_FULL_MIN = 0.2      # 主题多时，整行至少占预算的这么多（排在最前的那些），其余的主题只列名字
 INDEX_NAMES_HEAD = {"zh": "也记着（只列名字，提到了同样先取那一页）：", "en": "Also known (names only; the same applies): "}
 
@@ -357,7 +364,7 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
     more = len(topics) - shown
     script = Path(__file__).resolve().with_name("route_knowledge.sh")
     cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
-    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=INDEX_MORE[lang].format(n=more) if more else "")
+    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=(INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang].format(n=more) if more else "")
     return "\n".join([INDEX_HEAD[lang], *body, tail])
 
 
