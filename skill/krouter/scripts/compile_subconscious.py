@@ -269,16 +269,24 @@ def _norm_sha(text: str) -> str:
     return hashlib.sha256(text.replace("\r\n", "\n").strip().encode("utf-8")).hexdigest()
 
 
+def sample_path() -> Path:
+    """The alias table next to this code: the shipped sample, unless a host replaced it with a link to its own table."""
+    return Path(__file__).resolve().with_name("canonical_sources.psv")
+
+
 def sample_table(vault: Path, mp: Path) -> bool:
     """The vault's alias table is still the one the install laid down from the template: the code's sample, the same
     with the English names (an English vault), or the Chinese template's. Then it names only the template's example
     pages."""
-    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
+    sample = sample_path()
     try:
         mine = _norm_sha(mp.read_text(encoding="utf-8"))
         base = sample.read_text(encoding="utf-8")
     except OSError:
         return False
+    if sample.is_symlink():
+        # 代码目录里那份是指向库里别名表的软链（升级时保住用户的表）：它不是样例，拿它比只会把用户自己的表认成模板
+        return mine == TEMPLATE_ZH_TABLE_SHA256
     known = {_norm_sha(base), TEMPLATE_ZH_TABLE_SHA256}
     try:
         known.add(_norm_sha(zones.map_aliases(base, zones._rows(zones.EN_TABLE))))
@@ -298,8 +306,8 @@ def index_topics(vault: Path, today: date | None = None) -> list[dict]:
 
     today = today or date.today()
     mp = map_for(vault)
-    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
-    if not mp.is_file() or (mp.resolve() == sample.resolve() and not os.environ.get("KROUTER_MAP")):
+    sample = sample_path()
+    if not mp.is_file() or (mp.resolve() == sample.resolve() and not sample.is_symlink() and not os.environ.get("KROUTER_MAP")):
         return []  # 代码目录里那份是样例，不是这个库的知识：库里没有自己的别名表就不给索引
     if sample_table(vault, mp) and not os.environ.get("KROUTER_MAP"):
         return []  # 刚装好、还只有模板的示例页：示例主题不是用户定过的事，不列
