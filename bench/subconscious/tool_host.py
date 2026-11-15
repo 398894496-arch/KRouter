@@ -48,6 +48,7 @@ FOLDER = ("The user's notes on what has been decided (handbook pages and daily l
           "`notes/`. `search_notes`, `list_notes` and `read_note` work on that folder.")
 LISTED = "Index of the pages in `notes/`, one line per page (title: path):"
 KROUTER = "Context the app injected at session start:"
+LAST = "[Bench note, not from the user] No more tool calls are available. Write your reply to the user now."
 T_SEARCH = {"type": "function", "function": {
     "name": "search_notes",
     "description": "Search the Markdown files under notes/ with a case-insensitive regular expression (like `rg -i`). "
@@ -205,6 +206,8 @@ def converse(work: Path, prep: dict, cond: str, item: dict, key: str) -> dict:
             {"role": "user", "content": item["krouter" if cond == "krouter" else "plain"]}]
     calls, use, model, finish = [], Counter(), "", ""
     for rnd in range(MAX_ROUNDS + 1):
+        if rnd == MAX_ROUNDS:
+            msgs.append({"role": "user", "content": LAST})
         d = call(msgs, tools if rnd < MAX_ROUNDS else None, key)
         model = d.get("model", "")
         for k in ("prompt_tokens", "completion_tokens", "prompt_cache_hit_tokens"):

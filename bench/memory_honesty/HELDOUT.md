@@ -2229,3 +2229,4 @@ so the cost of a long index or of many tool calls in a real session is not seen 
 | Date | Event |
 |---|---|
 | 2026-11-15 | Registered, before any host call. The script was run without a model only: `prepare` on both vaults (120 items; 110 and 1,110 pages; the hook brought a page for 16 messages in both) and each tool once by hand. |
+| 2026-11-15 | **Smoke test, and one change before any set 45 message was sent.** One made-up message, not a set 45 item, in each condition on the 110-page vault; replies not kept. In the folder condition the host used all 4 rounds and, with no tools offered for its reply, wrote tool-call markup as its reply. Added for every condition: when the 4 rounds are used up, one line is appended before the last call ("[Bench note, not from the user] No more tool calls are available. Write your reply to the user now."). Nothing else changed. |
