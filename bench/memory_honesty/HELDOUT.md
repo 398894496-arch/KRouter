@@ -2176,3 +2176,56 @@ pages, each one or two sentences, far easier to embed than real notes; one run.
 |---|---|
 | 2026-11-15 | Registered, before any set 45 message was embedded. The script was checked for syntax only. |
 | 2026-11-15 | **Run once, development half** (`semantic_check.py`, fastembed 0.9.1 on the CPU of one Apple-silicon laptop; summary and every case's cosines in `bench/subconscious/results/set45/semantic/dev-minilm.json`). Said as it happened: the model's files would not come down through the library's own downloader on this machine, so they were fetched from the same Hugging Face repository with a plain HTTP client and their SHA-256 checked against the repository's; a `--model-dir` option was added to the script after registration to load them from a folder; a first attempt stopped on an incomplete model file before any message was embedded. Nothing in the rule changed. 90 pages embedded (the log pages and `90 系统文件/` left out). **Separation** (48 recall cases against 48 quiet ones, AUC): the first page's cosine **0.77**, its lead over the next topic 0.65; the lexical lookup with the gate off, first-page score 0.56, margin 0.61. **With no threshold at all the expected page is first by cosine for 21 of 48 recall cases.** **The model alone** at the chosen setting (T = 0.47, D = 0.10): recall **12 / 48** (unnamed **8 / 42**, named 4 / 6; zh 5 / 24, en 7 / 24), changed 7 / 24, quiet loud 0 / 48, wrong 1, old 0. **The hook and the model together** (the same setting chosen): recall **14 / 48** (unnamed 8 / 42, named 6 / 6), changed 13 / 24, quiet loud 2 / 48 (the hook's two), wrong 1, old 0. The hook alone, from the same run: 7 / 48, 1 / 42, 7 / 24, 2 / 48, 0, 0. **Cost:** 0.22 GB of model files (three files, 267 MB on disk); 0.65 s to load; 16 ms a page to embed (1.5 s for the 90 pages, about 160 s estimated for 10,000 pages of this length); 5.5 ms a message to embed and rank, under 1 ms more to rank 10,000 pages. **Against the line** (recall at least 24 of 48 and 20 of the 42 unnamed, with at most 3 quiet loud and 1 wrong): **not met**, alone (12 and 8) or together (14 and 8); and since the expected page is first for only 21 of 48 with no threshold, no choice of T and D could have met it with this model. **Read with.** (1) The model does separate better than word matching (0.77 against 0.56), and it brings 7 unnamed mentions the hook does not, quietly; what it lacks is the right page in first place. (2) It adds most on changed rules together with the hook (7 and 7 alone, 13 together). (3) T and D were chosen on the half they are scored on: these are upper estimates. (4) By the exception fixed above the model reached exactly 12 of 48, so one larger multilingual model may be run once under the same rule; whether it is run is the maintainer's decision and is logged here before it runs. Until then: no optional tier is built, no variant tried. Held-out half: not run, not read. |
+
+## Set 47: an index, or just a folder? The same messages with three things in the host's hands, tools run for real (registered 2026-11-15, before any host call)
+
+**Why.** Set 45's host layer says the whole chain brings the right page for 42 to 45 of 48 spoken mentions, and that
+almost all of it is the host reading the session-start index and fetching for itself. Two things that number does not
+say: what a host does with the same notes and no KRouter at all (a folder it can search), and what it does when its
+fetches are run and it sees their results (there they were written as a line and never run). An outside review asked
+for exactly this baseline. This set measures it. **No default changes; set 45's held-out half is not run and not read.**
+
+**Messages and vaults.** Set 45's development half, 120 messages (48 recall, 24 changed, 48 quiet), unchanged. Two
+vaults: vault3 + overlay (110 pages), and the same with 1,000 distractor pages dated newer than the real ones
+(`both.add_crowd(v, 1000, newer=True)`: 1,110 pages), the standing index at its shipped budget.
+
+**Three conditions** (`bench/subconscious/tool_host.py`; the system message is one neutral paragraph, then the
+condition's own block, word for word in the script).
+- **folder:** the host is told the notes are Markdown files in `notes/` and has `search_notes` (a case-insensitive
+  regular expression over the files, at most 30 matching lines), `list_notes` and `read_note`. No KRouter.
+- **listed:** the same, plus an index in its context, one line per page (title and path): the plain way to keep a wiki
+  for a model. No KRouter.
+- **krouter:** the standing index exactly as the session-start hook prints it, the hook's note above a message when it
+  brought a page, `krouter_ask` (the MCP tool's own description; it returns what `route_knowledge.py search` prints) and
+  `read_note`. No search tool: what is compared is KRouter's index and lookup against a folder and a search.
+
+**Host.** `deepseek-flash` through its API with function calling, temperature 0, at most 1,500 output tokens a call, at
+most 4 rounds of tool calls and then its reply; each message once; one conversation per message. The script stops if a
+reply names another model. Run from a clone at a neutral path.
+
+**Counting.** As set 45's host layer, with fetches now real: a recall or changed case is **right** when the hook brought
+the expected page (krouter only), or the host read it with `read_note`, or `krouter_ask` put it first (set 35's rule,
+resolved by `both.resolve`), or the reply names it; **wrong** for any other page brought, read, put first or named;
+**old-page delivery** for the replaced page; a quiet case is **loud** when the hook brought anything or the host made
+any tool call or named a page. A page that only appears in `search_notes` output is not counted until the host reads or
+names it. Also reported: tool calls and tokens per message. **Second measure, by a judge** (the same model, the prompt
+word for word in the script, shown the page in force, the replaced page if any, and the reply): does the reply state
+the page's rule, and does it state the replaced rule as current. It is there because the three conditions hand the
+host facts in different ways (a search line, a receipt's `how` line, a page), and the page count alone could favour one.
+
+**The line, fixed here, on the 1,110-page vault.** KRouter's index "earns its place" when **either** krouter is right on
+at least 6 more of the 48 recall cases than folder, **or** the two are within 2 of each other and krouter makes at most
+half the tool calls with no more quiet messages loud. If neither holds, the public pages say that at this size a plain
+folder with a search does as well. `listed` is reported beside both and has no line of its own. Whatever the numbers,
+all six runs are reported with both measures.
+
+**Known limits, said with any number.** The messages were written by a model from a list of the vault's pages; the
+distractor pages are generated and unlike the real ones, so a search may find the real pages more easily than in a real
+vault; one host model, one run per condition; pages are one or two sentences; the host has no other work in the session,
+so the cost of a long index or of many tool calls in a real session is not seen beyond the token counts.
+
+### Log, set 47
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before any host call. The script was run without a model only: `prepare` on both vaults (120 items; 110 and 1,110 pages; the hook brought a page for 16 messages in both) and each tool once by hand. |
