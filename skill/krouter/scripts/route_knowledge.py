@@ -410,7 +410,7 @@ def md_search(needle: str, scope: Path, max_per_file: int = 4, max_lines: int = 
 
 
 def print_recall(res: dict, vault: Path, lines: int, query: str = "") -> None:
-    from recall_index import PARTIAL_NOTE, best_lines, print_extras, print_kb, unseen_note
+    from recall_index import PARTIAL_NOTE, print_extras, print_kb, unseen_note
 
     print(f"recall_confidence: {res.get('confidence', 'none')}")
     print(f"recall_margin: {res.get('margin', 0)}")

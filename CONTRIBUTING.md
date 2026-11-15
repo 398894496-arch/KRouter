@@ -5,6 +5,7 @@ This repo stays a deterministic router. Do not add a vector index, embedding dae
 1. `python3 -m pip install -r requirements.txt -r requirements-dev.txt`
 2. `python3 -m pytest -q`
 3. `./scripts/first_run.sh`
+4. `ruff check .` (`python3 -m pip install ruff==0.8.6`; CI runs the same). The rules are in `pyproject.toml`: syntax errors and pyflakes only, no style rules.
 
 Before **upload** (`git push` / a release): commit, then `./scripts/verify_clean.sh`. That script unpacks `git archive HEAD` into a temp dir — uncommitted and untracked files are not there. A green pytest in a dirty worktree is not this check. v0.4.1 shipped `verify_canonical_map.py` against helpers that only existed uncommitted.
 

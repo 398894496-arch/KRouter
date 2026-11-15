@@ -3,7 +3,6 @@ not into the query log or the recall cache."""
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import shutil

@@ -4,7 +4,6 @@ receipt whose first line is `memory: none`; the confidence comes from the memory
 
 from __future__ import annotations
 
-import importlib
 import json
 import os
 import subprocess
