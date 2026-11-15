@@ -2127,3 +2127,51 @@ so what a DeepSeek-based agent with real tools does may differ.
 |---|---|
 | 2026-11-15 | Registered, before any DeepSeek call on a set 45 item. `api_host.py why` on the saved Claude runs (normal index), for reference: Sonnet recall 48 cases, a memory fetch on 41, not right 4 (did not look 1, looked and got no page 1, another page 2); Haiku a fetch on 44, not right 6 (did not look 4, another page 2). |
 | 2026-11-15 | **Run, development half, C0 only, two runs of 120** (from a clone of d7c7132 at a neutral path; `both.py prepare set45dev`, `api_host.py run`, `both.py score`, `api_host.py why`; replies, key and detail files in `bench/subconscious/results/set45/host-deepseek/`; both `key.json` files are byte for byte those of the Claude runs, and the index sizes are theirs: 60 topics all listed, and 300 topics with 16 as full lines). Smoke test first: one made-up message, not a set 45 item, reply not kept. Every reply present, every one from `deepseek-flash`, no HTTP or network error, nothing asked twice. Tokens: 272,036 in (248,832 read from the provider's cache) and 20,087 out for the normal index, 277,196 in (241,536 cached) and 23,319 out for the crowded one; the account's balance read 7.03 yuan before and 6.89 some minutes after: about 0.14 yuan for the two runs and the smoke test. **Normal index:** recall **45 / 48** (hook alone 7, host added 38; zh 24 / 24, en 21 / 24; unnamed 39 / 42, named 6 / 6), changed **23 / 24** (hook 7, host added 16), quiet loud **11 / 48** (the hook 2; unrelated 1, other_sense 4, common_word 1, pasted 2, near_topic 3, ack 0), wrong pages 9 (all by the host), old 0. **Crowded index:** recall **40 / 48** (host added 33; zh 22 / 24, en 18 / 24; unnamed 34 / 42), changed 22 / 24, quiet loud **12 / 48** (unrelated 1, other_sense 4, common_word 1, pasted 1, near_topic 5), wrong 8, old 0. **Beside the Claude hosts** (log above; not like for like, see the differences): recall, normal 45 against Sonnet 44 and Haiku 42, crowded 40 against 44 and 38; changed 23 and 22 against 23 in all four Claude runs; quiet loud 11 and 12 against 5 and 6 (Sonnet, Haiku, normal) and 5 and 4 (crowded); wrong pages 9 and 8 against 3 and 8 (normal) and 3 and 3 (crowded). **Did it look** (`why`): on the 48 recall cases the host made a memory fetch on 46 (normal) and 45 (crowded), Sonnet 41 and Haiku 44 on the normal index; on the 24 changed cases 24 and 20; on the 48 quiet cases 10 and 11 (Sonnet 3, Haiku 5). Recall cases not right, normal: 3 (did not look 1, another page 2); crowded: 8 (did not look 1, looked and got no page 1, another page 6). **Read with.** (1) DeepSeek goes and looks at least as readily as the Claude hosts did; what it pays is on the quiet side: it looks on about twice as many messages that should be left alone (10 or 11 of 48), mostly a word that has another sense here (4 of 8 in both runs) and questions next to a topic the vault holds (3 and 5 of 8). (2) In the normal run the three cases with another page (two recall, one changed) are the same three, with the same pages, as in Sonnet's run (en-020, en-042, en-071). Of the 9 wrong pages, 6 are extra pages on 4 cases where the expected page was also fetched or named; the Claude hosts rarely named more than one. (3) Several English messages were looked up under the Chinese name of the topic; whether a wrong page is the other language's page of the same topic was not counted here. (4) **Cut-off replies:** `deepseek-flash` counts its own reasoning inside the 600-token limit, and 3 replies in each run ended at the limit (one in each with no text at all). Normal: a recall case and a changed case that are right anyway (the hook brought the page; the fetch line was written) and a quiet case with no fetch. Crowded: three quiet cases, one loud; the one with no text (en-058, near_topic) could have been loud, so quiet loud in the crowded run is 12 or 13. No recall or changed case was lost to the limit. The replies stand, each asked once as registered. (5) After its `CALL` line the model in a number of replies went on as if the page had come back ("I checked the page, it only says…"); the instructions ask for the start of the reply, and what it would say with a real result is not measured. (6) One run per condition, invented messages, a 110-page vault, the host one message at a time with no app around it: a development number about willingness to look, not a product claim. No pass line applies. Held-out half: not run, not read. |
+
+### Set 45, third addendum: a local embedding model, a one-off mechanical check on the development half (registered 2026-11-15, before any embedding of a set 45 message)
+
+**Why.** The hook alone brings the right page for 7 of 48 mentions (1 of the 42 that use none of the page's names), plain
+BM25 made as quiet lands at 4 to 5, and the gate's own criteria cannot tell an unnamed mention from a message to leave
+alone (about 24 of 48 at best). A diagnosis on a real vault the same day (`bench/subconscious/sibling_tie.py`) found the
+held-back lookups are near ties between pages in different folders, not sibling pages. One thing is left to check before
+the per-message layer is called finished for word matching: **can a local embedding model, no service and no key, tell
+the two kinds of message apart?** This is a check that decides whether an optional tier is worth building; it is not
+that tier, and nothing here is imported by the engine. Development segment: the held-out half is not run and not read,
+no default changes.
+
+**What is run** (`bench/subconscious/semantic_check.py`, in an environment of its own with `fastembed`; no model API).
+Pages: every page of vault3 + overlay outside `90 系统文件/` whose `type` is not a log type, each as one text (title and
+body). A message is embedded as the hook sees it (`recollect.prose`). The first page by cosine is mapped to the page in
+force (`recollect.current`); it is brought when its cosine is at least T and leads the best page of another topic by at
+least D. Scored with set 32's `score` and printed with set 45's `report`, the same counting as the hook's lines.
+**Model:** `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dimensions, about 0.22 GB, multilingual
+because the messages are Chinese and English), through fastembed's ONNX build, on the CPU.
+
+**Choosing T and D.** On this half, from T = 0.20 to 0.90 in steps of 0.01 and D in {0, 0.02, 0.05, 0.10}: among the
+settings with **at most 3 of 48 quiet messages loud and at most 1 wrong page**, the one with the most recall cases right
+(then changed right, then fewer loud, then the higher T). The same choice is made again for the hook and the model
+together (the model's page added when the hook brought fewer than two pages and not that one).
+
+**Reported, whatever it shows.** (1) Separation: the AUC of the first page's cosine, 48 recall cases against 48 quiet
+ones, next to the AUC of the lexical lookup's first-page score and margin with the gate off; and how many recall cases
+have the expected page first by cosine with no threshold at all. (2) At the chosen setting, the model alone: recall
+right (and of the 42 unnamed), changed, quiet loud by kind, wrong, old; beside the hook alone (7 / 48, 1 / 42, 7 / 24,
+2 / 48, 0, 0). (3) The same for the hook and the model together. (4) Cost: the model's size, time to load it, to embed
+the pages and one message, and an estimate at 10,000 pages.
+
+**The line, fixed here.** With quiet loud at most 3 of 48 and wrong at most 1: **recall right at least 24 of 48 and at
+least 20 of the 42 unnamed, for the model alone or for the hook and the model together.** Met: an optional tier is worth
+building, and would then need its own registered set with a held-out run. Not met: the idea is put down and no variant
+is tried (no other pooling, chunking, prompt or rule). One exception, fixed here: if this model reaches at least 12 of 48
+under the same limits, one larger multilingual model may be run once under the same rule, named in the log before it
+runs; below 12, nothing more is run.
+
+**Known limits, said with any number.** T and D are chosen on the half they are scored on, so every number here is an
+upper estimate for that model; the messages were written by a model from a list of the vault's pages; the vault has 110
+pages, each one or two sentences, far easier to embed than real notes; one run.
+
+### Log, set 45 embedding check (development)
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before any set 45 message was embedded. The script was checked for syntax only. |
