@@ -1,0 +1,1354 @@
+{
+ "en-001": {
+  "hook": [],
+  "host": [
+   "Handbook/API deprecation.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-002": {
+  "hook": [],
+  "host": [
+   "Handbook/API deprecation.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-003": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-004": {
+  "hook": [],
+  "host": [
+   "团队手册/图片资源.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-005": {
+  "hook": [],
+  "host": [
+   "Handbook/Analytics queries.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-006": {
+  "hook": [],
+  "host": [
+   "Handbook/Access reviews.md",
+   "Handbook/Analyst data access.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-007": {
+  "hook": [],
+  "host": [
+   "Handbook/Access reviews.md",
+   "Handbook/Analyst data access.md",
+   "团队手册/权限申请.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-009": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-010": {
+  "hook": [],
+  "host": [
+   "Handbook/Analytics queries.md",
+   "Handbook/Analytics queries (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-016": {
+  "hook": [],
+  "host": [
+   "Handbook/Browser support.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-020": {
+  "hook": [],
+  "host": [
+   "团队手册/消息队列.md",
+   "团队手册/消息队列（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-027": {
+  "hook": [],
+  "host": [
+   "Handbook/Cloud cost alerts.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-028": {
+  "hook": [],
+  "host": [
+   "Handbook/Support hours.md",
+   "团队手册/出差标准.md",
+   "团队手册/服务拆分.md",
+   "团队手册/证书续签.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "en-029": {
+  "hook": [],
+  "host": [
+   "工作日志/2026-08-06.md",
+   "Daily log/2026-08-05.md",
+   "工作日志/2026-07-30.md",
+   "Daily log/2026-07-29.md",
+   "工作日志/2026-07-23.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-031": {
+  "hook": [],
+  "host": [
+   "Handbook/Customer interview notes.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-032": {
+  "hook": [],
+  "host": [
+   "Handbook/Customer interview notes.md",
+   "团队手册/客户回访.md",
+   "Handbook/Customer data deletion.md",
+   "Handbook/Support hours.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-034": {
+  "hook": [],
+  "host": [
+   "团队手册/软件采购.md",
+   "Handbook/Third-party scripts.md",
+   "团队手册/图片资源.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-038": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-039": {
+  "hook": [],
+  "host": [
+   "Handbook/API deprecation.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-042": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-043": {
+  "hook": [],
+  "host": [
+   "团队手册/节假日安排.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "en-044": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-045": {
+  "hook": [],
+  "host": [
+   "Handbook/Database for new services.md",
+   "Handbook/Database for new services (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-046": {
+  "hook": [],
+  "host": [
+   "Handbook/Hackathon.md",
+   "Daily log/2026-07-22.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-047": {
+  "hook": [],
+  "host": [
+   "Handbook/Hackathon.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-049": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-051": {
+  "hook": [],
+  "host": [
+   "Handbook/Language for code.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-053": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md",
+   "团队手册/发布说明（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-056": {
+  "hook": [],
+  "host": [
+   "Handbook/Price changes.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-058": {
+  "hook": [],
+  "host": [
+   "Handbook/Repository ownership.md",
+   "Handbook/Design handoff.md",
+   "Handbook/Cloud infrastructure changes.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-060": {
+  "hook": [],
+  "host": [
+   "Handbook/Feature requests.md",
+   "Handbook/Feature requests (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-061": {
+  "hook": [],
+  "host": [
+   "Handbook/Status page.md",
+   "Handbook/Support escalation.md",
+   "Daily log/2026-07-22.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-063": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-067": {
+  "hook": [],
+  "host": [
+   "Handbook/Support hours.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-068": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-069": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "en-071": {
+  "hook": [],
+  "host": [
+   "团队手册/数据看板.md",
+   "团队手册/数据看板（旧）.md",
+   "Handbook/Analytics queries.md",
+   "Handbook/Analytics queries (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-074": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-075": {
+  "hook": [],
+  "host": [
+   "Handbook/Mobile release criteria.md",
+   "Handbook/Mobile release criteria (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-078": {
+  "hook": [],
+  "host": [
+   "团队手册/代码托管.md",
+   "团队手册/代码托管（旧）.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-080": {
+  "hook": [],
+  "host": [
+   "Handbook/Mobile release criteria.md",
+   "Handbook/Mobile release criteria (old).md",
+   "工作日志/2026-08-06.md",
+   "Daily log/2026-08-05.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-082": {
+  "hook": [],
+  "host": [
+   "Handbook/Customer refunds.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-083": {
+  "hook": [],
+  "host": [
+   "团队手册/团队周会.md",
+   "工作日志/2026-08-06.md",
+   "Handbook/On-site days.md",
+   "Handbook/Support hours.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-085": {
+  "hook": [],
+  "host": [
+   "Handbook/Model deployment.md",
+   "Handbook/Model deployment (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-089": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-090": {
+  "hook": [],
+  "host": [
+   "Handbook/Model deployment.md",
+   "Handbook/Model deployment (old).md",
+   "Daily log/2026-08-05.md",
+   "Daily log/2026-07-29.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-091": {
+  "hook": [],
+  "host": [
+   "Handbook/Database for new services.md",
+   "Handbook/Database for new services (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-092": {
+  "hook": [],
+  "host": [
+   "Handbook/Feature requests.md",
+   "工作日志/2026-08-06.md",
+   "团队手册/意见反馈.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-093": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "en-097": {
+  "hook": [],
+  "host": [
+   "Handbook/Interview process.md",
+   "Handbook/Interview process (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-099": {
+  "hook": [],
+  "host": [
+   "Handbook/Hackathon.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-106": {
+  "hook": [],
+  "host": [
+   "Handbook/Support escalation.md",
+   "Handbook/Support escalation (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "en-109": {
+  "hook": [],
+  "host": [
+   "Handbook/Bug bounty.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-110": {
+  "hook": [],
+  "host": [
+   "Handbook/Support escalation.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "en-111": {
+  "hook": [],
+  "host": [
+   "Handbook/On-site days.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "en-115": {
+  "hook": [],
+  "host": [
+   "Handbook/Third-party scripts.md",
+   "Handbook/Third-party scripts (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-116": {
+  "hook": [],
+  "host": [
+   "Handbook/Transactional email.md",
+   "Handbook/Third-party scripts.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-117": {
+  "hook": [],
+  "host": [
+   "Handbook/Third-party scripts.md",
+   "Handbook/Third-party scripts (old).md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "en-118": {
+  "hook": [],
+  "host": [
+   "团队手册/测试环境.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "en-120": {
+  "hook": [],
+  "host": [
+   "Handbook/Transactional email.md",
+   "Daily log/2026-07-15.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-001": {
+  "hook": [],
+  "host": [
+   "团队手册/App 系统版本.md",
+   "团队手册/App 系统版本（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-002": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-005": {
+  "hook": [],
+  "host": [
+   "团队手册/代码托管.md",
+   "团队手册/代码托管（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-006": {
+  "hook": [],
+  "host": [
+   "团队手册/意见反馈.md",
+   "团队手册/客户投诉.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-012": {
+  "hook": [],
+  "host": [
+   "工作日志/2026-08-06.md",
+   "Daily log/2026-08-05.md",
+   "工作日志/2026-07-30.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-019": {
+  "hook": [],
+  "host": [
+   "团队手册/开源许可证.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-022": {
+  "hook": [],
+  "host": [
+   "团队手册/消息队列.md",
+   "团队手册/消息队列（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-024": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md",
+   "Handbook/Mobile release criteria.md",
+   "Handbook/Mobile release criteria (old).md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-025": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md",
+   "团队手册/发布说明（旧）.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-026": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-028": {
+  "hook": [],
+  "host": [
+   "团队手册/团队周会.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-029": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-034": {
+  "hook": [],
+  "host": [
+   "团队手册/数据共享.md",
+   "团队手册/数据共享（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-036": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-039": {
+  "hook": [],
+  "host": [
+   "团队手册/消息队列.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-043": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-045": {
+  "hook": [],
+  "host": [
+   "团队手册/意见反馈.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-048": {
+  "hook": [],
+  "host": [
+   "团队手册/Go 代码规范.md",
+   "工作日志/2026-08-06.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "search_notes",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-050": {
+  "hook": [],
+  "host": [
+   "团队手册/短信通道.md",
+   "团队手册/短信通道（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-053": {
+  "hook": [],
+  "host": [
+   "Handbook/Language for code.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-054": {
+  "hook": [],
+  "host": [
+   "团队手册/技术分享.md",
+   "团队手册/团队周会.md",
+   "工作日志/2026-08-06.md",
+   "工作日志/2026-07-30.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-055": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-058": {
+  "hook": [],
+  "host": [
+   "工作日志/2026-08-06.md",
+   "Daily log/2026-08-05.md",
+   "Handbook/Customer data deletion.md",
+   "团队手册/设备申领.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-060": {
+  "hook": [],
+  "host": [
+   "团队手册/数据共享.md",
+   "团队手册/数据分级.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-061": {
+  "hook": [],
+  "host": [
+   "团队手册/短信通道.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-062": {
+  "hook": [],
+  "host": [
+   "团队手册/客户投诉.md",
+   "Handbook/Customer refunds.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-063": {
+  "hook": [],
+  "host": [
+   "团队手册/权限申请.md",
+   "团队手册/权限申请（旧）.md",
+   "团队手册/App 系统版本.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-064": {
+  "hook": [],
+  "host": [
+   "团队手册/数据分级.md",
+   "团队手册/数据共享.md",
+   "团队手册/数据看板.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-068": {
+  "hook": [],
+  "host": [
+   "工作日志/2026-08-06.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-070": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-072": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-075": {
+  "hook": [],
+  "host": [
+   "团队手册/服务拆分.md",
+   "团队手册/技术方案模板.md",
+   "团队手册/需求评审.md",
+   "Handbook/Database for new services.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-076": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes"
+  ]
+ },
+ "zh-077": {
+  "hook": [],
+  "host": [
+   "团队手册/代码托管.md",
+   "团队手册/代码托管（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-079": {
+  "hook": [],
+  "host": [
+   "Handbook/Analytics queries.md",
+   "团队手册/数据看板.md",
+   "工作日志/2026-08-06.md",
+   "团队手册/发布说明.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-081": {
+  "hook": [],
+  "host": [
+   "团队手册/测试环境.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-082": {
+  "hook": [],
+  "host": [],
+  "calls": []
+ },
+ "zh-083": {
+  "hook": [],
+  "host": [
+   "团队手册/证书续签.md",
+   "团队手册/证书续签（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-085": {
+  "hook": [],
+  "host": [
+   "团队手册/消息队列.md",
+   "团队手册/消息队列（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-086": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-089": {
+  "hook": [],
+  "host": [
+   "团队手册/短信通道.md",
+   "Handbook/Transactional email.md",
+   "团队手册/客户投诉.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-094": {
+  "hook": [],
+  "host": [
+   "团队手册/测试环境.md",
+   "团队手册/数据分级.md",
+   "团队手册/数据共享.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-095": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md",
+   "团队手册/发布说明（旧）.md",
+   "工作日志/2026-08-06.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-096": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md",
+   "团队手册/节假日安排.md",
+   "团队手册/发布说明（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-098": {
+  "hook": [],
+  "host": [
+   "团队手册/绩效评估.md",
+   "团队手册/绩效评估（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-099": {
+  "hook": [],
+  "host": [
+   "团队手册/技术分享.md",
+   "团队手册/技术分享（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-101": {
+  "hook": [],
+  "host": [
+   "团队手册/消息队列.md",
+   "团队手册/短信通道.md",
+   "Handbook/Transactional email.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-102": {
+  "hook": [],
+  "host": [
+   "团队手册/数据标注.md",
+   "团队手册/数据标注（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-103": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-105": {
+  "hook": [],
+  "host": [
+   "团队手册/证书续签.md",
+   "团队手册/证书续签（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-107": {
+  "hook": [],
+  "host": [
+   "团队手册/软件采购.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note"
+  ]
+ },
+ "zh-108": {
+  "hook": [],
+  "host": [],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "search_notes"
+  ]
+ },
+ "zh-109": {
+  "hook": [],
+  "host": [
+   "团队手册/权限申请.md",
+   "团队手册/权限申请（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-110": {
+  "hook": [],
+  "host": [
+   "团队手册/需求评审.md",
+   "团队手册/技术方案模板.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-111": {
+  "hook": [],
+  "host": [
+   "Handbook/Analyst data access.md",
+   "团队手册/权限申请.md",
+   "团队手册/权限申请（旧）.md",
+   "团队手册/测试环境.md",
+   "团队手册/数据分级.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-113": {
+  "hook": [],
+  "host": [
+   "团队手册/团队周会.md",
+   "工作日志/2026-08-06.md",
+   "团队手册/设备申领.md"
+  ],
+  "calls": [
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-114": {
+  "hook": [],
+  "host": [
+   "团队手册/代码托管.md",
+   "工作日志/2026-07-09.md"
+  ],
+  "calls": [
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-116": {
+  "hook": [],
+  "host": [
+   "团队手册/办公网络.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes"
+  ]
+ },
+ "zh-119": {
+  "hook": [],
+  "host": [
+   "团队手册/服务拆分.md",
+   "团队手册/技术方案模板.md",
+   "团队手册/发布说明.md",
+   "Handbook/Database for new services.md",
+   "Handbook/Cloud infrastructure changes.md",
+   "Handbook/Repository ownership.md",
+   "团队手册/数据分级.md",
+   "团队手册/数据共享.md",
+   "团队手册/测试环境.md",
+   "团队手册/需求评审.md",
+   "Handbook/API deprecation.md",
+   "团队手册/权限申请.md",
+   "Handbook/Status page.md",
+   "团队手册/证书续签.md"
+  ],
+  "calls": [
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes",
+   "search_notes",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "read_note",
+   "search_notes",
+   "read_note",
+   "read_note"
+  ]
+ },
+ "zh-120": {
+  "hook": [],
+  "host": [
+   "团队手册/发布说明.md",
+   "团队手册/发布说明（旧）.md"
+  ],
+  "calls": [
+   "read_note",
+   "search_notes",
+   "read_note",
+   "search_notes"
+  ]
+ }
+}

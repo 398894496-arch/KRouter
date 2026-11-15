@@ -1,0 +1,36 @@
+### small
+krouter: items 120 missing 0
+  recall 45/48 (unnamed 39/42, named 6/6; zh 24, en 21)  changed 23/24  quiet loud 16/48  wrong 18  old 1
+  quiet loud by kind: unrelated=1/8, other_sense=5/8, common_word=1/8, pasted=1/8, near_topic=8/8, ack=0/8
+  tool calls 127 (1.06 a message; recall 67, changed 34, quiet 26); messages with a call: recall 47/48, changed 24/24, quiet 15/48
+  tokens: 682260 in, 34885 out (5686 in a message)
+### small
+folder: items 120 missing 0
+  recall 47/48 (unnamed 41/42, named 6/6; zh 23, en 24)  changed 23/24  quiet loud 40/48  wrong 62  old 8
+  quiet loud by kind: unrelated=5/8, other_sense=8/8, common_word=6/8, pasted=8/8, near_topic=8/8, ack=5/8
+  tool calls 667 (5.56 a message; recall 286, changed 141, quiet 240); messages with a call: recall 48/48, changed 24/24, quiet 40/48
+  tokens: 489832 in, 70432 out (4082 in a message)
+### small
+listed: items 120 missing 0
+  recall 47/48 (unnamed 41/42, named 6/6; zh 24, en 23)  changed 23/24  quiet loud 31/48  wrong 84  old 16
+  quiet loud by kind: unrelated=2/8, other_sense=6/8, common_word=4/8, pasted=8/8, near_topic=8/8, ack=3/8
+  tool calls 378 (3.15 a message; recall 166, changed 88, quiet 124); messages with a call: recall 48/48, changed 24/24, quiet 31/48
+  tokens: 905659 in, 54971 out (7547 in a message)
+### big
+krouter: items 120 missing 0
+  recall 16/48 (unnamed 10/42, named 6/6; zh 11, en 5)  changed 15/24  quiet loud 13/48  wrong 13  old 2
+  quiet loud by kind: unrelated=1/8, other_sense=2/8, common_word=3/8, pasted=0/8, near_topic=7/8, ack=0/8
+  tool calls 98 (0.82 a message; recall 53, changed 30, quiet 15); messages with a call: recall 39/48, changed 23/24, quiet 12/48
+  tokens: 619271 in, 35562 out (5161 in a message)
+### big
+folder: items 120 missing 0
+  recall 45/48 (unnamed 39/42, named 6/6; zh 22, en 23)  changed 23/24  quiet loud 39/48  wrong 53  old 11
+  quiet loud by kind: unrelated=5/8, other_sense=8/8, common_word=7/8, pasted=8/8, near_topic=8/8, ack=3/8
+  tool calls 682 (5.68 a message; recall 272, changed 161, quiet 249); messages with a call: recall 48/48, changed 24/24, quiet 39/48
+  tokens: 570556 in, 71925 out (4755 in a message)
+### big
+listed: items 120 missing 0
+  recall 47/48 (unnamed 41/42, named 6/6; zh 24, en 23)  changed 23/24  quiet loud 31/48  wrong 89  old 17
+  quiet loud by kind: unrelated=2/8, other_sense=7/8, common_word=4/8, pasted=7/8, near_topic=8/8, ack=3/8
+  tool calls 341 (2.84 a message; recall 149, changed 80, quiet 112); messages with a call: recall 47/48, changed 24/24, quiet 31/48
+  tokens: 5615498 in, 50042 out (46796 in a message)
