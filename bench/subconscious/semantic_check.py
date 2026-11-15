@@ -49,6 +49,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
     ap.add_argument("--save", default="")
+    ap.add_argument("--model-dir", default="", help="a folder that already holds the model's files (no download)")
     ap.add_argument("--query-prefix", default="")
     ap.add_argument("--page-prefix", default="")
     a = ap.parse_args()
@@ -82,7 +83,7 @@ def main() -> int:
     cur = {rel: R.current(v, rel, today) for rel in rels}
 
     t0 = time.perf_counter()
-    model = TextEmbedding(a.model)
+    model = TextEmbedding(a.model, specific_model_path=a.model_dir) if a.model_dir else TextEmbedding(a.model)
     t_load = time.perf_counter() - t0
 
     def embed(xs: list[str], prefix: str):
