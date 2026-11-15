@@ -2293,3 +2293,45 @@ covers what the alias table names.
 | 2026-11-15 | Registered, before either change was written. |
 | 2026-11-15 | **Both changes written, behind their switches** (`route_knowledge.py`: `print_nearest` after `recall: none`, and a `topics` route; `compile_subconscious.py`: the index's "N more" sentence names `krouter_topics` when the switch is on; `mcp_server.py`: the `krouter_topics` tool when the switch is on; `tool_host.py`: conditions `k1` to `k4` and `--mixed`). Checked without a model: `prepare` on big-apart and big-mixed (1,110 pages each; the hook brought a page for 16 messages in both; the index says 757 and 753 topics are not listed), the topics list and the nearest titles once by hand, and that the shipped lookup prints no nearest block. Two details settled then, before any host call: a group is listed whole, one line a topic, up to 1,000 topics (in big-mixed a handbook folder holds about 530, the real ones last because they are the oldest); nearest pages are at most five, and fewer when fewer pages in force rank at all. |
 | 2026-11-15 | **Run, eight runs of 120** (from a clone of 8531468 at a neutral path; smoke test first on one made-up message in k3, reply not kept; `tool_host.py run`, `score`, `judge` on the three K3 runs; everything in `bench/subconscious/results/set48/`). Every reply present, every one from `deepseek-flash`, every one ended normally, no error, nothing asked twice. The balance went from 3.98 to 1.17 yuan. The full test suite with neither switch set: 707 passed, 8 skipped. **K3, both switches** (recall right / changed / quiet loud / wrong / old; calls and input tokens a message). **big-apart: 37 / 48** (unnamed 31 / 42; zh 20, en 17), 22 / 24, 15 / 48, 19, **5**; 1.97 calls; 7,994 tokens. **big-mixed: 36 / 48** (unnamed 30 / 42; zh 21, en 15), 22 / 24, 18 / 48, 11, **3**; 1.63 calls; 7,613 tokens. **small: 45 / 48** (unnamed 39 / 42), 23 / 24, 16 / 48, 13, 0; 1.13 calls; 6,124 tokens. Judge (the reply states the page's rule), recall and changed: 36 and 22, 36 and 21 (one verdict unread), 45 and 23; **no reply states a replaced rule as current (0 of 24 in each)**. **Against the line: not met.** big-apart recall is 37 where the line is 40; old-page deliveries are 5 and 3 where the line is at most 2. Met: big-mixed recall (36, the line), small recall (45, line 44), quiet loud in all three (15, 18, 16; line 20), tool calls in all three (line 2.5). **Both switches stay off.** **The other runs.** big-apart: K0 16 / 48 (set 47); **K1, nearest titles only, 30 / 48**, changed 19, quiet loud 17, wrong 10, old 1, 1.06 calls; **K2, topics list only, 36 / 48**, changed 21, quiet loud 16, wrong 25, old 5, 2.33 calls; **K4, as shipped plus the folder's search, 31 / 48**, changed 20, quiet loud 17, wrong 20, old 4, 1.36 calls (51 searches); folder 45 / 48 (set 47). big-mixed: **K0 18 / 48**, changed 13, quiet loud 16, wrong 8, old 1, 0.88 calls; **folder 47 / 48**, changed 23, quiet loud 38, wrong 60, old 7, 5.67 calls. **Where K3's gain came from** (recall cases right in K3 and not in K0): big-apart 21, of which 19 used `krouter_topics`; big-mixed 18, of which 13 used it; no case right in K0 was lost in either. **What K3 still misses:** big-apart 11 (6 with no tool call at all, 3 after a topics list, 2 after asking only); big-mixed 12 (5, 4, 3). **The old-page deliveries** in K3 (5 and 3) are all changed cases where the host named or asked for the replaced page, none where it read it; by the judge no reply gives the replaced rule as current. Under the registered counting they are deliveries and the line is not met. **Quiet messages whose reply names a vault page** (the watch on nearest titles inviting an answer): K0 5 of 48 on big-mixed; K3 9, 7 and 10 on big-apart, big-mixed and small; K1 8; folder 12. It rises by a few with the changes; quiet loud itself moves by two (13 to 15, 16 to 18, 16 to 16). **Read with.** (1) The two changes together take KRouter from 16 and 18 of 48 to 37 and 36 at 1,110 pages, at about two tool calls a message and with the quiet side nearly where it was; a folder with a search is still ahead on recall (45 and 47) and disturbs 38 or 39 of the 48 quiet messages with 5.7 calls a message. (2) Most of the gain is the topics list (K2 alone 36; K1 alone 30). Adding a search tool to the shipped KRouter (K4) helps less than either. (3) The largest group still missed is messages on which the host makes no call: nothing in its context tells it the vault holds something on them. (4) These are development numbers on messages the changes were written against; one host, one run a condition. Set 45's held-out half: not run, not read. |
+
+### Set 48, addendum: the groups shown in the index itself, and old-page deliveries counted by what the host did with them (registered 2026-11-15, before the change was written)
+
+**Why.** Set 48's K3 missed its line on two counts. On big-apart recall was 37 where the line is 40, and the largest
+group still missed (6 of 11 there, 5 of 12 on big-mixed) is messages on which the host made no call at all: with the
+topic out of the index, nothing in its context says the vault holds anything near it, and the sentence that points to
+`krouter_topics` asks it to judge that a message "sounds like something that was settled". And old-page deliveries
+were 5 and 3 where the line is 2: every one a changed case in which the host named or asked for the replaced page and
+did not read it, and no reply gave the replaced rule as current. **One more development round, K5; nothing here uses
+set 45's held-out half.**
+
+**The change (K5 = K3 plus this, behind `KROUTER_TOPICS=1`).** When topics do not fit, the standing index itself lists
+the groups they fall in: each folder with how many topics it holds and four of their names, spread evenly over the
+group's order (not the first four, which are the newest), at most twelve groups, the largest first, inside the same
+budget (the names-only part gives up the room). The sentence that follows says: when the user's message is about the
+kind of thing one of these groups holds and no line above covers it, call `krouter_topics` with that group's name, find
+the topic's name, then fetch the page. `krouter_topics` and the nearest titles are as in K3.
+
+**Counting, one thing changed and said.** Set 47's rule counts an old-page delivery whenever the replaced page is
+brought, read, put first or named. It is still reported. **The line here uses a narrower count: the replaced page
+read with `read_note`, or a reply that the judge says states the replaced rule as current.** Naming the replaced page
+while giving the rule in force (as in "this replaced the older page") is what a correct answer about a changed rule
+often does, and is not counted against the line.
+
+**Runs.** K5 on big-apart, big-mixed and small, with the judge on all three. K0, K3 and folder are set 47's and set
+48's.
+
+**The line, fixed here, for K5.** As set 48's: big-apart recall at least **40 of 48**, big-mixed at least **36**, small
+at least **44**; in all three quiet loud at most **20 of 48** and at most **2.5 tool calls a message**. Old pages by
+the narrower count: at most 2 read in each run, and no reply stating a replaced rule as current. New, because the
+index now says more about what the vault holds: **quiet messages whose reply names a vault page at most 12 of 48** in
+each run (a folder with a search: 12; K3: 7 to 10). **All met:** K5 is proposed as the default, to be confirmed once on
+set 45's held-out half (K0 against K5) if the maintainer decides to open it. **Any not met:** the switches stay off and
+no third round is run on these messages; what is left goes to the held-out half or to new messages.
+
+**Known limits.** Those of set 48. This is the second change scored on the same 120 messages.
+
+### Log, set 48 addendum
+
+| Date | Event |
+|---|---|
+| 2026-11-15 | Registered, before the change was written. |
