@@ -195,10 +195,10 @@ INDEX_MORE = {"zh": "库里还有 {n} 件没列出，别的事也可以照样先
 # KROUTER_TOPICS=1（第 48 套）：没列出的主题可以分组列出来，这句话告诉宿主怎么列
 INDEX_MORE_TOPICS = {
     "zh": "上面只列了一部分，还有 {n} 件没列出。用户的话说的是某一组管的那类事、上面又没有对应的条目时，调用 krouter_topics 并传那一组的"
-          "名字，在里面找到那件事的名字，再取那一页。",
+          "名字（没有这个工具就在终端运行 {tcmd}），在里面找到那件事的名字，再取那一页。",
     "en": " {n} more are not listed. When the user's message is about the kind of thing one of the groups holds and no "
-          "line above covers it, call krouter_topics with that group's name, find the topic's name there, then fetch "
-          "its page.",
+          "line above covers it, call krouter_topics with that group's name (with no such tool, run {tcmd} in a terminal), find "
+          "the topic's name there, then fetch its page.",
 }
 INDEX_GROUPS = 12         # 索引里最多列几个分组（按主题数从多到少）
 INDEX_GROUPS_HEAD = {"zh": "库里定过的事按文件夹分组（含上面列出的）：", "en": "Everything settled, by folder (those above included): "}
@@ -269,16 +269,24 @@ def _norm_sha(text: str) -> str:
     return hashlib.sha256(text.replace("\r\n", "\n").strip().encode("utf-8")).hexdigest()
 
 
+def sample_path() -> Path:
+    """The alias table next to this code: the shipped sample, unless a host replaced it with a link to its own table."""
+    return Path(__file__).resolve().with_name("canonical_sources.psv")
+
+
 def sample_table(vault: Path, mp: Path) -> bool:
     """The vault's alias table is still the one the install laid down from the template: the code's sample, the same
     with the English names (an English vault), or the Chinese template's. Then it names only the template's example
     pages."""
-    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
+    sample = sample_path()
     try:
         mine = _norm_sha(mp.read_text(encoding="utf-8"))
         base = sample.read_text(encoding="utf-8")
     except OSError:
         return False
+    if sample.is_symlink():
+        # 代码目录里那份是指向库里别名表的软链（升级时保住用户的表）：它不是样例，拿它比只会把用户自己的表认成模板
+        return mine == TEMPLATE_ZH_TABLE_SHA256
     known = {_norm_sha(base), TEMPLATE_ZH_TABLE_SHA256}
     try:
         known.add(_norm_sha(zones.map_aliases(base, zones._rows(zones.EN_TABLE))))
@@ -298,8 +306,8 @@ def index_topics(vault: Path, today: date | None = None) -> list[dict]:
 
     today = today or date.today()
     mp = map_for(vault)
-    sample = Path(__file__).resolve().with_name("canonical_sources.psv")
-    if not mp.is_file() or (mp.resolve() == sample.resolve() and not os.environ.get("KROUTER_MAP")):
+    sample = sample_path()
+    if not mp.is_file() or (mp.resolve() == sample.resolve() and not sample.is_symlink() and not os.environ.get("KROUTER_MAP")):
         return []  # 代码目录里那份是样例，不是这个库的知识：库里没有自己的别名表就不给索引
     if sample_table(vault, mp) and not os.environ.get("KROUTER_MAP"):
         return []  # 刚装好、还只有模板的示例页：示例主题不是用户定过的事，不列
@@ -392,7 +400,9 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
         body.append(group_line)
     script = Path(__file__).resolve().with_name("route_knowledge.sh")
     cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
-    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=(INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang].format(n=more) if more else "")
+    tcmd = f"sh {shlex.quote(str(script))} topics '<{'组名' if lang == 'zh' else 'group'}>'"
+    more_tpl = (INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang]
+    tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=more_tpl.format(n=more, tcmd=tcmd) if more else "")
     return "\n".join([INDEX_HEAD[lang], *body, tail])
 
 
