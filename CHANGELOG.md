@@ -11,6 +11,8 @@ notice, then the details.
 
 ## Unreleased
 
+One switch, off by default, for a vault whose alias table names few of its pages (set 49, `docs/NUMBERS.md`): with `KROUTER_INDEX_PAGES=1` the session-start index also lists, by title, the pages in force that the table does not name (rule and topic pages; in a vault not laid out the template's way, its other pages outside the system folder), in the same budget, with no model. On the bench, with a table that names 8 pages, recall cases right went from 18 and 22 of 48 to 43 and 42. It stays off: one registered line on the quiet side was not met (quiet messages whose reply names a vault page, 15 of 48 on the larger vault where the limit is 12). Nothing changes with the switch off.
+
 **Fix: the session-start index was empty when the alias table next to the code is a link to the vault's own table.** A host that keeps its table in the vault and links the install directory's copy to it (so an upgrade never overwrites it) had its table taken for the shipped sample, by resolved path and by content, and got no standing index at all. Found on a real machine: its index had been empty since the session-start hook was connected. A linked table is now never the sample; the shipped sample and the template's table are still recognised (`tests/test_index_linked_table.py`).
 
 With `KROUTER_TOPICS=1`, the standing index's sentence about unlisted topics now also gives the terminal command (`route_knowledge.sh topics '<group>'`) for a host that has the hooks but not the MCP server, as it already does for `krouter_ask`. Found when installing on a machine wired that way. Nothing changes with the switch off.

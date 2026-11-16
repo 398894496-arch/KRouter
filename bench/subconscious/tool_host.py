@@ -16,6 +16,10 @@ tool calls, then its reply. Each message once, temperature 0. The key is read fr
 Set 48 adds: `k1`, krouter with `KROUTER_NEAREST=1` (nearest page titles on a refusal); `k2`, with `KROUTER_TOPICS=1` (the
 `krouter_topics` tool and the index's sentence that points to it); `k3`, both; `k4`, krouter as shipped plus the
 folder's `search_notes`; and `--mixed`, which writes the distractor pages into the two handbook folders.
+
+Set 49 adds: `--sparse`, a vault whose alias table names few of its pages (every eighth row of the bench table is kept,
+no row for a distractor page, trigger words only for the pages still named); and `p1`, krouter with
+`KROUTER_INDEX_PAGES=1` (the standing index also lists, by title, the pages in force that the alias table does not name).
 """
 
 from __future__ import annotations
@@ -72,7 +76,8 @@ class Stop(Exception):
     pass
 
 
-KCONDS = ("krouter", "k1", "k2", "k3", "k4", "k5")
+KCONDS = ("krouter", "k1", "k2", "k3", "k4", "k5", "p1")
+SPARSE_EVERY = 8  # set 49: of the bench alias table's rows, in file order, the 1st, 9th, 17th, ... are kept
 NEAREST, TOPICS = ("k1", "k3", "k5"), ("k2", "k3", "k5")  # k5: as k3, on the index of the set 48 addendum
 
 
@@ -112,7 +117,26 @@ def mix_crowd(v: Path) -> None:
     psv.write_text(text, encoding="utf-8")
 
 
-def prepare(work: Path, crowd: int, mixed: bool = False) -> None:
+def make_sparse(v: Path) -> None:
+    """Set 49: an alias table nobody kept up. Of the bench table's own rows every SPARSE_EVERY-th is kept (file order,
+    from the first); the distractor pages get no row; a trigger-word row stays only when its page is still named."""
+    psv = v / "90 系统文件/canonical_sources.psv"
+    head, own = [], []
+    for line in psv.read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.startswith("#"):
+            head.append(line)
+        elif not re.match(r"X\d{3}\|", line):
+            own.append(line)
+    kept = own[::SPARSE_EVERY]
+    psv.write_text("\n".join(head + kept) + "\n", encoding="utf-8")
+    named = {row.split("|")[2] for row in kept}
+    for f in sorted((v / "90 系统文件/自动化").glob("下意识触发词*.psv")):
+        rows = [x for x in f.read_text(encoding="utf-8").splitlines()
+                if not x.strip() or x.startswith("#") or x.split("|")[0] in named]
+        f.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+
+def prepare(work: Path, crowd: int, mixed: bool = False, sparse: bool = False) -> None:
     import shutil
 
     import both
@@ -128,6 +152,8 @@ def prepare(work: Path, crowd: int, mixed: bool = False) -> None:
         both.add_crowd(v, crowd, newer=True)
         if mixed:
             mix_crowd(v)
+    if sparse:
+        make_sparse(v)
     import compile_subconscious
     import recall_index
     import recollect
@@ -137,6 +163,9 @@ def prepare(work: Path, crowd: int, mixed: bool = False) -> None:
     os.environ["KROUTER_TOPICS"] = "1"
     index_topics = compile_subconscious.standing_index(v)
     del os.environ["KROUTER_TOPICS"]
+    os.environ["KROUTER_INDEX_PAGES"] = "1"
+    index_pages = compile_subconscious.standing_index(v)
+    del os.environ["KROUTER_INDEX_PAGES"]
     lines = []
     for rel in pages(v):
         got = recollect.page(v, rel)
@@ -149,7 +178,7 @@ def prepare(work: Path, crowd: int, mixed: bool = False) -> None:
         items.append({"id": r["id"], "plain": tpl.format(note="", text=r["text"]),
                       "krouter": tpl.format(note=nt.format(note=note) if note else "", text=r["text"])})
         key[r["id"]] = {**r, "hook": [h["real"] for h in hits]}
-    (work / "prep.json").write_text(json.dumps({"index": index, "index_topics": index_topics, "listed": "\n".join(lines),
+    (work / "prep.json").write_text(json.dumps({"index": index, "index_topics": index_topics, "index_pages": index_pages, "listed": "\n".join(lines),
                                                 "items": items},
                                                ensure_ascii=False, indent=1), encoding="utf-8")
     (work / "key.json").write_text(json.dumps(key, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -162,7 +191,8 @@ def system(prep: dict, cond: str) -> str:
         return f"{BASE}\n\n{FOLDER}"
     if cond == "listed":
         return f"{BASE}\n\n{FOLDER}\n\n{LISTED}\n{prep['listed']}"
-    return f"{BASE}\n\n{KROUTER}\n{prep['index_topics' if cond in TOPICS else 'index']}"
+    which = "index_pages" if cond == "p1" else ("index_topics" if cond in TOPICS else "index")
+    return f"{BASE}\n\n{KROUTER}\n{prep[which]}"
 
 
 def rel_of(work: Path, path: str) -> str:
@@ -452,10 +482,11 @@ def main() -> int:
     ap.add_argument("--cond", default="krouter", choices=["folder", "listed", *KCONDS])
     ap.add_argument("--crowd", type=int, default=0)
     ap.add_argument("--mixed", action="store_true")
+    ap.add_argument("--sparse", action="store_true")
     a = ap.parse_args()
     work = Path(a.work)
     if a.cmd == "prepare":
-        prepare(work, a.crowd, a.mixed)
+        prepare(work, a.crowd, a.mixed, a.sparse)
         return 0
     return {"run": run, "score": score, "judge": judge}[a.cmd](work, a.cond)
 

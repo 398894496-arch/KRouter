@@ -2337,3 +2337,78 @@ no third round is run on these messages; what is left goes to the held-out half 
 | 2026-11-15 | Registered, before the change was written. |
 | 2026-11-15 | **The change written** (`compile_subconscious.py`: `index_groups` and the new sentence, behind `KROUTER_TOPICS=1`; `tool_host.py`: condition `k5`, and the count of replaced pages read). Checked without a model: on big-mixed the index with the switch names three groups (团队手册/ 530, Handbook/ 529, Handbook/A/ 1) with four names each, the last of them a real handbook topic, and says 762 are not listed; on the 110-page vault, where everything fits, the index is character for character the shipped one. |
 | 2026-11-15 | **Run, K5 on the three vaults** (from a clone of e6bf88e at a neutral path; `run`, `score`, `judge`; `replies_k5.jsonl`, `detail_k5.json`, `judge_k5.jsonl` and the prepared index as `prep_k5.json` beside set 48's files, the printed lines in `k5.txt`). Every reply present, from `deepseek-flash`, ended normally, nothing asked twice; the balance went from 20.91 to 19.75 yuan. Tests touching the index, the prompt hook and the MCP server with no switch set: 130 passed. (recall right / changed / quiet loud / wrong / old by set 47's rule; calls and input tokens a message.) **big-apart: 41 / 48** (unnamed 35 / 42; zh 24, en 17), 22 / 24, **25 / 48**, 26, 6; 1.95 calls; 8,167 tokens. **big-mixed: 41 / 48** (unnamed 35 / 42; zh 23, en 18), 21 / 24, 19 / 48, 30, 5; 1.78 calls; 11,624 tokens. **small: 45 / 48**, 23 / 24, 15 / 48, 13, 2; 1.07 calls; 5,917 tokens. Judge, recall and changed: 41 and 22, 40 and 21, 45 and 23 (one verdict unread in each of the first two); no reply states a replaced rule as current. Replaced page read: 1, 0, 0. Quiet messages whose reply names a vault page: 12, 11, 11. Quiet loud by kind (unrelated, other_sense, common_word, pasted, near_topic, ack): big-apart 2, 7, 3, 5, 8, 0; big-mixed 2, 4, 4, 1, 8, 0; small 1, 3, 1, 2, 8, 0. **Against the line: not met, on one count.** Recall is met on all three (41, 41, 45; lines 40, 36, 44), tool calls on all three, old pages by the narrower count on all three, quiet replies naming a page on all three (12 is the limit). **Quiet loud on big-apart is 25 where the line is 20** (19 and 15 on the other two). **By the rule fixed above the switches stay off and no third round is run on these messages.** **Against K3, case by case.** Recall: big-apart 7 gained and 3 lost, big-mixed 7 gained and 2 lost; the cases with no tool call fall from 6 and 5 to 1 and 0, and what is still missed is mostly after a topics list (6 and 4). Quiet, big-apart: 12 messages loud in K5 that were not in K3 and 2 the other way; 19 of the 25 loud ones include a `krouter_topics` call. On big-apart the group line names two folders of about 30 real topics each, and the host opens one for other-sense, pasted and near-topic messages alike; on big-mixed, where each group is mostly distractors, it does so less (19 loud). **Read with.** (1) With the groups in the index KRouter is right on 41 of 48 at 1,110 pages on both vaults (K0 16 and 18, K3 37 and 36, a folder with a search 45 and 47), at under two tool calls a message. (2) The price is on the quiet side and depends on the vault: nothing on two vaults, twelve more quiet messages disturbed on the third (25 of 48; a folder with a search disturbs 39). Saying more about what the vault holds makes the host look more, for mentions and for non-mentions together; this bench cannot have one without the other at this setting. (3) The second change scored on the same 120 messages; one host, one run. Set 45's held-out half: not run, not read. |
+
+## Set 49: an alias table nobody kept up — the standing index lists every page in force, by title (registered 2026-11-16, before the change was written)
+
+**Why.** The standing index lists only what the alias table names. Every bench vault so far has a row for every topic;
+a real vault mostly does not. Counted on the maintainer's own vault (read-only; counts only, no page name or path read
+into this file): 1,552 pages indexed, 115 of them rule or topic pages in force, **11 of those named by the alias
+table**; the index a session starts with holds 15 topics. The other 104 are things the user settled that the host is
+never told about, and the alias table is filled by hand or by a nightly job that needs a model. Their titles come to
+1,661 characters; the index's budget is 5,400 and 1,400 are in use. **This set asks whether listing those pages by
+title, with no model and no alias row, brings them back, and what it costs on the quiet side** (set 48's addendum:
+saying more about what the vault holds makes the host look more, for mentions and non-mentions alike).
+
+**The change (to be written after this registration; one switch, `KROUTER_INDEX_PAGES=1`, off by default).** After the
+topics the alias table names (unchanged: full lines as shipped), the "names only" part of the standing index also
+lists, by title (`title` in the frontmatter, else the file name), the pages that are
+
+- in force as the prompt hook reads it (`recollect.current` returns the page itself: not replaced, not expired, not
+  secret, not a knowledge-base page), and not a log type; and
+- in the `rule` or `topic` tier. **When the vault holds fewer than 10 such pages** (a folder that is not laid out the
+  template's way, where every page is tier `other`), pages of the `other` tier outside the system folder are listed
+  after them. Project pages and logs are never listed here (grouping project pages is a later step, not this set).
+
+Order: rule pages, then topic pages, then the others; within each, the newest first (as the index orders topics). Same
+budget (5,400 characters, shared with what is already there); what does not fit is counted in the "N more are not
+listed" sentence. No page content, no path: a title only, which the host passes to `krouter_ask`. With the switch off,
+or when the alias table already names every such page, the index is character for character the shipped one. The
+prompt hook, the lookup and its gate do not change.
+
+**Checked without a model, before this registration** (the bench script's vault variant below was written first, the
+engine was not touched): passing a listed page's title to the lookup brings that page first for **52 of 52** pages on
+the small sparse vault and **172 of 172** on the mid one (the lookup answers `memory: related` with the page first,
+never `none`); on the maintainer's vault the ranking puts the page first for 98 of the 104 (103 in the first five).
+
+**Bench** (`tool_host.py`, as sets 47 and 48: set 45's development half, 120 messages — 48 mentions, 24 changed, 48
+quiet; `deepseek-flash` with function calling, at most 4 rounds, each message once, temperature 0; the same counting;
+run from a clone at a neutral path). **Vaults, new here (`--sparse`):** of the bench alias table's 64 rows every eighth
+is kept, in file order from the first (8 rows; fixed before looking at which); distractor pages get no row; a
+trigger-word row stays only when its page is still named. **sparse-small:** the 110-page vault; 60 pages in force that
+are not logs, 8 named, 52 not (their titles: 589 characters). **sparse-mid:** the same with 120 distractor pages
+written into the two handbook folders (230 pages; 180 in force, 8 named, 172 not; titles 2,302 characters), about
+one and a half times the maintainer's count. In both, the alias table names the expected page of 7 of the 48 mentions
+and 1 of the 24 changed cases, and the prompt hook alone brings the expected page for 5 and 5. Both vaults are tier
+`other` throughout, so the fallback above is what is measured; the `rule`-tier path is the same code with another
+filter and is covered by unit tests, not by this bench. **Conditions:** **P0** krouter as shipped; **P1** with
+`KROUTER_INDEX_PAGES=1`. Tools in both: `krouter_ask` and `read_note`. Four runs; the judge measure of set 47 on the
+two P1 runs. Not rerun, for reference: the same 110 pages with the full alias table, set 47: krouter 45 / 48, changed
+23 / 24, quiet loud 16 / 48; a folder with a search 47 / 48, 23 / 24, 40 / 48.
+
+**The line, fixed here, for P1.** sparse-small: recall right at least **40 of 48**; sparse-mid: at least **36 of 48**;
+on both: at least **6 more than P0** on the same vault, changed right at least **20 of 24**, quiet loud at most
+**20 of 48**, at most **2.5 tool calls a message**, at most 2 replaced pages read and no reply that the judge says
+states a replaced rule as current, and quiet messages whose reply names a vault page at most **12 of 48** (the counts
+of set 48's addendum). **All met:** the switch is proposed as the default; before the default changes, a confirmation
+on set 45's held-out half (P0 against P1 on a sparse vault, once) is the maintainer's separate decision. **Any one not
+met:** the switch stays off, which line failed is said, and no second round of this change is run on these messages.
+
+**Reported, whatever it shows.** Both conditions on both vaults with set 47's lines (recall, unnamed, changed, quiet
+loud by kind, wrong, old, calls and tokens a message); the index's length in each; for P1, of the cases P0 missed, how
+many were recovered by a `krouter_ask` on a listed title; what P1 still misses, by whether the host made a call.
+
+**Known limits, said with any number.** Those of set 47 (messages written by a model, generated distractors, one host
+model, one run a condition). These 120 messages have now been scored under two earlier changes (set 48 and its
+addendum) with the full alias table; this change was not written against their wording, but they are development
+numbers all the same. Which eight rows survive is one draw. A real page's title can be a poor name for what it settles
+(a date, a code name); the bench vault's titles are plain. At a thousand unnamed pages the titles do not fit either,
+and that case is set 48's, not this one's.
+
+### Log, set 49
+
+| Date | Event |
+|---|---|
+| 2026-11-16 | Registered, before the change was written. Written first, and run without a model only: `tool_host.py prepare --sparse` and condition `p1` (which reads an index the engine cannot produce yet), and the title check above. |
+| 2026-11-16 | **The change written, behind its switch** (`compile_subconscious.py`: `table_state`, `index_pages`, and the names-only part of the standing index takes the titles in the same budget). Settled when it was written, before any host call: the page list comes from the recall index, read-only (no index yet: no titles); at most 1,500 pages a tier are checked, newest first; a vault with no alias table of its own gets the titles too, a vault still on the template's sample table gets none, as today; a title is passed through the redactor. Checked without a model: with the full bench table the index with the switch is character for character the shipped one; on sparse-small it goes from 1,019 to 1,629 characters (52 titles), on sparse-mid from 1,017 to 3,340 (172 titles); the title check repeated from a clean environment, 52 of 52 and 172 of 172. On the maintainer's vault (read-only, counts only): 15 topics and 104 titles, all of them inside the budget, 1,435 to 3,117 characters, 0.07 to 0.55 seconds to build. Seven unit tests; the suite with no switch set: 714 passed, 10 skipped. **One thing found and said:** the shell these checks ran in carried `KROUTER_NEAREST=1` and `KROUTER_TOPICS=1` from the maintainer's own settings (set there on 2026-11-15 to try them); everything below was run with both unset, and the registration's counts were repeated that way and did not change. |
+| 2026-11-16 | **Run, four runs of 120** (from a clone of c2548a7 at a neutral path; `tool_host.py run`, `score`, and `judge` on the two P1 runs; `prep.json`, `key.json`, every reply with its tool calls, the detail and judge files in `bench/subconscious/results/set49/`, the printed lines in `scores.txt`). Every reply present, every one from `deepseek-flash`, every one ended normally, no error, nothing asked twice; the balance went from 19.50 to 18.70 yuan. (recall right / changed / quiet loud / wrong / old by set 47's rule; calls and input tokens a message.) **sparse-small. P0, as shipped: 18 / 48** (unnamed 14 / 42, named 4 / 6; zh 11, en 7), 14 / 24, 11 / 48, 29, 3; 0.82 calls; 2,423 tokens. **P1: 43 / 48** (unnamed 37 / 42, named 6 / 6; zh 24, en 19), 23 / 24, 16 / 48, 21, 0; 1.27 calls; 3,543 tokens. **sparse-mid. P0: 22 / 48** (unnamed 16 / 42, named 6 / 6; zh 15, en 7), 13 / 24, 10 / 48, 21, 0; 0.82 calls; 2,440 tokens. **P1: 42 / 48** (unnamed 36 / 42, named 6 / 6; zh 24, en 18), 23 / 24, 19 / 48, 26, 4; 1.27 calls; 4,939 tokens. Judge on P1 (the reply states the page's rule), recall and changed: 43 and 23; 42 and 22 (one verdict unread); no reply states a replaced rule as current (0 of 24 in both). Replaced page read: 0 and 0 (P0: 1 and 0). **Quiet messages whose reply names a vault page: P0 4 and 4; P1 11 and 15.** Quiet loud by kind (unrelated, other_sense, common_word, pasted, near_topic, ack, each of 8): small P0 1, 2, 0, 1, 7, 0 and P1 1, 5, 1, 2, 7, 0; mid P0 1, 1, 0, 1, 7, 0 and P1 1, 5, 1, 5, 7, 0. **Against the line: not met, on one count.** Met on both vaults: recall (43 and 42; lines 40 and 36), the gain over P0 (25 and 20; line 6), changed (23 and 23; line 20), quiet loud (16 and 19; line 20), tool calls (1.27; line 2.5), replaced pages read and no stale rule. **Quiet messages whose reply names a vault page: 11 on sparse-small (the limit is 12), 15 on sparse-mid.** By the rule fixed above **the switch stays off** and no second round of this change is run on these messages. **Where the gain came from** (recall cases right in P1 and not in P0): 25 and 20, none lost; in 23 and 18 of them the host passed a listed title, word for word, to `krouter_ask`, and in the other 2 and 2 a query that contains it. **What P1 still misses:** 5 and 6, one of them in each with no call at all; every expected page among them was in the title list. **The 4 old-page deliveries on sparse-mid** under set 47's rule are changed cases where the reply names the replaced page; none read it and none gives its rule as current. **Read with.** (1) With an alias table that names 8 of the pages, the shipped index brings 18 and 22 of 48; listing the rest by title brings 43 and 42, within two or three of the same 110 pages with every row written by hand (45, set 47), with no model and no alias row, at 1.3 tool calls a message. (2) The quiet side pays: the host looks on 15 and 18 of the 48 quiet messages where it looked on 10 and 9, and more replies name a page (11 and 15 against 4 and 4). The rise is in pasted text and other-sense words; it is larger with 172 titles than with 52, which is set 48's addendum again: the more the index says the vault holds, the more the host looks. A folder with a search disturbs 40 of 48 (set 47). (3) One host, one run a condition, one draw of which eight rows survive; these 120 messages have been scored under three changes now. Set 45's held-out half: not run, not read. |
+| 2026-11-16 | **After the run, the page list read another way, no host call** (cf33db9): `index_pages` takes the pages from the small `files` table and works the tier out from the path and the page's own `status`, instead of scanning `docs`, which reads every page's body off disk and is cold when a session starts. Checked without a model: `prepare --sparse` on both vaults gives the same P0 and P1 index as the ones the runs used, line for line, apart from the last line, which carries the work folder's path; on a 1,557-page vault the same 105 titles, the step from about 0.5 s to about 0.1 s. The scores above describe this code too. |
