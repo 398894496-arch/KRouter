@@ -334,8 +334,9 @@ def index_pages(vault: Path, skip: set[str], today: date | None = None) -> list[
     try:
         con = sqlite3.connect(f"file:{ri.cache_path(vault)}?mode=ro", uri=True)
         try:
-            rows = con.execute("SELECT d.rel, d.tier, f.mtime_ns FROM docs d JOIN files f ON f.rel = d.rel "
-                               "WHERE d.tier IN ('rule', 'topic', 'other') ORDER BY f.mtime_ns DESC").fetchall()
+            # 只读 `files` 这张小表，层从路径算：扫 `docs` 会把每一页的正文都从盘上读一遍（会话开始时是冷的）
+            rows = [(rel, ri.tier_of(zones.canon(vault, rel), ""), mtime_ns) for rel, mtime_ns in
+                    con.execute("SELECT rel, mtime_ns FROM files ORDER BY mtime_ns DESC, rel")]
         finally:
             con.close()
     except sqlite3.Error:
@@ -348,10 +349,12 @@ def index_pages(vault: Path, skip: set[str], today: date | None = None) -> list[
             canon = zones.canon(vault, rel)
             if tier == "other" and canon.startswith(SYSTEM_DIR):
                 continue
+            fm = (recollect.page(vault, rel) or ({}, ""))[0]
+            if ri.tier_of(canon, (fm.get("status") or "").strip().lower()) != tier:
+                continue  # 作废的、自动生成的：索引库里记在 dead 层
             cur = recollect.current(vault, rel, today)
             if cur is None or cur[0] != rel:
                 continue
-            fm = (recollect.page(vault, rel) or ({}, ""))[0]
             if (fm.get("type") or "").lower() in recollect.LOG_TYPES:
                 continue
             updated = str(fm.get("date") or fm.get("valid_from") or fm.get("verified_at") or "")[:10] \

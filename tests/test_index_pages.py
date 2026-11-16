@@ -103,6 +103,7 @@ def test_rule_pages_are_listed_and_other_folders_are_not_once_there_are_enough(e
         page(v / f"02 经验与方法/规矩{i:02d}.md", f"规矩{i:02d}", f"第 {i} 条规矩：周五不发版。")
     page(v / "02 经验与方法/主题档案/主题｜发版.md", "主题｜发版", "发版的来龙去脉。")
     page(v / "02 经验与方法/旧规矩.md", "旧规矩", "作废了。", extra="status: superseded\n")
+    page(v / "02 经验与方法/机器汇总.md", "机器汇总", "自动生成的。", extra="status: generated\n")
     page(v / "随手记/买菜.md", "买菜", "周末买菜。")
     page(v / "01 项目/某项目/进度.md", "某项目进度", "做到一半。")
     page(v / "05 时间日志/2026-10-01.md", "2026-10-01", "今天开会。", extra="type: log\n")
@@ -115,7 +116,7 @@ def test_rule_pages_are_listed_and_other_folders_are_not_once_there_are_enough(e
     assert "规矩01" in listed and "主题｜发版" in listed
     assert listed.index("规矩01") < listed.index("主题｜发版")  # 规则页在前，主题页在后
     assert "规矩00" not in listed  # 别名表点了名，已经有整行
-    for absent in ("旧规矩", "买菜", "某项目进度", "2026-10-01"):
+    for absent in ("旧规矩", "机器汇总", "买菜", "某项目进度", "2026-10-01"):
         assert absent not in listed
 
 
