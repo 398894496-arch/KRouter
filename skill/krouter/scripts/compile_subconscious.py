@@ -296,21 +296,87 @@ def sample_table(vault: Path, mp: Path) -> bool:
     return mine in known
 
 
+def table_state(vault: Path) -> str:
+    """`own`: the vault has an alias table of its own. `none`: it has none (the one next to the code is a sample, not
+    this vault's knowledge). `sample`: just installed, the table still names only the template's example pages, which
+    are not things the user settled."""
+    import os
+
+    mp = map_for(vault)
+    sample = sample_path()
+    if not mp.is_file() or (mp.resolve() == sample.resolve() and not sample.is_symlink() and not os.environ.get("KROUTER_MAP")):
+        return "none"
+    if sample_table(vault, mp) and not os.environ.get("KROUTER_MAP"):
+        return "sample"
+    return "own"
+
+
+INDEX_PAGES_MIN = 10      # 第 49 套：现行的规则页和主题页不到这么多（库不是按模板摆的），其他页也按标题列
+INDEX_PAGES_SCAN = 1500   # 每一层最多核对这么多页（按改动时间从新到旧），再多的不列
+SYSTEM_DIR = "90 系统文件/"
+
+
+def index_pages(vault: Path, skip: set[str], today: date | None = None) -> list[dict]:
+    """`KROUTER_INDEX_PAGES=1` (set 49): the pages in force that the alias table does not name, to be listed by title in
+    the standing index: [{rel, name, when}]. In force as the prompt hook reads it (`recollect.current` gives the page
+    itself: not replaced, not expired, not secret, not knowledge base), not a log type. Rule pages, then topic pages,
+    the newest first; when the vault holds fewer than INDEX_PAGES_MIN of those, pages of the `other` tier outside
+    the system folder after them. Project pages and logs are never listed. Reads the recall index, writes nothing; no
+    index yet, or a vault still on the template's sample table: no pages."""
+    import sqlite3
+
+    import recollect
+    import recall_index as ri
+
+    if table_state(vault) == "sample":
+        return []
+    today = today or date.today()
+    try:
+        con = sqlite3.connect(f"file:{ri.cache_path(vault)}?mode=ro", uri=True)
+        try:
+            rows = con.execute("SELECT d.rel, d.tier, f.mtime_ns FROM docs d JOIN files f ON f.rel = d.rel "
+                               "WHERE d.tier IN ('rule', 'topic', 'other') ORDER BY f.mtime_ns DESC").fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return []
+    used = last_used(vault)
+
+    def live(tier: str) -> list[dict]:
+        out = []
+        for rel, _tier, mtime_ns in [r for r in rows if r[1] == tier][:INDEX_PAGES_SCAN]:
+            canon = zones.canon(vault, rel)
+            if tier == "other" and canon.startswith(SYSTEM_DIR):
+                continue
+            cur = recollect.current(vault, rel, today)
+            if cur is None or cur[0] != rel:
+                continue
+            fm = (recollect.page(vault, rel) or ({}, ""))[0]
+            if (fm.get("type") or "").lower() in recollect.LOG_TYPES:
+                continue
+            updated = str(fm.get("date") or fm.get("valid_from") or fm.get("verified_at") or "")[:10] \
+                or date.fromtimestamp(mtime_ns / 1e9).isoformat()
+            out.append({"rel": canon, "name": re.sub(r"\s+", " ", str(fm.get("title") or Path(rel).stem)).strip(),
+                        "when": max(updated, used.get(canon, "")[:10])})
+        out.sort(key=lambda x: ("".join(chr(0x10FFFF - ord(c)) for c in x["when"]), x["name"]))
+        return out
+
+    pages = live("rule") + live("topic")
+    if len(pages) < INDEX_PAGES_MIN:
+        pages += live("other")
+    return [p for p in pages if p["rel"] not in skip and p["name"]]
+
+
 def index_topics(vault: Path, today: date | None = None) -> list[dict]:
     """One topic per live page the alias table names: [{rel, name, others, how, rule, when}], best first (rule pages,
     then the newest of last used and last updated). A row on a replaced page counts for the page that replaced it."""
     import recollect
     import recall_index as ri
 
-    import os
-
     today = today or date.today()
     mp = map_for(vault)
-    sample = sample_path()
-    if not mp.is_file() or (mp.resolve() == sample.resolve() and not sample.is_symlink() and not os.environ.get("KROUTER_MAP")):
-        return []  # 代码目录里那份是样例，不是这个库的知识：库里没有自己的别名表就不给索引
-    if sample_table(vault, mp) and not os.environ.get("KROUTER_MAP"):
-        return []  # 刚装好、还只有模板的示例页：示例主题不是用户定过的事，不列
+    if table_state(vault) != "own":
+        return []
     try:
         rows = load_rows(mp)
     except ValueError:
@@ -354,7 +420,9 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
     from krouter_redact import redact
 
     topics = index_topics(vault, today)
-    if not topics:
+    # 第 49 套：别名表没点名的现行页，按标题排在「只列名字」那一段的后面，占同一份预算
+    extra = index_pages(vault, {t["rel"] for t in topics}, today) if os.environ.get("KROUTER_INDEX_PAGES") == "1" else []
+    if not topics and not extra:
         return ""
     lang = "en" if zones.lang(vault) == "en" else "zh"
     body, used = [], 0
@@ -386,8 +454,9 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
     named, shown = [], 0
     head = INDEX_NAMES_HEAD[lang]
     room = chars - used - len(head)
-    for t in rest:
-        item = t["name"]  # 名字就是别名：拿它去 krouter_ask 正好锁到那一页
+    for t in rest + extra:
+        # 名字就是别名：拿它去 krouter_ask 正好锁到那一页（按标题列的页：标题查回这一页，标题先脱敏）
+        item = t["name"] if "others" in t else redact(t["name"])
         if room - (len(item) + 1) < 0:
             break
         named.append(item)
@@ -395,7 +464,7 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
     if named:
         body.append(head + ("、" if lang == "zh" else "; ").join(named))
     shown = len(body) - (1 if named else 0) + len(named)
-    more = len(topics) - shown
+    more = len(topics) + len(extra) - shown
     if group_line:
         body.append(group_line)
     script = Path(__file__).resolve().with_name("route_knowledge.sh")
