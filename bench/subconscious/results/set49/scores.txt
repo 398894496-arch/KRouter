@@ -1,0 +1,44 @@
+== run small krouter
+{"cond": "krouter", "items": 120, "replies": 120, "models": ["deepseek-flash"], "not_stop": 0, "tokens": {"prompt_tokens": 290793, "completion_tokens": 40269, "prompt_cache_hit_tokens": 223744}, "stopped": null}
+== run small p1
+{"cond": "p1", "items": 120, "replies": 120, "models": ["deepseek-flash"], "not_stop": 0, "tokens": {"prompt_tokens": 425219, "completion_tokens": 38416, "prompt_cache_hit_tokens": 325888}, "stopped": null}
+== run mid krouter
+{"cond": "krouter", "items": 120, "replies": 120, "models": ["deepseek-flash"], "not_stop": 0, "tokens": {"prompt_tokens": 292771, "completion_tokens": 39192, "prompt_cache_hit_tokens": 224512}, "stopped": null}
+== run mid p1
+{"cond": "p1", "items": 120, "replies": 120, "models": ["deepseek-flash"], "not_stop": 0, "tokens": {"prompt_tokens": 592690, "completion_tokens": 39334, "prompt_cache_hit_tokens": 487936}, "stopped": null}
+== score small krouter
+krouter: items 120 missing 0
+  recall 18/48 (unnamed 14/42, named 4/6; zh 11, en 7)  changed 14/24  quiet loud 11/48  wrong 29  old 3
+  quiet loud by kind: unrelated=1/8, other_sense=2/8, common_word=0/8, pasted=1/8, near_topic=7/8, ack=0/8
+  tool calls 99 (0.82 a message; recall 51, changed 38, quiet 10); messages with a call: recall 34/48, changed 22/24, quiet 10/48
+  replaced page read with read_note: 1 of 24 changed cases
+  quiet messages whose reply names a vault page: 4/48; calls by tool: krouter_ask 79, read_note 20
+  tokens: 290793 in, 40269 out (2423 in a message)
+== score small p1
+p1: items 120 missing 0
+  recall 43/48 (unnamed 37/42, named 6/6; zh 24, en 19)  changed 23/24  quiet loud 16/48  wrong 21  old 0
+  quiet loud by kind: unrelated=1/8, other_sense=5/8, common_word=1/8, pasted=2/8, near_topic=7/8, ack=0/8
+  tool calls 152 (1.27 a message; recall 79, changed 47, quiet 26); messages with a call: recall 46/48, changed 24/24, quiet 15/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 11/48; calls by tool: krouter_ask 109, read_note 43
+  tokens: 425219 in, 38416 out (3543 in a message)
+== judge small p1
+p1: reply carries the page's rule (judge): recall 43/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0
+== score mid krouter
+krouter: items 120 missing 0
+  recall 22/48 (unnamed 16/42, named 6/6; zh 15, en 7)  changed 13/24  quiet loud 10/48  wrong 21  old 0
+  quiet loud by kind: unrelated=1/8, other_sense=1/8, common_word=0/8, pasted=1/8, near_topic=7/8, ack=0/8
+  tool calls 99 (0.82 a message; recall 52, changed 34, quiet 13); messages with a call: recall 37/48, changed 23/24, quiet 9/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 4/48; calls by tool: krouter_ask 82, read_note 17
+  tokens: 292771 in, 39192 out (2440 in a message)
+== score mid p1
+p1: items 120 missing 0
+  recall 42/48 (unnamed 36/42, named 6/6; zh 24, en 18)  changed 23/24  quiet loud 19/48  wrong 26  old 4
+  quiet loud by kind: unrelated=1/8, other_sense=5/8, common_word=1/8, pasted=5/8, near_topic=7/8, ack=0/8
+  tool calls 153 (1.27 a message; recall 82, changed 40, quiet 31); messages with a call: recall 47/48, changed 23/24, quiet 18/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 15/48; calls by tool: krouter_ask 116, read_note 37
+  tokens: 592690 in, 39334 out (4939 in a message)
+== judge mid p1
+p1: reply carries the page's rule (judge): recall 42/48, changed 22/24; states the replaced rule as current: 0/24; verdicts not read 1
