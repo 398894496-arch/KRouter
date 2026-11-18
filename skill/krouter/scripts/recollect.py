@@ -609,6 +609,180 @@ def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> 
              "anchor": "", "older": cur[1] or older}]
 
 
+# ---------- a reader for what the hook cannot tell (sets 51 and 52) ----------
+# 钩子不读句子，只比字面：分不清「换了说法在提这件事」和「随口一句、碰巧有相同的词」，所以门槛严了就安静，松了就乱出声。
+# `KROUTER_RECALL_JUDGE=1`（默认关）：钩子自己什么都没递、手里又有字面最接近的几页时，问一次模型「这句话说的是哪一页，
+# 都不是回 0」，它点了哪页就递哪页。要一把 key（`KROUTER_JUDGE_KEY`，没有就用 `DEEPSEEK_API_KEY`；环境变量或 keys 文件），
+# 默认问 DeepSeek 的 `deepseek-flash`（`KROUTER_JUDGE_URL`、`KROUTER_JUDGE_MODEL` 换成任何兼容 chat completions 的接口）。
+# 发出去的只有这句话的正文（脱敏后）和候选页的名字与一行结论；标了 `#不记` 的会话不问。超过 JUDGE_TIMEOUT 秒当没问过。
+JUDGE_K = 5
+JUDGE_MIN_WEIGHT = 12  # 一个汉字算 2、一个拉丁字母或数字算 1：比这轻的话（「好的」「go on」）没有可查的东西，不问
+JUDGE_TIMEOUT = 5.0
+JUDGE_MAX_DAILY = 500
+JUDGE_URL = "https://api.deepseek.com/chat/completions"
+JUDGE_MODEL = "deepseek-flash"
+JUDGE_LOG = "judge.jsonl"
+JUDGE_ASK = {
+    "zh": "下面是用户刚说的一句话，和记忆库里按字面最接近的几页（每页一行：名字：记的是什么）。判断这句话是不是在说其中某一页"
+          "记的那件事：换了说法、没提名字也算；只是碰巧有相同的词、说的是别的事不算；粘贴的日志、代码、别人的话不算。\n"
+          "只回答一个数字：是哪一页就回它的编号；都不是、或拿不准，回 0。不要解释。\n\n用户的话：{text}\n\n{pages}\n",
+    "en": "Below are a message the user just sent and the pages of their memory vault closest to it by wording (one line "
+          "each: name: what it records). Decide whether the message is about the matter one of the pages records: said "
+          "another way or without the name counts; sharing a word while being about something else does not; pasted "
+          "logs, code or someone else's words do not.\nAnswer with one number only: the page's number, or 0 when it is "
+          "none of them or you are not sure. No explanation.\n\nThe message: {text}\n\n{pages}\n",
+}
+
+
+def _setting(name: str) -> str:
+    """An environment variable, else the same name in the keys file (`llm.keys_file()`)."""
+    val = os.environ.get(name, "").strip()
+    if val:
+        return val
+    try:
+        import llm
+
+        path = llm.keys_file()
+        return llm._parse(path.read_text(encoding="utf-8", errors="replace")).get(name, "") if path.is_file() else ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def judge_conf() -> dict | None:
+    """Where the question goes, or None when the tier is off or has no key."""
+    if os.environ.get("KROUTER_RECALL_JUDGE") != "1":
+        return None
+    key = _setting("KROUTER_JUDGE_KEY") or _setting("DEEPSEEK_API_KEY")
+    if not key:
+        return None
+
+    def number(name: str, default: float) -> float:
+        try:
+            return float(os.environ.get(name, "") or default)
+        except ValueError:
+            return default
+
+    return {"key": key, "url": _setting("KROUTER_JUDGE_URL") or JUDGE_URL, "model": _setting("KROUTER_JUDGE_MODEL") or JUDGE_MODEL,
+            "timeout": max(0.5, number("KROUTER_JUDGE_TIMEOUT", JUDGE_TIMEOUT)), "cap": int(number("KROUTER_JUDGE_MAX", JUDGE_MAX_DAILY))}
+
+
+def weight(text: str) -> int:
+    return 2 * len(CJK.findall(text)) + len(re.findall(r"[A-Za-z0-9]", text))
+
+
+def candidates(vault: Path, said: str, have: set[str], k: int = JUDGE_K, today: date | None = None) -> list[dict]:
+    """The pages closest to the message by wording that the hook would be allowed to bring: [{rel, real, title, how}],
+    at most k, best first. Its own full-text recall, the refusal gate ignored; in force, not a log or a session excerpt,
+    not secret, not a knowledge-base page, not in `have`. A message lighter than JUDGE_MIN_WEIGHT gets none."""
+    today = today or date.today()
+    if not said or len(said) > PROSE_MAX or weight(said) < JUDGE_MIN_WEIGHT:
+        return []
+    res = _ranked(vault, said) or {}
+    out: list[dict] = []
+    for h in res.get("hits") or []:
+        if h.get("tier") in ("log", "dead"):
+            continue
+        cur = current(vault, zones.real(vault, h["rel"]), today)
+        if cur is None or cur[0] in have or any(c["real"] == cur[0] for c in out):
+            continue
+        fm = (page(vault, cur[0]) or ({}, ""))[0]
+        if (fm.get("type") or "").lower() in LOG_TYPES:
+            continue
+        d = describe(vault, cur[0], "", "", today)
+        out.append({"rel": d["rel"], "real": cur[0], "how": d["how"],
+                    "title": re.sub(r"\s+", " ", str(fm.get("title") or Path(cur[0]).stem)).strip()})
+        if len(out) >= k:
+            break
+    return out
+
+
+def judge_prompt(text: str, cands: list[dict], lang: str) -> str:
+    sep = "：" if lang == "zh" else ": "
+    return JUDGE_ASK[lang].format(text=text.strip(),
+                                  pages="\n".join(f"{i}. {c['title']}{sep}{c['how']}" for i, c in enumerate(cands, 1)))
+
+
+def judge_pick(reply: str, n: int) -> int:
+    """The number the model answered; 0 for none, and for anything unreadable or out of range."""
+    m = re.search(r"\d+", reply or "")
+    v = int(m.group()) if m else 0
+    return v if 1 <= v <= n else 0
+
+
+def _judge_call(conf: dict, prompt: str) -> str:
+    import urllib.request
+
+    body = {"model": conf["model"], "messages": [{"role": "user", "content": prompt}], "temperature": 0, "max_tokens": 16}
+    req = urllib.request.Request(conf["url"], data=json.dumps(body).encode(), headers={
+        "Authorization": f"Bearer {conf['key']}", "Content-Type": "application/json", "User-Agent": "krouter"})
+    with urllib.request.urlopen(req, timeout=conf["timeout"]) as resp:
+        return json.load(resp)["choices"][0]["message"].get("content") or ""
+
+
+def _judge_calls_today() -> int:
+    today, n = datetime.now(timezone.utc).strftime("%Y-%m-%d"), 0
+    try:
+        for line in (state_dir() / JUDGE_LOG).read_text(encoding="utf-8", errors="replace").splitlines():
+            n += line.startswith('{"ts": "' + today)
+    except OSError:
+        pass
+    return n
+
+
+def _judge_log(seconds: float, n: int, picked: bool, error: str) -> None:
+    """One line per question asked, outside the vault: when, how long, how many candidates, whether a page was named,
+    what went wrong. Never the message, the pages or the reply."""
+    try:
+        base = state_dir()
+        base.mkdir(parents=True, exist_ok=True)
+        row = {"ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "seconds": round(seconds, 2),
+               "candidates": n, "picked": picked, "error": error}
+        with (base / JUDGE_LOG).open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def judged(vault: Path, text: str, today: date | None = None) -> list[dict]:
+    """For a message the hook brought nothing for: ask the reader which candidate page, if any, it is about, and bring
+    that one (shaped as `recollect()` shapes a page, route `judge`). [] when the tier is off, there is no key, no
+    candidate, today's questions are used up, the reader says none, or it does not answer in time."""
+    import threading
+
+    conf = judge_conf()
+    if conf is None:
+        return []
+    today = today or date.today()
+    said = prose(text)
+    cands = candidates(vault, said, set(), JUDGE_K, today)
+    if not cands or _judge_calls_today() >= conf["cap"]:
+        return []
+    lang = "zh" if CJK.search(said) else "en"
+    prompt = judge_prompt(redact(said), cands, lang)
+    box: dict = {}
+
+    def work() -> None:
+        try:
+            box["reply"] = _judge_call(conf, prompt)
+        except Exception as exc:  # noqa: BLE001  问不到就当没问过
+            box["error"] = type(exc).__name__
+
+    t0 = time.perf_counter()
+    th = threading.Thread(target=work, daemon=True)
+    th.start()
+    th.join(conf["timeout"])
+    took = time.perf_counter() - t0
+    error = "timeout" if th.is_alive() else box.get("error", "")
+    n = 0 if error else judge_pick(box.get("reply", ""), len(cands))
+    _judge_log(took, len(cands), bool(n), error)
+    if not n:
+        return []
+    c = cands[n - 1]
+    d = describe(vault, c["real"], "", "", today)
+    d.update(route="judge", word=c["title"], sentence=cut(redact(sentence_at(said, 0)), SENTENCE_MAX), provisional=False)
+    return [d]
+
+
 REFRESH_EVERY = 600
 
 
@@ -893,8 +1067,8 @@ def log(hits: list[dict], agent: str, session: str) -> None:
 
 HEAD = {"zh": "KRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：",
         "en": "KRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):"}
-VIA = {"zh": {"alias": "别名", "trigger": "触发词", "recall": "全文召回"},
-       "en": {"alias": "alias", "trigger": "trigger", "recall": "full-text recall"}}
+VIA = {"zh": {"alias": "别名", "trigger": "触发词", "recall": "全文召回", "judge": "模型判断"},
+       "en": {"alias": "alias", "trigger": "trigger", "recall": "full-text recall", "judge": "model-judged"}}
 OLDER = {"zh": "更早的一页说法不同（{p}），以这页为准", "en": "an earlier page said otherwise ({p}); this one holds"}
 CHANGED = {"zh": "这页后来改过：{t}", "en": "changed later: {t}"}
 RELATED = {"zh": "相关页：{t}", "en": "related: {t}"}
@@ -941,6 +1115,8 @@ def main(argv: list[str]) -> int:
         return 2
     use = tuple(r for r in args.routes.split(",") if r in ROUTES) if args.routes else None
     hits = recollect(Path(raw), args.text, use)
+    if not hits and use is None:
+        hits = judged(Path(raw), args.text)  # `KROUTER_RECALL_JUDGE=1`：钩子没递时问一次模型
     print(json.dumps(hits, ensure_ascii=False, indent=1) if args.json else render(hits))
     return 0
 

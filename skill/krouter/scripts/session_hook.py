@@ -575,10 +575,15 @@ def recall_note(payload: dict, agent: str, text: str) -> None:
             return
         sid = str(payload.get("session_id") or "")
         recollect.keep_index_fresh(Path(raw).expanduser())
-        hits = recollect.keep_new(recollect.recollect(Path(raw).expanduser(), text), agent, sid)
-        transcript = str(payload.get("transcript_path") or "")
+        found = recollect.recollect(Path(raw).expanduser(), text)
         # 「#不记」：这句话里有，或这个会话前面说过（记成一个标记文件，免得每句话都去扫整份会话记录）
         quiet = recollect.no_capture(agent, sid, bool(NO_CAPTURE.search(text)))
+        if not found and not quiet:
+            # `KROUTER_RECALL_JUDGE=1`（默认关）：钩子自己没递、手里有字面最接近的几页时，问一次模型说的是哪一页。
+            # 标了不记的会话不问：那句话不该发给别的模型
+            found = recollect.judged(Path(raw).expanduser(), text)
+        hits = recollect.keep_new(found, agent, sid)
+        transcript = str(payload.get("transcript_path") or "")
         if hits and not quiet and transcript and marked_out(Path(transcript), agent):
             quiet = recollect.no_capture(agent, sid, True)
         recollect.remember_turn(agent, sid, text, hits, quiet)  # 这一轮结束时 turn 看宿主自己取了什么

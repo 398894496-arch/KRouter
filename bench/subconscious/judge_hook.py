@@ -51,6 +51,8 @@ def main() -> int:
     ap.add_argument("--crowd", type=int, default=0)
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--decider", default="", help="an OpenRouter decision model id; empty: deepseek-flash (set 51)")
+    ap.add_argument("--engine", action="store_true", help="ask through the engine (`recollect.judged`, "
+                    "KROUTER_RECALL_JUDGE=1) instead of this script's own call: the tier as shipped")
     args = ap.parse_args()
     import set45  # puts skill/krouter/scripts (or SET45_SCRIPTS) on the path
     import run as set32
@@ -80,6 +82,23 @@ def main() -> int:
         brought = {r["id"]: recollect.recollect(v, r["text"], recollect.DEFAULT_ROUTES) for r in rows}
         cands = {r["id"]: ([] if brought[r["id"]] else candidates.candidates(v, r["text"], set(), candidates.K_JUDGE))
                  for r in rows}
+        if args.engine and not args.dry:
+            os.environ.update(KROUTER_RECALL_JUDGE="1", KROUTER_JUDGE_KEY=key)
+            for r in rows:
+                if not brought[r["id"]]:
+                    brought[r["id"]] = recollect.judged(v, r["text"])
+            log = Path(os.environ["KROUTER_STATE_DIR"]) / recollect.JUDGE_LOG
+            asked = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines()] if log.is_file() else []
+            (args.out / "judge.jsonl").write_text("".join(json.dumps(a, ensure_ascii=False) + "\n" for a in asked), encoding="utf-8")
+            (args.out / "brought.jsonl").write_text("".join(json.dumps(
+                {"id": r["id"], "brought": [h["real"] for h in brought[r["id"]]], "routes": [h["route"] for h in brought[r["id"]]]},
+                ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+            secs = sorted(a["seconds"] for a in asked) or [0.0]
+            print(f"engine: questions asked {len(asked)}  named a page {sum(a['picked'] for a in asked)}  "
+                  f"errors {dict((e, sum(1 for a in asked if a['error'] == e)) for e in sorted({a['error'] for a in asked} - {''}))}")
+            print(f"seconds per call: median {statistics.median(secs):.2f}  p90 {secs[int(len(secs) * 0.9)]:.2f}  max {secs[-1]:.2f}")
+            set45.report(rows, brought, f"hook + judge through the engine  crowd: {args.crowd}")
+            return 0
     asking = [r for r in rows if cands[r["id"]]]
     print(f"cases: {len(rows)}  the hook brought a page for {sum(bool(b) for b in brought.values())}  "
           f"messages that ask the model: {len(asking)}")
