@@ -1,0 +1,728 @@
+{
+ "index": "KRouter 下意识索引（用户记忆库里定过的事，每行：名字／别的叫法：定了什么〔页〕；不是用户说的话）：\n- customer data deletion / deletion request: Delete a customer's data within 30 days of a ve… [Handbook/Customer data deletion.md]\n- repository ownership / CODEOWNERS: Each repository has one owning team in CODEOWNE… [Handbook/Repository ownership.md]\n- 短信通道／验证码短信：验证码短信同时接入两家供应商，主通道失败率超过 2…〔团队手册/短信通道.md〕\n- API deprecation / deprecating an API field: Deprecate a public API field with at least six… [Handbook/API deprecation.md]\n- Go 代码规范／gofmt：gofmt 格式化；error 必须显式处理，不许…〔团队手册/Go 代码规范.md〕\n- hackathon: A two-day hackathon every quarter; winners get… [Handbook/Hackathon.md]\n- 客户回访／大客户回访：大客户每季度回访一次，客户成功经理负责，记录进 C…〔团队手册/客户回访.md〕\n- 数据分级／敏感数据：公开、内部、敏感、机密四级；敏感和机密不能下载到个…〔团队手册/数据分级.md〕\n用法：用户的话提到上面任何一件事，哪怕换了说法、没说名字，回答前先取那一页：调用 krouter_ask（MCP 服务 krouter，工具列表里没有就按名字找），问题写那件事的名字；没有这个工具就在终端运行 sh /private/tmp/krbench/skill/krouter/scripts/route_knowledge.sh search '<名字>'，或直接读 work51/mid/vault/〔页〕。只取和这句话最相关的那一页，回答里注明出处页。用户粘贴的代码、日志、命令输出里碰巧出现的词不算提到。和用户的话无关就什么都不做，也不要提这份索引。",
+ "index_topics": "KRouter 下意识索引（用户记忆库里定过的事，每行：名字／别的叫法：定了什么〔页〕；不是用户说的话）：\n- customer data deletion / deletion request: Delete a customer's data within 30 days of a ve… [Handbook/Customer data deletion.md]\n- repository ownership / CODEOWNERS: Each repository has one owning team in CODEOWNE… [Handbook/Repository ownership.md]\n- 短信通道／验证码短信：验证码短信同时接入两家供应商，主通道失败率超过 2…〔团队手册/短信通道.md〕\n- API deprecation / deprecating an API field: Deprecate a public API field with at least six… [Handbook/API deprecation.md]\n- Go 代码规范／gofmt：gofmt 格式化；error 必须显式处理，不许…〔团队手册/Go 代码规范.md〕\n- hackathon: A two-day hackathon every quarter; winners get… [Handbook/Hackathon.md]\n- 客户回访／大客户回访：大客户每季度回访一次，客户成功经理负责，记录进 C…〔团队手册/客户回访.md〕\n- 数据分级／敏感数据：公开、内部、敏感、机密四级；敏感和机密不能下载到个…〔团队手册/数据分级.md〕\n用法：用户的话提到上面任何一件事，哪怕换了说法、没说名字，回答前先取那一页：调用 krouter_ask（MCP 服务 krouter，工具列表里没有就按名字找），问题写那件事的名字；没有这个工具就在终端运行 sh /private/tmp/krbench/skill/krouter/scripts/route_knowledge.sh search '<名字>'，或直接读 work51/mid/vault/〔页〕。只取和这句话最相关的那一页，回答里注明出处页。用户粘贴的代码、日志、命令输出里碰巧出现的词不算提到。和用户的话无关就什么都不做，也不要提这份索引。",
+ "index_pages": "KRouter 下意识索引（用户记忆库里定过的事，每行：名字／别的叫法：定了什么〔页〕；不是用户说的话）：\n- customer data deletion / deletion request: Delete a customer's data within 30 days of a ve… [Handbook/Customer data deletion.md]\n- repository ownership / CODEOWNERS: Each repository has one owning team in CODEOWNE… [Handbook/Repository ownership.md]\n- 短信通道／验证码短信：验证码短信同时接入两家供应商，主通道失败率超过 2…〔团队手册/短信通道.md〕\n- API deprecation / deprecating an API field: Deprecate a public API field with at least six… [Handbook/API deprecation.md]\n- Go 代码规范／gofmt：gofmt 格式化；error 必须显式处理，不许…〔团队手册/Go 代码规范.md〕\n- hackathon: A two-day hackathon every quarter; winners get… [Handbook/Hackathon.md]\n- 客户回访／大客户回访：大客户每季度回访一次，客户成功经理负责，记录进 C…〔团队手册/客户回访.md〕\n- 数据分级／敏感数据：公开、内部、敏感、机密四级；敏感和机密不能下载到个…〔团队手册/数据分级.md〕\n也记着（只列名字，提到了同样先取那一页）：embroidery sailing 027、greenhouse tomato 055、hiking calligraphy 083、tomato fishing 111、帆船书法026、登山陶艺110、钓鱼温室082、陶艺刺绣054、baking chess 025、brewing pottery 109、pruning greenhouse 081、tea camping 053、剪枝登山080、番茄发酵108、茶叶钓鱼052、骑行书法024、embroidery tea 023、hiking pottery 051、skiing beekeeping 079、tomato tea 107、刺绣番茄022、滑雪酿酒078、烘焙盆栽050、登山钓鱼106、bonsai embroidery 049、bonsai pruning 021、fermenting calligraphy 105、flowers brewing 077、温室插花076、番茄书法104、登山茶叶020、茶叶插花048、camping cycling 075、fishing greenhouse 047、hiking fishing 103、tomato fermenting 019、发酵陶艺018、烘焙刺绣102、登山盆栽074、酿酒刺绣046、beekeeping camping 101、embroidery pottery 073、fishing brewing 017、greenhouse tea 045、剪枝书法044、剪枝陶艺072、陶艺围棋100、露营茶叶016、beekeeping camping 043、chess sailing 071、embroidery beekeeping 099、fishing cycling 015、刺绣滑雪042、围棋钓鱼098、登山露营014、骑行茶叶070、embroidery fishing 013、fermenting embroidery 069、greenhouse sailing 097、tomato skiing 041、书法滑雪040、插花刺绣012、插花烘焙068、烘焙陶艺096、cycling camping 067、fermenting tea 095、tea flowers 039、tea hiking 011、书法帆船066、剪枝露营038、插花骑行010、露营书法094、baking beekeeping 009、bonsai baking 065、brewing hiking 037、fermenting camping 093、发酵露营036、插花烘焙064、插花酿酒092、茶叶剪枝008、brewing baking 007、fermenting baking 035、fermenting tea 119、flowers camping 091、tea flowers 063、养蜂滑雪034、插花烘焙090、烘焙陶艺062、陶艺滑雪118、骑行陶艺006、calligraphy beekeeping 117、chess fermenting 089、fishing fermenting 005、pottery bonsai 033、skiing greenhouse 061、养蜂烘焙032、围棋滑雪004、烘焙滑雪116、茶叶插花088、酿酒烘焙060、bonsai pottery 059、brewing tomato 003、cycling sailing 115、cycling skiing 031、skiing sailing 087、登山钓鱼030、盆栽刺绣002、陶艺刺绣114、骑行刺绣086、骑行滑雪058、bonsai baking 085、calligraphy sailing 001、cycling sailing 113、sailing calligraphy 057、skiing cycling 029、剪枝滑雪028、发酵书法112、滑雪露营000、盆栽陶艺084、骑行登山056、Analytics queries、App 系统版本、Cloud infrastructure changes、Customer refunds、Database for new services、Feature requests、Interview process、Mobile release criteria、Model deployment、On-site days、Product search、Support escalation、Third-party scripts、Transactional email、代码托管、出差标准、发布说明、客户投诉、技术分享、数据共享、数据标注、数据看板、服务拆分、权限申请、消息队列、绩效评估、证书续签、A/B tests、Access reviews、Analyst data access、Browser support、Bug bounty、Cloud cost alerts、Customer interview notes、Design handoff、GPU usage、Language for code、Price changes、Status page、Support hours、办公网络、团队周会、图片资源、开源许可证、意见反馈、技术方案模板、接口文档、测试环境、节假日安排、设备申领、软件采购、需求评审\n用法：用户的话提到上面任何一件事，哪怕换了说法、没说名字，回答前先取那一页：调用 krouter_ask（MCP 服务 krouter，工具列表里没有就按名字找），问题写那件事的名字；没有这个工具就在终端运行 sh /private/tmp/krbench/skill/krouter/scripts/route_knowledge.sh search '<名字>'，或直接读 work51/mid/vault/〔页〕。只取和这句话最相关的那一页，回答里注明出处页。用户粘贴的代码、日志、命令输出里碰巧出现的词不算提到。和用户的话无关就什么都不做，也不要提这份索引。",
+ "listed": "- baking beekeeping 009: notes/Archive/baking beekeeping 009.md\n- baking chess 025: notes/Archive/baking chess 025.md\n- beekeeping camping 043: notes/Archive/beekeeping camping 043.md\n- beekeeping camping 101: notes/Archive/beekeeping camping 101.md\n- bonsai baking 065: notes/Archive/bonsai baking 065.md\n- bonsai baking 085: notes/Archive/bonsai baking 085.md\n- bonsai embroidery 049: notes/Archive/bonsai embroidery 049.md\n- bonsai pottery 059: notes/Archive/bonsai pottery 059.md\n- bonsai pruning 021: notes/Archive/bonsai pruning 021.md\n- brewing baking 007: notes/Archive/brewing baking 007.md\n- brewing hiking 037: notes/Archive/brewing hiking 037.md\n- brewing pottery 109: notes/Archive/brewing pottery 109.md\n- brewing tomato 003: notes/Archive/brewing tomato 003.md\n- calligraphy beekeeping 117: notes/Archive/calligraphy beekeeping 117.md\n- calligraphy sailing 001: notes/Archive/calligraphy sailing 001.md\n- camping cycling 075: notes/Archive/camping cycling 075.md\n- chess fermenting 089: notes/Archive/chess fermenting 089.md\n- chess sailing 071: notes/Archive/chess sailing 071.md\n- cycling camping 067: notes/Archive/cycling camping 067.md\n- cycling sailing 113: notes/Archive/cycling sailing 113.md\n- cycling sailing 115: notes/Archive/cycling sailing 115.md\n- cycling skiing 031: notes/Archive/cycling skiing 031.md\n- embroidery beekeeping 099: notes/Archive/embroidery beekeeping 099.md\n- embroidery fishing 013: notes/Archive/embroidery fishing 013.md\n- embroidery pottery 073: notes/Archive/embroidery pottery 073.md\n- embroidery sailing 027: notes/Archive/embroidery sailing 027.md\n- embroidery tea 023: notes/Archive/embroidery tea 023.md\n- fermenting baking 035: notes/Archive/fermenting baking 035.md\n- fermenting calligraphy 105: notes/Archive/fermenting calligraphy 105.md\n- fermenting camping 093: notes/Archive/fermenting camping 093.md\n- fermenting embroidery 069: notes/Archive/fermenting embroidery 069.md\n- fermenting tea 095: notes/Archive/fermenting tea 095.md\n- fermenting tea 119: notes/Archive/fermenting tea 119.md\n- fishing brewing 017: notes/Archive/fishing brewing 017.md\n- fishing cycling 015: notes/Archive/fishing cycling 015.md\n- fishing fermenting 005: notes/Archive/fishing fermenting 005.md\n- fishing greenhouse 047: notes/Archive/fishing greenhouse 047.md\n- flowers brewing 077: notes/Archive/flowers brewing 077.md\n- flowers camping 091: notes/Archive/flowers camping 091.md\n- greenhouse sailing 097: notes/Archive/greenhouse sailing 097.md\n- greenhouse tea 045: notes/Archive/greenhouse tea 045.md\n- greenhouse tomato 055: notes/Archive/greenhouse tomato 055.md\n- hiking calligraphy 083: notes/Archive/hiking calligraphy 083.md\n- hiking fishing 103: notes/Archive/hiking fishing 103.md\n- hiking pottery 051: notes/Archive/hiking pottery 051.md\n- pottery bonsai 033: notes/Archive/pottery bonsai 033.md\n- pruning greenhouse 081: notes/Archive/pruning greenhouse 081.md\n- sailing calligraphy 057: notes/Archive/sailing calligraphy 057.md\n- skiing beekeeping 079: notes/Archive/skiing beekeeping 079.md\n- skiing cycling 029: notes/Archive/skiing cycling 029.md\n- skiing greenhouse 061: notes/Archive/skiing greenhouse 061.md\n- skiing sailing 087: notes/Archive/skiing sailing 087.md\n- tea camping 053: notes/Archive/tea camping 053.md\n- tea flowers 039: notes/Archive/tea flowers 039.md\n- tea flowers 063: notes/Archive/tea flowers 063.md\n- tea hiking 011: notes/Archive/tea hiking 011.md\n- tomato fermenting 019: notes/Archive/tomato fermenting 019.md\n- tomato fishing 111: notes/Archive/tomato fishing 111.md\n- tomato skiing 041: notes/Archive/tomato skiing 041.md\n- tomato tea 107: notes/Archive/tomato tea 107.md\n- 书法帆船066: notes/Archive/书法帆船066.md\n- 书法滑雪040: notes/Archive/书法滑雪040.md\n- 养蜂滑雪034: notes/Archive/养蜂滑雪034.md\n- 养蜂烘焙032: notes/Archive/养蜂烘焙032.md\n- 刺绣滑雪042: notes/Archive/刺绣滑雪042.md\n- 刺绣番茄022: notes/Archive/刺绣番茄022.md\n- 剪枝书法044: notes/Archive/剪枝书法044.md\n- 剪枝滑雪028: notes/Archive/剪枝滑雪028.md\n- 剪枝登山080: notes/Archive/剪枝登山080.md\n- 剪枝陶艺072: notes/Archive/剪枝陶艺072.md\n- 剪枝露营038: notes/Archive/剪枝露营038.md\n- 发酵书法112: notes/Archive/发酵书法112.md\n- 发酵陶艺018: notes/Archive/发酵陶艺018.md\n- 发酵露营036: notes/Archive/发酵露营036.md\n- 围棋滑雪004: notes/Archive/围棋滑雪004.md\n- 围棋钓鱼098: notes/Archive/围棋钓鱼098.md\n- 帆船书法026: notes/Archive/帆船书法026.md\n- 插花刺绣012: notes/Archive/插花刺绣012.md\n- 插花烘焙064: notes/Archive/插花烘焙064.md\n- 插花烘焙068: notes/Archive/插花烘焙068.md\n- 插花烘焙090: notes/Archive/插花烘焙090.md\n- 插花酿酒092: notes/Archive/插花酿酒092.md\n- 插花骑行010: notes/Archive/插花骑行010.md\n- 温室插花076: notes/Archive/温室插花076.md\n- 滑雪酿酒078: notes/Archive/滑雪酿酒078.md\n- 滑雪露营000: notes/Archive/滑雪露营000.md\n- 烘焙刺绣102: notes/Archive/烘焙刺绣102.md\n- 烘焙滑雪116: notes/Archive/烘焙滑雪116.md\n- 烘焙盆栽050: notes/Archive/烘焙盆栽050.md\n- 烘焙陶艺062: notes/Archive/烘焙陶艺062.md\n- 烘焙陶艺096: notes/Archive/烘焙陶艺096.md\n- 番茄书法104: notes/Archive/番茄书法104.md\n- 番茄发酵108: notes/Archive/番茄发酵108.md\n- 登山盆栽074: notes/Archive/登山盆栽074.md\n- 登山茶叶020: notes/Archive/登山茶叶020.md\n- 登山钓鱼030: notes/Archive/登山钓鱼030.md\n- 登山钓鱼106: notes/Archive/登山钓鱼106.md\n- 登山陶艺110: notes/Archive/登山陶艺110.md\n- 登山露营014: notes/Archive/登山露营014.md\n- 盆栽刺绣002: notes/Archive/盆栽刺绣002.md\n- 盆栽陶艺084: notes/Archive/盆栽陶艺084.md\n- 茶叶剪枝008: notes/Archive/茶叶剪枝008.md\n- 茶叶插花048: notes/Archive/茶叶插花048.md\n- 茶叶插花088: notes/Archive/茶叶插花088.md\n- 茶叶钓鱼052: notes/Archive/茶叶钓鱼052.md\n- 酿酒刺绣046: notes/Archive/酿酒刺绣046.md\n- 酿酒烘焙060: notes/Archive/酿酒烘焙060.md\n- 钓鱼温室082: notes/Archive/钓鱼温室082.md\n- 陶艺刺绣054: notes/Archive/陶艺刺绣054.md\n- 陶艺刺绣114: notes/Archive/陶艺刺绣114.md\n- 陶艺围棋100: notes/Archive/陶艺围棋100.md\n- 陶艺滑雪118: notes/Archive/陶艺滑雪118.md\n- 露营书法094: notes/Archive/露营书法094.md\n- 露营茶叶016: notes/Archive/露营茶叶016.md\n- 骑行书法024: notes/Archive/骑行书法024.md\n- 骑行刺绣086: notes/Archive/骑行刺绣086.md\n- 骑行滑雪058: notes/Archive/骑行滑雪058.md\n- 骑行登山056: notes/Archive/骑行登山056.md\n- 骑行茶叶070: notes/Archive/骑行茶叶070.md\n- 骑行陶艺006: notes/Archive/骑行陶艺006.md\n- 2026-06-03: notes/Daily log/2026-06-03.md\n- 2026-06-10: notes/Daily log/2026-06-10.md\n- 2026-06-17: notes/Daily log/2026-06-17.md\n- 2026-06-24: notes/Daily log/2026-06-24.md\n- 2026-07-01: notes/Daily log/2026-07-01.md\n- 2026-07-08: notes/Daily log/2026-07-08.md\n- 2026-07-15: notes/Daily log/2026-07-15.md\n- 2026-07-22: notes/Daily log/2026-07-22.md\n- 2026-07-29: notes/Daily log/2026-07-29.md\n- 2026-08-05: notes/Daily log/2026-08-05.md\n- A/B tests: notes/Handbook/A/B tests.md\n- API deprecation: notes/Handbook/API deprecation.md\n- Access reviews: notes/Handbook/Access reviews.md\n- Analyst data access: notes/Handbook/Analyst data access.md\n- Analytics queries (old): notes/Handbook/Analytics queries (old).md\n- Analytics queries: notes/Handbook/Analytics queries.md\n- Browser support: notes/Handbook/Browser support.md\n- Bug bounty: notes/Handbook/Bug bounty.md\n- Cloud cost alerts: notes/Handbook/Cloud cost alerts.md\n- Cloud infrastructure changes (old): notes/Handbook/Cloud infrastructure changes (old).md\n- Cloud infrastructure changes: notes/Handbook/Cloud infrastructure changes.md\n- Customer data deletion (old): notes/Handbook/Customer data deletion (old).md\n- Customer data deletion: notes/Handbook/Customer data deletion.md\n- Customer interview notes: notes/Handbook/Customer interview notes.md\n- Customer refunds (old): notes/Handbook/Customer refunds (old).md\n- Customer refunds: notes/Handbook/Customer refunds.md\n- Database for new services (old): notes/Handbook/Database for new services (old).md\n- Database for new services: notes/Handbook/Database for new services.md\n- Design handoff: notes/Handbook/Design handoff.md\n- Feature requests (old): notes/Handbook/Feature requests (old).md\n- Feature requests: notes/Handbook/Feature requests.md\n- GPU usage: notes/Handbook/GPU usage.md\n- Hackathon: notes/Handbook/Hackathon.md\n- Interview process (old): notes/Handbook/Interview process (old).md\n- Interview process: notes/Handbook/Interview process.md\n- Language for code: notes/Handbook/Language for code.md\n- Mobile release criteria (old): notes/Handbook/Mobile release criteria (old).md\n- Mobile release criteria: notes/Handbook/Mobile release criteria.md\n- Model deployment (old): notes/Handbook/Model deployment (old).md\n- Model deployment: notes/Handbook/Model deployment.md\n- On-site days (old): notes/Handbook/On-site days (old).md\n- On-site days: notes/Handbook/On-site days.md\n- Price changes: notes/Handbook/Price changes.md\n- Product search (old): notes/Handbook/Product search (old).md\n- Product search: notes/Handbook/Product search.md\n- Repository ownership (old): notes/Handbook/Repository ownership (old).md\n- Repository ownership: notes/Handbook/Repository ownership.md\n- Status page: notes/Handbook/Status page.md\n- Support escalation (old): notes/Handbook/Support escalation (old).md\n- Support escalation: notes/Handbook/Support escalation.md\n- Support hours: notes/Handbook/Support hours.md\n- Third-party scripts (old): notes/Handbook/Third-party scripts (old).md\n- Third-party scripts: notes/Handbook/Third-party scripts.md\n- Transactional email (old): notes/Handbook/Transactional email (old).md\n- Transactional email: notes/Handbook/Transactional email.md\n- App 系统版本: notes/团队手册/App 系统版本.md\n- App 系统版本（旧）: notes/团队手册/App 系统版本（旧）.md\n- Go 代码规范: notes/团队手册/Go 代码规范.md\n- 代码托管: notes/团队手册/代码托管.md\n- 代码托管（旧）: notes/团队手册/代码托管（旧）.md\n- 出差标准: notes/团队手册/出差标准.md\n- 出差标准（旧）: notes/团队手册/出差标准（旧）.md\n- 办公网络: notes/团队手册/办公网络.md\n- 发布说明: notes/团队手册/发布说明.md\n- 发布说明（旧）: notes/团队手册/发布说明（旧）.md\n- 团队周会: notes/团队手册/团队周会.md\n- 图片资源: notes/团队手册/图片资源.md\n- 客户回访: notes/团队手册/客户回访.md\n- 客户投诉: notes/团队手册/客户投诉.md\n- 客户投诉（旧）: notes/团队手册/客户投诉（旧）.md\n- 开源许可证: notes/团队手册/开源许可证.md\n- 意见反馈: notes/团队手册/意见反馈.md\n- 技术分享: notes/团队手册/技术分享.md\n- 技术分享（旧）: notes/团队手册/技术分享（旧）.md\n- 技术方案模板: notes/团队手册/技术方案模板.md\n- 接口文档: notes/团队手册/接口文档.md\n- 数据共享: notes/团队手册/数据共享.md\n- 数据共享（旧）: notes/团队手册/数据共享（旧）.md\n- 数据分级: notes/团队手册/数据分级.md\n- 数据标注: notes/团队手册/数据标注.md\n- 数据标注（旧）: notes/团队手册/数据标注（旧）.md\n- 数据看板: notes/团队手册/数据看板.md\n- 数据看板（旧）: notes/团队手册/数据看板（旧）.md\n- 服务拆分: notes/团队手册/服务拆分.md\n- 服务拆分（旧）: notes/团队手册/服务拆分（旧）.md\n- 权限申请: notes/团队手册/权限申请.md\n- 权限申请（旧）: notes/团队手册/权限申请（旧）.md\n- 测试环境: notes/团队手册/测试环境.md\n- 消息队列: notes/团队手册/消息队列.md\n- 消息队列（旧）: notes/团队手册/消息队列（旧）.md\n- 短信通道: notes/团队手册/短信通道.md\n- 短信通道（旧）: notes/团队手册/短信通道（旧）.md\n- 绩效评估: notes/团队手册/绩效评估.md\n- 绩效评估（旧）: notes/团队手册/绩效评估（旧）.md\n- 节假日安排: notes/团队手册/节假日安排.md\n- 设备申领: notes/团队手册/设备申领.md\n- 证书续签: notes/团队手册/证书续签.md\n- 证书续签（旧）: notes/团队手册/证书续签（旧）.md\n- 软件采购: notes/团队手册/软件采购.md\n- 需求评审: notes/团队手册/需求评审.md\n- 2026-06-04: notes/工作日志/2026-06-04.md\n- 2026-06-11: notes/工作日志/2026-06-11.md\n- 2026-06-18: notes/工作日志/2026-06-18.md\n- 2026-06-25: notes/工作日志/2026-06-25.md\n- 2026-07-02: notes/工作日志/2026-07-02.md\n- 2026-07-09: notes/工作日志/2026-07-09.md\n- 2026-07-16: notes/工作日志/2026-07-16.md\n- 2026-07-23: notes/工作日志/2026-07-23.md\n- 2026-07-30: notes/工作日志/2026-07-30.md\n- 2026-08-06: notes/工作日志/2026-08-06.md",
+ "items": [
+  {
+   "id": "en-001",
+   "plain": "[User message]\ndrop that old field in 3.2?",
+   "krouter": "[User message]\ndrop that old field in 3.2?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- API deprecation [Handbook/API deprecation.md]\n\n[User message]\ndrop that old field in 3.2?"
+  },
+  {
+   "id": "en-002",
+   "plain": "[User message]\ndo we add the Sunset header?",
+   "krouter": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"Sunset header\" → Deprecate a public API field with at least six months' notice and a Sunset header; remove it only in a major version [Handbook/API deprecation.md, alias]\nIf you use it, cite the page.\n\n[User message]\ndo we add the Sunset header?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"Sunset header\" → Deprecate a public API field with at least six months' notice and a Sunset header; remove it only in a major version [Handbook/API deprecation.md, alias]\nIf you use it, cite the page.\n\n[User message]\ndo we add the Sunset header?"
+  },
+  {
+   "id": "en-003",
+   "plain": "[User message]\ncat walked on my keyboard lol",
+   "krouter": "[User message]\ncat walked on my keyboard lol",
+   "krouter_c": "[User message]\ncat walked on my keyboard lol"
+  },
+  {
+   "id": "en-004",
+   "plain": "[User message]\nneed a sunset header image",
+   "krouter": "[User message]\nneed a sunset header image",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- API deprecation [Handbook/API deprecation.md]\n\n[User message]\nneed a sunset header image"
+  },
+  {
+   "id": "en-005",
+   "plain": "[User message]\nwhere do I run reports now?",
+   "krouter": "[User message]\nwhere do I run reports now?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Bug bounty [Handbook/Bug bounty.md]\n- Analytics queries [Handbook/Analytics queries.md]\n- Database for new services [Handbook/Database for new services.md]\n\n[User message]\nwhere do I run reports now?"
+  },
+  {
+   "id": "en-006",
+   "plain": "[User message]\nprod db login vanished, why?",
+   "krouter": "[User message]\nprod db login vanished, why?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Analytics queries [Handbook/Analytics queries.md]\n\n[User message]\nprod db login vanished, why?"
+  },
+  {
+   "id": "en-007",
+   "plain": "[User message]\nhaven't opened the billing db since spring, will it get cut off?",
+   "krouter": "[User message]\nhaven't opened the billing db since spring, will it get cut off?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- On-site days [Handbook/On-site days.md]\n- Design handoff [Handbook/Design handoff.md]\n- Database for new services [Handbook/Database for new services.md]\n\n[User message]\nhaven't opened the billing db since spring, will it get cut off?"
+  },
+  {
+   "id": "en-009",
+   "plain": "[User message]\nthis keeps showing up in the worker output, any idea what's slow?\n2026-11-12T09:14:02Z INFO  worker-3 starting job sync_catalog batch=412\n2026-11-12T09:14:03Z INFO  worker-3 fetched 5000 rows from upstream in 812ms\n2026-11-12T09:14:03Z WARN  worker-3 row 2231 missing field 'sku', skipping\n2026-11-12T09:14:04Z INFO  worker-3 wrote 4999 rows, 1 skipped\n2026-11-12T09:14:04Z INFO  config loaded from /etc/app/config.yaml (generated by terraform apply 2026-11-10)\n2026-11-12T09:14:05Z ERROR worker-3 timeout talking to cache-01:6379 after 2000ms\n2026-11-12T09:14:05Z INFO  worker-3 retrying (1/3)\n2026-11-12T09:14:07Z ERROR worker-3 timeout talking to cache-01:6379 after 2000ms\n2026-11-12T09:14:07Z INFO  worker-3 retrying (2/3)\n2026-11-12T09:14:09Z INFO  worker-3 cache reconnected\n2026-11-12T09:14:09Z INFO  worker-3 job sync_catalog batch=412 finished in 7.3s",
+   "krouter": "[User message]\nthis keeps showing up in the worker output, any idea what's slow?\n2026-11-12T09:14:02Z INFO  worker-3 starting job sync_catalog batch=412\n2026-11-12T09:14:03Z INFO  worker-3 fetched 5000 rows from upstream in 812ms\n2026-11-12T09:14:03Z WARN  worker-3 row 2231 missing field 'sku', skipping\n2026-11-12T09:14:04Z INFO  worker-3 wrote 4999 rows, 1 skipped\n2026-11-12T09:14:04Z INFO  config loaded from /etc/app/config.yaml (generated by terraform apply 2026-11-10)\n2026-11-12T09:14:05Z ERROR worker-3 timeout talking to cache-01:6379 after 2000ms\n2026-11-12T09:14:05Z INFO  worker-3 retrying (1/3)\n2026-11-12T09:14:07Z ERROR worker-3 timeout talking to cache-01:6379 after 2000ms\n2026-11-12T09:14:07Z INFO  worker-3 retrying (2/3)\n2026-11-12T09:14:09Z INFO  worker-3 cache reconnected\n2026-11-12T09:14:09Z INFO  worker-3 job sync_catalog batch=412 finished in 7.3s",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Customer data deletion [Handbook/Customer data deletion.md]\n- Hackathon [Handbook/Hackathon.md]\n\n[User message]\nthis keeps showing up in the worker output, any idea what's slow?\n2026-11-12T09:14:02Z INFO  worker-3 starting job sync_catalog batch=412\n2026-11-12T09:14:03Z INFO  worker-3 fetched 5000 rows from upstream in 812ms\n2026-11-12T09:14:03Z WARN  worker-3 row 2231 missing field 'sku', skipping\n2026-11-12T09:14:04Z INFO  worker-3 wrote 4999 rows, 1 skipped\n2026-11-12T09:14:04Z INFO  config loaded from /etc/app/config.yaml (generated by terraform apply 2026-11-10)\n2026-11-12T09:14:05Z ERROR worker-3 timeout talking to cache-01:6379 after 2000ms\n2026-11-12T09:14:05Z INFO  worker-3 retrying (1/3)\n2026-11-12T09:14:07Z ERROR worker-3 timeout talking to cache-01:6379 after 2000ms\n2026-11-12T09:14:07Z INFO  worker-3 retrying (2/3)\n2026-11-12T09:14:09Z INFO  worker-3 cache reconnected\n2026-11-12T09:14:09Z INFO  worker-3 job sync_catalog batch=412 finished in 7.3s"
+  },
+  {
+   "id": "en-010",
+   "plain": "[User message]\nrunning a big analytics query this afternoon, what's the current place to do it?",
+   "krouter": "[User message]\nrunning a big analytics query this afternoon, what's the current place to do it?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Analytics queries [Handbook/Analytics queries.md]\n- Analyst data access [Handbook/Analyst data access.md]\n- Model deployment [Handbook/Model deployment.md]\n\n[User message]\nrunning a big analytics query this afternoon, what's the current place to do it?"
+  },
+  {
+   "id": "en-016",
+   "plain": "[User message]\ndo we still care about IE11?",
+   "krouter": "[User message]\ndo we still care about IE11?",
+   "krouter_c": "[User message]\ndo we still care about IE11?"
+  },
+  {
+   "id": "en-020",
+   "plain": "[User message]\nadding a new queue now, how do I go about it?",
+   "krouter": "[User message]\nadding a new queue now, how do I go about it?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Go 代码规范 [团队手册/Go 代码规范.md]\n- Database for new services [Handbook/Database for new services.md]\n- Transactional email [Handbook/Transactional email.md]\n\n[User message]\nadding a new queue now, how do I go about it?"
+  },
+  {
+   "id": "en-027",
+   "plain": "[User message]\nthe aws bill spiked overnight, who answers?",
+   "krouter": "[User message]\nthe aws bill spiked overnight, who answers?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Support hours [Handbook/Support hours.md]\n\n[User message]\nthe aws bill spiked overnight, who answers?"
+  },
+  {
+   "id": "en-028",
+   "plain": "[User message]\nwhat's our on-call pay?",
+   "krouter": "[User message]\nwhat's our on-call pay?",
+   "krouter_c": "[User message]\nwhat's our on-call pay?"
+  },
+  {
+   "id": "en-029",
+   "plain": "[User message]\ngo on",
+   "krouter": "[User message]\ngo on",
+   "krouter_c": "[User message]\ngo on"
+  },
+  {
+   "id": "en-031",
+   "plain": "[User message]\ntag the writeup by segment?",
+   "krouter": "[User message]\ntag the writeup by segment?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Customer interview notes [Handbook/Customer interview notes.md]\n- Third-party scripts [Handbook/Third-party scripts.md]\n\n[User message]\ntag the writeup by segment?"
+  },
+  {
+   "id": "en-032",
+   "plain": "[User message]\nhow long keep the user call recordings?",
+   "krouter": "[User message]\nhow long keep the user call recordings?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Price changes [Handbook/Price changes.md]\n- Customer interview notes [Handbook/Customer interview notes.md]\n\n[User message]\nhow long keep the user call recordings?"
+  },
+  {
+   "id": "en-034",
+   "plain": "[User message]\ngood tag manager for photos?",
+   "krouter": "[User message]\ngood tag manager for photos?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Third-party scripts [Handbook/Third-party scripts.md]\n- A/B tests [Handbook/A/B tests.md]\n\n[User message]\ngood tag manager for photos?"
+  },
+  {
+   "id": "en-038",
+   "plain": "[User message]\nprice of coffee here is crazy",
+   "krouter": "[User message]\nprice of coffee here is crazy",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Price changes [Handbook/Price changes.md]\n\n[User message]\nprice of coffee here is crazy"
+  },
+  {
+   "id": "en-039",
+   "plain": "[User message]\netag seems to change on every request, any idea why?\n$ curl -i https://api.example.test/v1/widgets/42\nHTTP/2 200\ndate: Thu, 12 Nov 2026 09:31:07 GMT\ncontent-type: application/json\ncontent-length: 214\ncache-control: private, max-age=0\netag: \"a1b2c3d4\"\nx-request-id: 7f3e9c10-5b2a-4c77-9a58-0e1b7d2f4a66\nsunset: Sat, 30 Jun 2027 00:00:00 GMT\nstrict-transport-security: max-age=31536000; includeSubDomains\nx-ratelimit-limit: 600\nx-ratelimit-remaining: 597\n\n{\"id\":42,\"name\":\"blue widget\",\"price_cents\":1299,\"stock\":17,\"tags\":[\"new\",\"sale\"],\"created_at\":\"2026-08-14T10:22:51Z\",\"updated_at\":\"2026-11-10T16:03:12Z\"}",
+   "krouter": "[User message]\netag seems to change on every request, any idea why?\n$ curl -i https://api.example.test/v1/widgets/42\nHTTP/2 200\ndate: Thu, 12 Nov 2026 09:31:07 GMT\ncontent-type: application/json\ncontent-length: 214\ncache-control: private, max-age=0\netag: \"a1b2c3d4\"\nx-request-id: 7f3e9c10-5b2a-4c77-9a58-0e1b7d2f4a66\nsunset: Sat, 30 Jun 2027 00:00:00 GMT\nstrict-transport-security: max-age=31536000; includeSubDomains\nx-ratelimit-limit: 600\nx-ratelimit-remaining: 597\n\n{\"id\":42,\"name\":\"blue widget\",\"price_cents\":1299,\"stock\":17,\"tags\":[\"new\",\"sale\"],\"created_at\":\"2026-08-14T10:22:51Z\",\"updated_at\":\"2026-11-10T16:03:12Z\"}",
+   "krouter_c": "[User message]\netag seems to change on every request, any idea why?\n$ curl -i https://api.example.test/v1/widgets/42\nHTTP/2 200\ndate: Thu, 12 Nov 2026 09:31:07 GMT\ncontent-type: application/json\ncontent-length: 214\ncache-control: private, max-age=0\netag: \"a1b2c3d4\"\nx-request-id: 7f3e9c10-5b2a-4c77-9a58-0e1b7d2f4a66\nsunset: Sat, 30 Jun 2027 00:00:00 GMT\nstrict-transport-security: max-age=31536000; includeSubDomains\nx-ratelimit-limit: 600\nx-ratelimit-remaining: 597\n\n{\"id\":42,\"name\":\"blue widget\",\"price_cents\":1299,\"stock\":17,\"tags\":[\"new\",\"sale\"],\"created_at\":\"2026-08-14T10:22:51Z\",\"updated_at\":\"2026-11-10T16:03:12Z\"}"
+  },
+  {
+   "id": "en-042",
+   "plain": "[User message]\nmy notebook died while I was at lunch",
+   "krouter": "[User message]\nmy notebook died while I was at lunch",
+   "krouter_c": "[User message]\nmy notebook died while I was at lunch"
+  },
+  {
+   "id": "en-043",
+   "plain": "[User message]\nhow many PTO days do we get?",
+   "krouter": "[User message]\nhow many PTO days do we get?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- On-site days [Handbook/On-site days.md]\n- Access reviews [Handbook/Access reviews.md]\n- Bug bounty [Handbook/Bug bounty.md]\n\n[User message]\nhow many PTO days do we get?"
+  },
+  {
+   "id": "en-044",
+   "plain": "[User message]\nfine, leave it",
+   "krouter": "[User message]\nfine, leave it",
+   "krouter_c": "[User message]\nfine, leave it"
+  },
+  {
+   "id": "en-045",
+   "plain": "[User message]\nwhich db for a new service?",
+   "krouter": "[User message]\nwhich db for a new service?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Database for new services [Handbook/Database for new services.md]\n- Model deployment [Handbook/Model deployment.md]\n- Customer data deletion [Handbook/Customer data deletion.md]\n\n[User message]\nwhich db for a new service?"
+  },
+  {
+   "id": "en-046",
+   "plain": "[User message]\nwhen's the next hackathon?",
+   "krouter": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"hackathon\" → A two-day hackathon every quarter; winners get one sprint of follow-up [Handbook/Hackathon.md, alias]\nIf you use it, cite the page.\n\n[User message]\nwhen's the next hackathon?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"hackathon\" → A two-day hackathon every quarter; winners get one sprint of follow-up [Handbook/Hackathon.md, alias]\nIf you use it, cite the page.\n\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Customer data deletion [Handbook/Customer data deletion.md]\n\n[User message]\nwhen's the next hackathon?"
+  },
+  {
+   "id": "en-047",
+   "plain": "[User message]\nour demo won, do we get time to build it out?",
+   "krouter": "[User message]\nour demo won, do we get time to build it out?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Hackathon [Handbook/Hackathon.md]\n\n[User message]\nour demo won, do we get time to build it out?"
+  },
+  {
+   "id": "en-049",
+   "plain": "[User message]\npostfix vs prefix notation?",
+   "krouter": "[User message]\npostfix vs prefix notation?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Transactional email [Handbook/Transactional email.md]\n\n[User message]\npostfix vs prefix notation?"
+  },
+  {
+   "id": "en-051",
+   "plain": "[User message]\ngit log in Spanish ok?",
+   "krouter": "[User message]\ngit log in Spanish ok?",
+   "krouter_c": "[User message]\ngit log in Spanish ok?"
+  },
+  {
+   "id": "en-053",
+   "plain": "[User message]\nrelease notes look fine to me",
+   "krouter": "[User message]\nrelease notes look fine to me",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Customer interview notes [Handbook/Customer interview notes.md]\n- Mobile release criteria [Handbook/Mobile release criteria.md]\n- A/B tests [Handbook/A/B tests.md]\n\n[User message]\nrelease notes look fine to me"
+  },
+  {
+   "id": "en-056",
+   "plain": "[User message]\nold customers keep old rate?",
+   "krouter": "[User message]\nold customers keep old rate?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Price changes [Handbook/Price changes.md]\n- Support hours [Handbook/Support hours.md]\n- Mobile release criteria [Handbook/Mobile release criteria.md]\n\n[User message]\nold customers keep old rate?"
+  },
+  {
+   "id": "en-058",
+   "plain": "[User message]\nPR review SLA?",
+   "krouter": "[User message]\nPR review SLA?",
+   "krouter_c": "[User message]\nPR review SLA?"
+  },
+  {
+   "id": "en-060",
+   "plain": "[User message]\nsomeone from a client call just told me they really need CSV export on the reports page. I'm a dev, not on the product side, so I don't know where that kind of thing is supposed to be written down or who looks at it afterwards. Where do I put it now?",
+   "krouter": "[User message]\nsomeone from a client call just told me they really need CSV export on the reports page. I'm a dev, not on the product side, so I don't know where that kind of thing is supposed to be written down or who looks at it afterwards. Where do I put it now?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Status page [Handbook/Status page.md]\n- Product search [Handbook/Product search.md]\n- Bug bounty [Handbook/Bug bounty.md]\n\n[User message]\nsomeone from a client call just told me they really need CSV export on the reports page. I'm a dev, not on the product side, so I don't know where that kind of thing is supposed to be written down or who looks at it afterwards. Where do I put it now?"
+  },
+  {
+   "id": "en-061",
+   "plain": "[User message]\noutage is real, update when?",
+   "krouter": "[User message]\noutage is real, update when?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Cloud infrastructure changes [Handbook/Cloud infrastructure changes.md]\n\n[User message]\noutage is real, update when?"
+  },
+  {
+   "id": "en-063",
+   "plain": "[User message]\nlunch time, back in 20",
+   "krouter": "[User message]\nlunch time, back in 20",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Hackathon [Handbook/Hackathon.md]\n- Support hours [Handbook/Support hours.md]\n- 登山茶叶020 [Archive/登山茶叶020.md]\n\n[User message]\nlunch time, back in 20"
+  },
+  {
+   "id": "en-067",
+   "plain": "[User message]\ncan enterprise clients call at night",
+   "krouter": "[User message]\ncan enterprise clients call at night",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Support hours [Handbook/Support hours.md]\n- Product search [Handbook/Product search.md]\n\n[User message]\ncan enterprise clients call at night"
+  },
+  {
+   "id": "en-068",
+   "plain": "[User message]\nthe sunset from the office window is unreal today, taking a break",
+   "krouter": "[User message]\nthe sunset from the office window is unreal today, taking a break",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- API deprecation [Handbook/API deprecation.md]\n- On-site days [Handbook/On-site days.md]\n\n[User message]\nthe sunset from the office window is unreal today, taking a break"
+  },
+  {
+   "id": "en-069",
+   "plain": "[User message]\ncan someone tell me why the deploy job never runs on PRs\nname: ci\non:\n  push:\n    branches: [main]\n  pull_request:\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npm run lint\n      - run: npm test -- --coverage\n      - run: npm run build\n      - uses: actions/upload-artifact@v4\n        with:\n          name: dist\n          path: dist/\n      - name: Notify\n        run: curl -s -X POST \"$SLACK_WEBHOOK\" -d '{\"text\":\"build done, see status page https://status.example.test\"}'\n  deploy:\n    needs: build\n    if: github.ref == 'refs/heads/main'\n    runs-on: ubuntu-latest",
+   "krouter": "[User message]\ncan someone tell me why the deploy job never runs on PRs\nname: ci\non:\n  push:\n    branches: [main]\n  pull_request:\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npm run lint\n      - run: npm test -- --coverage\n      - run: npm run build\n      - uses: actions/upload-artifact@v4\n        with:\n          name: dist\n          path: dist/\n      - name: Notify\n        run: curl -s -X POST \"$SLACK_WEBHOOK\" -d '{\"text\":\"build done, see status page https://status.example.test\"}'\n  deploy:\n    needs: build\n    if: github.ref == 'refs/heads/main'\n    runs-on: ubuntu-latest",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- brewing baking 007 [Archive/brewing baking 007.md]\n- calligraphy sailing 001 [Archive/calligraphy sailing 001.md]\n- baking beekeeping 009 [Archive/baking beekeeping 009.md]\n\n[User message]\ncan someone tell me why the deploy job never runs on PRs\nname: ci\non:\n  push:\n    branches: [main]\n  pull_request:\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npm run lint\n      - run: npm test -- --coverage\n      - run: npm run build\n      - uses: actions/upload-artifact@v4\n        with:\n          name: dist\n          path: dist/\n      - name: Notify\n        run: curl -s -X POST \"$SLACK_WEBHOOK\" -d '{\"text\":\"build done, see status page https://status.example.test\"}'\n  deploy:\n    needs: build\n    if: github.ref == 'refs/heads/main'\n    runs-on: ubuntu-latest"
+  },
+  {
+   "id": "en-071",
+   "plain": "[User message]\nwhich db do dashboards hit?",
+   "krouter": "[User message]\nwhich db do dashboards hit?",
+   "krouter_c": "[User message]\nwhich db do dashboards hit?"
+  },
+  {
+   "id": "en-074",
+   "plain": "[User message]\nthanks",
+   "krouter": "[User message]\nthanks",
+   "krouter_c": "[User message]\nthanks"
+  },
+  {
+   "id": "en-075",
+   "plain": "[User message]\nwhat's the ship bar for iOS?",
+   "krouter": "[User message]\nwhat's the ship bar for iOS?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Model deployment [Handbook/Model deployment.md]\n- App 系统版本 [团队手册/App 系统版本.md]\n\n[User message]\nwhat's the ship bar for iOS?"
+  },
+  {
+   "id": "en-078",
+   "plain": "[User message]\nrebase or merge?",
+   "krouter": "[User message]\nrebase or merge?",
+   "krouter_c": "[User message]\nrebase or merge?"
+  },
+  {
+   "id": "en-080",
+   "plain": "[User message]\ncan I roll the Android build out to everyone? crash numbers look ok",
+   "krouter": "[User message]\ncan I roll the Android build out to everyone? crash numbers look ok",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- A/B tests [Handbook/A/B tests.md]\n- Mobile release criteria [Handbook/Mobile release criteria.md]\n- App 系统版本 [团队手册/App 系统版本.md]\n\n[User message]\ncan I roll the Android build out to everyone? crash numbers look ok"
+  },
+  {
+   "id": "en-082",
+   "plain": "[User message]\ngive back $180 myself?",
+   "krouter": "[User message]\ngive back $180 myself?",
+   "krouter_c": "[User message]\ngive back $180 myself?"
+  },
+  {
+   "id": "en-083",
+   "plain": "[User message]\nThe access ramp at the station is closed, so I'll be late",
+   "krouter": "[User message]\nThe access ramp at the station is closed, so I'll be late",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Access reviews [Handbook/Access reviews.md]\n- Analyst data access [Handbook/Analyst data access.md]\n\n[User message]\nThe access ramp at the station is closed, so I'll be late"
+  },
+  {
+   "id": "en-085",
+   "plain": "[User message]\nhow to push a model live?",
+   "krouter": "[User message]\nhow to push a model live?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Model deployment [Handbook/Model deployment.md]\n\n[User message]\nhow to push a model live?"
+  },
+  {
+   "id": "en-089",
+   "plain": "[User message]\nyep do that",
+   "krouter": "[User message]\nyep do that",
+   "krouter_c": "[User message]\nyep do that"
+  },
+  {
+   "id": "en-090",
+   "plain": "[User message]\nI retrained the ranking thing this week and on my holdout it's about 2% better than what's running. I'd like to get it serving before the weekend, so what's the correct path to production for it these days? Don't want to repeat the last mess.",
+   "krouter": "[User message]\nI retrained the ranking thing this week and on my holdout it's about 2% better than what's running. I'd like to get it serving before the weekend, so what's the correct path to production for it these days? Don't want to repeat the last mess.",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- On-site days [Handbook/On-site days.md]\n- Access reviews [Handbook/Access reviews.md]\n- Browser support [Handbook/Browser support.md]\n\n[User message]\nI retrained the ranking thing this week and on my holdout it's about 2% better than what's running. I'd like to get it serving before the weekend, so what's the correct path to production for it these days? Don't want to repeat the last mess."
+  },
+  {
+   "id": "en-091",
+   "plain": "[User message]\nmysql or something else for the new svc?",
+   "krouter": "[User message]\nmysql or something else for the new svc?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Database for new services [Handbook/Database for new services.md]\n- Model deployment [Handbook/Model deployment.md]\n\n[User message]\nmysql or something else for the new svc?"
+  },
+  {
+   "id": "en-092",
+   "plain": "[User message]\nsomeone asked for dark mode",
+   "krouter": "[User message]\nsomeone asked for dark mode",
+   "krouter_c": "[User message]\nsomeone asked for dark mode"
+  },
+  {
+   "id": "en-093",
+   "plain": "[User message]\ncan you suggest a name for my side project, it's a recipe app for people who hate cooking",
+   "krouter": "[User message]\ncan you suggest a name for my side project, it's a recipe app for people who hate cooking",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- App 系统版本 [团队手册/App 系统版本.md]\n- Cloud cost alerts [Handbook/Cloud cost alerts.md]\n- Analytics queries [Handbook/Analytics queries.md]\n\n[User message]\ncan you suggest a name for my side project, it's a recipe app for people who hate cooking"
+  },
+  {
+   "id": "en-097",
+   "plain": "[User message]\nhow long's the coding round?",
+   "krouter": "[User message]\nhow long's the coding round?",
+   "krouter_c": "[User message]\nhow long's the coding round?"
+  },
+  {
+   "id": "en-099",
+   "plain": "[User message]\n```\n3fa91c2 fix: handle empty cart in totals\n8b0d4e7 hackathon: prototype of voice search\nc41e9aa chore: bump deps\n2d7f6b0 docs: update readme\n```\nwhich of these can I squash safely",
+   "krouter": "[User message]\n```\n3fa91c2 fix: handle empty cart in totals\n8b0d4e7 hackathon: prototype of voice search\nc41e9aa chore: bump deps\n2d7f6b0 docs: update readme\n```\nwhich of these can I squash safely",
+   "krouter_c": "[User message]\n```\n3fa91c2 fix: handle empty cart in totals\n8b0d4e7 hackathon: prototype of voice search\nc41e9aa chore: bump deps\n2d7f6b0 docs: update readme\n```\nwhich of these can I squash safely"
+  },
+  {
+   "id": "en-106",
+   "plain": "[User message]\nBeen on this one for three days: a user hits a crash on checkout and I logged it, but nobody on the dev side has even looked at it. Who is supposed to grab it, and can I just mark it high priority myself or does someone else decide that?",
+   "krouter": "[User message]\nBeen on this one for three days: a user hits a crash on checkout and I logged it, but nobody on the dev side has even looked at it. Who is supposed to grab it, and can I just mark it high priority myself or does someone else decide that?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- On-site days [Handbook/On-site days.md]\n- Language for code [Handbook/Language for code.md]\n- Mobile release criteria [Handbook/Mobile release criteria.md]\n\n[User message]\nBeen on this one for three days: a user hits a crash on checkout and I logged it, but nobody on the dev side has even looked at it. Who is supposed to grab it, and can I just mark it high priority myself or does someone else decide that?"
+  },
+  {
+   "id": "en-109",
+   "plain": "[User message]\nso in the game I'm playing there's this bug bounty quest where the town pays you gold for catching beetles and I keep missing the rare ones. any tips for farming them faster? I've got like 40 hours in already",
+   "krouter": "[User message]\nso in the game I'm playing there's this bug bounty quest where the town pays you gold for catching beetles and I keep missing the rare ones. any tips for farming them faster? I've got like 40 hours in already",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Bug bounty [Handbook/Bug bounty.md]\n- Support hours [Handbook/Support hours.md]\n- Price changes [Handbook/Price changes.md]\n\n[User message]\nso in the game I'm playing there's this bug bounty quest where the town pays you gold for catching beetles and I keep missing the rare ones. any tips for farming them faster? I've got like 40 hours in already"
+  },
+  {
+   "id": "en-110",
+   "plain": "[User message]\nhow do I hand bugs to eng?",
+   "krouter": "[User message]\nhow do I hand bugs to eng?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Support escalation [Handbook/Support escalation.md]\n\n[User message]\nhow do I hand bugs to eng?"
+  },
+  {
+   "id": "en-111",
+   "plain": "[User message]\nwhen am I in the office?",
+   "krouter": "[User message]\nwhen am I in the office?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- On-site days [Handbook/On-site days.md]\n\n[User message]\nwhen am I in the office?"
+  },
+  {
+   "id": "en-115",
+   "plain": "[User message]\ncan marketing add a tracker?",
+   "krouter": "[User message]\ncan marketing add a tracker?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Transactional email [Handbook/Transactional email.md]\n\n[User message]\ncan marketing add a tracker?"
+  },
+  {
+   "id": "en-116",
+   "plain": "[User message]\nnewsletter on same domain ok?",
+   "krouter": "[User message]\nnewsletter on same domain ok?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Transactional email [Handbook/Transactional email.md]\n\n[User message]\nnewsletter on same domain ok?"
+  },
+  {
+   "id": "en-117",
+   "plain": "[User message]\nadding a chat widget, ok?",
+   "krouter": "[User message]\nadding a chat widget, ok?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Support hours [Handbook/Support hours.md]\n- Design handoff [Handbook/Design handoff.md]\n\n[User message]\nadding a chat widget, ok?"
+  },
+  {
+   "id": "en-118",
+   "plain": "[User message]\nWe're about to run a big load test against staging before the holiday sale. Do we have any agreed guidelines about when load tests are allowed, who has to be told beforehand, and how much traffic is okay? I don't want to take down the shared environment like last time.",
+   "krouter": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"run load test before\" → An A/B test runs for at least two full weeks and needs a primary metric registered before it starts. Stopping early because the numbers look good is not allowe… [Handbook/A/B tests.md, full-text recall]\nIf you use it, cite the page.\n\n[User message]\nWe're about to run a big load test against staging before the holiday sale. Do we have any agreed guidelines about when load tests are allowed, who has to be told beforehand, and how much traffic is okay? I don't want to take down the shared environment like last time.",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter memory note (recalled from the user's vault, not typed by the user; it may not bear on this message):\n- \"run load test before\" → An A/B test runs for at least two full weeks and needs a primary metric registered before it starts. Stopping early because the numbers look good is not allowe… [Handbook/A/B tests.md, full-text recall]\nIf you use it, cite the page.\n\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Interview process [Handbook/Interview process.md]\n- Hackathon [Handbook/Hackathon.md]\n- Browser support [Handbook/Browser support.md]\n\n[User message]\nWe're about to run a big load test against staging before the holiday sale. Do we have any agreed guidelines about when load tests are allowed, who has to be told beforehand, and how much traffic is okay? I don't want to take down the shared environment like last time."
+  },
+  {
+   "id": "en-120",
+   "plain": "[User message]\nwho sends receipts now?",
+   "krouter": "[User message]\nwho sends receipts now?",
+   "krouter_c": "[Context the app's hook attached to this user message this turn (the user does not see it)]\nKRouter candidates (the pages closest to this message by wording; names only, not checked, most likely unrelated. Fetch a page only if the message really is about that matter; otherwise act as if this note were not here and do not mention it):\n- Transactional email [Handbook/Transactional email.md]\n\n[User message]\nwho sends receipts now?"
+  },
+  {
+   "id": "zh-001",
+   "plain": "【用户消息】\niOS 14 的老手机还能用我们的客户端吗",
+   "krouter": "【用户消息】\niOS 14 的老手机还能用我们的客户端吗",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 客户回访 〔团队手册/客户回访.md〕\n- 客户投诉 〔团队手册/客户投诉.md〕\n- 登山露营014 〔Archive/登山露营014.md〕\n\n【用户消息】\niOS 14 的老手机还能用我们的客户端吗"
+  },
+  {
+   "id": "zh-002",
+   "plain": "【用户消息】\n好",
+   "krouter": "【用户消息】\n好",
+   "krouter_c": "【用户消息】\n好"
+  },
+  {
+   "id": "zh-005",
+   "plain": "【用户消息】\nGitLab 还能用到什么时候，现在新开仓库该放 GitHub 企业版那边吗",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「能用 仓库 企业 业版」 → 代码统一迁到公司的 GitHub 企业版，自建 GitLab 只读到明年三月；新建仓库默认私有。改动原因：自建 GitLab 维护成本太高。本页取代 代码托管（旧）。 〔团队手册/代码托管.md，全文召回〕\n  更早的一页说法不同（团队手册/代码托管（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\nGitLab 还能用到什么时候，现在新开仓库该放 GitHub 企业版那边吗",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「能用 仓库 企业 业版」 → 代码统一迁到公司的 GitHub 企业版，自建 GitLab 只读到明年三月；新建仓库默认私有。改动原因：自建 GitLab 维护成本太高。本页取代 代码托管（旧）。 〔团队手册/代码托管.md，全文召回〕\n  更早的一页说法不同（团队手册/代码托管（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 办公网络 〔团队手册/办公网络.md〕\n\n【用户消息】\nGitLab 还能用到什么时候，现在新开仓库该放 GitHub 企业版那边吗"
+  },
+  {
+   "id": "zh-006",
+   "plain": "【用户消息】\n小区物业群里在收意见反馈，我想提电梯老坏的事",
+   "krouter": "【用户消息】\n小区物业群里在收意见反馈，我想提电梯老坏的事",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 意见反馈 〔团队手册/意见反馈.md〕\n- 团队周会 〔团队手册/团队周会.md〕\n- 技术方案模板 〔团队手册/技术方案模板.md〕\n\n【用户消息】\n小区物业群里在收意见反馈，我想提电梯老坏的事"
+  },
+  {
+   "id": "zh-012",
+   "plain": "【用户消息】\n继续",
+   "krouter": "【用户消息】\n继续",
+   "krouter_c": "【用户消息】\n继续"
+  },
+  {
+   "id": "zh-019",
+   "plain": "【用户消息】\n同事想在项目里引一个 copyleft 的库，要不要先找法务看看再合进去？",
+   "krouter": "【用户消息】\n同事想在项目里引一个 copyleft 的库，要不要先找法务看看再合进去？",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 开源许可证 〔团队手册/开源许可证.md〕\n- 绩效评估 〔团队手册/绩效评估.md〕\n- 服务拆分 〔团队手册/服务拆分.md〕\n\n【用户消息】\n同事想在项目里引一个 copyleft 的库，要不要先找法务看看再合进去？"
+  },
+  {
+   "id": "zh-022",
+   "plain": "【用户消息】\n消息队列现在统一用哪个，主题怎么命名",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「消息 息队 队列 统一」 → 异步任务统一用 Kafka，主题命名为 业务域.事件名；消息至少保留 7 天，消费者必须幂等。改动原因：RabbitMQ 在高峰期堆积严重。本页取代 消息队列（旧）。 〔团队手册/消息队列.md，全文召回〕\n  更早的一页说法不同（团队手册/消息队列（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\n消息队列现在统一用哪个，主题怎么命名",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「消息 息队 队列 统一」 → 异步任务统一用 Kafka，主题命名为 业务域.事件名；消息至少保留 7 天，消费者必须幂等。改动原因：RabbitMQ 在高峰期堆积严重。本页取代 消息队列（旧）。 〔团队手册/消息队列.md，全文召回〕\n  更早的一页说法不同（团队手册/消息队列（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 图片资源 〔团队手册/图片资源.md〕\n- 技术方案模板 〔团队手册/技术方案模板.md〕\n\n【用户消息】\n消息队列现在统一用哪个，主题怎么命名"
+  },
+  {
+   "id": "zh-024",
+   "plain": "【用户消息】\n灰度放量一般按多少比例走",
+   "krouter": "【用户消息】\n灰度放量一般按多少比例走",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 软件采购 〔团队手册/软件采购.md〕\n- 服务拆分 〔团队手册/服务拆分.md〕\n\n【用户消息】\n灰度放量一般按多少比例走"
+  },
+  {
+   "id": "zh-025",
+   "plain": "【用户消息】\n上完新功能得跟客服那边说一声吧，发哪个群",
+   "krouter": "【用户消息】\n上完新功能得跟客服那边说一声吧，发哪个群",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 发布说明 〔团队手册/发布说明.md〕\n- 意见反馈 〔团队手册/意见反馈.md〕\n\n【用户消息】\n上完新功能得跟客服那边说一声吧，发哪个群"
+  },
+  {
+   "id": "zh-026",
+   "plain": "【用户消息】\n帮我把这句翻成英文：明天下午见",
+   "krouter": "【用户消息】\n帮我把这句翻成英文：明天下午见",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 节假日安排 〔团队手册/节假日安排.md〕\n- 技术分享 〔团队手册/技术分享.md〕\n\n【用户消息】\n帮我把这句翻成英文：明天下午见"
+  },
+  {
+   "id": "zh-028",
+   "plain": "【用户消息】\n周二上午十点是不是要开那个同步风险的会",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「周二 二上 上午 同步」 → 团队周会在每周二上午 10 点，半小时，只同步风险和需要协调的事，不念进度。 〔团队手册/团队周会.md，全文召回〕\n用到就注明出处页。\n\n【用户消息】\n周二上午十点是不是要开那个同步风险的会",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「周二 二上 上午 同步」 → 团队周会在每周二上午 10 点，半小时，只同步风险和需要协调的事，不念进度。 〔团队手册/团队周会.md，全文召回〕\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 技术方案模板 〔团队手册/技术方案模板.md〕\n- 客户投诉 〔团队手册/客户投诉.md〕\n\n【用户消息】\n周二上午十点是不是要开那个同步风险的会"
+  },
+  {
+   "id": "zh-029",
+   "plain": "【用户消息】\n我爸的驾驶许可证到期了，得去车管所换",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「许可 可证 到期 期了」 → 引入开源组件只允许 MIT、Apache-2.0、BSD 许可证；GPL 类组件要先经过法务评估。 〔团队手册/开源许可证.md，全文召回〕\n用到就注明出处页。\n\n【用户消息】\n我爸的驾驶许可证到期了，得去车管所换",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「许可 可证 到期 期了」 → 引入开源组件只允许 MIT、Apache-2.0、BSD 许可证；GPL 类组件要先经过法务评估。 〔团队手册/开源许可证.md，全文召回〕\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 软件采购 〔团队手册/软件采购.md〕\n- 证书续签 〔团队手册/证书续签.md〕\n- 权限申请 〔团队手册/权限申请.md〕\n\n【用户消息】\n我爸的驾驶许可证到期了，得去车管所换"
+  },
+  {
+   "id": "zh-034",
+   "plain": "【用户消息】\n给合作方的数据现在是怎么个发法，有时效吗",
+   "krouter": "【用户消息】\n给合作方的数据现在是怎么个发法，有时效吗",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据共享 〔团队手册/数据共享.md〕\n- 测试环境 〔团队手册/测试环境.md〕\n- 数据分级 〔团队手册/数据分级.md〕\n\n【用户消息】\n给合作方的数据现在是怎么个发法，有时效吗"
+  },
+  {
+   "id": "zh-036",
+   "plain": "【用户消息】\nPython 里 list 去重还保持顺序怎么写",
+   "krouter": "【用户消息】\nPython 里 list 去重还保持顺序怎么写",
+   "krouter_c": "【用户消息】\nPython 里 list 去重还保持顺序怎么写"
+  },
+  {
+   "id": "zh-039",
+   "plain": "【用户消息】\n新来的同事问异步任务该接哪个中间件，现在我们是怎么定的，保留多久、重复消费怎么处理",
+   "krouter": "【用户消息】\n新来的同事问异步任务该接哪个中间件，现在我们是怎么定的，保留多久、重复消费怎么处理",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 消息队列 〔团队手册/消息队列.md〕\n- Go 代码规范 〔团队手册/Go 代码规范.md〕\n\n【用户消息】\n新来的同事问异步任务该接哪个中间件，现在我们是怎么定的，保留多久、重复消费怎么处理"
+  },
+  {
+   "id": "zh-043",
+   "plain": "【用户消息】\n年货采购清单我列好了，你看看漏啥没",
+   "krouter": "【用户消息】\n年货采购清单我列好了，你看看漏啥没",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 软件采购 〔团队手册/软件采购.md〕\n\n【用户消息】\n年货采购清单我列好了，你看看漏啥没"
+  },
+  {
+   "id": "zh-045",
+   "plain": "【用户消息】\napp 里用户点那个提建议的入口，最后去哪了",
+   "krouter": "【用户消息】\napp 里用户点那个提建议的入口，最后去哪了",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- App 系统版本 〔团队手册/App 系统版本.md〕\n- Analytics queries 〔Handbook/Analytics queries.md〕\n- Browser support 〔Handbook/Browser support.md〕\n\n【用户消息】\napp 里用户点那个提建议的入口，最后去哪了"
+  },
+  {
+   "id": "zh-048",
+   "plain": "【用户消息】\nRun make lint\ngolangci-lint run ./...\ninternal/util/retry.go:14:2: SA4006: this value of `err` is never used (staticcheck)\ninternal/util/retry.go:31:9: ineffassign: ineffectual assignment to ctx\ngofmt: 0 files need formatting\nmake: *** [lint] Error 1\nError: Process completed with exit code 2.\n\n这个 lint 我本地没复现，是版本不一样吗",
+   "krouter": "【用户消息】\nRun make lint\ngolangci-lint run ./...\ninternal/util/retry.go:14:2: SA4006: this value of `err` is never used (staticcheck)\ninternal/util/retry.go:31:9: ineffassign: ineffectual assignment to ctx\ngofmt: 0 files need formatting\nmake: *** [lint] Error 1\nError: Process completed with exit code 2.\n\n这个 lint 我本地没复现，是版本不一样吗",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- Go 代码规范 〔团队手册/Go 代码规范.md〕\n- App 系统版本 〔团队手册/App 系统版本.md〕\n- cycling skiing 031 〔Archive/cycling skiing 031.md〕\n\n【用户消息】\nRun make lint\ngolangci-lint run ./...\ninternal/util/retry.go:14:2: SA4006: this value of `err` is never used (staticcheck)\ninternal/util/retry.go:31:9: ineffassign: ineffectual assignment to ctx\ngofmt: 0 files need formatting\nmake: *** [lint] Error 1\nError: Process completed with exit code 2.\n\n这个 lint 我本地没复现，是版本不一样吗"
+  },
+  {
+   "id": "zh-050",
+   "plain": "【用户消息】\n现在验证码短信的主通道要是挂了会怎么处理？是人工去切还是有自动切换，阈值多少",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「验证码短信」 → 验证码短信同时接入两家供应商，主通道失败率超过 2% 时自动切到备用通道。改动原因：单一供应商故障导致用户无法登录。本页取代 短信通道（旧）。 〔团队手册/短信通道.md，别名〕\n  更早的一页说法不同（团队手册/短信通道（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\n现在验证码短信的主通道要是挂了会怎么处理？是人工去切还是有自动切换，阈值多少",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「验证码短信」 → 验证码短信同时接入两家供应商，主通道失败率超过 2% 时自动切到备用通道。改动原因：单一供应商故障导致用户无法登录。本页取代 短信通道（旧）。 〔团队手册/短信通道.md，别名〕\n  更早的一页说法不同（团队手册/短信通道（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- Go 代码规范 〔团队手册/Go 代码规范.md〕\n\n【用户消息】\n现在验证码短信的主通道要是挂了会怎么处理？是人工去切还是有自动切换，阈值多少"
+  },
+  {
+   "id": "zh-053",
+   "plain": "【用户消息】\nPython 项目用什么格式化工具，black 还是 ruff？有没有统一的配置文件放在哪",
+   "krouter": "【用户消息】\nPython 项目用什么格式化工具，black 还是 ruff？有没有统一的配置文件放在哪",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- Go 代码规范 〔团队手册/Go 代码规范.md〕\n- 图片资源 〔团队手册/图片资源.md〕\n- 数据看板 〔团队手册/数据看板.md〕\n\n【用户消息】\nPython 项目用什么格式化工具，black 还是 ruff？有没有统一的配置文件放在哪"
+  },
+  {
+   "id": "zh-054",
+   "plain": "【用户消息】\n技术分享这个季度我们组还没人讲，下一次周四是哪天来着，要不要我先报个题目",
+   "krouter": "【用户消息】\n技术分享这个季度我们组还没人讲，下一次周四是哪天来着，要不要我先报个题目",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 技术分享 〔团队手册/技术分享.md〕\n- 技术方案模板 〔团队手册/技术方案模板.md〕\n- 客户回访 〔团队手册/客户回访.md〕\n\n【用户消息】\n技术分享这个季度我们组还没人讲，下一次周四是哪天来着，要不要我先报个题目"
+  },
+  {
+   "id": "zh-055",
+   "plain": "【用户消息】\n地图上标注了几家咖啡店，周末挨个探",
+   "krouter": "【用户消息】\n地图上标注了几家咖啡店，周末挨个探",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据标注 〔团队手册/数据标注.md〕\n- 需求评审 〔团队手册/需求评审.md〕\n\n【用户消息】\n地图上标注了几家咖啡店，周末挨个探"
+  },
+  {
+   "id": "zh-058",
+   "plain": "【用户消息】\n嗯嗯，可以",
+   "krouter": "【用户消息】\n嗯嗯，可以",
+   "krouter_c": "【用户消息】\n嗯嗯，可以"
+  },
+  {
+   "id": "zh-060",
+   "plain": "【用户消息】\n外面公司要一份用户明细，我邮件直接发过去？",
+   "krouter": "【用户消息】\n外面公司要一份用户明细，我邮件直接发过去？",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据共享 〔团队手册/数据共享.md〕\n- 办公网络 〔团队手册/办公网络.md〕\n- 意见反馈 〔团队手册/意见反馈.md〕\n\n【用户消息】\n外面公司要一份用户明细，我邮件直接发过去？"
+  },
+  {
+   "id": "zh-061",
+   "plain": "【用户消息】\n我在给登录模块写发送那串六位数的重试逻辑，现在想的是失败了就重试三次，三次不行就报错给用户。但我隐约记得基础设施那边已经有一套机制，发不出去会自动换一家，如果是这样我这边就不用重复造轮子，还可能互相打架，用户会收到好几条。你帮我查下现在到底有没有，阈值是多少，免得我白写。",
+   "krouter": "【用户消息】\n我在给登录模块写发送那串六位数的重试逻辑，现在想的是失败了就重试三次，三次不行就报错给用户。但我隐约记得基础设施那边已经有一套机制，发不出去会自动换一家，如果是这样我这边就不用重复造轮子，还可能互相打架，用户会收到好几条。你帮我查下现在到底有没有，阈值是多少，免得我白写。",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 短信通道 〔团队手册/短信通道.md〕\n- 权限申请 〔团队手册/权限申请.md〕\n- 需求评审 〔团队手册/需求评审.md〕\n\n【用户消息】\n我在给登录模块写发送那串六位数的重试逻辑，现在想的是失败了就重试三次，三次不行就报错给用户。但我隐约记得基础设施那边已经有一套机制，发不出去会自动换一家，如果是这样我这边就不用重复造轮子，还可能互相打架，用户会收到好几条。你帮我查下现在到底有没有，阈值是多少，免得我白写。"
+  },
+  {
+   "id": "zh-062",
+   "plain": "【用户消息】\n用户在微博上骂我们，客服一直没吭声，现在规定多久内必须先答复？结果多久给，涉及退款要不要知会风控",
+   "krouter": "【用户消息】\n用户在微博上骂我们，客服一直没吭声，现在规定多久内必须先答复？结果多久给，涉及退款要不要知会风控",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 客户投诉 〔团队手册/客户投诉.md〕\n- 意见反馈 〔团队手册/意见反馈.md〕\n- 办公网络 〔团队手册/办公网络.md〕\n\n【用户消息】\n用户在微博上骂我们，客服一直没吭声，现在规定多久内必须先答复？结果多久给，涉及退款要不要知会风控"
+  },
+  {
+   "id": "zh-063",
+   "plain": "【用户消息】\n手机上的权限申请弹窗每次都要点，能关吗",
+   "krouter": "【用户消息】\n手机上的权限申请弹窗每次都要点，能关吗",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 权限申请 〔团队手册/权限申请.md〕\n- 需求评审 〔团队手册/需求评审.md〕\n- 测试环境 〔团队手册/测试环境.md〕\n\n【用户消息】\n手机上的权限申请弹窗每次都要点，能关吗"
+  },
+  {
+   "id": "zh-064",
+   "plain": "【用户消息】\n这份表里有手机号，能拷到我自己电脑上不",
+   "krouter": "【用户消息】\n这份表里有手机号，能拷到我自己电脑上不",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据分级 〔团队手册/数据分级.md〕\n\n【用户消息】\n这份表里有手机号，能拷到我自己电脑上不"
+  },
+  {
+   "id": "zh-068",
+   "plain": "【用户消息】\n医院那边说过几天会有人电话回访我的复查情况，我得记得接，别又被当成骚扰电话挂掉了",
+   "krouter": "【用户消息】\n医院那边说过几天会有人电话回访我的复查情况，我得记得接，别又被当成骚扰电话挂掉了",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 客户回访 〔团队手册/客户回访.md〕\n- 数据分级 〔团队手册/数据分级.md〕\n- 权限申请 〔团队手册/权限申请.md〕\n\n【用户消息】\n医院那边说过几天会有人电话回访我的复查情况，我得记得接，别又被当成骚扰电话挂掉了"
+  },
+  {
+   "id": "zh-070",
+   "plain": "【用户消息】\nOK 就按这个来",
+   "krouter": "【用户消息】\nOK 就按这个来",
+   "krouter_c": "【用户消息】\nOK 就按这个来"
+  },
+  {
+   "id": "zh-072",
+   "plain": "【用户消息】\n我想给我妈买个家用血压计，哪种牌子靠谱一点，别太贵就行，她就是想在家自己量量",
+   "krouter": "【用户消息】\n我想给我妈买个家用血压计，哪种牌子靠谱一点，别太贵就行，她就是想在家自己量量",
+   "krouter_c": "【用户消息】\n我想给我妈买个家用血压计，哪种牌子靠谱一点，别太贵就行，她就是想在家自己量量"
+  },
+  {
+   "id": "zh-075",
+   "plain": "【用户消息】\n想把订单模块单独拆出去，得走啥流程",
+   "krouter": "【用户消息】\n想把订单模块单独拆出去，得走啥流程",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 软件采购 〔团队手册/软件采购.md〕\n\n【用户消息】\n想把订单模块单独拆出去，得走啥流程"
+  },
+  {
+   "id": "zh-076",
+   "plain": "【用户消息】\n那部电影据说春节档节前发布了预告，剧情看着有点像去年那部，不知道值不值得去电影院看",
+   "krouter": "【用户消息】\n那部电影据说春节档节前发布了预告，剧情看着有点像去年那部，不知道值不值得去电影院看",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 发布说明 〔团队手册/发布说明.md〕\n- 节假日安排 〔团队手册/节假日安排.md〕\n\n【用户消息】\n那部电影据说春节档节前发布了预告，剧情看着有点像去年那部，不知道值不值得去电影院看"
+  },
+  {
+   "id": "zh-077",
+   "plain": "【用户消息】\n代码托管现在放哪，私有还是公开",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「代码 码托 托管 私有」 → 代码统一迁到公司的 GitHub 企业版，自建 GitLab 只读到明年三月；新建仓库默认私有。改动原因：自建 GitLab 维护成本太高。本页取代 代码托管（旧）。 〔团队手册/代码托管.md，全文召回〕\n  更早的一页说法不同（团队手册/代码托管（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\n代码托管现在放哪，私有还是公开",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「代码 码托 托管 私有」 → 代码统一迁到公司的 GitHub 企业版，自建 GitLab 只读到明年三月；新建仓库默认私有。改动原因：自建 GitLab 维护成本太高。本页取代 代码托管（旧）。 〔团队手册/代码托管.md，全文召回〕\n  更早的一页说法不同（团队手册/代码托管（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- Go 代码规范 〔团队手册/Go 代码规范.md〕\n- 数据分级 〔团队手册/数据分级.md〕\n- 接口文档 〔团队手册/接口文档.md〕\n\n【用户消息】\n代码托管现在放哪，私有还是公开"
+  },
+  {
+   "id": "zh-079",
+   "plain": "【用户消息】\n上周把转化率的算法改了，销售老问我为啥和之前对不上，报表那边是不是得留个说明",
+   "krouter": "【用户消息】\n上周把转化率的算法改了，销售老问我为啥和之前对不上，报表那边是不是得留个说明",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 发布说明 〔团队手册/发布说明.md〕\n- 数据标注 〔团队手册/数据标注.md〕\n\n【用户消息】\n上周把转化率的算法改了，销售老问我为啥和之前对不上，报表那边是不是得留个说明"
+  },
+  {
+   "id": "zh-081",
+   "plain": "【用户消息】\n联调的数据昨晚怎么全没了",
+   "krouter": "【用户消息】\n联调的数据昨晚怎么全没了",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据共享 〔团队手册/数据共享.md〕\n- 测试环境 〔团队手册/测试环境.md〕\n- 数据分级 〔团队手册/数据分级.md〕\n\n【用户消息】\n联调的数据昨晚怎么全没了"
+  },
+  {
+   "id": "zh-082",
+   "plain": "【用户消息】\n火车站那个大看板上写着晚点四十分钟，我朋友还在站台傻等，我得赶紧给他打个电话",
+   "krouter": "【用户消息】\n火车站那个大看板上写着晚点四十分钟，我朋友还在站台傻等，我得赶紧给他打个电话",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据看板 〔团队手册/数据看板.md〕\n- 需求评审 〔团队手册/需求评审.md〕\n\n【用户消息】\n火车站那个大看板上写着晚点四十分钟，我朋友还在站台傻等，我得赶紧给他打个电话"
+  },
+  {
+   "id": "zh-083",
+   "plain": "【用户消息】\n官网的 https 到期是谁在管",
+   "krouter": "【用户消息】\n官网的 https 到期是谁在管",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 证书续签 〔团队手册/证书续签.md〕\n- 软件采购 〔团队手册/软件采购.md〕\n- 权限申请 〔团队手册/权限申请.md〕\n\n【用户消息】\n官网的 https 到期是谁在管"
+  },
+  {
+   "id": "zh-085",
+   "plain": "【用户消息】\n异步的活儿用啥中间件，topic 咋起名",
+   "krouter": "【用户消息】\n异步的活儿用啥中间件，topic 咋起名",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 消息队列 〔团队手册/消息队列.md〕\n\n【用户消息】\n异步的活儿用啥中间件，topic 咋起名"
+  },
+  {
+   "id": "zh-086",
+   "plain": "【用户消息】\nDocker 容器里怎么把宿主机的某个目录挂进去，我改完 compose 文件之后没生效，重启过了",
+   "krouter": "【用户消息】\nDocker 容器里怎么把宿主机的某个目录挂进去，我改完 compose 文件之后没生效，重启过了",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 节假日安排 〔团队手册/节假日安排.md〕\n- 数据共享 〔团队手册/数据共享.md〕\n\n【用户消息】\nDocker 容器里怎么把宿主机的某个目录挂进去，我改完 compose 文件之后没生效，重启过了"
+  },
+  {
+   "id": "zh-089",
+   "plain": "【用户消息】\n用户收不到登录的那个六位数，有后手吗",
+   "krouter": "【用户消息】\n用户收不到登录的那个六位数，有后手吗",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 短信通道 〔团队手册/短信通道.md〕\n- App 系统版本 〔团队手册/App 系统版本.md〕\n\n【用户消息】\n用户收不到登录的那个六位数，有后手吗"
+  },
+  {
+   "id": "zh-094",
+   "plain": "【用户消息】\n预发环境的数据是从线上同步过来的吗？多久同步一次，会不会把手机号也带过来",
+   "krouter": "【用户消息】\n预发环境的数据是从线上同步过来的吗？多久同步一次，会不会把手机号也带过来",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 测试环境 〔团队手册/测试环境.md〕\n- 数据共享 〔团队手册/数据共享.md〕\n- 数据分级 〔团队手册/数据分级.md〕\n\n【用户消息】\n预发环境的数据是从线上同步过来的吗？多久同步一次，会不会把手机号也带过来"
+  },
+  {
+   "id": "zh-095",
+   "plain": "【用户消息】\n这周三要发版，发布说明现在要写哪些内容？发到哪里，要不要同步改帮助中心那边",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「发布 布说 说明 要写」 → 每次发布都要写发布说明，列出新功能、修复和已知问题，发到产品公告频道，同时更新帮助中心。改动原因：客服经常不知道上了新功能。本页取代 发布说明（旧）。 〔团队手册/发布说明.md，全文召回〕\n  更早的一页说法不同（团队手册/发布说明（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\n这周三要发版，发布说明现在要写哪些内容？发到哪里，要不要同步改帮助中心那边",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「发布 布说 说明 要写」 → 每次发布都要写发布说明，列出新功能、修复和已知问题，发到产品公告频道，同时更新帮助中心。改动原因：客服经常不知道上了新功能。本页取代 发布说明（旧）。 〔团队手册/发布说明.md，全文召回〕\n  更早的一页说法不同（团队手册/发布说明（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 团队周会 〔团队手册/团队周会.md〕\n- 节假日安排 〔团队手册/节假日安排.md〕\n\n【用户消息】\n这周三要发版，发布说明现在要写哪些内容？发到哪里，要不要同步改帮助中心那边"
+  },
+  {
+   "id": "zh-096",
+   "plain": "【用户消息】\n放假前最晚几点能推到线上",
+   "krouter": "【用户消息】\n放假前最晚几点能推到线上",
+   "krouter_c": "【用户消息】\n放假前最晚几点能推到线上"
+  },
+  {
+   "id": "zh-098",
+   "plain": "【用户消息】\n下个月又到了那种要写自评、还要找别的组同事给我打分的时候。我入职刚满七个月，上一次没赶上，这次不知道算不算。另外我们组长说是下个月，我同桌说是下下个月，两边说法不一样。到底是怎么排的？谁打分？我手上还有两个项目的复盘没写完，要是时间点很近我得提前赶。",
+   "krouter": "【用户消息】\n下个月又到了那种要写自评、还要找别的组同事给我打分的时候。我入职刚满七个月，上一次没赶上，这次不知道算不算。另外我们组长说是下个月，我同桌说是下下个月，两边说法不一样。到底是怎么排的？谁打分？我手上还有两个项目的复盘没写完，要是时间点很近我得提前赶。",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 绩效评估 〔团队手册/绩效评估.md〕\n- 发布说明 〔团队手册/发布说明.md〕\n\n【用户消息】\n下个月又到了那种要写自评、还要找别的组同事给我打分的时候。我入职刚满七个月，上一次没赶上，这次不知道算不算。另外我们组长说是下个月，我同桌说是下下个月，两边说法不一样。到底是怎么排的？谁打分？我手上还有两个项目的复盘没写完，要是时间点很近我得提前赶。"
+  },
+  {
+   "id": "zh-099",
+   "plain": "【用户消息】\n我们组这季度轮到讲了吗？现在是多久办一次，每个组有硬性要求吗，录像放哪",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「季度 一次 每个 个组」 → 技术分享改为每两周周四下午一次，每个组每季度至少讲一次，录像放进知识库。改动原因：每月一次、自愿参加，结果没人报名。本页取代 技术分享（旧）。 〔团队手册/技术分享.md，全文召回〕\n  更早的一页说法不同（团队手册/技术分享（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\n我们组这季度轮到讲了吗？现在是多久办一次，每个组有硬性要求吗，录像放哪",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「季度 一次 每个 个组」 → 技术分享改为每两周周四下午一次，每个组每季度至少讲一次，录像放进知识库。改动原因：每月一次、自愿参加，结果没人报名。本页取代 技术分享（旧）。 〔团队手册/技术分享.md，全文召回〕\n  更早的一页说法不同（团队手册/技术分享（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 客户回访 〔团队手册/客户回访.md〕\n- 绩效评估 〔团队手册/绩效评估.md〕\n\n【用户消息】\n我们组这季度轮到讲了吗？现在是多久办一次，每个组有硬性要求吗，录像放哪"
+  },
+  {
+   "id": "zh-101",
+   "plain": "【用户消息】\n凌晨下游重复收到同一条通知，查了一圈，是不是我们消费端该自己兜住这种情况",
+   "krouter": "【用户消息】\n凌晨下游重复收到同一条通知，查了一圈，是不是我们消费端该自己兜住这种情况",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 测试环境 〔团队手册/测试环境.md〕\n\n【用户消息】\n凌晨下游重复收到同一条通知，查了一圈，是不是我们消费端该自己兜住这种情况"
+  },
+  {
+   "id": "zh-102",
+   "plain": "【用户消息】\n要标一批训练样本，现在谁来做，怎么验收",
+   "krouter": "【用户消息】\n要标一批训练样本，现在谁来做，怎么验收",
+   "krouter_c": "【用户消息】\n要标一批训练样本，现在谁来做，怎么验收"
+  },
+  {
+   "id": "zh-103",
+   "plain": "【用户消息】\n我们打算给对外的开放接口加一层限流，网关那边我看了一圈，能做的方式有令牌桶、漏桶、固定窗口几种。想听听你的建议：我们的调用量不大，峰值大概每秒两三百，但是个别大客户会突发，一秒钟能打上千个。我倾向于令牌桶加按客户分级的配额，不过怕实现太复杂，你觉得有没有更简单又够用的办法？",
+   "krouter": "【用户消息】\n我们打算给对外的开放接口加一层限流，网关那边我看了一圈，能做的方式有令牌桶、漏桶、固定窗口几种。想听听你的建议：我们的调用量不大，峰值大概每秒两三百，但是个别大客户会突发，一秒钟能打上千个。我倾向于令牌桶加按客户分级的配额，不过怕实现太复杂，你觉得有没有更简单又够用的办法？",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 客户回访 〔团队手册/客户回访.md〕\n- 接口文档 〔团队手册/接口文档.md〕\n- 数据分级 〔团队手册/数据分级.md〕\n\n【用户消息】\n我们打算给对外的开放接口加一层限流，网关那边我看了一圈，能做的方式有令牌桶、漏桶、固定窗口几种。想听听你的建议：我们的调用量不大，峰值大概每秒两三百，但是个别大客户会突发，一秒钟能打上千个。我倾向于令牌桶加按客户分级的配额，不过怕实现太复杂，你觉得有没有更简单又够用的办法？"
+  },
+  {
+   "id": "zh-105",
+   "plain": "【用户消息】\n今天值班群里有条告警，说是官网域名证书快到期了，剩一个月。我看了下好像是证书管理服务那边卡住了，我手上没权限，这种情况该走什么处理，我该找谁，要不要先在群里回一下？先说明下官网现在还正常，我刚接班，上一班的人已经下线了。对了，这个证书是三个子域共用的。",
+   "krouter": "【用户消息】\n今天值班群里有条告警，说是官网域名证书快到期了，剩一个月。我看了下好像是证书管理服务那边卡住了，我手上没权限，这种情况该走什么处理，我该找谁，要不要先在群里回一下？先说明下官网现在还正常，我刚接班，上一班的人已经下线了。对了，这个证书是三个子域共用的。",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 证书续签 〔团队手册/证书续签.md〕\n- 服务拆分 〔团队手册/服务拆分.md〕\n- 权限申请 〔团队手册/权限申请.md〕\n\n【用户消息】\n今天值班群里有条告警，说是官网域名证书快到期了，剩一个月。我看了下好像是证书管理服务那边卡住了，我手上没权限，这种情况该走什么处理，我该找谁，要不要先在群里回一下？先说明下官网现在还正常，我刚接班，上一班的人已经下线了。对了，这个证书是三个子域共用的。"
+  },
+  {
+   "id": "zh-107",
+   "plain": "【用户消息】\n买个一年的 SaaS，快到期了谁去问要不要续",
+   "krouter": "【用户消息】\n买个一年的 SaaS，快到期了谁去问要不要续",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 绩效评估 〔团队手册/绩效评估.md〕\n- 软件采购 〔团队手册/软件采购.md〕\n- 服务拆分 〔团队手册/服务拆分.md〕\n\n【用户消息】\n买个一年的 SaaS，快到期了谁去问要不要续"
+  },
+  {
+   "id": "zh-108",
+   "plain": "【用户消息】\n2026-11-13 02:14:07.221 INFO  [main] c.e.order.Application - Started Application in 8.412 seconds\n2026-11-13 02:14:07.388 INFO  [kafka-consumer-1] o.a.k.c.c.internals.ConsumerCoordinator - [Consumer clientId=order-svc-1, groupId=order-group] Adding newly assigned partitions: order.created-0, order.created-1\n2026-11-13 02:14:07.402 INFO  [kafka-consumer-1] o.a.k.c.c.internals.SubscriptionState - [Consumer clientId=order-svc-1, groupId=order-group] Setting offset for partition order.created-0 to the committed offset FetchPosition{offset=48213}\n2026-11-13 02:14:09.917 WARN  [http-nio-8080-exec-3] c.e.order.web.OrderController - slow request GET /api/orders/9918273 took 2113ms\n2026-11-13 02:14:11.004 ERROR [pool-4-thread-2] c.e.order.job.SyncJob - sync failed for orderId=9918273\njava.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms.\n    at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)\n    at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:197)\n    at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:162)\n    at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:128)\n2026-11-13 02:14:11.230 INFO  [kafka-consumer-1] o.a.k.c.c.internals.ConsumerCoordinator - [Consumer clientId=order-svc-1, groupId=order-group] Revoke previously assigned partitions order.created-0, order.created-1\n2026-11-13 02:14:12.771 WARN  [http-nio-8080-exec-7] c.e.order.web.OrderController - slow request GET /api/orders/9918301 took 3380ms\n\n数据库连接池老是满，是不是这个 SyncJob 一直占着连接没放",
+   "krouter": "【用户消息】\n2026-11-13 02:14:07.221 INFO  [main] c.e.order.Application - Started Application in 8.412 seconds\n2026-11-13 02:14:07.388 INFO  [kafka-consumer-1] o.a.k.c.c.internals.ConsumerCoordinator - [Consumer clientId=order-svc-1, groupId=order-group] Adding newly assigned partitions: order.created-0, order.created-1\n2026-11-13 02:14:07.402 INFO  [kafka-consumer-1] o.a.k.c.c.internals.SubscriptionState - [Consumer clientId=order-svc-1, groupId=order-group] Setting offset for partition order.created-0 to the committed offset FetchPosition{offset=48213}\n2026-11-13 02:14:09.917 WARN  [http-nio-8080-exec-3] c.e.order.web.OrderController - slow request GET /api/orders/9918273 took 2113ms\n2026-11-13 02:14:11.004 ERROR [pool-4-thread-2] c.e.order.job.SyncJob - sync failed for orderId=9918273\njava.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms.\n    at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)\n    at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:197)\n    at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:162)\n    at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:128)\n2026-11-13 02:14:11.230 INFO  [kafka-consumer-1] o.a.k.c.c.internals.ConsumerCoordinator - [Consumer clientId=order-svc-1, groupId=order-group] Revoke previously assigned partitions order.created-0, order.created-1\n2026-11-13 02:14:12.771 WARN  [http-nio-8080-exec-7] c.e.order.web.OrderController - slow request GET /api/orders/9918301 took 3380ms\n\n数据库连接池老是满，是不是这个 SyncJob 一直占着连接没放",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 数据分级 〔团队手册/数据分级.md〕\n- 数据标注 〔团队手册/数据标注.md〕\n- 数据共享 〔团队手册/数据共享.md〕\n\n【用户消息】\n2026-11-13 02:14:07.221 INFO  [main] c.e.order.Application - Started Application in 8.412 seconds\n2026-11-13 02:14:07.388 INFO  [kafka-consumer-1] o.a.k.c.c.internals.ConsumerCoordinator - [Consumer clientId=order-svc-1, groupId=order-group] Adding newly assigned partitions: order.created-0, order.created-1\n2026-11-13 02:14:07.402 INFO  [kafka-consumer-1] o.a.k.c.c.internals.SubscriptionState - [Consumer clientId=order-svc-1, groupId=order-group] Setting offset for partition order.created-0 to the committed offset FetchPosition{offset=48213}\n2026-11-13 02:14:09.917 WARN  [http-nio-8080-exec-3] c.e.order.web.OrderController - slow request GET /api/orders/9918273 took 2113ms\n2026-11-13 02:14:11.004 ERROR [pool-4-thread-2] c.e.order.job.SyncJob - sync failed for orderId=9918273\njava.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms.\n    at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)\n    at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:197)\n    at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:162)\n    at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:128)\n2026-11-13 02:14:11.230 INFO  [kafka-consumer-1] o.a.k.c.c.internals.ConsumerCoordinator - [Consumer clientId=order-svc-1, groupId=order-group] Revoke previously assigned partitions order.created-0, order.created-1\n2026-11-13 02:14:12.771 WARN  [http-nio-8080-exec-7] c.e.order.web.OrderController - slow request GET /api/orders/9918301 took 3380ms\n\n数据库连接池老是满，是不是这个 SyncJob 一直占着连接没放"
+  },
+  {
+   "id": "zh-109",
+   "plain": "【用户消息】\n线上出问题得马上查日志，我没权限，生产权限在哪申请？要谁审批，临时权限能开多久",
+   "krouter": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「问题 权限 生产 产权」 → 生产权限在工单系统申请，由直属上级和系统负责人双人审批；临时权限最长 7 天，到期自动收回。改动原因：口头开的权限没人记得收回。本页取代 权限申请（旧）。 〔团队手册/权限申请.md，全文召回〕\n  更早的一页说法不同（团队手册/权限申请（旧）.md），以这页为准\n用到就注明出处页。\n\n【用户消息】\n线上出问题得马上查日志，我没权限，生产权限在哪申请？要谁审批，临时权限能开多久",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 记忆提示（从用户的记忆库里想起的，不是用户这句话里说的；和这句话无关就不用管）：\n- 「问题 权限 生产 产权」 → 生产权限在工单系统申请，由直属上级和系统负责人双人审批；临时权限最长 7 天，到期自动收回。改动原因：口头开的权限没人记得收回。本页取代 权限申请（旧）。 〔团队手册/权限申请.md，全文召回〕\n  更早的一页说法不同（团队手册/权限申请（旧）.md），以这页为准\n用到就注明出处页。\n\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 测试环境 〔团队手册/测试环境.md〕\n- 发布说明 〔团队手册/发布说明.md〕\n\n【用户消息】\n线上出问题得马上查日志，我没权限，生产权限在哪申请？要谁审批，临时权限能开多久"
+  },
+  {
+   "id": "zh-110",
+   "plain": "【用户消息】\n产品刚丢过来的东西，没拉大家过一遍就让我写？",
+   "krouter": "【用户消息】\n产品刚丢过来的东西，没拉大家过一遍就让我写？",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 意见反馈 〔团队手册/意见反馈.md〕\n- 需求评审 〔团队手册/需求评审.md〕\n- 发布说明 〔团队手册/发布说明.md〕\n\n【用户消息】\n产品刚丢过来的东西，没拉大家过一遍就让我写？"
+  },
+  {
+   "id": "zh-111",
+   "plain": "【用户消息】\n昨晚线上订单库慢查询报警，我想自己连上去看看执行计划，但我的账号只能连测试库。现在我这边的情况是主管今天不在，下午三点之前要出结论。想问一下想拿到线上库的账号，现在到底怎么走？需要谁点头？能拿到多久？我先说清楚，我只是想看执行计划，不会改任何数据。另外到期了要不要我自己去关？",
+   "krouter": "【用户消息】\n昨晚线上订单库慢查询报警，我想自己连上去看看执行计划，但我的账号只能连测试库。现在我这边的情况是主管今天不在，下午三点之前要出结论。想问一下想拿到线上库的账号，现在到底怎么走？需要谁点头？能拿到多久？我先说清楚，我只是想看执行计划，不会改任何数据。另外到期了要不要我自己去关？",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 测试环境 〔团队手册/测试环境.md〕\n- 数据共享 〔团队手册/数据共享.md〕\n- 节假日安排 〔团队手册/节假日安排.md〕\n\n【用户消息】\n昨晚线上订单库慢查询报警，我想自己连上去看看执行计划，但我的账号只能连测试库。现在我这边的情况是主管今天不在，下午三点之前要出结论。想问一下想拿到线上库的账号，现在到底怎么走？需要谁点头？能拿到多久？我先说清楚，我只是想看执行计划，不会改任何数据。另外到期了要不要我自己去关？"
+  },
+  {
+   "id": "zh-113",
+   "plain": "【用户消息】\n没来得及汇报进度，会上只说风险就行吧",
+   "krouter": "【用户消息】\n没来得及汇报进度，会上只说风险就行吧",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 团队周会 〔团队手册/团队周会.md〕\n- 技术方案模板 〔团队手册/技术方案模板.md〕\n\n【用户消息】\n没来得及汇报进度，会上只说风险就行吧"
+  },
+  {
+   "id": "zh-114",
+   "plain": "【用户消息】\n```\n# .gitlab-ci.yml\n# GitLab Runner tag: docker\nstages:\n  - build\n  - test\n  - deploy\n\nvariables:\n  GIT_DEPTH: '20'\n  MAVEN_OPTS: '-Dmaven.repo.local=.m2/repository'\n\ncache:\n  key: ${CI_COMMIT_REF_SLUG}\n  paths:\n    - .m2/repository/\n\nlint-job:\n  stage: test\n  image: node:20-alpine\n  script:\n    - npm ci\n    - npm run lint\n\nbuild-job:\n  stage: build\n  image: maven:3.9-eclipse-temurin-17\n  script:\n    - mvn -B -DskipTests package\n  artifacts:\n    paths:\n      - target/*.jar\n    expire_in: 1 day\n\ntest-job:\n  stage: test\n  image: maven:3.9-eclipse-temurin-17\n  script:\n    - mvn -B test\n\ndeploy-job:\n  stage: deploy\n  script:\n    - ./scripts/deploy.sh staging\n  only:\n    - main\n  environment: staging\n```\npipeline 一直卡在 pending，runner 显示 offline，yml 本身看着没问题吧",
+   "krouter": "【用户消息】\n```\n# .gitlab-ci.yml\n# GitLab Runner tag: docker\nstages:\n  - build\n  - test\n  - deploy\n\nvariables:\n  GIT_DEPTH: '20'\n  MAVEN_OPTS: '-Dmaven.repo.local=.m2/repository'\n\ncache:\n  key: ${CI_COMMIT_REF_SLUG}\n  paths:\n    - .m2/repository/\n\nlint-job:\n  stage: test\n  image: node:20-alpine\n  script:\n    - npm ci\n    - npm run lint\n\nbuild-job:\n  stage: build\n  image: maven:3.9-eclipse-temurin-17\n  script:\n    - mvn -B -DskipTests package\n  artifacts:\n    paths:\n      - target/*.jar\n    expire_in: 1 day\n\ntest-job:\n  stage: test\n  image: maven:3.9-eclipse-temurin-17\n  script:\n    - mvn -B test\n\ndeploy-job:\n  stage: deploy\n  script:\n    - ./scripts/deploy.sh staging\n  only:\n    - main\n  environment: staging\n```\npipeline 一直卡在 pending，runner 显示 offline，yml 本身看着没问题吧",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 设备申领 〔团队手册/设备申领.md〕\n- 发布说明 〔团队手册/发布说明.md〕\n\n【用户消息】\n```\n# .gitlab-ci.yml\n# GitLab Runner tag: docker\nstages:\n  - build\n  - test\n  - deploy\n\nvariables:\n  GIT_DEPTH: '20'\n  MAVEN_OPTS: '-Dmaven.repo.local=.m2/repository'\n\ncache:\n  key: ${CI_COMMIT_REF_SLUG}\n  paths:\n    - .m2/repository/\n\nlint-job:\n  stage: test\n  image: node:20-alpine\n  script:\n    - npm ci\n    - npm run lint\n\nbuild-job:\n  stage: build\n  image: maven:3.9-eclipse-temurin-17\n  script:\n    - mvn -B -DskipTests package\n  artifacts:\n    paths:\n      - target/*.jar\n    expire_in: 1 day\n\ntest-job:\n  stage: test\n  image: maven:3.9-eclipse-temurin-17\n  script:\n    - mvn -B test\n\ndeploy-job:\n  stage: deploy\n  script:\n    - ./scripts/deploy.sh staging\n  only:\n    - main\n  environment: staging\n```\npipeline 一直卡在 pending，runner 显示 offline，yml 本身看着没问题吧"
+  },
+  {
+   "id": "zh-116",
+   "plain": "【用户消息】\n外面来的客人想上网，连哪个",
+   "krouter": "【用户消息】\n外面来的客人想上网，连哪个",
+   "krouter_c": "【用户消息】\n外面来的客人想上网，连哪个"
+  },
+  {
+   "id": "zh-119",
+   "plain": "【用户消息】\n我们组最近在聊把订单系统里的优惠券那一块单独摘出来做成一个独立部署的新东西。原因很具体：优惠券的规则每周都在改，每次改都要跟着订单大版本一起发，上线窗口被卡得很死，测试也要全量回归。运营那边又经常要求临时加活动，我们每次都只能说排到下个版本。上个月双十一预热的时候，因为一个优惠券的小改动，整个订单链路回滚了一次，大家都挺难受的。所以我们组长希望下个季度把它独立出来，数据库也想一起分开，先从只读的查询接口开始迁，写入那部分最后迁。我这两天在做前期的调研，已经把调用关系梳理了一遍，订单、购物车、结算、客服后台一共四个调用方，QPS 加起来峰值大概每秒四百多。另外补充一些背景，方便你判断规模：优惠券这块现在大概有三万行代码，主要是规则引擎和发放、核销三个模块，其中规则引擎是最复杂的，嵌套了很多历史遗留的特例判断，没有单测。团队里熟悉这块的只有三个人，其中一个下个月会调去别的项目。如果拆出去，我们打算先用同一个仓库的子目录的方式过渡，等稳定了再拆仓库。数据库这边我们已经评估过，优惠券相关的表一共十二张，和订单表有两处外键关联，需要先去掉外键再迁。我们还没对外讲过这件事，只有组内几个人知道，想等流程搞清楚了再向上同步，免得讲了又被问一堆答不上来的问题。现在的问题是，我不确定想拆一个新的独立部署的东西出来，需要走哪些审批，要先写什么文档，需要哪些人点头，还有上线的时候有没有硬性的前置条件，比如监控、值班之类的。我不想先做了一堆工作，到最后被卡在流程上。你先帮我把现在的要求理一下，我再去排计划。",
+   "krouter": "【用户消息】\n我们组最近在聊把订单系统里的优惠券那一块单独摘出来做成一个独立部署的新东西。原因很具体：优惠券的规则每周都在改，每次改都要跟着订单大版本一起发，上线窗口被卡得很死，测试也要全量回归。运营那边又经常要求临时加活动，我们每次都只能说排到下个版本。上个月双十一预热的时候，因为一个优惠券的小改动，整个订单链路回滚了一次，大家都挺难受的。所以我们组长希望下个季度把它独立出来，数据库也想一起分开，先从只读的查询接口开始迁，写入那部分最后迁。我这两天在做前期的调研，已经把调用关系梳理了一遍，订单、购物车、结算、客服后台一共四个调用方，QPS 加起来峰值大概每秒四百多。另外补充一些背景，方便你判断规模：优惠券这块现在大概有三万行代码，主要是规则引擎和发放、核销三个模块，其中规则引擎是最复杂的，嵌套了很多历史遗留的特例判断，没有单测。团队里熟悉这块的只有三个人，其中一个下个月会调去别的项目。如果拆出去，我们打算先用同一个仓库的子目录的方式过渡，等稳定了再拆仓库。数据库这边我们已经评估过，优惠券相关的表一共十二张，和订单表有两处外键关联，需要先去掉外键再迁。我们还没对外讲过这件事，只有组内几个人知道，想等流程搞清楚了再向上同步，免得讲了又被问一堆答不上来的问题。现在的问题是，我不确定想拆一个新的独立部署的东西出来，需要走哪些审批，要先写什么文档，需要哪些人点头，还有上线的时候有没有硬性的前置条件，比如监控、值班之类的。我不想先做了一堆工作，到最后被卡在流程上。你先帮我把现在的要求理一下，我再去排计划。",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- 接口文档 〔团队手册/接口文档.md〕\n- App 系统版本 〔团队手册/App 系统版本.md〕\n- 服务拆分 〔团队手册/服务拆分.md〕\n\n【用户消息】\n我们组最近在聊把订单系统里的优惠券那一块单独摘出来做成一个独立部署的新东西。原因很具体：优惠券的规则每周都在改，每次改都要跟着订单大版本一起发，上线窗口被卡得很死，测试也要全量回归。运营那边又经常要求临时加活动，我们每次都只能说排到下个版本。上个月双十一预热的时候，因为一个优惠券的小改动，整个订单链路回滚了一次，大家都挺难受的。所以我们组长希望下个季度把它独立出来，数据库也想一起分开，先从只读的查询接口开始迁，写入那部分最后迁。我这两天在做前期的调研，已经把调用关系梳理了一遍，订单、购物车、结算、客服后台一共四个调用方，QPS 加起来峰值大概每秒四百多。另外补充一些背景，方便你判断规模：优惠券这块现在大概有三万行代码，主要是规则引擎和发放、核销三个模块，其中规则引擎是最复杂的，嵌套了很多历史遗留的特例判断，没有单测。团队里熟悉这块的只有三个人，其中一个下个月会调去别的项目。如果拆出去，我们打算先用同一个仓库的子目录的方式过渡，等稳定了再拆仓库。数据库这边我们已经评估过，优惠券相关的表一共十二张，和订单表有两处外键关联，需要先去掉外键再迁。我们还没对外讲过这件事，只有组内几个人知道，想等流程搞清楚了再向上同步，免得讲了又被问一堆答不上来的问题。现在的问题是，我不确定想拆一个新的独立部署的东西出来，需要走哪些审批，要先写什么文档，需要哪些人点头，还有上线的时候有没有硬性的前置条件，比如监控、值班之类的。我不想先做了一堆工作，到最后被卡在流程上。你先帮我把现在的要求理一下，我再去排计划。"
+  },
+  {
+   "id": "zh-120",
+   "plain": "【用户消息】\n============================= test session starts ==============================\nplatform linux -- Python 3.11.6, pytest-8.1.1, pluggy-1.4.0\nrootdir: /home/runner/work/tools/tools\ncollected 14 items\n\ntests/test_changelog.py ..F.......                                       [ 71%]\ntests/test_version.py ....                                               [100%]\n\n=================================== FAILURES ===================================\n_________________________ test_generate_release_notes __________________________\n\n    def test_generate_release_notes():\n        commits = ['feat: add export', 'fix: crash on empty list', 'chore: bump deps']\n        notes = generate(commits)\n>       assert notes.startswith('## Features')\nE       AssertionError: assert False\nE        +  where False = <built-in method startswith of str object at 0x7f1c2a>('## Features')\n\n---------------------------- Captured stdout call -----------------------------\nGenerating release notes for v2.3.1\n=========================== short test summary info ============================\nFAILED tests/test_changelog.py::test_generate_release_notes - AssertionError: assert False\n========================= 1 failed, 13 passed in 0.42s =========================\n\n这个断言挂了，是我模板里标题写成 ## New 了吗，还是测试写死了",
+   "krouter": "【用户消息】\n============================= test session starts ==============================\nplatform linux -- Python 3.11.6, pytest-8.1.1, pluggy-1.4.0\nrootdir: /home/runner/work/tools/tools\ncollected 14 items\n\ntests/test_changelog.py ..F.......                                       [ 71%]\ntests/test_version.py ....                                               [100%]\n\n=================================== FAILURES ===================================\n_________________________ test_generate_release_notes __________________________\n\n    def test_generate_release_notes():\n        commits = ['feat: add export', 'fix: crash on empty list', 'chore: bump deps']\n        notes = generate(commits)\n>       assert notes.startswith('## Features')\nE       AssertionError: assert False\nE        +  where False = <built-in method startswith of str object at 0x7f1c2a>('## Features')\n\n---------------------------- Captured stdout call -----------------------------\nGenerating release notes for v2.3.1\n=========================== short test summary info ============================\nFAILED tests/test_changelog.py::test_generate_release_notes - AssertionError: assert False\n========================= 1 failed, 13 passed in 0.42s =========================\n\n这个断言挂了，是我模板里标题写成 ## New 了吗，还是测试写死了",
+   "krouter_c": "【这一轮，应用的钩子随用户消息附上的上下文（用户看不到）】\nKRouter 候选（按字面最接近这句话的几页，只有名字，没核对过，多半与这句话无关。只有这句话确实在说其中某一件事时才去取那一页；否则当这段不存在，回复里也不要提）：\n- A/B tests 〔Handbook/A/B tests.md〕\n- API deprecation 〔Handbook/API deprecation.md〕\n- Customer interview notes 〔Handbook/Customer interview notes.md〕\n\n【用户消息】\n============================= test session starts ==============================\nplatform linux -- Python 3.11.6, pytest-8.1.1, pluggy-1.4.0\nrootdir: /home/runner/work/tools/tools\ncollected 14 items\n\ntests/test_changelog.py ..F.......                                       [ 71%]\ntests/test_version.py ....                                               [100%]\n\n=================================== FAILURES ===================================\n_________________________ test_generate_release_notes __________________________\n\n    def test_generate_release_notes():\n        commits = ['feat: add export', 'fix: crash on empty list', 'chore: bump deps']\n        notes = generate(commits)\n>       assert notes.startswith('## Features')\nE       AssertionError: assert False\nE        +  where False = <built-in method startswith of str object at 0x7f1c2a>('## Features')\n\n---------------------------- Captured stdout call -----------------------------\nGenerating release notes for v2.3.1\n=========================== short test summary info ============================\nFAILED tests/test_changelog.py::test_generate_release_notes - AssertionError: assert False\n========================= 1 failed, 13 passed in 0.42s =========================\n\n这个断言挂了，是我模板里标题写成 ## New 了吗，还是测试写死了"
+  }
+ ]
+}

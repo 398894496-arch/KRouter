@@ -1,0 +1,45 @@
+===== run small h1 06:18:04
+===== score small h1
+h1: items 120 missing 0
+  recall 30/48 (unnamed 24/42, named 6/6; zh 20, en 10)  changed 20/24  quiet loud 11/48  wrong 20  old 1
+  quiet loud by kind: unrelated=1/8, other_sense=2/8, common_word=0/8, pasted=1/8, near_topic=7/8, ack=0/8
+  tool calls 111 (0.93 a message; recall 62, changed 36, quiet 13); messages with a call: recall 41/48, changed 23/24, quiet 10/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 6/48; calls by tool: krouter_ask 87, read_note 24
+  tokens: 327114 in, 37520 out (2726 in a message)
+===== judge small h1
+h1: reply carries the page's rule (judge): recall 30/48, changed 20/24; states the replaced rule as current: 0/24; verdicts not read 0
+===== run small h2 06:20:24
+===== score small h2
+h2: items 120 missing 0
+  recall 43/48 (unnamed 37/42, named 6/6; zh 24, en 19)  changed 23/24  quiet loud 16/48  wrong 14  old 1
+  quiet loud by kind: unrelated=1/8, other_sense=4/8, common_word=1/8, pasted=3/8, near_topic=7/8, ack=0/8
+  tool calls 140 (1.17 a message; recall 74, changed 39, quiet 27); messages with a call: recall 48/48, changed 23/24, quiet 15/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 12/48; calls by tool: krouter_ask 100, read_note 40
+  tokens: 438995 in, 38209 out (3658 in a message)
+===== judge small h2
+h2: reply carries the page's rule (judge): recall 43/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0
+===== run mid h1 06:22:53
+===== score mid h1
+h1: items 120 missing 0
+  recall 29/48 (unnamed 23/42, named 6/6; zh 18, en 11)  changed 19/24  quiet loud 10/48  wrong 19  old 2
+  quiet loud by kind: unrelated=1/8, other_sense=1/8, common_word=0/8, pasted=1/8, near_topic=7/8, ack=0/8
+  tool calls 103 (0.86 a message; recall 56, changed 37, quiet 10); messages with a call: recall 41/48, changed 24/24, quiet 9/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 5/48; calls by tool: krouter_ask 87, read_note 16
+  tokens: 316807 in, 37563 out (2640 in a message)
+===== judge mid h1
+h1: reply carries the page's rule (judge): recall 29/48, changed 19/24; states the replaced rule as current: 0/24; verdicts not read 0
+===== run mid h2 06:25:14
+===== score mid h2
+h2: items 120 missing 0
+  recall 43/48 (unnamed 37/42, named 6/6; zh 24, en 19)  changed 23/24  quiet loud 15/48  wrong 20  old 0
+  quiet loud by kind: unrelated=1/8, other_sense=3/8, common_word=1/8, pasted=2/8, near_topic=8/8, ack=0/8
+  tool calls 142 (1.18 a message; recall 76, changed 42, quiet 24); messages with a call: recall 46/48, changed 23/24, quiet 14/48
+  replaced page read with read_note: 0 of 24 changed cases
+  quiet messages whose reply names a vault page: 10/48; calls by tool: krouter_ask 108, read_note 34
+  tokens: 583579 in, 38230 out (4863 in a message)
+===== judge mid h2
+h2: reply carries the page's rule (judge): recall 43/48, changed 23/24; states the replaced rule as current: 0/24; verdicts not read 0
+===== done 06:27:40
