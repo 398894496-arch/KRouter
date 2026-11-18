@@ -84,3 +84,41 @@ def pick(reply: str, n: int) -> int:
     m = re.search(r"\d+", reply or "")
     v = int(m.group()) if m else 0
     return v if 1 <= v <= n else 0
+
+
+# Set 52: the same question for a decision model (one that returns a typed choice with probabilities, no text).
+NONE = "none"
+INSTRUCT = {
+    "zh": "state 是用户刚说的一句话。判断它是不是在说下面某一页记的那件事：换了说法、没提名字也算；只是碰巧有相同的词、"
+          "说的是别的事不算；粘贴的日志、代码、别人的话不算。都不是或拿不准，选 none。",
+    "en": "The state is a message the user just sent. Decide whether it is about the matter one of the pages below "
+          "records: said another way or without the name counts; sharing a word while being about something else does "
+          "not; pasted logs, code or someone else's words do not. If it is none of them, or you are not sure, choose none.",
+}
+NONE_SAYS = {
+    "zh": "都不是，或拿不准：这句话不是在说上面任何一页记的事",
+    "en": "None of the pages, or not sure: the message is not about any matter recorded above",
+}
+
+
+def question(cands: list[dict], lang: str) -> dict:
+    """One `choice` question: an option per candidate (p1..pN, its name and one line) and `none`."""
+    sep = "：" if lang == "zh" else ": "
+    criteria = {f"p{i}": f"{c['title']}{sep}{c['how']}" for i, c in enumerate(cands, 1)}
+    criteria[NONE] = NONE_SAYS[lang]
+    return {"type": "choice", "instructions": INSTRUCT[lang], "criteria": criteria}
+
+
+def chosen(answer: dict | None, n: int) -> tuple[int, float]:
+    """(the candidate's number or 0, the model's confidence in its pick or -1) from a decision model's answer."""
+    answer = answer or {}
+    pick = str(answer.get("choice") or "")
+    conf = answer.get("confidence")
+    try:
+        conf = float(conf)
+    except (TypeError, ValueError):
+        probs = answer.get("probabilities") or {}
+        conf = float(probs.get(pick, -1)) if isinstance(probs, dict) else -1.0
+    m = re.fullmatch(r"p(\d+)", pick)
+    v = int(m.group(1)) if m else 0
+    return (v if 1 <= v <= n else 0), conf
