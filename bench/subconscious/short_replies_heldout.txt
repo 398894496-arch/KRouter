@@ -1,0 +1,64 @@
+# Set 50, second list: written 2026-11-18 after the first list's baseline was read and before any rule was written or
+# tried. Not run on any vault until the set was registered.
+# zh
+弄吧
+搞吧
+开始吧
+来吧
+删吧
+停吧
+嗯
+嗯嗯
+对
+是的
+没错
+同意
+就它了
+这个好
+还行
+一般
+不太行
+差不多
+再想想
+回头说
+晚点再说
+先不管
+下一个
+上一个
+往下
+接下来呢
+后来呢
+结果呢
+怎么样了
+有结果吗
+成了吗
+通了吗
+能用吗
+要多久
+还要等吗
+什么时候好
+为啥
+咋回事
+啥意思
+哪里不对
+哪个更好
+选第二个
+两个都要
+全都要
+都不要
+不要了
+撤回
+回滚
+# en
+yep
+nope
+alright
+cool
+great
+perfect
+go on
+keep going
+next
+what happened?
+any luck?
+done?
