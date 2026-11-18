@@ -545,6 +545,9 @@ def _choose(vault: Path, found: list[dict], today: date) -> list[dict]:
                                                    f["span"][0]))
 
 
+_RANKED: dict = {}  # 同一句话在一次钩子里会被问两回（钩子自己的全文一路、给模型挑候选）：只查一遍
+
+
 def _ranked(vault: Path, said: str) -> dict | None:
     """Full-text recall over the message, from the index as it is (never rebuilt here: this runs on every message)."""
     import recall_index as ri
@@ -552,9 +555,18 @@ def _ranked(vault: Path, said: str) -> dict | None:
     if not ri.cache_path(vault).is_file():
         return None
     try:
-        return ri.recall(vault, said, refresh_first=False, assoc=False, conflict=True)
-    except Exception:  # noqa: BLE001
+        st = ri.cache_path(vault).stat()
+    except OSError:
         return None
+    key = (str(vault), said, st.st_mtime_ns, st.st_size)  # 索引一变就重查
+    if _RANKED.get("key") == key:
+        return _RANKED["res"]
+    try:
+        res = ri.recall(vault, said, refresh_first=False, assoc=False, conflict=True)
+    except Exception:  # noqa: BLE001
+        res = None
+    _RANKED.update(key=key, res=res)
+    return res
 
 
 THIN_STRONG = 2
