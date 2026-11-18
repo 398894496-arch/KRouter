@@ -55,6 +55,66 @@ def test_daily_cap_stops_the_borrowing_quietly(lane, monkeypatch):
     assert isinstance(e.value, llm.NoModel) and "KROUTER_HOST_CLI_MAX" in str(e.value)
 
 
+def as_step(monkeypatch, name: str) -> None:
+    import sys
+
+    monkeypatch.setattr(sys, "argv", [f"/somewhere/{name}.py"])
+
+
+def test_session_import_leaves_a_share_of_the_day_for_the_nightly_steps(lane, monkeypatch):
+    """A busy day of session import does not leave the nightly steps with nothing (30 a day: import stops at 18)."""
+    llm, vault, _ = lane
+    monkeypatch.setenv("KROUTER_HOST_CLI_MAX", "10")
+    assert llm.host_cli_kept() == 4
+    as_step(monkeypatch, "import_sessions")
+    for i in range(6):
+        llm.complete(f"session {i}", vault)
+    with pytest.raises(llm.HostCapReached) as e:
+        llm.complete("a seventh session", vault)
+    assert "session import" in str(e.value) and "KROUTER_HOST_CLI_MAX" in str(e.value)
+    assert llm.host_calls_split() == (6, 0)
+    for step in ("consolidate_topics", "consolidate_topics", "answer_cards", "reconsolidate"):
+        as_step(monkeypatch, step)
+        llm.complete("a nightly step", vault)
+    with pytest.raises(llm.HostCapReached) as e:  # 整天的次数用完：谁都不再调
+        llm.complete("an eleventh call", vault)
+    assert "session import" not in str(e.value)
+    assert llm.host_calls_today() == 10
+
+
+def test_what_the_nightly_steps_used_is_no_longer_kept_and_import_gets_the_rest(lane, monkeypatch):
+    llm, vault, _ = lane
+    monkeypatch.setenv("KROUTER_HOST_CLI_MAX", "10")
+    as_step(monkeypatch, "consolidate_topics")
+    for i in range(3):
+        llm.complete(f"topic {i}", vault)
+    as_step(monkeypatch, "import_sessions")
+    assert llm.host_cli_room()  # 留 4 次、夜里已用 3 次：还留 1 次，导入能用到第 9 次
+    for i in range(6):
+        llm.complete(f"session {i}", vault)
+    assert not llm.host_cli_room() and llm.host_cli_room("answer_cards")
+    assert llm.host_calls_split() == (6, 3)
+
+
+def test_the_nightly_steps_may_use_more_than_their_share_when_import_left_room(lane, monkeypatch):
+    llm, vault, _ = lane
+    monkeypatch.setenv("KROUTER_HOST_CLI_MAX", "5")
+    as_step(monkeypatch, "consolidate_topics")
+    for i in range(5):
+        llm.complete(f"topic {i}", vault)
+    assert llm.host_calls_split() == (0, 5) and not llm.host_cli_room("import_sessions")
+
+
+def test_a_cap_too_small_to_split_keeps_nothing_back(lane, monkeypatch):
+    llm, vault, _ = lane
+    monkeypatch.setenv("KROUTER_HOST_CLI_MAX", "2")
+    assert llm.host_cli_kept() == 0
+    as_step(monkeypatch, "import_sessions")
+    llm.complete("one", vault)
+    llm.complete("two", vault)
+    assert llm.host_calls_split() == (2, 0)
+
+
 def test_one_switch_turns_it_off_and_says_what_is_off(lane, monkeypatch):
     llm, vault, _ = lane
     monkeypatch.setenv("KROUTER_HOST_CLI", "0")
