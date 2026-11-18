@@ -1,0 +1,104 @@
+===== typesafe/jev-1.14 crowd 0
+cases: 120  the hook brought a page for 16  messages that ask the model: 81
+model: ['typesafe/jev-1.14-20261014']  calls: 81  said a page: 31  tokens: 49508
+seconds per call: median 0.75  p90 0.90  max 1.64
+hook + judge (typesafe/jev-1.14)  crowd: 0  cases: 120
+  zh: recall 16/24  changed 10/12  quiet-loud 2/24  wrong 0  old 0
+  en: recall 11/24  changed 5/12  quiet-loud 2/24  wrong 1  old 0
+  all: recall 27/48  changed 15/24  quiet-loud 4/48  wrong 1  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=1/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 21/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'judge': 31, 'recall': 4, 'trigger': 1}
+  choice score: 42 - 3*5 - 9*0 = 27
+===== typesafe/jev-1.14 crowd 1000
+cases: 120  the hook brought a page for 16  messages that ask the model: 80
+model: ['typesafe/jev-1.14-20261014']  calls: 80  said a page: 33  tokens: 48710
+seconds per call: median 0.75  p90 0.82  max 1.53
+hook + judge (typesafe/jev-1.14)  crowd: 1000  cases: 120
+  zh: recall 17/24  changed 10/12  quiet-loud 2/24  wrong 0  old 0
+  en: recall 11/24  changed 6/12  quiet-loud 2/24  wrong 1  old 0
+  all: recall 28/48  changed 16/24  quiet-loud 4/48  wrong 1  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=2/8, ack=0/8
+  recall not named (mechanical): 22/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'judge': 33, 'recall': 4, 'trigger': 1}
+  choice score: 44 - 3*5 - 9*0 = 29
+===== liquid/d1.2 crowd 0
+cases: 120  the hook brought a page for 16  messages that ask the model: 81
+model: ['liquid/d1.2-20261116']  calls: 81  said a page: 37  tokens: 22858
+seconds per call: median 0.86  p90 1.07  max 2.27
+hook + judge (liquid/d1.2)  crowd: 0  cases: 120
+  zh: recall 19/24  changed 10/12  quiet-loud 2/24  wrong 0  old 0
+  en: recall 11/24  changed 6/12  quiet-loud 3/24  wrong 2  old 0
+  all: recall 30/48  changed 16/24  quiet-loud 5/48  wrong 2  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=2/8, common_word=1/8, pasted=1/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 24/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'judge': 37, 'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 46 - 3*7 - 9*0 = 25
+===== liquid/d1.2 crowd 1000
+cases: 120  the hook brought a page for 16  messages that ask the model: 80
+model: ['liquid/d1.2-20261116']  calls: 80  said a page: 39  tokens: 22347
+seconds per call: median 0.84  p90 0.95  max 1.48
+hook + judge (liquid/d1.2)  crowd: 1000  cases: 120
+  zh: recall 18/24  changed 10/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 12/24  changed 8/12  quiet-loud 3/24  wrong 3  old 0
+  all: recall 30/48  changed 18/24  quiet-loud 4/48  wrong 3  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=2/8, common_word=1/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 24/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'judge': 39, 'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 48 - 3*7 - 9*0 = 27
+===== togethercomputer/tev1-4b-experimental crowd 0
+cases: 120  the hook brought a page for 16  messages that ask the model: 81
+model: ['togethercomputer/tev1-4b-experimental-20260923']  calls: 81  said a page: 13  tokens: 26373
+seconds per call: median 0.80  p90 1.50  max 2.67
+hook + judge (togethercomputer/tev1-4b-experimental)  crowd: 0  cases: 120
+  zh: recall 8/24  changed 10/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 7/24  changed 2/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 15/48  changed 12/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 9/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'judge': 13, 'recall': 4, 'trigger': 1}
+  choice score: 27 - 3*2 - 9*0 = 21
+===== togethercomputer/tev1-4b-experimental crowd 1000
+cases: 120  the hook brought a page for 16  messages that ask the model: 80
+model: ['togethercomputer/tev1-4b-experimental-20260923']  calls: 80  said a page: 14  tokens: 25831
+seconds per call: median 0.80  p90 0.87  max 1.95
+hook + judge (togethercomputer/tev1-4b-experimental)  crowd: 1000  cases: 120
+  zh: recall 9/24  changed 10/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 6/24  changed 3/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 15/48  changed 13/24  quiet-loud 2/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 9/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'judge': 14, 'recall': 4, 'trigger': 1}
+  choice score: 28 - 3*2 - 9*0 = 22
+===== jaredpalmer/kev-4b crowd 0
+cases: 120  the hook brought a page for 16  messages that ask the model: 81
+model: ['jaredpalmer/kev-4b-20260924']  calls: 81  said a page: 22  tokens: 19960
+seconds per call: median 1.14  p90 1.38  max 2.07
+hook + judge (jaredpalmer/kev-4b)  crowd: 0  cases: 120
+  zh: recall 17/24  changed 10/12  quiet-loud 2/24  wrong 0  old 0
+  en: recall 6/24  changed 2/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 23/48  changed 12/24  quiet-loud 3/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=1/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 17/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'judge': 22, 'recall': 4, 'trigger': 1}
+  choice score: 35 - 3*3 - 9*0 = 26
+===== jaredpalmer/kev-4b crowd 1000
+cases: 120  the hook brought a page for 16  messages that ask the model: 80
+model: ['jaredpalmer/kev-4b-20260924']  calls: 80  said a page: 23  tokens: 19479
+seconds per call: median 1.16  p90 1.29  max 2.07
+hook + judge (jaredpalmer/kev-4b)  crowd: 1000  cases: 120
+  zh: recall 17/24  changed 10/12  quiet-loud 2/24  wrong 0  old 0
+  en: recall 6/24  changed 3/12  quiet-loud 1/24  wrong 0  old 0
+  all: recall 23/48  changed 13/24  quiet-loud 3/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=0/8, pasted=1/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 17/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'alias': 11, 'judge': 23, 'recall': 4, 'trigger': 1}
+  choice score: 36 - 3*3 - 9*0 = 27

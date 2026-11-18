@@ -1,0 +1,14 @@
+===== perplexity/pplx-decider-flash-v1.3:free crowd 0 08:34:50
+cases: 120  the hook brought a page for 16  messages that ask the model: 81
+model: ['perplexity/pplx-decider-flash-v1.3-20261112']  calls: 81  said a page: 33  tokens: 24137
+seconds per call: median 0.78  p90 0.96  max 2.26
+hook + judge (perplexity/pplx-decider-flash-v1.3:free)  crowd: 0  cases: 120
+  zh: recall 18/24  changed 10/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 11/24  changed 7/12  quiet-loud 2/24  wrong 0  old 0
+  all: recall 29/48  changed 17/24  quiet-loud 3/48  wrong 0  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 23/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'judge': 33, 'alias': 11, 'recall': 4, 'trigger': 1}
+  choice score: 46 - 3*3 - 9*0 = 37
+===== perplexity/pplx-decider-flash-v1.3:free crowd 1000 08:40:21
