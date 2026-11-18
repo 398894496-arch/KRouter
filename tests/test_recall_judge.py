@@ -117,6 +117,15 @@ def test_none_or_an_answer_that_names_no_candidate_brings_nothing(box, monkeypat
     assert recollect.judged(box["vault"], MENTION) == [] and len(box["asked"]) == 1
 
 
+def test_an_empty_answer_is_logged_as_one(box, monkeypatch):
+    import recollect
+
+    on(monkeypatch)
+    box["reader"]("  ")
+    assert recollect.judged(box["vault"], MENTION) == []
+    assert json.loads((box["state"] / recollect.JUDGE_LOG).read_text(encoding="utf-8").splitlines()[0])["error"] == "empty"
+
+
 def test_a_reader_that_fails_or_is_slow_is_as_if_nobody_asked(box, monkeypatch):
     import recollect
 
@@ -252,6 +261,8 @@ def test_through_the_hook_over_http(built, tmp_path, server):
     assert EXPECT in note and "model-judged" in note
     assert len(Reader.got) == 1 and Reader.got[0]["auth"] == "Bearer test-key" and Reader.got[0]["model"] == "deepseek-flash"
     assert Reader.got[0]["temperature"] == 0 and MENTION in Reader.got[0]["messages"][0]["content"]
+    # deepseek-flash 先想再答：给 16 个 token 时回来是空的，81 句一页都没点（引擎第一次重跑时发现）
+    assert Reader.got[0]["max_tokens"] >= 1000
     row = json.loads((tmp_path / "state/recalled.jsonl").read_text(encoding="utf-8").splitlines()[0])
     assert row["route"] == "judge" and row["page"] == EXPECT
 

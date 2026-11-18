@@ -622,6 +622,7 @@ JUDGE_MAX_DAILY = 500
 JUDGE_URL = "https://api.deepseek.com/chat/completions"
 JUDGE_MODEL = "deepseek-flash"
 JUDGE_LOG = "judge.jsonl"
+JUDGE_MAX_TOKENS = 1500  # 这类快模型先想几十个 token 再答；给少了（16）只想不答，回来是空的。评测时就是 1500
 JUDGE_ASK = {
     "zh": "下面是用户刚说的一句话，和记忆库里按字面最接近的几页（每页一行：名字：记的是什么）。判断这句话是不是在说其中某一页"
           "记的那件事：换了说法、没提名字也算；只是碰巧有相同的词、说的是别的事不算；粘贴的日志、代码、别人的话不算。\n"
@@ -712,7 +713,8 @@ def judge_pick(reply: str, n: int) -> int:
 def _judge_call(conf: dict, prompt: str) -> str:
     import urllib.request
 
-    body = {"model": conf["model"], "messages": [{"role": "user", "content": prompt}], "temperature": 0, "max_tokens": 16}
+    body = {"model": conf["model"], "messages": [{"role": "user", "content": prompt}], "temperature": 0,
+            "max_tokens": JUDGE_MAX_TOKENS}
     req = urllib.request.Request(conf["url"], data=json.dumps(body).encode(), headers={
         "Authorization": f"Bearer {conf['key']}", "Content-Type": "application/json", "User-Agent": "krouter"})
     with urllib.request.urlopen(req, timeout=conf["timeout"]) as resp:
@@ -773,6 +775,8 @@ def judged(vault: Path, text: str, today: date | None = None) -> list[dict]:
     th.join(conf["timeout"])
     took = time.perf_counter() - t0
     error = "timeout" if th.is_alive() else box.get("error", "")
+    if not error and not (box.get("reply") or "").strip():
+        error = "empty"  # 接口回来了，但没有字：多半是给的长度不够它答
     n = 0 if error else judge_pick(box.get("reply", ""), len(cands))
     _judge_log(took, len(cands), bool(n), error)
     if not n:
