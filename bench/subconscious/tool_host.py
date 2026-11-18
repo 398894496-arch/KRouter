@@ -76,7 +76,8 @@ class Stop(Exception):
     pass
 
 
-KCONDS = ("krouter", "k1", "k2", "k3", "k4", "k5", "p1")
+KCONDS = ("krouter", "k1", "k2", "k3", "k4", "k5", "p1", "h1", "h2")
+CANDS = ("h1", "h2")  # 第 51 套：钩子没递页时，随消息附上字面最接近的几页的名字，由宿主判断
 SPARSE_EVERY = 8  # set 49: of the bench alias table's rows, in file order, the 1st, 9th, 17th, ... are kept
 NEAREST, TOPICS = ("k1", "k3", "k5"), ("k2", "k3", "k5")  # k5: as k3, on the index of the set 48 addendum
 
@@ -170,20 +171,26 @@ def prepare(work: Path, crowd: int, mixed: bool = False, sparse: bool = False) -
     for rel in pages(v):
         got = recollect.page(v, rel)
         lines.append(f"- {(got[0].get('title') if got else '') or Path(rel).stem}: notes/{rel}")
+    import candidates
+
     items, key = [], {}
     for r in set45.case_file("set45dev"):
         hits = recollect.recollect(v, r["text"], recollect.DEFAULT_ROUTES)
         note = recollect.render(hits)
+        cands = candidates.candidates(v, r["text"], {h["real"] for h in hits}, candidates.K_HOST)
+        with_c = "\n\n".join(x for x in (note, candidates.render(cands, r["lang"])) if x)
         tpl, nt = (both.ZH, both.ZH_NOTE) if r["lang"] == "zh" else (both.EN, both.EN_NOTE)
         items.append({"id": r["id"], "plain": tpl.format(note="", text=r["text"]),
-                      "krouter": tpl.format(note=nt.format(note=note) if note else "", text=r["text"])})
-        key[r["id"]] = {**r, "hook": [h["real"] for h in hits]}
+                      "krouter": tpl.format(note=nt.format(note=note) if note else "", text=r["text"]),
+                      "krouter_c": tpl.format(note=nt.format(note=with_c) if with_c else "", text=r["text"])})
+        key[r["id"]] = {**r, "hook": [h["real"] for h in hits], "cand": [c["real"] for c in cands]}
     (work / "prep.json").write_text(json.dumps({"index": index, "index_topics": index_topics, "index_pages": index_pages, "listed": "\n".join(lines),
                                                 "items": items},
                                                ensure_ascii=False, indent=1), encoding="utf-8")
     (work / "key.json").write_text(json.dumps(key, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(items)} items; {len(lines)} pages; standing index {len(index)} characters; page list "
-          f"{len(chr(10).join(lines))} characters; the hook brought a page for {sum(bool(k['hook']) for k in key.values())}")
+          f"{len(chr(10).join(lines))} characters; the hook brought a page for {sum(bool(k['hook']) for k in key.values())}; "
+          f"candidates go with {sum(bool(k['cand']) for k in key.values())}")
 
 
 def system(prep: dict, cond: str) -> str:
@@ -191,7 +198,7 @@ def system(prep: dict, cond: str) -> str:
         return f"{BASE}\n\n{FOLDER}"
     if cond == "listed":
         return f"{BASE}\n\n{FOLDER}\n\n{LISTED}\n{prep['listed']}"
-    which = "index_pages" if cond == "p1" else ("index_topics" if cond in TOPICS else "index")
+    which = "index_pages" if cond in ("p1", "h2") else ("index_topics" if cond in TOPICS else "index")
     return f"{BASE}\n\n{KROUTER}\n{prep[which]}"
 
 
@@ -278,7 +285,7 @@ def converse(work: Path, prep: dict, cond: str, item: dict, key: str) -> dict:
     else:
         tools = [T_SEARCH, T_LIST, T_READ]
     msgs = [{"role": "system", "content": system(prep, cond)},
-            {"role": "user", "content": item["krouter" if cond in KCONDS else "plain"]}]
+            {"role": "user", "content": item["krouter_c" if cond in CANDS else "krouter" if cond in KCONDS else "plain"]}]
     calls, use, model, finish = [], Counter(), "", ""
     for rnd in range(MAX_ROUNDS + 1):
         if rnd == MAX_ROUNDS:
