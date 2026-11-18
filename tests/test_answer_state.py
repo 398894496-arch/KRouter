@@ -104,7 +104,7 @@ def test_strict_mode_keeps_the_prompt_hook_to_direct_pages(vault, monkeypatch):
     import recollect
 
     res = {"hits": [{"rel": "02 经验与方法/值班交接.md", "tier": "rule"}], "confidence": "medium", "margin": 9.9,
-           "query_tokens": ["值班"]}
+           "query_tokens": ["值班", "交接"], "strong": 2}  # 两个实词对上：不是第 50 套管的「只对上一个词」
     assert recollect._recall_hits(vault, res, date.today(), set())
     monkeypatch.setenv("KROUTER_STRICT", "1")
     assert recollect._recall_hits(vault, res, date.today(), set()) == []

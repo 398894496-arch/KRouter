@@ -557,6 +557,33 @@ def _ranked(vault: Path, said: str) -> dict | None:
         return None
 
 
+THIN_STRONG = 2
+
+
+def _titled(vault: Path, rel: str, terms: list[str]) -> bool:
+    """Whether one of the message's terms is in the page's title or file name, as the recall index holds them."""
+    import sqlite3
+
+    import recall_index as ri
+
+    terms = [t for t in terms if not t.isdigit()]
+    if not terms:
+        return False
+    try:
+        con = sqlite3.connect(f"file:{ri.cache_path(vault)}?mode=ro", uri=True)
+        try:
+            row = con.execute("SELECT rid FROM files WHERE rel = ?", (rel,)).fetchone()
+            if not row:
+                return False
+            marks = ",".join("?" * len(terms))
+            return con.execute(f"SELECT 1 FROM vinst WHERE term IN ({marks}) AND doc = ? AND col = 'title' LIMIT 1",
+                               terms + [row[0]]).fetchone() is not None
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return False
+
+
 def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> list[dict]:
     import recall_index as ri
 
@@ -566,6 +593,8 @@ def _recall_hits(vault: Path, res: dict | None, today: date, have: set[str]) -> 
     top = res["hits"][0]
     if top.get("tier") in ("log", "dead") or (res.get("margin") or 0) < RECALL_MARGIN:
         return []
+    if (res.get("strong") or 0) < THIN_STRONG and not _titled(vault, top["rel"], res.get("query_tokens") or []):
+        return []  # 这句话只有一个实词对上了这一页（或一个都没有），而且不是这页的名字：多半是碰巧
     real = zones.real(vault, top["rel"])
     cur = current(vault, real, today)
     if cur is None or cur[0] in have:
