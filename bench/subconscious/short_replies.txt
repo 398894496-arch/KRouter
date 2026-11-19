@@ -1,0 +1,108 @@
+# Set 50: replies that carry nothing to look up. One per line; written 2026-11-18, before the change.
+# zh
+装吧
+上吧
+发吧
+合吧
+改吧
+跑吧
+试试吧
+那就这样吧
+好的
+好
+行
+可以
+没问题
+继续
+接着来
+然后呢
+还有吗
+没了
+就这样
+先这样
+对吗
+是吗
+这对吗
+真的吗
+确定吗
+为什么
+怎么办
+什么意思
+哪两句
+哪一个
+第几个
+多少钱
+多久
+在哪
+谁说的
+不对
+不是这个
+不行
+不用了
+算了
+重来
+再试一次
+再来一遍
+等一下
+稍等
+我看看
+看到了
+收到
+明白了
+懂了
+知道了
+辛苦了
+谢谢
+太好了
+厉害
+牛
+哈哈哈
+唉
+烦死了
+怎么又这样
+怎么回事
+出什么事了
+搞定了吗
+好了吗
+完了吗
+还在吗
+你在干嘛
+快点
+慢一点
+随便
+都行
+听你的
+你来定
+第一个
+选 B
+# en
+ok
+okay
+yes
+no
+sure
+go ahead
+do it
+ship it
+sounds good
+looks good
+fine
+right
+is that right?
+really?
+why?
+how so?
+what now?
+and then?
+which one?
+which two?
+anything else?
+that's all
+never mind
+try again
+one more time
+hold on
+got it
+thanks
+nice
+hmm

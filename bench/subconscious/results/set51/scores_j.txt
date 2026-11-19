@@ -1,0 +1,24 @@
+===== J, set 45's own vault (110 pages)
+cases: 120  the hook brought a page for 16  messages that ask the model: 81
+model: ['deepseek-flash']  calls: 81  said a page: 36  tokens: 37543
+seconds per call: median 1.36  p90 2.58  max 10.16
+hook + judge  crowd: 0  cases: 120
+  zh: recall 18/24  changed 10/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 13/24  changed 7/12  quiet-loud 2/24  wrong 1  old 0
+  all: recall 31/48  changed 17/24  quiet-loud 3/48  wrong 1  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 25/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'judge': 36, 'alias': 11, 'recall': 4, 'trigger': 1}
+===== J, with 1,000 distractor pages
+cases: 120  the hook brought a page for 16  messages that ask the model: 80
+model: ['deepseek-flash']  calls: 80  said a page: 36  tokens: 34091
+seconds per call: median 1.35  p90 2.52  max 9.00
+hook + judge  crowd: 1000  cases: 120
+  zh: recall 18/24  changed 10/12  quiet-loud 1/24  wrong 0  old 0
+  en: recall 12/24  changed 8/12  quiet-loud 2/24  wrong 1  old 0
+  all: recall 30/48  changed 18/24  quiet-loud 3/48  wrong 1  old 0
+  quiet-loud by kind: unrelated=0/8, other_sense=1/8, common_word=1/8, pasted=0/8, near_topic=1/8, ack=0/8
+  recall not named (mechanical): 24/42
+  recall named (mechanical): 6/6
+  pages brought by route: {'judge': 36, 'alias': 11, 'recall': 4, 'trigger': 1}

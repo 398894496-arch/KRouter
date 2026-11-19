@@ -1,0 +1,81 @@
+{"id": "en-001", "candidates": ["Handbook/API deprecation.md"], "reply": "1", "pick": 1, "page": "Handbook/API deprecation.md", "seconds": 1.79, "model": "deepseek-flash", "tokens": 332}
+{"id": "en-004", "candidates": ["Handbook/API deprecation.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.69, "model": "deepseek-flash", "tokens": 301}
+{"id": "en-005", "candidates": ["Handbook/Bug bounty.md", "Handbook/Analytics queries.md", "Handbook/Database for new services.md"], "reply": "2", "pick": 2, "page": "Handbook/Analytics queries.md", "seconds": 1.72, "model": "deepseek-flash", "tokens": 380}
+{"id": "en-006", "candidates": ["Handbook/Analytics queries.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.65, "model": "deepseek-flash", "tokens": 433}
+{"id": "en-007", "candidates": ["Handbook/Design handoff.md", "Handbook/Database for new services.md", "Handbook/On-site days.md", "Handbook/Customer refunds.md"], "reply": "0", "pick": 0, "page": "", "seconds": 3.83, "model": "deepseek-flash", "tokens": 821}
+{"id": "en-009", "candidates": ["Handbook/Customer data deletion.md", "Handbook/Hackathon.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.24, "model": "deepseek-flash", "tokens": 601}
+{"id": "en-010", "candidates": ["Handbook/Analytics queries.md", "Handbook/Analyst data access.md", "Handbook/Model deployment.md"], "reply": "1", "pick": 1, "page": "Handbook/Analytics queries.md", "seconds": 1.41, "model": "deepseek-flash", "tokens": 390}
+{"id": "en-020", "candidates": ["团队手册/Go 代码规范.md", "Handbook/Database for new services.md", "Handbook/Transactional email.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.72, "model": "deepseek-flash", "tokens": 428}
+{"id": "en-027", "candidates": ["Handbook/Support hours.md"], "reply": "0", "pick": 0, "page": "", "seconds": 4.92, "model": "deepseek-flash", "tokens": 848}
+{"id": "en-031", "candidates": ["Handbook/Third-party scripts.md", "Handbook/Customer interview notes.md"], "reply": "2", "pick": 2, "page": "Handbook/Customer interview notes.md", "seconds": 1.15, "model": "deepseek-flash", "tokens": 297}
+{"id": "en-032", "candidates": ["Handbook/Price changes.md", "Handbook/Customer interview notes.md"], "reply": "2", "pick": 2, "page": "Handbook/Customer interview notes.md", "seconds": 0.75, "model": "deepseek-flash", "tokens": 261}
+{"id": "en-034", "candidates": ["Handbook/Third-party scripts.md", "Handbook/A/B tests.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.62, "model": "deepseek-flash", "tokens": 362}
+{"id": "en-038", "candidates": ["Handbook/Price changes.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.27, "model": "deepseek-flash", "tokens": 273}
+{"id": "en-039", "candidates": ["Handbook/Price changes.md", "Handbook/API deprecation.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.85, "model": "deepseek-flash", "tokens": 595}
+{"id": "en-043", "candidates": ["Handbook/On-site days.md", "Handbook/Bug bounty.md", "Handbook/Access reviews.md", "Handbook/Price changes.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.23, "model": "deepseek-flash", "tokens": 340}
+{"id": "en-045", "candidates": ["Handbook/Database for new services.md", "Handbook/Model deployment.md", "Handbook/Customer data deletion.md"], "reply": "1", "pick": 1, "page": "Handbook/Database for new services.md", "seconds": 0.99, "model": "deepseek-flash", "tokens": 321}
+{"id": "en-047", "candidates": ["Handbook/Hackathon.md"], "reply": "1", "pick": 1, "page": "Handbook/Hackathon.md", "seconds": 1.04, "model": "deepseek-flash", "tokens": 245}
+{"id": "en-049", "candidates": ["Handbook/Transactional email.md"], "reply": "0", "pick": 0, "page": "", "seconds": 0.97, "model": "deepseek-flash", "tokens": 238}
+{"id": "en-053", "candidates": ["团队手册/发布说明.md", "Handbook/Customer interview notes.md", "Handbook/Mobile release criteria.md", "Handbook/A/B tests.md"], "reply": "1", "pick": 1, "page": "团队手册/发布说明.md", "seconds": 2.01, "model": "deepseek-flash", "tokens": 482}
+{"id": "en-056", "candidates": ["Handbook/Price changes.md", "Handbook/Mobile release criteria.md", "Handbook/Support hours.md"], "reply": "1", "pick": 1, "page": "Handbook/Price changes.md", "seconds": 1.15, "model": "deepseek-flash", "tokens": 303}
+{"id": "en-060", "candidates": ["Handbook/Status page.md", "Handbook/Product search.md", "Handbook/Bug bounty.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.29, "model": "deepseek-flash", "tokens": 395}
+{"id": "en-061", "candidates": ["Handbook/Status page.md", "Handbook/Cloud infrastructure changes.md"], "reply": "1", "pick": 1, "page": "Handbook/Status page.md", "seconds": 1.0, "model": "deepseek-flash", "tokens": 267}
+{"id": "en-063", "candidates": ["Handbook/Customer refunds.md", "Handbook/Hackathon.md", "Handbook/Support hours.md"], "reply": "0", "pick": 0, "page": "", "seconds": 2.11, "model": "deepseek-flash", "tokens": 485}
+{"id": "en-067", "candidates": ["Handbook/Support hours.md", "Handbook/Product search.md"], "reply": "1", "pick": 1, "page": "Handbook/Support hours.md", "seconds": 1.0, "model": "deepseek-flash", "tokens": 277}
+{"id": "en-068", "candidates": ["Handbook/API deprecation.md", "Handbook/On-site days.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.72, "model": "deepseek-flash", "tokens": 396}
+{"id": "en-069", "candidates": ["Handbook/Hackathon.md", "Handbook/A/B tests.md", "Handbook/Product search.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.29, "model": "deepseek-flash", "tokens": 588}
+{"id": "en-075", "candidates": ["Handbook/Model deployment.md", "团队手册/App 系统版本.md"], "reply": "2", "pick": 2, "page": "团队手册/App 系统版本.md", "seconds": 1.38, "model": "deepseek-flash", "tokens": 385}
+{"id": "en-080", "candidates": ["Handbook/A/B tests.md", "Handbook/Mobile release criteria.md", "团队手册/App 系统版本.md"], "reply": "2", "pick": 2, "page": "Handbook/Mobile release criteria.md", "seconds": 1.52, "model": "deepseek-flash", "tokens": 404}
+{"id": "en-082", "candidates": ["Handbook/Customer refunds.md"], "reply": "1", "pick": 1, "page": "Handbook/Customer refunds.md", "seconds": 1.02, "model": "deepseek-flash", "tokens": 265}
+{"id": "en-083", "candidates": ["Handbook/Access reviews.md", "Handbook/Analyst data access.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.25, "model": "deepseek-flash", "tokens": 302}
+{"id": "en-085", "candidates": ["Handbook/Model deployment.md"], "reply": "1", "pick": 1, "page": "Handbook/Model deployment.md", "seconds": 1.32, "model": "deepseek-flash", "tokens": 282}
+{"id": "en-090", "candidates": ["Handbook/On-site days.md", "Handbook/Access reviews.md", "Handbook/Browser support.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.66, "model": "deepseek-flash", "tokens": 415}
+{"id": "en-091", "candidates": ["Handbook/Database for new services.md", "Handbook/Model deployment.md"], "reply": "1", "pick": 1, "page": "Handbook/Database for new services.md", "seconds": 0.93, "model": "deepseek-flash", "tokens": 303}
+{"id": "en-093", "candidates": ["团队手册/App 系统版本.md", "Handbook/Cloud cost alerts.md", "Handbook/Analytics queries.md", "Handbook/Browser support.md", "Handbook/On-site days.md"], "reply": "0", "pick": 0, "page": "", "seconds": 0.88, "model": "deepseek-flash", "tokens": 437}
+{"id": "en-106", "candidates": ["Handbook/Mobile release criteria.md", "Handbook/Language for code.md", "Handbook/Design handoff.md", "Handbook/Repository ownership.md"], "reply": "0", "pick": 0, "page": "", "seconds": 3.5, "model": "deepseek-flash", "tokens": 733}
+{"id": "en-109", "candidates": ["Handbook/Bug bounty.md", "Handbook/Support hours.md", "Handbook/GPU usage.md", "Handbook/Price changes.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.33, "model": "deepseek-flash", "tokens": 427}
+{"id": "en-110", "candidates": ["Handbook/Support escalation.md"], "reply": "1", "pick": 1, "page": "Handbook/Support escalation.md", "seconds": 1.69, "model": "deepseek-flash", "tokens": 276}
+{"id": "en-111", "candidates": ["Handbook/On-site days.md"], "reply": "1", "pick": 1, "page": "Handbook/On-site days.md", "seconds": 1.0, "model": "deepseek-flash", "tokens": 240}
+{"id": "en-115", "candidates": ["Handbook/Transactional email.md"], "reply": "", "pick": 0, "page": "", "seconds": 9.84, "model": "deepseek-flash", "tokens": 1683}
+{"id": "en-116", "candidates": ["Handbook/Transactional email.md"], "reply": "1", "pick": 1, "page": "Handbook/Transactional email.md", "seconds": 1.74, "model": "deepseek-flash", "tokens": 342}
+{"id": "en-117", "candidates": ["Handbook/Support hours.md", "Handbook/Design handoff.md"], "reply": "0", "pick": 0, "page": "", "seconds": 2.16, "model": "deepseek-flash", "tokens": 471}
+{"id": "en-120", "candidates": ["Handbook/Transactional email.md"], "reply": "1", "pick": 1, "page": "Handbook/Transactional email.md", "seconds": 1.81, "model": "deepseek-flash", "tokens": 357}
+{"id": "zh-001", "candidates": ["团队手册/客户回访.md", "团队手册/客户投诉.md", "团队手册/办公网络.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.38, "model": "deepseek-flash", "tokens": 332}
+{"id": "zh-006", "candidates": ["团队手册/意见反馈.md", "团队手册/团队周会.md", "团队手册/技术方案模板.md", "团队手册/绩效评估.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.2, "model": "deepseek-flash", "tokens": 409}
+{"id": "zh-019", "candidates": ["团队手册/开源许可证.md", "团队手册/绩效评估.md", "团队手册/服务拆分.md"], "reply": "1", "pick": 1, "page": "团队手册/开源许可证.md", "seconds": 1.49, "model": "deepseek-flash", "tokens": 368}
+{"id": "zh-024", "candidates": ["团队手册/软件采购.md", "团队手册/服务拆分.md"], "reply": "0", "pick": 0, "page": "", "seconds": 0.8, "model": "deepseek-flash", "tokens": 296}
+{"id": "zh-025", "candidates": ["团队手册/发布说明.md", "团队手册/意见反馈.md"], "reply": "1", "pick": 1, "page": "团队手册/发布说明.md", "seconds": 1.17, "model": "deepseek-flash", "tokens": 355}
+{"id": "zh-026", "candidates": ["团队手册/节假日安排.md", "团队手册/技术分享.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.35, "model": "deepseek-flash", "tokens": 319}
+{"id": "zh-043", "candidates": ["团队手册/软件采购.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.35, "model": "deepseek-flash", "tokens": 277}
+{"id": "zh-045", "candidates": ["团队手册/App 系统版本.md", "Handbook/Analytics queries.md", "Handbook/Browser support.md", "团队手册/短信通道.md", "Handbook/On-site days.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.6, "model": "deepseek-flash", "tokens": 485}
+{"id": "zh-048", "candidates": ["团队手册/Go 代码规范.md", "团队手册/App 系统版本.md", "Handbook/Customer interview notes.md", "Handbook/Analytics queries.md"], "reply": "", "pick": 0, "page": "", "seconds": 10.16, "model": "deepseek-flash", "tokens": 1892}
+{"id": "zh-053", "candidates": ["团队手册/Go 代码规范.md", "团队手册/图片资源.md", "团队手册/数据看板.md", "团队手册/数据共享.md", "团队手册/技术方案模板.md"], "reply": "0", "pick": 0, "page": "", "seconds": 0.97, "model": "deepseek-flash", "tokens": 396}
+{"id": "zh-055", "candidates": ["团队手册/数据标注.md", "团队手册/需求评审.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.36, "model": "deepseek-flash", "tokens": 313}
+{"id": "zh-060", "candidates": ["团队手册/办公网络.md", "团队手册/数据共享.md", "团队手册/意见反馈.md", "团队手册/App 系统版本.md"], "reply": "2", "pick": 2, "page": "团队手册/数据共享.md", "seconds": 1.29, "model": "deepseek-flash", "tokens": 400}
+{"id": "zh-061", "candidates": ["团队手册/短信通道.md", "团队手册/权限申请.md", "团队手册/需求评审.md"], "reply": "1", "pick": 1, "page": "团队手册/短信通道.md", "seconds": 2.58, "model": "deepseek-flash", "tokens": 481}
+{"id": "zh-062", "candidates": ["团队手册/客户投诉.md", "团队手册/意见反馈.md", "团队手册/App 系统版本.md", "团队手册/短信通道.md"], "reply": "1", "pick": 1, "page": "团队手册/客户投诉.md", "seconds": 1.77, "model": "deepseek-flash", "tokens": 485}
+{"id": "zh-063", "candidates": ["团队手册/权限申请.md", "团队手册/需求评审.md", "团队手册/测试环境.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.34, "model": "deepseek-flash", "tokens": 431}
+{"id": "zh-064", "candidates": ["团队手册/数据分级.md"], "reply": "1", "pick": 1, "page": "团队手册/数据分级.md", "seconds": 2.18, "model": "deepseek-flash", "tokens": 409}
+{"id": "zh-068", "candidates": ["团队手册/客户回访.md", "团队手册/数据分级.md", "团队手册/权限申请.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.57, "model": "deepseek-flash", "tokens": 366}
+{"id": "zh-072", "candidates": ["团队手册/软件采购.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.13, "model": "deepseek-flash", "tokens": 254}
+{"id": "zh-075", "candidates": ["团队手册/软件采购.md"], "reply": "0", "pick": 0, "page": "", "seconds": 0.91, "model": "deepseek-flash", "tokens": 261}
+{"id": "zh-076", "candidates": ["团队手册/节假日安排.md", "团队手册/发布说明.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.47, "model": "deepseek-flash", "tokens": 351}
+{"id": "zh-079", "candidates": ["团队手册/发布说明.md", "团队手册/办公网络.md", "团队手册/数据看板.md", "团队手册/数据标注.md"], "reply": "3", "pick": 3, "page": "团队手册/数据看板.md", "seconds": 1.96, "model": "deepseek-flash", "tokens": 589}
+{"id": "zh-081", "candidates": ["团队手册/数据共享.md", "团队手册/测试环境.md", "团队手册/数据分级.md", "团队手册/数据看板.md"], "reply": "2", "pick": 2, "page": "团队手册/测试环境.md", "seconds": 1.22, "model": "deepseek-flash", "tokens": 387}
+{"id": "zh-082", "candidates": ["团队手册/需求评审.md", "团队手册/数据看板.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.41, "model": "deepseek-flash", "tokens": 338}
+{"id": "zh-085", "candidates": ["团队手册/消息队列.md"], "reply": "1", "pick": 1, "page": "团队手册/消息队列.md", "seconds": 1.42, "model": "deepseek-flash", "tokens": 286}
+{"id": "zh-086", "candidates": ["团队手册/节假日安排.md", "团队手册/数据共享.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.18, "model": "deepseek-flash", "tokens": 298}
+{"id": "zh-089", "candidates": ["团队手册/短信通道.md", "团队手册/App 系统版本.md"], "reply": "1", "pick": 1, "page": "团队手册/短信通道.md", "seconds": 0.99, "model": "deepseek-flash", "tokens": 362}
+{"id": "zh-094", "candidates": ["团队手册/测试环境.md", "团队手册/数据共享.md", "团队手册/客户投诉.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.59, "model": "deepseek-flash", "tokens": 391}
+{"id": "zh-098", "candidates": ["团队手册/绩效评估.md", "团队手册/发布说明.md"], "reply": "1", "pick": 1, "page": "团队手册/绩效评估.md", "seconds": 1.19, "model": "deepseek-flash", "tokens": 409}
+{"id": "zh-099", "candidates": ["团队手册/技术分享.md", "团队手册/客户回访.md", "团队手册/客户投诉.md", "团队手册/绩效评估.md"], "reply": "1", "pick": 1, "page": "团队手册/技术分享.md", "seconds": 1.17, "model": "deepseek-flash", "tokens": 414}
+{"id": "zh-101", "candidates": ["团队手册/测试环境.md", "团队手册/消息队列.md"], "reply": "2", "pick": 2, "page": "团队手册/消息队列.md", "seconds": 1.4, "model": "deepseek-flash", "tokens": 342}
+{"id": "zh-103", "candidates": ["团队手册/客户回访.md", "团队手册/接口文档.md", "团队手册/数据分级.md", "团队手册/客户投诉.md", "团队手册/意见反馈.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.18, "model": "deepseek-flash", "tokens": 455}
+{"id": "zh-107", "candidates": ["团队手册/软件采购.md", "团队手册/绩效评估.md", "团队手册/服务拆分.md", "团队手册/证书续签.md"], "reply": "1", "pick": 1, "page": "团队手册/软件采购.md", "seconds": 1.32, "model": "deepseek-flash", "tokens": 453}
+{"id": "zh-108", "candidates": ["团队手册/数据分级.md", "团队手册/数据共享.md", "团队手册/数据看板.md", "团队手册/数据标注.md", "团队手册/测试环境.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.07, "model": "deepseek-flash", "tokens": 968}
+{"id": "zh-110", "candidates": ["团队手册/意见反馈.md", "团队手册/需求评审.md", "团队手册/发布说明.md"], "reply": "", "pick": 0, "page": "", "seconds": 9.79, "model": "deepseek-flash", "tokens": 1762}
+{"id": "zh-111", "candidates": ["团队手册/测试环境.md", "团队手册/数据共享.md", "团队手册/需求评审.md", "团队手册/节假日安排.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.61, "model": "deepseek-flash", "tokens": 470}
+{"id": "zh-113", "candidates": ["团队手册/团队周会.md", "团队手册/技术方案模板.md"], "reply": "1", "pick": 1, "page": "团队手册/团队周会.md", "seconds": 1.22, "model": "deepseek-flash", "tokens": 299}
+{"id": "zh-114", "candidates": ["团队手册/设备申领.md", "团队手册/发布说明.md"], "reply": "0", "pick": 0, "page": "", "seconds": 1.27, "model": "deepseek-flash", "tokens": 571}
+{"id": "zh-119", "candidates": ["团队手册/接口文档.md", "团队手册/App 系统版本.md", "团队手册/服务拆分.md", "团队手册/测试环境.md", "团队手册/权限申请.md"], "reply": "3", "pick": 3, "page": "团队手册/服务拆分.md", "seconds": 2.95, "model": "deepseek-flash", "tokens": 859}
+{"id": "zh-120", "candidates": ["Handbook/A/B tests.md", "团队手册/发布说明.md", "Handbook/API deprecation.md", "团队手册/技术方案模板.md"], "reply": "0", "pick": 0, "page": "", "seconds": 3.24, "model": "deepseek-flash", "tokens": 1029}

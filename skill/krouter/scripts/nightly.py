@@ -204,7 +204,8 @@ def channel_lines(vault: Path) -> list[str]:
     except Exception:  # noqa: BLE001
         return []
     out = [f"借用已登录的 agent 命令行（订阅额度）：{rep['host_cli']}，今天 {rep['host_cli_calls_today']} / "
-           f"{rep['host_cli_max']} 次，每次见 `{llm.HOST_LOG_PAGE}`。", ""]
+           f"{rep['host_cli_max']} 次（其中 {rep.get('host_cli_kept', 0)} 次留给夜间的步骤，会话导入用不到这一份），"
+           f"每次见 `{llm.HOST_LOG_PAGE}`。", ""]
     if rep.get("off_without_model"):
         out += ["没有可用的模型通道（没有 API key，也没找到已登录的 agent 命令行），这些功能没开："
                 + "、".join(rep["off_without_model"]) + "。召回、纠错捕获、经验摘要、agent 自己写卡和笔记照常。", ""]

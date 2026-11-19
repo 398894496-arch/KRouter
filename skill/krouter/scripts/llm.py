@@ -356,7 +356,8 @@ class NoModel(RuntimeError):
 #    declares it.
 # 3. No session around (the nightly run, a session-end hook): the host's own CLI in non-interactive mode, on the
 #    login the user already has (`claude -p`, `codex exec`, `cursor-agent -p`, …), found by `detect_writer()`.
-#    This spends the user's subscription, so: at most HOST_CLI_MAX_DEFAULT calls a day (`KROUTER_HOST_CLI_MAX`),
+#    This spends the user's subscription, so: at most HOST_CLI_MAX_DEFAULT calls a day (`KROUTER_HOST_CLI_MAX`;
+#    session import takes at most three fifths of them, the rest is kept for the nightly steps),
 #    every call recorded where the user can see it (HOST_LOG_PAGE in the vault, host-calls.jsonl in the state
 #    directory; metadata only, never the prompt), and `KROUTER_HOST_CLI=0` turns it off. KRouter only runs the CLI
 #    the official way; it never reads, copies or forwards any app's login token, keychain item or credential file.
@@ -395,25 +396,69 @@ def _host_calls_file() -> Path:
     return Path(os.environ.get("KROUTER_STATE_DIR") or Path.home() / ".local/state/krouter") / "host-calls.jsonl"
 
 
-def host_calls_today() -> int:
+# 会话导入整天都在跑、有多少会话就要多少次；夜里的步骤（主题整合、问答卡、改主意的重整）一天只跑一回、排在它后面。
+# 不留份额的话，会话多的一天导入把次数用光，夜里那几步就整晚跳过。所以每天的次数里留 HOST_CLI_NIGHT_SHARE 给
+# 导入以外的步骤；它们用掉多少，留着的就少多少。
+HOST_CLI_NIGHT_SHARE = (2, 5)
+DAYTIME_STEPS = frozenset({"import_sessions", "import_claude_mem", "session_hook"})
+
+
+def _step() -> str:
+    import sys
+
+    return Path(sys.argv[0] or "?").stem
+
+
+def host_cli_kept(cap: int | None = None) -> int:
+    """How many of the day's calls are kept for the steps that are not session import."""
+    cap = host_cli_max() if cap is None else cap
+    return cap * HOST_CLI_NIGHT_SHARE[0] // HOST_CLI_NIGHT_SHARE[1]
+
+
+def host_calls_split() -> tuple[int, int]:
+    """Today's calls through the agent's CLI: (by session import, by every other step)."""
     from datetime import date
 
-    path, today, n = _host_calls_file(), date.today().isoformat(), 0
+    path, today, day, other = _host_calls_file(), date.today().isoformat(), 0, 0
     if path.is_file():
         for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            n += line.startswith('{"at": "' + today)
-    return n
+            if not line.startswith('{"at": "' + today):
+                continue
+            try:
+                step = json.loads(line).get("step", "")
+            except ValueError:
+                step = ""
+            if step in DAYTIME_STEPS:
+                day += 1
+            else:
+                other += 1
+    return day, other
+
+
+def host_calls_today() -> int:
+    return sum(host_calls_split())
+
+
+def host_cli_room(step: str | None = None) -> bool:
+    """Whether `step` (this process's script by default) may make one more call through the agent's CLI today:
+    never past the day's cap, and session import not into what is still kept for the other steps."""
+    cap = host_cli_max()
+    day, other = host_calls_split()
+    if day + other >= cap:
+        return False
+    if (step or _step()) not in DAYTIME_STEPS:
+        return True
+    return day + other + max(0, host_cli_kept(cap) - other) < cap
 
 
 def _host_record(vault: Path | None, cli: str, prompt: str, text: str, ok: bool) -> None:
     """One line per host-CLI call, in the state directory and on the vault page: when, which CLI, which KRouter
     step, characters in and out, whether it worked. Never the prompt or the reply."""
-    import sys
     from datetime import datetime
 
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     kind = writer_probe_argv(cli)[0]
-    step = Path(sys.argv[0] or "?").stem
+    step = _step()
     row = {"at": now, "cli": kind, "step": step, "chars_in": len(prompt), "chars_out": len(text or ""), "ok": ok}
     try:
         path = _host_calls_file()
@@ -448,7 +493,8 @@ def channel_report(vault: Path | None = None) -> dict:
     first = steps[0] if steps else ("none", "")
     out = {"lane": first[0] if first[0] != "cli" else f"cli {writer_probe_argv(first[1])[0]}",
            "host_cli": "on" if host_cli_on() else f"off ({HOST_CLI_FLAG}=0)",
-           "host_cli_calls_today": host_calls_today(), "host_cli_max": host_cli_max()}
+           "host_cli_calls_today": host_calls_today(), "host_cli_max": host_cli_max(),
+           "host_cli_kept": host_cli_kept()}
     if not steps:
         out["off_without_model"] = list(NEEDS_MODEL)
     return out
@@ -794,8 +840,8 @@ def complete(prompt: str, vault: Path | None = None) -> str:
                 _record(kind, model, prompt, text, usage)
                 return text
             if kind == "cli":
-                if host_calls_today() >= host_cli_max():
-                    capped = True  # 今天借订阅的次数用完了：跳过这一级，不算失败
+                if not host_cli_room():
+                    capped = True  # 今天借订阅的次数用完了（或会话导入的那份用完了）：跳过这一级，不算失败
                     continue
                 with tempfile.TemporaryDirectory(prefix="krouter-llm-") as tmp:
                     prompt_file = str(Path(tmp) / "prompt.md")
@@ -816,6 +862,10 @@ def complete(prompt: str, vault: Path | None = None) -> str:
     if errors:
         raise RuntimeError("all model channels failed: " + " | ".join(errors))
     if capped:
+        if host_calls_today() < host_cli_max():
+            raise HostCapReached(f"session import has used its share of today's {host_cli_max()} calls through the "
+                                 f"agent's CLI ({host_cli_kept()} are kept for the nightly steps; "
+                                 f"KROUTER_HOST_CLI_MAX to change, {HOST_CLI_FLAG}=0 to turn off)")
         raise HostCapReached(f"today's {host_cli_max()} calls through the agent's CLI are used up "
                              f"(KROUTER_HOST_CLI_MAX to change, {HOST_CLI_FLAG}=0 to turn off)")
     raise NoModel("no API key and no logged-in CLI; set a *_API_KEY or log in one of: " + ", ".join(PATH_NAMES))
