@@ -1,0 +1,14 @@
+#!/bin/sh
+# KRouter hook launcher, so that one command string works on every platform:
+# hooks/hooks.json asks for "session_hook", Windows finds session_hook.cmd through
+# PATHEXT, POSIX runs this file. python3 is not tried on Windows, where it is the
+# Microsoft Store app-execution alias (%LOCALAPPDATA%\Microsoft\WindowsApps\python3.exe):
+# it exits 9009 and prints nothing, which is how every KRouter hook failed in silence.
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 127
+for py in python3 python; do
+    if command -v "$py" >/dev/null 2>&1; then
+        exec "$py" "$here/session_hook.py" "$@"
+    fi
+done
+echo "KRouter: neither python3 nor python is on PATH (see docs/INSTALL.md)" >&2
+exit 127
