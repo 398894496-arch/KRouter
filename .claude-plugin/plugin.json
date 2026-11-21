@@ -11,8 +11,8 @@
   "skills": ["./plugin/skills/"],
   "mcpServers": {
     "krouter": {
-      "command": "python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/mcp_server.py"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/skill/krouter/scripts/mcp_server",
+      "args": []
     }
   }
 }
