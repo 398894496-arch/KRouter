@@ -30,19 +30,27 @@ K = 5
 EXCERPT = 240
 TIMEOUT = 15.0  # 一次查询不是每句话都跑：可以比钩子（5 秒）多等一会儿；评测中位数约 1 秒
 SWITCH = "KROUTER_ASK_JUDGE"
+FULL = 1200  # set 54：正文不超过这么长的页整页给模型看；更长的页给开头 HEAD 字和最相关的几处，合起来不超过 FULL
+HEAD = 300
+SPOTS = 3
+SPOT = 300
+PASSAGE = FULL
 ASK = ("Below is a question someone asked their own memory vault, and the vault pages closest to it (number, title, "
-       "the start of the page). Decide which page answers the question. A page about a neighbouring matter, or one that "
-       "only shares words with the question, does not answer it.\n"
-       "Answer with one number only: the page's number, or 0 if none of them answers the question. No explanation.\n\n"
+       "the passage of the page closest to the question). Decide which pages hold information needed to answer it: the "
+       "answer itself, a fact the answer can be worked out from, one of several items the question counts, compares or "
+       "orders in time, the latest state of something that changed, or what the person said they like or want. A page "
+       "about a different matter that only shares words with the question does not.\n"
+       "Answer with page numbers only, the most useful first, separated by commas; or 0 if none of them holds any of "
+       "that. No explanation.\n\n"
        "The question: {q}\n\n{pages}\n")
 NOTE = {
-    "picked": "recall_judge: {model} read the first {n} pages and named this one as the answer (KROUTER_ASK_JUDGE)",
-    "none": "recall_judge: {model} read the first {n} pages and found none that answers this (KROUTER_ASK_JUDGE)",
+    "picked": "recall_judge: {model} read the passage closest to the question in each of the first {n} pages and named these as holding the answer, most useful first (KROUTER_ASK_JUDGE)",
+    "none": "recall_judge: {model} read the passage closest to the question in each of the first {n} pages and found none that holds any of the answer (KROUTER_ASK_JUDGE)",
 }
 
 
-def excerpt(vault: Path, rel: str) -> tuple[str, str]:
-    """(title, the start of the text) of a page, front matter and the H1 left out."""
+def _body(vault: Path, rel: str) -> tuple[str, list[str]]:
+    """(title, the text's non-empty lines), front matter and the H1 left out."""
     text = (vault / rel).read_text(encoding="utf-8", errors="replace")
     title = Path(rel).stem
     if text.startswith("---"):
@@ -51,22 +59,59 @@ def excerpt(vault: Path, rel: str) -> tuple[str, str]:
             m = re.search(r"^title:\s*(.+)$", text[:end], re.M)
             title = m.group(1).strip().strip("'\"") if m else title
             text = text[end + 4:]
-    lines = [ln for ln in text.splitlines() if ln.strip() and not ln.startswith("# ")]
-    return title, re.sub(r"\s+", " ", " ".join(lines))[:EXCERPT]
+    return title, [re.sub(r"\s+", " ", ln).strip() for ln in text.splitlines() if ln.strip() and not ln.startswith("# ")]
+
+
+def is_long(vault: Path, rel: str) -> bool:
+    return len(" ".join(_body(vault, rel)[1])) > FULL
+
+
+def passage(vault: Path, rel: str, question: str) -> tuple[str, str]:
+    """(title, what the reader sees of the page): the whole text when it is at most FULL characters; otherwise its first
+    HEAD characters and the SPOTS lines closest to the question (scored by the question's words they hold, each word
+    weighted by how rare it is on the page), in page order, each cut to SPOT characters around its first question word,
+    joined by " … ", at most FULL in all."""
+    import math
+
+    import recall_index as ri
+
+    title, lines = _body(vault, rel)
+    whole = " ".join(lines)
+    if len(whole) <= FULL:
+        return title, whole
+    q = set(ri.tokens(question))
+    toks = [set(ri.tokens(ln)) for ln in lines]
+    df = {w: sum(1 for s in toks if w in s) for w in q}
+    weight = {w: math.log((len(lines) + 1) / (df[w] + 0.5)) for w in q if df[w]}
+    scores = [sum(weight.get(w, 0.0) for w in s & q) for s in toks]
+    ranked = sorted((i for i in range(len(lines)) if scores[i] > 0), key=lambda i: (-scores[i], i))[:SPOTS]
+    parts = [whole[:HEAD]]
+    for i in sorted(ranked):
+        text, low = lines[i], lines[i].lower()
+        if len(text) > SPOT:
+            hits = [low.find(w) for w in weight if low.find(w) >= 0]
+            at = max(0, min(hits) - SPOT // 4) if hits else 0
+            text = text[at:at + SPOT]
+        parts.append(text)
+    return title, " … ".join(parts)[:FULL]
 
 
 def prompt(q: str, vault: Path, cands: list[str]) -> str:
     pages = []
     for i, rel in enumerate(cands, 1):
-        title, start = excerpt(vault, rel)
-        pages.append(f"{i}. {title}: {start}")
+        title, text = passage(vault, rel, q)
+        pages.append(f"{i}. {title}: {text}")
     return ASK.format(q=q.strip(), pages="\n".join(pages))
 
 
-def pick(reply: str, n: int) -> int:
-    m = re.search(r"\d+", reply or "")
-    v = int(m.group()) if m else 0
-    return v if 1 <= v <= n else 0
+def pick(reply: str, n: int) -> list[int]:
+    """The page numbers answered, in order, each once; [] for 0 or anything unreadable or out of range."""
+    out: list[int] = []
+    for m in re.findall(r"\d+", reply or ""):
+        v = int(m)
+        if 1 <= v <= n and v not in out:
+            out.append(v)
+    return out
 
 
 def conf() -> dict | None:
@@ -115,13 +160,26 @@ def decide(vault: Path, query: str, scope: str = "") -> dict | None:
     error = "timeout" if th.is_alive() else box.get("error", "")
     if not error and not (box.get("reply") or "").strip():
         error = "empty"
-    n = 0 if error else pick(box.get("reply", ""), len(cands))
-    recollect._judge_log(time.perf_counter() - t0, len(cands), bool(n), error, route="ask")
+    picked = [] if error else pick(box.get("reply", ""), len(cands))
+    recollect._judge_log(time.perf_counter() - t0, len(cands), bool(picked), error, route="ask")
     if error:
         return None
-    if not n:
+    got = outcome(vault, res["hits"][:len(cands)], picked)
+    if got is None:
+        return None
+    if not got:
         return {**res, "hits": [], "confidence": "none", "judged": "none",
                 "judge_note": NOTE["none"].format(model=c["model"], n=len(cands))}
-    hit = res["hits"][n - 1]
-    return {**res, "hits": [hit], "confidence": "high", "judged": "picked", "assoc": [], "more": [], "conflict": [],
-            "judge_note": NOTE["picked"].format(model=c["model"], n=len(cands))}
+    return {**res, "hits": got, "confidence": "high", "judged": "picked", "assoc": [], "more": [],
+            "conflict": [], "judge_note": NOTE["picked"].format(model=c["model"], n=len(cands))}
+
+
+def outcome(vault: Path, hits: list[dict], picked: list[int]) -> list[dict] | None:
+    """What the lookup answers from, given the candidates and the reader's numbers: the pages named, most useful first,
+    then the long candidates not named (the reader saw only parts of them), in their order; [] for "the memory does not
+    have it", which only a reader that saw every candidate whole can say; None to answer as without the switch."""
+    long = [h for h in hits if is_long(vault, h["rel"])]
+    if not picked:
+        return None if long else []  # 长页只给了片段：模型说都不是不算数（set 54：长对话页上模型拒得太多）
+    named = [hits[i - 1] for i in picked]
+    return named + [h for h in long if h not in named]

@@ -142,7 +142,10 @@ def candidates(source: str, rows: list[dict], vault: Path, qset: str) -> dict[st
     return {qid: [p for p, _ in hits][:K] for qid, hits in scored}
 
 
-def answers(source: str, qset: str, reader: Reader, workers: int = 8) -> tuple[list[dict], list[dict]]:
+def answers(source: str, qset: str, reader: Reader, workers: int = 8, v54: bool = False) -> tuple[list[dict], list[dict]]:
+    """`v54`: set 54's engine prompt (`ask_reader`: the passage closest to the question, several pages may be named)."""
+    if v54:
+        import ask_reader as eng
     rows = mh.questions(qset)
     with tempfile.TemporaryDirectory(prefix="krouter-askjudge-", ignore_cleanup_errors=True) as tmp:
         os.environ["KROUTER_NO_QUERY_LOG"] = "1"
@@ -151,16 +154,17 @@ def answers(source: str, qset: str, reader: Reader, workers: int = 8) -> tuple[l
         vault = Path(tmp) / "vault"
         shutil.copytree(mh.vault_of(qset), vault)
         cands = candidates(source, rows, vault, qset)
-        prompts = {it["id"]: prompt(it["q"], vault, cands[it["id"]]) for it in rows if cands[it["id"]]}
+        mk = eng.prompt if v54 else prompt
+        prompts = {it["id"]: mk(it["q"], vault, cands[it["id"]]) for it in rows if cands[it["id"]]}
         with ThreadPoolExecutor(workers) as ex:
             replies = dict(zip(prompts, ex.map(reader, prompts.values())))
     out, log = [], []
     for it in rows:
         c = cands[it["id"]]
         r = replies.get(it["id"], {"reply": "", "error": "no candidates", "seconds": 0})
-        n = pick(r["reply"], len(c))
-        out.append({"id": it["id"], "refused": n == 0, "cited": [c[n - 1]] if n else [], "score": None})
-        log.append({"id": it["id"], "n_cands": len(c), "pick": n, "error": r["error"], "seconds": r["seconds"],
+        got = eng.pick(r["reply"], len(c)) if v54 else ([pick(r["reply"], len(c))] if pick(r["reply"], len(c)) else [])
+        out.append({"id": it["id"], "refused": not got, "cited": [c[i - 1] for i in got], "score": None})
+        log.append({"id": it["id"], "n_cands": len(c), "pick": got, "error": r["error"], "seconds": r["seconds"],
                     "gold_in_cands": bool(it["gold"]) and it["gold"] in c})
     return out, log
 
@@ -172,10 +176,11 @@ def main() -> int:
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--url", default=URL)
     ap.add_argument("--reveal", action="store_true", help="per-question misses (never on a held-out set)")
+    ap.add_argument("--v54", action="store_true", help="set 54: the engine's passage prompt, several pages")
     args = ap.parse_args()
     reader = Reader(args.model, args.url)
-    ans, log = answers(args.source, args.qset, reader)
-    tag = f"{args.qset}-{args.source}"
+    ans, log = answers(args.source, args.qset, reader, v54=args.v54)
+    tag = f"{args.qset}-{args.source}" + ("-v54" if args.v54 else "")
     (reader.dir / f"{tag}.answers.jsonl").write_text("".join(json.dumps(a, ensure_ascii=False) + "\n" for a in ans),
                                                      encoding="utf-8")
     res = mh.score(mh.questions(args.qset), ans)
