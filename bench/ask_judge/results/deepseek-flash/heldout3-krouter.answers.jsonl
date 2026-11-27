@@ -1,0 +1,200 @@
+{"id": "H3-001", "refused": false, "cited": ["Handbook/Analytics queries.md"], "score": null}
+{"id": "H3-002", "refused": false, "cited": ["Handbook/Analytics queries.md"], "score": null}
+{"id": "H3-003", "refused": false, "cited": ["Handbook/Feature requests.md"], "score": null}
+{"id": "H3-004", "refused": false, "cited": ["Handbook/Feature requests.md"], "score": null}
+{"id": "H3-005", "refused": false, "cited": ["Handbook/Model deployment.md"], "score": null}
+{"id": "H3-006", "refused": false, "cited": ["Handbook/Model deployment.md"], "score": null}
+{"id": "H3-007", "refused": false, "cited": ["Handbook/Customer data deletion.md"], "score": null}
+{"id": "H3-008", "refused": false, "cited": ["Handbook/Customer data deletion.md"], "score": null}
+{"id": "H3-009", "refused": false, "cited": ["Handbook/Cloud infrastructure changes.md"], "score": null}
+{"id": "H3-010", "refused": false, "cited": ["Handbook/Cloud infrastructure changes.md"], "score": null}
+{"id": "H3-011", "refused": false, "cited": ["Handbook/Support escalation.md"], "score": null}
+{"id": "H3-012", "refused": true, "cited": [], "score": null}
+{"id": "H3-013", "refused": false, "cited": ["Handbook/Interview process.md"], "score": null}
+{"id": "H3-014", "refused": false, "cited": ["Handbook/Interview process.md"], "score": null}
+{"id": "H3-015", "refused": false, "cited": ["Handbook/Mobile release criteria.md"], "score": null}
+{"id": "H3-016", "refused": false, "cited": ["Handbook/Mobile release criteria.md"], "score": null}
+{"id": "H3-017", "refused": false, "cited": ["Handbook/Third-party scripts.md"], "score": null}
+{"id": "H3-018", "refused": false, "cited": ["Handbook/Third-party scripts.md"], "score": null}
+{"id": "H3-019", "refused": false, "cited": ["Handbook/Database for new services.md"], "score": null}
+{"id": "H3-020", "refused": false, "cited": ["Handbook/Database for new services.md"], "score": null}
+{"id": "H3-021", "refused": false, "cited": ["Handbook/Product search.md"], "score": null}
+{"id": "H3-022", "refused": false, "cited": ["Handbook/Product search.md"], "score": null}
+{"id": "H3-023", "refused": false, "cited": ["Handbook/On-site days.md"], "score": null}
+{"id": "H3-024", "refused": false, "cited": ["Handbook/On-site days.md"], "score": null}
+{"id": "H3-025", "refused": false, "cited": ["Handbook/Customer refunds.md"], "score": null}
+{"id": "H3-026", "refused": false, "cited": ["Handbook/Customer refunds.md"], "score": null}
+{"id": "H3-027", "refused": false, "cited": ["Handbook/Transactional email.md"], "score": null}
+{"id": "H3-028", "refused": false, "cited": ["Handbook/Transactional email.md"], "score": null}
+{"id": "H3-029", "refused": false, "cited": ["Handbook/Repository ownership.md"], "score": null}
+{"id": "H3-030", "refused": true, "cited": [], "score": null}
+{"id": "H3-031", "refused": false, "cited": ["Handbook/Design handoff.md"], "score": null}
+{"id": "H3-032", "refused": false, "cited": ["Handbook/Design handoff.md"], "score": null}
+{"id": "H3-033", "refused": false, "cited": ["Handbook/Customer interview notes.md"], "score": null}
+{"id": "H3-034", "refused": false, "cited": ["Handbook/Customer interview notes.md"], "score": null}
+{"id": "H3-035", "refused": false, "cited": ["Handbook/API deprecation.md"], "score": null}
+{"id": "H3-036", "refused": false, "cited": ["Handbook/API deprecation.md"], "score": null}
+{"id": "H3-037", "refused": false, "cited": ["Handbook/GPU usage.md"], "score": null}
+{"id": "H3-038", "refused": false, "cited": ["Handbook/GPU usage.md"], "score": null}
+{"id": "H3-039", "refused": false, "cited": ["Handbook/Bug bounty.md"], "score": null}
+{"id": "H3-040", "refused": false, "cited": ["Handbook/Bug bounty.md"], "score": null}
+{"id": "H3-041", "refused": false, "cited": ["Handbook/Status page.md"], "score": null}
+{"id": "H3-042", "refused": false, "cited": ["Handbook/Status page.md"], "score": null}
+{"id": "H3-043", "refused": false, "cited": ["Handbook/Access reviews.md"], "score": null}
+{"id": "H3-044", "refused": false, "cited": ["Handbook/Access reviews.md"], "score": null}
+{"id": "H3-045", "refused": false, "cited": ["Handbook/Price changes.md"], "score": null}
+{"id": "H3-046", "refused": false, "cited": ["Handbook/Price changes.md"], "score": null}
+{"id": "H3-047", "refused": false, "cited": ["Handbook/A/B tests.md"], "score": null}
+{"id": "H3-048", "refused": false, "cited": ["Handbook/A/B tests.md"], "score": null}
+{"id": "H3-049", "refused": false, "cited": ["Handbook/Support hours.md"], "score": null}
+{"id": "H3-050", "refused": false, "cited": ["Handbook/Support hours.md"], "score": null}
+{"id": "H3-051", "refused": false, "cited": ["Handbook/Language for code.md"], "score": null}
+{"id": "H3-052", "refused": false, "cited": ["Handbook/Language for code.md"], "score": null}
+{"id": "H3-053", "refused": false, "cited": ["Handbook/Analyst data access.md"], "score": null}
+{"id": "H3-054", "refused": false, "cited": ["Handbook/Analyst data access.md"], "score": null}
+{"id": "H3-055", "refused": false, "cited": ["Handbook/Hackathon.md"], "score": null}
+{"id": "H3-056", "refused": false, "cited": ["Handbook/Hackathon.md"], "score": null}
+{"id": "H3-057", "refused": false, "cited": ["Handbook/Cloud cost alerts.md"], "score": null}
+{"id": "H3-058", "refused": false, "cited": ["Handbook/Cloud cost alerts.md"], "score": null}
+{"id": "H3-059", "refused": false, "cited": ["Handbook/Browser support.md"], "score": null}
+{"id": "H3-060", "refused": false, "cited": ["Handbook/Browser support.md"], "score": null}
+{"id": "H3-061", "refused": false, "cited": ["团队手册/服务拆分.md"], "score": null}
+{"id": "H3-062", "refused": false, "cited": ["团队手册/服务拆分.md"], "score": null}
+{"id": "H3-063", "refused": false, "cited": ["团队手册/消息队列.md"], "score": null}
+{"id": "H3-064", "refused": false, "cited": ["团队手册/消息队列.md"], "score": null}
+{"id": "H3-065", "refused": false, "cited": ["团队手册/数据看板.md"], "score": null}
+{"id": "H3-066", "refused": false, "cited": ["团队手册/数据看板.md"], "score": null}
+{"id": "H3-067", "refused": false, "cited": ["团队手册/客户投诉.md"], "score": null}
+{"id": "H3-068", "refused": false, "cited": ["团队手册/客户投诉.md"], "score": null}
+{"id": "H3-069", "refused": false, "cited": ["团队手册/出差标准.md"], "score": null}
+{"id": "H3-070", "refused": false, "cited": ["团队手册/出差标准.md"], "score": null}
+{"id": "H3-071", "refused": false, "cited": ["团队手册/发布说明（旧）.md"], "score": null}
+{"id": "H3-072", "refused": false, "cited": ["团队手册/发布说明.md"], "score": null}
+{"id": "H3-073", "refused": false, "cited": ["团队手册/权限申请.md"], "score": null}
+{"id": "H3-074", "refused": false, "cited": ["团队手册/权限申请.md"], "score": null}
+{"id": "H3-075", "refused": false, "cited": ["团队手册/数据标注.md"], "score": null}
+{"id": "H3-076", "refused": false, "cited": ["团队手册/数据标注.md"], "score": null}
+{"id": "H3-077", "refused": false, "cited": ["团队手册/App 系统版本.md"], "score": null}
+{"id": "H3-078", "refused": false, "cited": ["团队手册/App 系统版本.md"], "score": null}
+{"id": "H3-079", "refused": false, "cited": ["团队手册/技术分享.md"], "score": null}
+{"id": "H3-080", "refused": false, "cited": ["团队手册/技术分享.md"], "score": null}
+{"id": "H3-081", "refused": false, "cited": ["团队手册/证书续签.md"], "score": null}
+{"id": "H3-082", "refused": false, "cited": ["团队手册/证书续签.md"], "score": null}
+{"id": "H3-083", "refused": false, "cited": ["团队手册/短信通道.md"], "score": null}
+{"id": "H3-084", "refused": false, "cited": ["团队手册/短信通道.md"], "score": null}
+{"id": "H3-085", "refused": false, "cited": ["团队手册/代码托管.md"], "score": null}
+{"id": "H3-086", "refused": false, "cited": ["团队手册/代码托管.md"], "score": null}
+{"id": "H3-087", "refused": false, "cited": ["团队手册/数据共享.md"], "score": null}
+{"id": "H3-088", "refused": false, "cited": ["团队手册/数据共享.md"], "score": null}
+{"id": "H3-089", "refused": false, "cited": ["团队手册/绩效评估.md"], "score": null}
+{"id": "H3-090", "refused": false, "cited": ["团队手册/绩效评估.md"], "score": null}
+{"id": "H3-091", "refused": false, "cited": ["团队手册/需求评审.md"], "score": null}
+{"id": "H3-092", "refused": false, "cited": ["团队手册/需求评审.md"], "score": null}
+{"id": "H3-093", "refused": false, "cited": ["团队手册/技术方案模板.md"], "score": null}
+{"id": "H3-094", "refused": false, "cited": ["团队手册/技术方案模板.md"], "score": null}
+{"id": "H3-095", "refused": false, "cited": ["团队手册/测试环境.md"], "score": null}
+{"id": "H3-096", "refused": false, "cited": ["团队手册/测试环境.md"], "score": null}
+{"id": "H3-097", "refused": false, "cited": ["团队手册/意见反馈.md"], "score": null}
+{"id": "H3-098", "refused": false, "cited": ["团队手册/意见反馈.md"], "score": null}
+{"id": "H3-099", "refused": false, "cited": ["团队手册/软件采购.md"], "score": null}
+{"id": "H3-100", "refused": false, "cited": ["团队手册/软件采购.md"], "score": null}
+{"id": "H3-101", "refused": false, "cited": ["团队手册/数据分级.md"], "score": null}
+{"id": "H3-102", "refused": false, "cited": ["团队手册/数据分级.md"], "score": null}
+{"id": "H3-103", "refused": false, "cited": ["团队手册/办公网络.md"], "score": null}
+{"id": "H3-104", "refused": false, "cited": ["团队手册/办公网络.md"], "score": null}
+{"id": "H3-105", "refused": false, "cited": ["团队手册/图片资源.md"], "score": null}
+{"id": "H3-106", "refused": false, "cited": ["团队手册/图片资源.md"], "score": null}
+{"id": "H3-107", "refused": false, "cited": ["团队手册/接口文档.md"], "score": null}
+{"id": "H3-108", "refused": false, "cited": ["团队手册/接口文档.md"], "score": null}
+{"id": "H3-109", "refused": false, "cited": ["团队手册/Go 代码规范.md"], "score": null}
+{"id": "H3-110", "refused": false, "cited": ["团队手册/Go 代码规范.md"], "score": null}
+{"id": "H3-111", "refused": false, "cited": ["团队手册/节假日安排.md"], "score": null}
+{"id": "H3-112", "refused": false, "cited": ["团队手册/节假日安排.md"], "score": null}
+{"id": "H3-113", "refused": false, "cited": ["团队手册/客户回访.md"], "score": null}
+{"id": "H3-114", "refused": false, "cited": ["团队手册/客户回访.md"], "score": null}
+{"id": "H3-115", "refused": false, "cited": ["团队手册/团队周会.md"], "score": null}
+{"id": "H3-116", "refused": false, "cited": ["团队手册/团队周会.md"], "score": null}
+{"id": "H3-117", "refused": false, "cited": ["团队手册/开源许可证.md"], "score": null}
+{"id": "H3-118", "refused": false, "cited": ["团队手册/开源许可证.md"], "score": null}
+{"id": "H3-119", "refused": false, "cited": ["团队手册/设备申领.md"], "score": null}
+{"id": "H3-120", "refused": false, "cited": ["团队手册/设备申领.md"], "score": null}
+{"id": "H3-121", "refused": true, "cited": [], "score": null}
+{"id": "H3-122", "refused": true, "cited": [], "score": null}
+{"id": "H3-123", "refused": true, "cited": [], "score": null}
+{"id": "H3-124", "refused": false, "cited": ["Handbook/Model deployment.md"], "score": null}
+{"id": "H3-125", "refused": true, "cited": [], "score": null}
+{"id": "H3-126", "refused": true, "cited": [], "score": null}
+{"id": "H3-127", "refused": true, "cited": [], "score": null}
+{"id": "H3-128", "refused": true, "cited": [], "score": null}
+{"id": "H3-129", "refused": true, "cited": [], "score": null}
+{"id": "H3-130", "refused": false, "cited": ["Handbook/Interview process.md"], "score": null}
+{"id": "H3-131", "refused": true, "cited": [], "score": null}
+{"id": "H3-132", "refused": true, "cited": [], "score": null}
+{"id": "H3-133", "refused": true, "cited": [], "score": null}
+{"id": "H3-134", "refused": true, "cited": [], "score": null}
+{"id": "H3-135", "refused": true, "cited": [], "score": null}
+{"id": "H3-136", "refused": true, "cited": [], "score": null}
+{"id": "H3-137", "refused": true, "cited": [], "score": null}
+{"id": "H3-138", "refused": true, "cited": [], "score": null}
+{"id": "H3-139", "refused": true, "cited": [], "score": null}
+{"id": "H3-140", "refused": true, "cited": [], "score": null}
+{"id": "H3-141", "refused": true, "cited": [], "score": null}
+{"id": "H3-142", "refused": true, "cited": [], "score": null}
+{"id": "H3-143", "refused": true, "cited": [], "score": null}
+{"id": "H3-144", "refused": true, "cited": [], "score": null}
+{"id": "H3-145", "refused": true, "cited": [], "score": null}
+{"id": "H3-146", "refused": true, "cited": [], "score": null}
+{"id": "H3-147", "refused": true, "cited": [], "score": null}
+{"id": "H3-148", "refused": true, "cited": [], "score": null}
+{"id": "H3-149", "refused": true, "cited": [], "score": null}
+{"id": "H3-150", "refused": true, "cited": [], "score": null}
+{"id": "H3-151", "refused": true, "cited": [], "score": null}
+{"id": "H3-152", "refused": true, "cited": [], "score": null}
+{"id": "H3-153", "refused": true, "cited": [], "score": null}
+{"id": "H3-154", "refused": true, "cited": [], "score": null}
+{"id": "H3-155", "refused": true, "cited": [], "score": null}
+{"id": "H3-156", "refused": true, "cited": [], "score": null}
+{"id": "H3-157", "refused": true, "cited": [], "score": null}
+{"id": "H3-158", "refused": true, "cited": [], "score": null}
+{"id": "H3-159", "refused": false, "cited": ["Handbook/Browser support.md"], "score": null}
+{"id": "H3-160", "refused": true, "cited": [], "score": null}
+{"id": "H3-161", "refused": true, "cited": [], "score": null}
+{"id": "H3-162", "refused": true, "cited": [], "score": null}
+{"id": "H3-163", "refused": true, "cited": [], "score": null}
+{"id": "H3-164", "refused": true, "cited": [], "score": null}
+{"id": "H3-165", "refused": true, "cited": [], "score": null}
+{"id": "H3-166", "refused": true, "cited": [], "score": null}
+{"id": "H3-167", "refused": true, "cited": [], "score": null}
+{"id": "H3-168", "refused": true, "cited": [], "score": null}
+{"id": "H3-169", "refused": true, "cited": [], "score": null}
+{"id": "H3-170", "refused": true, "cited": [], "score": null}
+{"id": "H3-171", "refused": true, "cited": [], "score": null}
+{"id": "H3-172", "refused": false, "cited": ["团队手册/权限申请.md"], "score": null}
+{"id": "H3-173", "refused": true, "cited": [], "score": null}
+{"id": "H3-174", "refused": true, "cited": [], "score": null}
+{"id": "H3-175", "refused": true, "cited": [], "score": null}
+{"id": "H3-176", "refused": true, "cited": [], "score": null}
+{"id": "H3-177", "refused": true, "cited": [], "score": null}
+{"id": "H3-178", "refused": true, "cited": [], "score": null}
+{"id": "H3-179", "refused": true, "cited": [], "score": null}
+{"id": "H3-180", "refused": true, "cited": [], "score": null}
+{"id": "H3-181", "refused": true, "cited": [], "score": null}
+{"id": "H3-182", "refused": true, "cited": [], "score": null}
+{"id": "H3-183", "refused": true, "cited": [], "score": null}
+{"id": "H3-184", "refused": true, "cited": [], "score": null}
+{"id": "H3-185", "refused": true, "cited": [], "score": null}
+{"id": "H3-186", "refused": true, "cited": [], "score": null}
+{"id": "H3-187", "refused": true, "cited": [], "score": null}
+{"id": "H3-188", "refused": true, "cited": [], "score": null}
+{"id": "H3-189", "refused": true, "cited": [], "score": null}
+{"id": "H3-190", "refused": true, "cited": [], "score": null}
+{"id": "H3-191", "refused": true, "cited": [], "score": null}
+{"id": "H3-192", "refused": true, "cited": [], "score": null}
+{"id": "H3-193", "refused": true, "cited": [], "score": null}
+{"id": "H3-194", "refused": true, "cited": [], "score": null}
+{"id": "H3-195", "refused": true, "cited": [], "score": null}
+{"id": "H3-196", "refused": true, "cited": [], "score": null}
+{"id": "H3-197", "refused": true, "cited": [], "score": null}
+{"id": "H3-198", "refused": true, "cited": [], "score": null}
+{"id": "H3-199", "refused": true, "cited": [], "score": null}
+{"id": "H3-200", "refused": true, "cited": [], "score": null}
