@@ -133,8 +133,8 @@ platform, `python3`, which on Windows is that same alias. The one-line install r
 Python it ran under, so it works there; with the plugin alone, add it yourself:
 `claude mcp add krouter -- py -3 "<plugin folder>\skill\krouter\scripts\mcp_server.py"`. Until then the session's
 standing index says how to look things up from the terminal (`sh …/route_knowledge.sh search '<name>'`), which goes
-through the same launcher. None of this has been run on a Windows machine by us; the CI's Windows runner runs the
-launcher tests in Git Bash.
+through the same launcher. The hooks and the router were run through Git Bash on a Windows 11 machine whose `python3`
+and `python` are both Store aliases (2026-11-27); the MCP command above was not.
 
 ## What leaves your machine, and what it costs
 
