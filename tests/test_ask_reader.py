@@ -1,11 +1,10 @@
-"""`KROUTER_ASK_JUDGE=1` (set 53): the lookup's first five pages go to a reader with the question, and the receipt cites
-the page it names or says the memory does not have it. Off by default; needs a key; a failed, empty or late call, or a
+"""`KROUTER_ASK_JUDGE=1` (sets 53, 54): the lookup's first five pages go to a reader with the question, and the receipt
+cites the pages it names or says the memory does not have it. Off by default; needs a key; a failed, empty or late call, or a
 used-up day, leaves the lookup as it is without the switch; sends the redacted question and each candidate's title and
-first 240 characters, nothing else; the prompt is set 53's word for word. No test calls a real model."""
+at most 1,200 characters, nothing else; a page shown only in parts cannot be refused. No test calls a real model."""
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
@@ -89,15 +88,36 @@ def test_off_by_default_and_without_a_key(box, monkeypatch):
     assert box["asked"] == []
 
 
-def test_the_prompt_is_set_53s_word_for_word(box):
+def test_short_pages_are_shown_whole_and_long_ones_in_parts(box, tmp_path):
     import ask_reader
 
-    spec = importlib.util.spec_from_file_location("bench_ask_judge", REPO / "bench/ask_judge/ask_judge.py")
-    bench = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(bench)
-    assert (ask_reader.ASK, ask_reader.K, ask_reader.EXCERPT) == (bench.ASK, bench.K, bench.EXCERPT)
     c = cands(box["vault"])
-    assert c and ask_reader.prompt(QUESTION, box["vault"], c) == bench.prompt(QUESTION, box["vault"], c)
+    assert c and all(not ask_reader.is_long(box["vault"], rel) for rel in c)  # vault3 的页都短：整页给看
+    title, text = ask_reader.passage(box["vault"], c[0], QUESTION)
+    assert text == " ".join(ask_reader._body(box["vault"], c[0])[1])
+    v = tmp_path / "v"
+    v.mkdir()
+    filler = "\n".join(f"Line {i} about the weather and the office plants." for i in range(200))
+    (v / "long.md").write_text("---\ntitle: Long chat\n---\n\n# Long chat\n\n" + filler +
+                               "\nWe keep backups of the customer database for 35 days.\n" + filler, encoding="utf-8")
+    assert ask_reader.is_long(v, "long.md")
+    title, text = ask_reader.passage(v, "long.md", QUESTION)
+    assert title == "Long chat" and len(text) <= ask_reader.FULL and "35 days" in text and text.startswith("Line 0")
+
+
+def test_the_reader_may_not_refuse_a_page_it_saw_in_parts(box, tmp_path):
+    import ask_reader
+
+    v = tmp_path / "v"
+    v.mkdir()
+    (v / "short.md").write_text("A short rule.\n", encoding="utf-8")
+    (v / "long.md").write_text("word " * 600, encoding="utf-8")
+    s, lg = {"rel": "short.md"}, {"rel": "long.md"}
+    assert ask_reader.outcome(v, [s, s], []) == []  # 全是整页看过的：可以说记忆里没有
+    assert ask_reader.outcome(v, [s, lg], []) is None  # 有只看了片段的长页：照没开开关时查
+    assert ask_reader.outcome(v, [s, lg], [1]) == [s, lg]  # 点名的在前，没点名的长页留在后面
+    assert ask_reader.outcome(v, [lg, s], [2, 1]) == [s, lg]
+    assert ask_reader.pick("2, 1, 2, 9", 3) == [2, 1] and ask_reader.pick("0", 3) == [] and ask_reader.pick("none", 3) == []
 
 
 def test_the_page_named_is_cited_alone(box, monkeypatch):
@@ -154,7 +174,7 @@ def test_only_the_redacted_question_and_the_excerpts_leave(box, monkeypatch):
     assert KEYLIKE not in sent and "<redacted>" in sent
     for line in sent.splitlines():
         if line[:2].rstrip(".").isdigit() and ". " in line:
-            assert len(line.split(": ", 1)[1]) <= 240
+            assert len(line.split(": ", 1)[1]) <= ask_reader.FULL
 
 
 class _Fake(BaseHTTPRequestHandler):

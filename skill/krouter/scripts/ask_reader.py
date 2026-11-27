@@ -2,20 +2,25 @@
 
 The lookup's own ranking finds the pages closest to the question by wording, but its refusal gate is a threshold on
 wording too: it cites a neighbouring page when the words line up and refuses a right page when they do not. With the
-switch on, the first K pages in force (the gate off) go to a small model with the question, each as its title and the
-start of its text, and the model names the one that answers the question, or none. That page is cited alone, or the
-receipt says the memory does not have it. Set 53 (bench/memory_honesty/HELDOUT.md), held-out, 200 questions: wrong
-citations 26.1% -> 4.1%, neighbour questions refused 47 -> 76 of 80, right answers 102 -> 117 of 120, with
-`deepseek-flash`. What it does not change: the ranking itself (BM25's five pages under the same reader did as well).
+switch on, the first K pages in force (the gate off) go to a small model with the question, and the model names the
+pages that hold the answer or a part of it, most useful first, or none. A page of at most FULL characters is shown
+whole; a longer one as its start and the lines closest to the question, and the reader may not refuse it: "none" is a
+refusal only when every candidate was shown whole (set 54: shown parts of long chat pages, a reader refused more than
+half of LongMemEval's answerable questions).
 
-What leaves the machine with the switch on: the question, redacted, and for each candidate its title and its first 240
-characters, to `KROUTER_JUDGE_URL` (DeepSeek by default). It needs a key: `KROUTER_JUDGE_KEY`, or `DEEPSEEK_API_KEY`,
-in the environment or the keys file, the same as the per-message hook's reader (`KROUTER_RECALL_JUDGE`), and shares its
-daily cap and its metadata log (`judge.jsonl`, never the question). A failed call, a timeout or a used-up day leaves
-the lookup exactly as it is without the switch.
+Set 54 (bench/memory_honesty/HELDOUT.md), held-out, `deepseek-flash`: on short rule pages (heldout3, 200 questions)
+wrong citations 26.1% -> 5.9%, neighbour questions refused 47 -> 74 of 80, right answers 102 -> 111 of 120; on long
+chat pages (LongMemEval's held-out half) 213 -> 218 of 235 with an answer cited, 10 -> 4 refused. What it does not
+change: the ranking (BM25's five pages under the same reader did as well).
 
-The prompt, the page excerpt and K are set 53's, word for word (`bench/ask_judge/ask_judge.py`; a test holds them
-equal): change them and the numbers above no longer describe what ships.
+What leaves the machine with the switch on: the question, redacted, and for each candidate its title and what the
+reader is shown of it (at most FULL characters), to `KROUTER_JUDGE_URL` (DeepSeek by default). It needs a key:
+`KROUTER_JUDGE_KEY`, or `DEEPSEEK_API_KEY`, in the environment or the keys file, the same as the per-message hook's
+reader (`KROUTER_RECALL_JUDGE`), and shares its daily cap and its metadata log (`judge.jsonl`, never the question). A
+failed call, a timeout or a used-up day leaves the lookup exactly as it is without the switch.
+
+The prompt, what the reader is shown, K and the rule in `outcome` are set 54's (`bench/ask_judge/ask_judge.py --v54`
+and `lme_probe.py` call this module): change them and the numbers above no longer describe what ships.
 """
 
 from __future__ import annotations
@@ -27,7 +32,6 @@ import time
 from pathlib import Path
 
 K = 5
-EXCERPT = 240
 TIMEOUT = 15.0  # 一次查询不是每句话都跑：可以比钩子（5 秒）多等一会儿；评测中位数约 1 秒
 SWITCH = "KROUTER_ASK_JUDGE"
 FULL = 1200  # set 54：正文不超过这么长的页整页给模型看；更长的页给开头 HEAD 字和最相关的几处，合起来不超过 FULL
