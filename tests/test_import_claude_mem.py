@@ -179,3 +179,46 @@ def test_same_project_name_in_two_repos_stays_two_pages(env):
         page = next(v for v in pages.values() if f"{who} decision" in v)
         other = "beta" if who == "alpha" else "alpha"
         assert f"project_root: " in page and f"/{who}/api" in page and f"{other} decision" not in page
+
+
+RULES = "02 经验与方法/从 claude-mem 导入"
+
+
+def _empty_copy(src: Path, dst: Path, blank_project: bool = False) -> Path:
+    """The same claude-mem database after a reinstall or a reset: tables there, rows gone (or every project blank)."""
+    shutil.copy(src, dst)
+    con = sqlite3.connect(dst)
+    if blank_project:
+        for table in ("sdk_sessions", "observations", "session_summaries"):
+            con.execute(f"UPDATE {table} SET project = ''")
+    else:
+        for table in ("observations", "session_summaries", "sdk_sessions"):
+            con.execute(f"DELETE FROM {table}")
+    con.commit()
+    con.close()
+    return dst
+
+
+@pytest.mark.parametrize("blank_project", [False, True])
+def test_a_database_that_reads_empty_deletes_no_imported_page(env, blank_project):
+    """#105: a full run that produced nothing (or produced other names for everything) does not prune."""
+    _run(env)
+    before = _pages(env["vault"], RULES)
+    assert len(before) == 2
+    db = _empty_copy(Path(env["env"]["KROUTER_CLAUDE_MEM_DB"]), env["tmp"] / "reset.db", blank_project)
+    out = _run(env, extra={"KROUTER_CLAUDE_MEM_DB": str(db)})
+    after = _pages(env["vault"], RULES)
+    assert out["pruned"] == 0 and "prune_held" in out
+    for name, text in before.items():
+        assert after[name] == text  # 一页没删，内容没动
+
+
+def test_a_page_an_older_version_named_is_still_pruned(env):
+    _run(env)
+    old = env["vault"] / RULES / "api 的决定（旧版本的名字）.md"
+    old.write_text("---\nsource: krouter-claude-mem\nstatus: candidate\n---\n\n# old\n", encoding="utf-8")
+    mine = env["vault"] / RULES / "我自己写的.md"
+    mine.write_text("# 不是导入的\n", encoding="utf-8")
+    out = _run(env)
+    assert out["pruned"] == 1 and "prune_held" not in out
+    assert not old.exists() and mine.exists() and len(_pages(env["vault"], RULES)) == 3
