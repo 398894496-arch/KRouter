@@ -349,7 +349,7 @@ Methods and what still fails: [`docs/VERIFY.md`](docs/VERIFY.md). For agents ask
 
 **Maintenance.** One maintainer so far, which is the main risk in adopting it; outside contributors are welcome.
 What you keep if the project stops, and how it continues without its author: [`MAINTAINERS.md`](MAINTAINERS.md).
-Minor releases come at most once a week and patches when ready; `KROUTER_TAG=v2.1.2` (any tag) pins one. What counts
+A release goes out every Friday when `main` has changed, a patch in between only for a fix that cannot wait; `KROUTER_TAG=v2.2.0` (any tag) pins one. What counts
 as the stable surface: [`DETAILS.md` → Stability and versions](docs/DETAILS.md#stability-and-versions). Bugs and
 questions: [issues](https://github.com/398894496-arch/KRouter/issues); security reports: [`SECURITY.md`](SECURITY.md).
 

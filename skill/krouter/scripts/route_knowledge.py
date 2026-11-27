@@ -459,7 +459,16 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
         res = None
     widened = False
     wide = None
-    if (res is None or not res["hits"] or res.get("confidence") == "none") and scope != vault:
+    judged = None
+    try:  # KROUTER_ASK_JUDGE=1：前 5 页交给模型判断哪一页回答了问题、或者都没有（set 53）；没开、没 key、出错都是 None
+        import ask_reader
+
+        judged = ask_reader.decide(vault, query)
+    except Exception:  # noqa: BLE001
+        judged = None
+    if judged is not None:
+        res = judged
+    if judged is None and (res is None or not res["hits"] or res.get("confidence") == "none") and scope != vault:
         # 路由范围（单个偏好/纠错页、01 项目）里没有答案：扩到全库，规则页优先，并如实标出
         try:
             wide = recall(vault, query, "")
@@ -478,6 +487,8 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     folded = strict and _ri.answer_state(res) == "related"
     if res and res["hits"] and res.get("confidence") != "none" and not folded:
         print(_ri.state_line(vault, res, query))
+        if res.get("judge_note"):
+            print(res["judge_note"])
         emit_receipt(scope, "ranked-recall-complete", route, query, vault, map_path)
         log_query(route, query, "ranked-recall-complete" + ("+widened" if widened else ""), res["hits"][0]["rel"],
                   res.get("confidence", ""), [h["rel"] for h in res["hits"][:3]])
@@ -492,6 +503,8 @@ def bounded_search(scope: Path, vault: Path, map_path: Path, route: str, query: 
     if _ri is not None:
         # 记忆里没有（只有知识库对得上时这一行这样说）；严格模式下「只有相关的页」也走这里
         print(_ri.state_line(vault, res, query, strict=strict))
+        if res and res.get("judge_note"):
+            print(res["judge_note"])
     emit_receipt(scope, "bounded-literal-search-complete", route, query, vault, map_path)
     log_query(route, query, "bounded-literal-search-complete")
     emit_suggestions(query, vault, map_path)

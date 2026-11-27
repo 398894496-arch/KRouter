@@ -1,0 +1,30 @@
+{"id": "C-release", "refused": false, "cited": ["Engineering/Release process.md"], "score": null}
+{"id": "C-db-backup", "refused": false, "cited": ["Engineering/Database backups.md"], "score": null}
+{"id": "C-code-review", "refused": false, "cited": ["Engineering/Code review rule.md"], "score": null}
+{"id": "C-api-timeout", "refused": false, "cited": ["Engineering/API timeout.md"], "score": null}
+{"id": "C-node-version", "refused": false, "cited": ["Engineering/Node version.md"], "score": null}
+{"id": "C-logging", "refused": false, "cited": ["Engineering/Logging level.md"], "score": null}
+{"id": "C-branch-names", "refused": false, "cited": ["Engineering/Branch naming.md"], "score": null}
+{"id": "C-secrets", "refused": false, "cited": ["Engineering/Where secrets live.md"], "score": null}
+{"id": "C-on-call", "refused": false, "cited": ["Engineering/On-call rotation.md"], "score": null}
+{"id": "C-css", "refused": false, "cited": ["Engineering/CSS approach.md"], "score": null}
+{"id": "S-ports", "refused": false, "cited": ["Engineering/Local ports.md"], "score": null}
+{"id": "S-tests", "refused": false, "cited": ["Engineering/Running tests.md"], "score": null}
+{"id": "S-dates", "refused": false, "cited": ["Engineering/Date format.md"], "score": null}
+{"id": "S-feature-flags", "refused": false, "cited": ["Engineering/Feature flags.md"], "score": null}
+{"id": "S-errors", "refused": false, "cited": ["Engineering/Error messages.md"], "score": null}
+{"id": "S-deps", "refused": false, "cited": ["Engineering/Adding dependencies.md"], "score": null}
+{"id": "S-incidents", "refused": false, "cited": ["Engineering/Incident reports.md"], "score": null}
+{"id": "S-docs", "refused": false, "cited": ["Engineering/Where docs live.md"], "score": null}
+{"id": "S-translations", "refused": false, "cited": ["Engineering/Translations.md"], "score": null}
+{"id": "S-perf", "refused": false, "cited": ["Engineering/Performance budget.md"], "score": null}
+{"id": "R-01", "refused": true, "cited": [], "score": null}
+{"id": "R-02", "refused": true, "cited": [], "score": null}
+{"id": "R-03", "refused": true, "cited": [], "score": null}
+{"id": "R-04", "refused": true, "cited": [], "score": null}
+{"id": "R-05", "refused": true, "cited": [], "score": null}
+{"id": "R-06", "refused": true, "cited": [], "score": null}
+{"id": "R-07", "refused": true, "cited": [], "score": null}
+{"id": "R-08", "refused": true, "cited": [], "score": null}
+{"id": "R-09", "refused": true, "cited": [], "score": null}
+{"id": "R-10", "refused": true, "cited": [], "score": null}

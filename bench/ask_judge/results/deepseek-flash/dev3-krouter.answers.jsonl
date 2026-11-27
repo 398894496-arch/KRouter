@@ -1,0 +1,50 @@
+{"id": "D3-01", "refused": false, "cited": ["Engineering/JavaScript package manager.md"], "score": null}
+{"id": "D3-02", "refused": false, "cited": ["Engineering/Database migrations.md"], "score": null}
+{"id": "D3-03", "refused": false, "cited": ["Engineering/API versioning.md"], "score": null}
+{"id": "D3-04", "refused": false, "cited": ["Engineering/Expense approval.md"], "score": null}
+{"id": "D3-05", "refused": false, "cited": ["Engineering/Password hashing.md"], "score": null}
+{"id": "D3-06", "refused": false, "cited": ["Engineering/Database migrations.md"], "score": null}
+{"id": "D3-07", "refused": false, "cited": ["Engineering/Container base image.md"], "score": null}
+{"id": "D3-08", "refused": false, "cited": ["Engineering/Deploy freeze.md"], "score": null}
+{"id": "D3-09", "refused": false, "cited": ["工程规范/服务器操作系统.md"], "score": null}
+{"id": "D3-10", "refused": false, "cited": ["工程规范/代码评审时限.md"], "score": null}
+{"id": "D3-11", "refused": false, "cited": ["工程规范/前端框架.md"], "score": null}
+{"id": "D3-12", "refused": false, "cited": ["工程规范/前端框架.md"], "score": null}
+{"id": "D3-13", "refused": false, "cited": ["工程规范/测试覆盖率.md"], "score": null}
+{"id": "D3-14", "refused": false, "cited": ["工程规范/上线方式.md"], "score": null}
+{"id": "D3-15", "refused": false, "cited": ["工程规范/数据库连接池.md"], "score": null}
+{"id": "D3-16", "refused": false, "cited": ["Engineering/Laptop security.md"], "score": null}
+{"id": "D3-17", "refused": false, "cited": ["Engineering/Contractor access.md"], "score": null}
+{"id": "D3-18", "refused": false, "cited": ["Engineering/P1 bugs.md"], "score": null}
+{"id": "D3-19", "refused": false, "cited": ["Engineering/Laptop security.md"], "score": null}
+{"id": "D3-20", "refused": false, "cited": ["Engineering/Mobile release train.md"], "score": null}
+{"id": "D3-21", "refused": false, "cited": ["Engineering/Commit messages.md"], "score": null}
+{"id": "D3-22", "refused": false, "cited": ["Engineering/Python formatting.md"], "score": null}
+{"id": "D3-23", "refused": false, "cited": ["工程规范/接口路径命名.md"], "score": null}
+{"id": "D3-24", "refused": false, "cited": ["工程规范/告警分级.md"], "score": null}
+{"id": "D3-25", "refused": false, "cited": ["工程规范/缓存键命名.md"], "score": null}
+{"id": "D3-26", "refused": false, "cited": ["工程规范/依赖升级.md"], "score": null}
+{"id": "D3-27", "refused": false, "cited": ["工程规范/接口路径命名.md"], "score": null}
+{"id": "D3-28", "refused": false, "cited": ["工程规范/生产环境部署.md"], "score": null}
+{"id": "D3-29", "refused": false, "cited": ["工程规范/告警分级.md"], "score": null}
+{"id": "D3-30", "refused": false, "cited": ["工程规范/会议纪要.md"], "score": null}
+{"id": "D3-31", "refused": true, "cited": [], "score": null}
+{"id": "D3-32", "refused": true, "cited": [], "score": null}
+{"id": "D3-33", "refused": true, "cited": [], "score": null}
+{"id": "D3-34", "refused": true, "cited": [], "score": null}
+{"id": "D3-35", "refused": true, "cited": [], "score": null}
+{"id": "D3-36", "refused": true, "cited": [], "score": null}
+{"id": "D3-37", "refused": true, "cited": [], "score": null}
+{"id": "D3-38", "refused": true, "cited": [], "score": null}
+{"id": "D3-39", "refused": true, "cited": [], "score": null}
+{"id": "D3-40", "refused": true, "cited": [], "score": null}
+{"id": "D3-41", "refused": true, "cited": [], "score": null}
+{"id": "D3-42", "refused": true, "cited": [], "score": null}
+{"id": "D3-43", "refused": true, "cited": [], "score": null}
+{"id": "D3-44", "refused": true, "cited": [], "score": null}
+{"id": "D3-45", "refused": true, "cited": [], "score": null}
+{"id": "D3-46", "refused": true, "cited": [], "score": null}
+{"id": "D3-47", "refused": true, "cited": [], "score": null}
+{"id": "D3-48", "refused": true, "cited": [], "score": null}
+{"id": "D3-49", "refused": true, "cited": [], "score": null}
+{"id": "D3-50", "refused": true, "cited": [], "score": null}

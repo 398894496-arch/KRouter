@@ -661,9 +661,10 @@ def _setting(name: str) -> str:
         return ""
 
 
-def judge_conf() -> dict | None:
-    """Where the question goes, or None when the tier is off or has no key."""
-    if os.environ.get("KROUTER_RECALL_JUDGE") != "1":
+def judge_conf(switch: str = "KROUTER_RECALL_JUDGE") -> dict | None:
+    """Where the question goes, or None when the tier is off or has no key. `switch` names the tier: the per-message
+    hook's (`KROUTER_RECALL_JUDGE`) or the lookup's (`KROUTER_ASK_JUDGE`, `ask_reader.py`); key, address and cap are shared."""
+    if os.environ.get(switch) != "1":
         return None
     key = _setting("KROUTER_JUDGE_KEY") or _setting("DEEPSEEK_API_KEY")
     if not key:
@@ -743,14 +744,14 @@ def _judge_calls_today() -> int:
     return n
 
 
-def _judge_log(seconds: float, n: int, picked: bool, error: str) -> None:
+def _judge_log(seconds: float, n: int, picked: bool, error: str, route: str = "hook") -> None:
     """One line per question asked, outside the vault: when, how long, how many candidates, whether a page was named,
     what went wrong. Never the message, the pages or the reply."""
     try:
         base = state_dir()
         base.mkdir(parents=True, exist_ok=True)
         row = {"ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "seconds": round(seconds, 2),
-               "candidates": n, "picked": picked, "error": error}
+               "candidates": n, "picked": picked, "error": error, "route": route}
         with (base / JUDGE_LOG).open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
     except OSError:
