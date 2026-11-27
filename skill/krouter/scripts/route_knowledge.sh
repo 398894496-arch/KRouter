@@ -21,9 +21,12 @@ QUERY=${2:-}
 
 # One process instead of four: the Python twin runs lock + recall + receipt in-process.
 # KROUTER_SH_ONLY=1 keeps the pure-shell path below.
-if [ "${KROUTER_SH_ONLY:-0}" != 1 ] && command -v python3 >/dev/null 2>&1 \
-  && [ -f "$(dirname "$0")/route_knowledge.py" ]; then
-  exec python3 "$(dirname "$0")/route_knowledge.py" "$@"
+# pyfind.sh skips the Windows Store alias that `python3` often is there (#103); with no Python that runs, the
+# pure-shell path below answers.
+if [ "${KROUTER_SH_ONLY:-0}" != 1 ] && [ -f "$(dirname "$0")/route_knowledge.py" ] \
+  && [ -f "$(dirname "$0")/pyfind.sh" ]; then
+  . "$(dirname "$0")/pyfind.sh"
+  krouter_exec_python "$(dirname "$0")/route_knowledge.py" "$@" || true
 fi
 
 # 区名可配置：库根目录 krouter-zones.psv（或 KROUTER_ZONES）每行「默认前缀|你的前缀」，最长前缀优先（同 zones.py）

@@ -250,7 +250,7 @@ def test_a_local_import_keeps_the_digest_until_the_next_distill(box, monkeypatch
 
 def test_plugin_hooks_also_record_each_claude_code_turn():
     hooks = json.loads((REPO / "hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
-    assert hooks["Stop"][0]["hooks"][0]["command"].endswith("session_hook.py\" turn")
+    assert hooks["Stop"][0]["hooks"][0]["command"].endswith("session_hook\" turn")
 
 
 # ---------- 安装：并进各家的钩子文件 ----------

@@ -124,6 +124,18 @@ The one-line install adds the plugin from the same checksummed release. To add i
 auto-update: run `claude plugin update krouter@krouter`, or turn it on in `/plugin` → Marketplaces → krouter → Enable
 auto-update.
 
+**On Windows**, the plugin's hooks run through Git Bash (Claude Code's default shell for hooks there) and a small
+launcher, `skill/krouter/scripts/session_hook`, which skips the Microsoft Store alias that `python3` often is and uses
+`python` or `py -3` instead ([#103](https://github.com/398894496-arch/KRouter/issues/103)). Claude Code with no Git
+Bash runs hooks in PowerShell, where the launcher's `sh` is not found: install Git for Windows. The plugin's MCP server
+is a different case: Claude Code starts it without a shell, and the plugin file can name one command for every
+platform, `python3`, which on Windows is that same alias. The one-line install registers the MCP server with the
+Python it ran under, so it works there; with the plugin alone, add it yourself:
+`claude mcp add krouter -- py -3 "<plugin folder>\skill\krouter\scripts\mcp_server.py"`. Until then the session's
+standing index says how to look things up from the terminal (`sh …/route_knowledge.sh search '<name>'`), which goes
+through the same launcher. None of this has been run on a Windows machine by us; the CI's Windows runner runs the
+launcher tests in Git Bash.
+
 ## What leaves your machine, and what it costs
 
 - **Queries never leave.** Lookup is local: a SQLite full-text cache and Python's standard library; 83–87 ms warm median on the 110-page test vault, 116–126 ms at 10,000 pages (whole hook process, p95 up to 144 ms; set 34, before 2.1.0; the 2.1.0 prompt hook's warm p95 at 10,000 pages is 129–131 ms, set 39).
