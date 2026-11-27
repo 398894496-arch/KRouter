@@ -470,9 +470,10 @@ def standing_index(vault: Path, today: date | None = None, lines: int = INDEX_LI
     more = len(topics) + len(extra) - shown
     if group_line:
         body.append(group_line)
-    script = Path(__file__).resolve().with_name("route_knowledge.sh")
-    cmd = f"sh {shlex.quote(str(script))} search '<{'名字' if lang == 'zh' else 'name'}>'"
-    tcmd = f"sh {shlex.quote(str(script))} topics '<{'组名' if lang == 'zh' else 'group'}>'"
+    # 正斜杠：Windows 上宿主的终端是 Git Bash，`C:\…` 里的反斜杠在那里不是路径分隔（#103）
+    script = Path(__file__).resolve().with_name("route_knowledge.sh").as_posix()
+    cmd = f"sh {shlex.quote(script)} search '<{'名字' if lang == 'zh' else 'name'}>'"
+    tcmd = f"sh {shlex.quote(script)} topics '<{'组名' if lang == 'zh' else 'group'}>'"
     more_tpl = (INDEX_MORE_TOPICS if os.environ.get("KROUTER_TOPICS") == "1" else INDEX_MORE)[lang]
     tail = INDEX_TAIL[lang].format(cmd=cmd, vault=str(vault), more=more_tpl.format(n=more, tcmd=tcmd) if more else "")
     return "\n".join([INDEX_HEAD[lang], *body, tail])

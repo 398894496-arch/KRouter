@@ -386,12 +386,22 @@ def main() -> int:
         counts[res] += 1
         if res == "written":
             writes.append(f"{RULE_FOLDER}/{name}")
+    pruned, held = 0, ""
     if not args.days and not args.dry_run and rule_dir.is_dir():
-        # 全量导入时，名字已经不再产生的决定页（比如以前没分仓库、现在分了）是旧版本留下的：删掉，免得两份
+        # 全量导入时，名字已经不再产生的决定页（比如以前没分仓库、现在分了）是旧版本留下的：删掉，免得两份。
+        # 但 claude-mem 的库读空了（重装、清表、project 一栏临时为空）时，"不再产生"的是全部页：那不是旧版本，
+        # 是这次没读到。这次一页没产生、或要删的比产生的还多，就一页都不删（#105）。
         made = {f"{RULE_FOLDER}/{project_page(pr, rw, root=rt)[0]}" for (pr, rt), rw in decisions.items()}
-        for page in rule_dir.glob("*.md"):
-            if frontmatter(page).get("source") == MARK and f"{RULE_FOLDER}/{page.name}" not in made:
+        stale = [p for p in rule_dir.glob("*.md")
+                 if frontmatter(p).get("source") == MARK and f"{RULE_FOLDER}/{p.name}" not in made]
+        if stale and (not made or len(stale) > len(made)):
+            held = (f"kept {len(stale)} imported decision page(s) this run did not produce: it produced "
+                    f"{len(made)}, too few to tell old pages from a database that read empty")
+            print(held, file=sys.stderr)
+        else:
+            for page in stale:
                 page.unlink()
+            pruned = len(stale)
     if args.consent and not args.dry_run:
         save_state({**st, "consent": True, "distill": bool(args.distill),
                     "at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
@@ -399,6 +409,7 @@ def main() -> int:
                       "observations": sum(len(s["obs"]) for s in sessions.values()),
                       "projects": len(decisions), "decisions": sum(len(v) for v in decisions.values()),
                       "distilled": calls, "distill_failed": failed, "chars": sent, **counts,
+                      "pruned": pruned, **({"prune_held": held} if held else {}),
                       "writes": writes if len(writes) <= 20 else writes[:20] + [f"… {len(writes) - 20} more"]},
                      ensure_ascii=False))
     return 1 if failed and not calls else 0

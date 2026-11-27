@@ -1,0 +1,10 @@
+#!/bin/sh
+# KRouter's Claude Code hooks start here (hooks/hooks.json runs `sh ".../session_hook" <mode>`): one command line for
+# macOS, Linux and Windows, where Claude Code runs hooks through Git Bash. pyfind.sh picks a Python that really runs;
+# on Windows `python3` is often the Microsoft Store alias, which exits 9009 in silence (#103, first diagnosed with a
+# launcher in #104 by ispy0719).
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 127
+. "$here/pyfind.sh"
+krouter_exec_python "$here/session_hook.py" "$@"
+echo "KRouter: no working Python 3 found (tried python3, python, py -3). On Windows python3 is often the Microsoft Store alias; install Python from python.org (docs/INSTALL.md)." >&2
+exit 127

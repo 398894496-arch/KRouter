@@ -39,6 +39,7 @@ done
 LIST=$(python3 -c 'import sys, tarfile; print("\n".join(tarfile.open(sys.argv[1]).getnames()))' "dsh-krouter-$VER.tgz")  # bsdtar 会转义中文名
 for need in package/scripts/bootstrap.py package/scripts/install.sh package/scripts/uninstall.sh package/scripts/krouter package/scripts/krouter_run.py \
             package/skill/krouter/scripts/route_knowledge.sh package/skill/krouter/scripts/mcp_server.py \
+            package/skill/krouter/scripts/pyfind.sh package/skill/krouter/scripts/session_hook \
             package/skill/krouter/scripts/zones_en.psv package/sdk/krouter/cli.py package/sdk/krouter/doctor.py \
             package/skill/krouter/scripts/associate.py package/skill/krouter/scripts/cocite.py \
             package/skill/krouter/scripts/experience.py package/skill/krouter/scripts/llm.py \
