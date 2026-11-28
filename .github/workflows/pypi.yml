@@ -1,6 +1,6 @@
 name: pypi
 
-# `pip install krouter`: every published release goes to PyPI through Trusted Publishing (no token stored anywhere;
+# `pip install krouter-memory` (the name `krouter` was taken on PyPI): every published release goes to PyPI through Trusted Publishing (no token stored anywhere;
 # PyPI trusts this workflow's GitHub identity). The PyPI side, once, by the maintainer: pypi.org → Your projects →
 # Publishing → add a pending publisher: owner 398894496-arch, repository KRouter, workflow pypi.yml, environment pypi.
 # A release published before that is configured fails here and nowhere else; run this workflow by hand with its tag.
@@ -36,6 +36,6 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           ls dist
-          test -f "dist/krouter-${TAG#v}-py3-none-any.whl" || { echo "dist has no krouter-${TAG#v} wheel"; exit 1; }
+          test -f "dist/krouter_memory-${TAG#v}-py3-none-any.whl" || { echo "dist has no krouter_memory-${TAG#v} wheel"; exit 1; }
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.4
