@@ -62,7 +62,7 @@ comes back as one node with its source; nothing comes back when the vault does n
 match to make an answer from.
 
 ```python
-# pip install "krouter[llamaindex] @ git+https://github.com/398894496-arch/KRouter"
+# pip install "krouter-memory[llamaindex]"
 from krouter.integrations.llamaindex import KRouterRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 
@@ -112,12 +112,12 @@ a folder (`("users", "ada")` is `users/ada/`), an item is one Markdown page in i
 recall on that namespace alone.
 
 ```sh
-pip install "krouter[langgraph]"           # once 2.0.0 is on PyPI; it is not there yet
+pip install "krouter-memory[langgraph]"    # the PyPI package is krouter-memory; the name krouter was taken
 pip install "./KRouter[langgraph]"         # until then, from a clone of this repository
 python -m krouter.integrations.langgraph_demo   # the example below, no model and no key
 ```
 
-The extra adds only `langgraph>=1.0,<2` (Python 3.10+); `pip install krouter` alone stays without dependencies.
+The extra adds only `langgraph>=1.0,<2` (Python 3.10+); `pip install krouter-memory` alone stays without dependencies.
 
 ```python
 from dataclasses import dataclass

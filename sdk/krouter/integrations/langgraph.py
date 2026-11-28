@@ -19,7 +19,7 @@ already has a page keeps the old page under `.history/`, marked as superseded by
 it (`supersedes:`); `delete` keeps the last version there too, marked retired. `history()` reads them back;
 `purge()` removes a key with its history (when it really has to be gone).
 
-Needs `langgraph` (`pip install "krouter[langgraph]"`). Without it, nothing else in KRouter imports this module.
+Needs `langgraph` (`pip install "krouter-memory[langgraph]"`). Without it, nothing else in KRouter imports this module.
 """
 
 from __future__ import annotations

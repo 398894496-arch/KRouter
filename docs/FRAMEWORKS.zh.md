@@ -49,7 +49,7 @@ asyncio.run(main())
 这是一个检索器，LlamaIndex 能放检索器的地方都能放（查询引擎、聊天引擎、agent 工具）。答案所在的页作为一个带出处的节点返回；库里没有时什么都不返回，引擎也就拿不到勉强凑上的结果去编答案。
 
 ```python
-# pip install "krouter[llamaindex] @ git+https://github.com/398894496-arch/KRouter"
+# pip install "krouter-memory[llamaindex]"
 from krouter.integrations.llamaindex import KRouterRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 
@@ -98,12 +98,12 @@ LangGraph 自己的长期记忆接口，不走 MCP：一个 `BaseStore`，交给
 的召回。
 
 ```sh
-pip install "krouter[langgraph]"           # 2.0.0 发到 PyPI 之后；现在还没有
+pip install "krouter-memory[langgraph]"    # PyPI 上的包名是 krouter-memory（krouter 已被占用）
 pip install "./KRouter[langgraph]"         # 在那之前，从本仓库的克隆装
 python -m krouter.integrations.langgraph_demo   # 下面这个例子，不调模型、不要 key
 ```
 
-这个附加组只多装 `langgraph>=1.0,<2`（要 Python 3.10+）；只装 `pip install krouter` 照旧没有任何依赖。
+这个附加组只多装 `langgraph>=1.0,<2`（要 Python 3.10+）；只装 `pip install krouter-memory` 照旧没有任何依赖。
 
 ```python
 from dataclasses import dataclass

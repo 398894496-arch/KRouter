@@ -1,7 +1,7 @@
 # Changelog
 
 **Release pace.** 1.1.x was held to fixes from 2026-10-15; 1.2.0 shipped on 2026-10-19, ahead of the planned
-2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11; 2.1.1 on 2026-11-12; 2.1.2 on 2026-11-13; 2.2.0 on 2026-11-27. The early weeks shipped many versions a day; that pace was development, not a
+2026-11-12, at the maintainer's call; 1.3.0 on 2026-11-09; 2.0.0 on 2026-11-10; 2.1.0 on 2026-11-11; 2.1.1 on 2026-11-12; 2.1.2 on 2026-11-13; 2.2.0 and 2.2.1 on 2026-11-27. The early weeks shipped many versions a day; that pace was development, not a
 support promise.
 
 From 2026-11-27, a release every Friday when `main` has changed since the last one; a patch in between only for a fix that cannot wait. 1.0.0 to
@@ -13,9 +13,13 @@ notice, then the details.
 
 Nothing yet.
 
+## 2.2.1 — 2026-11-27
+
+**`pip install krouter-memory`.** KRouter is on PyPI as `krouter-memory`; the command it installs is still `krouter`. 2.2.0's PyPI step stopped because the name `krouter` was already registered on PyPI (an empty project, not ours). Nothing else changed.
+
 ## 2.2.0 — 2026-11-27
 
-**`pip install krouter`.** Each release now goes to PyPI as well (`.github/workflows/pypi.yml`, Trusted Publishing: no token stored). The package carries the `krouter` command, the SDK and the router scripts; the one-line install stays the way to get the hooks, the nightly job and the app connections.
+**PyPI.** Each release now goes to PyPI as well (from 2.2.1, as `krouter-memory`: the name `krouter` was already taken) (`.github/workflows/pypi.yml`, Trusted Publishing: no token stored). The package carries the `krouter` command, the SDK and the router scripts; the one-line install stays the way to get the hooks, the nightly job and the app connections.
 
 **`KROUTER_ASK_JUDGE=1` (off by default): a reader decides what a lookup answers from.** The lookup's refusal gate is a threshold on wording, so it cites a neighbouring page when the words line up and refuses a right one when they do not. With the switch on, the first five pages in force go to a small model with the question, and the receipt cites the pages it names as holding the answer, most useful first (`memory: direct`, with a `recall_judge:` line saying so), or says the memory does not have it. A page of at most 1,200 characters is shown whole; a longer one as its start and the lines closest to the question, and the reader may not refuse it: "none" counts only when every candidate was shown whole. Sets 53 and 54 ([`bench/memory_honesty/HELDOUT.md`](bench/memory_honesty/HELDOUT.md)), held-out, `deepseek-flash`: on short rule pages (200 questions on a vault nobody tuned on) wrong citations 26.1% → 5.9%, neighbour questions refused 47 → 74 of 80, right answers 102 → 111 of 120; on long chat pages (LongMemEval's held-out half) 213 → 218 of 235 with an answer cited and 10 → 4 refused. What it does not change: the ranking; BM25's five pages under the same reader did as well (no difference shown). It uses the same key, address and daily cap as `KROUTER_RECALL_JUDGE` (`KROUTER_JUDGE_KEY` or `DEEPSEEK_API_KEY`); what leaves the machine: the redacted question and, for each of the five candidates, its title and at most 1,200 characters. About a second a lookup; past 15 seconds (`KROUTER_ASK_JUDGE_TIMEOUT`), on a failed call or a used-up day the lookup answers as it does without the switch.
 

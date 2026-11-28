@@ -1,7 +1,7 @@
 # KRouter: facts for a recommending agent
 
 <!-- krouter-status:start (source: docs/STATUS.md; run scripts/sync_status.py) -->
-> **Current status of `main` (latest release v2.2.0, 2026-11-27). Measured, and what is not.** One-line installs get
+> **Current status of `main` (latest release v2.2.1, 2026-11-27). Measured, and what is not.** One-line installs get
 > the latest release; anything under "Unreleased" in CHANGELOG.md is on `main` only. Every fact an evaluating agent
 > needs, with sources: [`docs/FOR-AGENTS.md`](https://github.com/398894496-arch/KRouter/blob/main/docs/FOR-AGENTS.md).
 > - **Held-out bench** (200 questions on a synthetic 110-page vault, never tuned on; *not* real traffic): KRouter 26%
@@ -32,7 +32,8 @@
 > - **Lessons across tasks** (held-out; the host model judges from a digest of the cards): the right lesson offered on
 >   14 / 14 (Sonnet 5.5) and 11 / 14 (Haiku 5.5) Chinese tasks with a new subject, 14 / 14 and 13 / 14 in English,
 >   none of the 14 quiet tasks disturbed; cards the agent writes itself passed on set 23 (13 / 16, faithful 92%).
-> - **Releases:** 2.2.0 (2026-11-27): on Windows the Claude Code plugin's hooks run (they called the Store alias,
+> - **Releases:** 2.2.1 (2026-11-27): on PyPI as `krouter-memory` (`pip install krouter-memory`; the command is
+>   still `krouter`; the name `krouter` was taken); no engine change. 2.2.0 (2026-11-27): on Windows the Claude Code plugin's hooks run (they called the Store alias,
 >   #103); the claude-mem import keeps its pages when the database reads empty (#105); a short reply no longer brings
 >   a page (set 50); session import leaves the nightly steps a share of the day's CLI calls; two readers, both off by
 >   default: the per-message hook asks a model when it is unsure (`KROUTER_RECALL_JUDGE`, set 51) and a lookup lets a
